@@ -92,7 +92,7 @@
           "identity" : "swift-eventsource",
           "kind" : "remoteSourceControl",
           "location" : "https://github.com/launchdarkly/swift-eventsource",
-          "name" : "LDSwiftEventSource"
+          "name" : "swift-eventsource"
         },
         "state" : {
           "checkoutState" : {

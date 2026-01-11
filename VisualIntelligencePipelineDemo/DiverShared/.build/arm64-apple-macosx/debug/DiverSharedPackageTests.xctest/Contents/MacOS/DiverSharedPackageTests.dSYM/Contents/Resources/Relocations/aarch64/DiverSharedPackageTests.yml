@@ -3,8 +3,8 @@ triple:          'arm64-apple-darwin'
 binary-path:     '/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.xctest/Contents/MacOS/DiverSharedPackageTests'
 relocations:
   - { offset: 0xD7CD9, size: 0x8, addend: 0x0, symName: '_$s11DiverShared14AppGroupConfigV15groupIdentifierSSvg', symObjAddr: 0x0, symBinAddr: 0x1300, symSize: 0x34 }
-  - { offset: 0xD7CFD, size: 0x8, addend: 0x0, symName: '_$s11DiverShared14AppGroupConfigV7defaultACvpZ', symObjAddr: 0x7800, symBinAddr: 0x60CB0, symSize: 0x0 }
-  - { offset: 0xD7DD8, size: 0x8, addend: 0x0, symName: '_$s11DiverShared17AppGroupContainerO16defaultStoreNameSSvpZ', symObjAddr: 0x7828, symBinAddr: 0x60CD8, symSize: 0x0 }
+  - { offset: 0xD7CFD, size: 0x8, addend: 0x0, symName: '_$s11DiverShared14AppGroupConfigV7defaultACvpZ', symObjAddr: 0x7810, symBinAddr: 0x60CB0, symSize: 0x0 }
+  - { offset: 0xD7DD8, size: 0x8, addend: 0x0, symName: '_$s11DiverShared17AppGroupContainerO16defaultStoreNameSSvpZ', symObjAddr: 0x7838, symBinAddr: 0x60CD8, symSize: 0x0 }
   - { offset: 0xD7DE6, size: 0x8, addend: 0x0, symName: '_$s11DiverShared14AppGroupConfigVWOh', symObjAddr: 0x1B8, symBinAddr: 0x14B8, symSize: 0x40 }
   - { offset: 0xD7DFA, size: 0x8, addend: 0x0, symName: '_$s11DiverShared14AppGroupConfigV7default_WZ', symObjAddr: 0x1F8, symBinAddr: 0x14F8, symSize: 0x120 }
   - { offset: 0xD7E14, size: 0x8, addend: 0x0, symName: '_$s11DiverShared14AppGroupConfigV7defaultACvau', symObjAddr: 0x358, symBinAddr: 0x1658, symSize: 0x50 }
@@ -640,7 +640,7 @@ relocations:
   - { offset: 0xDDFD3, size: 0x8, addend: 0x0, symName: '_$s11DiverShared22IntelligenceCapabilityVACycfC', symObjAddr: 0x54, symBinAddr: 0x1E390, symSize: 0x4 }
   - { offset: 0xDE070, size: 0x8, addend: 0x0, symName: '_$s11DiverShared0A11LinkPayloadV3urlSSvg', symObjAddr: 0x0, symBinAddr: 0x1E3A8, symSize: 0x30 }
   - { offset: 0xDE094, size: 0x8, addend: 0x0, symName: '_$s11DiverShared0A11LinkWrapperO7baseURL10Foundation0F0VvpZ', symObjAddr: 0x141C0, symBinAddr: 0x60CF8, symSize: 0x0 }
-  - { offset: 0xDE0AE, size: 0x8, addend: 0x0, symName: '_$s11DiverShared0A11LinkWrapperO14currentVersionSivpZ', symObjAddr: 0x82A0, symBinAddr: 0x50A80, symSize: 0x0 }
+  - { offset: 0xDE0AE, size: 0x8, addend: 0x0, symName: '_$s11DiverShared0A11LinkWrapperO14currentVersionSivpZ', symObjAddr: 0x82A0, symBinAddr: 0x50A90, symSize: 0x0 }
   - { offset: 0xDE39D, size: 0x8, addend: 0x0, symName: '_$s11DiverShared0A11LinkPayloadVWOh', symObjAddr: 0x13C, symBinAddr: 0x1E4E4, symSize: 0x34 }
   - { offset: 0xDE3B1, size: 0x8, addend: 0x0, symName: '_$s11DiverShared0A11LinkPayloadV10CodingKeys33_C148B1FB036C7D2D522A93997EB8A828LLOAFSHAAWl', symObjAddr: 0x510, symBinAddr: 0x1E8B8, symSize: 0x68 }
   - { offset: 0xDE3C5, size: 0x8, addend: 0x0, symName: '_$s11DiverShared0A11LinkPayloadV10CodingKeys33_C148B1FB036C7D2D522A93997EB8A828LLOAFs0E3KeyAAWl', symObjAddr: 0x750, symBinAddr: 0x1EAF8, symSize: 0x68 }

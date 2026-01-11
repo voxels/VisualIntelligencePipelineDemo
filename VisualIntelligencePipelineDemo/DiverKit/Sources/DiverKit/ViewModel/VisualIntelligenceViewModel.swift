@@ -565,7 +565,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         self.accumulatedContexts = []
         self.siftedBoundingBox = nil
         self.capturedImage = nil
-        self.isReviewing = false
+        self.isReviewing = true // Switch to review mode immediately to show loading state
         self.activeObservation = nil
         
         Task {
@@ -580,7 +580,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 return
                 #endif
                 
-                self.isAnalyzing = true
+                await MainActor.run { self.isAnalyzing = true }
                     
                     // Analyze for interactive results
                     // For photo library, we usually assume .up logic unless meta says otherwise
@@ -1520,6 +1520,9 @@ public class VisualIntelligenceViewModel: ObservableObject {
         var combinedHistory = ""
         if !accumulatedContext.isEmpty {
              combinedHistory = accumulatedContext.joined(separator: "\n---\n")
+             if !currentStepSummary.isEmpty {
+                 combinedHistory += "\n---\n(Current) " + currentStepSummary
+             }
         } else {
              combinedHistory = currentStepSummary
         }
@@ -1593,6 +1596,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
             }
         }
         
+        if !currentStepSummary.isEmpty {
+            let summary = currentStepSummary
+            Task { @MainActor in
+                Services.shared.dailyContextService?.addContext(summary)
+            }
+        }
+
         return (finalResults, currentStepSummary.isEmpty ? nil : currentStepSummary, allCandidates)
     }
 

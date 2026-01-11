@@ -269,7 +269,7 @@ public final class IntelligenceProcessor: Sendable {
                  
                  // barcodeRequest.regionOfInterest = paddedRoi // Fix: Allow barcode scanning on full frame
                  textRequest.regionOfInterest = paddedRoi
-                 classificationRequest.regionOfInterest = paddedRoi
+                 // classificationRequest.regionOfInterest = paddedRoi // Fix: Allow product classification on full frame
                  documentRequest.regionOfInterest = paddedRoi
              }
          } else {

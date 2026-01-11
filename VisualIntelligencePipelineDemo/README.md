@@ -1,3 +1,64 @@
+# Diver - Visual Intelligence Pipeline
+
+Diver is a universal application for iOS and macOS designed for capturing, organizing, and enriching visual intelligence. It leverages on-device computer vision, generative AI, and a multi-stage enrichment pipeline to turn captured moments into structured, actionable data.
+
+## Project Structure
+
+The workspace is organized into modular components:
+
+- **Diver (App)**: The main application target (iOS/macOS).
+- **DiverKit**: A Swift Package containing the core business logic, services (`LocalPipelineService`, `EnrichmentService`), and ViewModels (`VisualIntelligenceViewModel`).
+- **DiverShared**: A library for shared data models, persistence layers (`SwiftData`, `DiverQueueStore`), and utilities used across the App, Extensions, and Widgets.
+- **LocalPackages/**: Contains local dependencies such as the YahooSearch SDK wrapper.
+
+## User Experience Walkthrough
+
+### 1. Visual Sifting & Context Capture
+Diver's primary interface is the **Visual Intelligence View**, accessible via the "Scan for context" button or the floating Camera action.
+- **Unified Shutter**: The camera interface uses a custom `AVCaptureSession` bridged to SwiftUI. It performs real-time **subject sifting** (isolating objects) while simultaneously scanning for **QR codes** and **Text**.
+- **Photo Library Integration**: Users can tap the photo picker icon to load an image from their library. The app immediately transitions to a "Reviewing" state, running the full `IntelligenceProcessor` on the selected static image just as it would for a live capture.
+- **Context Accumulation**: As you capture multiple items in a session, Diver aggregates the context (visual labels, location, text) from *all* images to build a richer "Session History".
+
+### 2. Daily Context Narrative
+New in this version is the **Daily Context Narrative**, located at the top of the Sidebar.
+- **Live Summarization**: As you capture visual context throughout the day, the `DailyContextService` appends these events to a running log.
+- **LLM Synthesis**: An on-device LLM (via `ContextQuestionService`) periodically analyzes this log to generate a narrative summary (e.g., *"Morning spent debugging SwiftUI at a coffee shop, followed by researching camera gear."*).
+- **Persistence**: This narrative persists for the day, giving users an at-a-glance understanding of their digital footprint.
+
+## Dependencies
+
+This project relies on the following external and open-source libraries. Please refer to their original documentation for detailed usage instructions.
+
+### 1. swift-eventsource
+Used to handle Server-Sent Events (SSE) for real-time data streaming within the intelligence pipeline.
+- **Source**: [https://github.com/launchdarkly/swift-eventsource](https://github.com/launchdarkly/swift-eventsource)
+- **README**: [View README](https://github.com/launchdarkly/swift-eventsource/blob/main/README.md)
+- **License**: Apache 2.0
+
+### 2. SpotifyAPI
+A Swift library for the Spotify Web API, used for enriching identifying and enriching music-related entities.
+- **Source**: [https://github.com/Peter-Schorn/SpotifyAPI](https://github.com/Peter-Schorn/SpotifyAPI)
+- **README**: [View README](https://github.com/Peter-Schorn/SpotifyAPI/blob/master/README.md)
+- **License**: MIT
+
+### 3. KnowMaps (Service)
+Diver integrates with the KnowMaps knowledge graph for vector-based context retrieval. This is handled via the `KnowMapsAdapter` within `DiverKit`.
+
+## Building the Project
+
+### Prerequisites
+- **Xcode 15+** (Recommended: Xcode 16 beta for iOS 26.0/macOS 15.0 SDK support).
+- **Swift 6.0** toolchain.
+
+### installation
+1. Clone the repository.
+2. Open `VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj`.
+3. Xcode will automatically resolve the SPM packages (`DiverKit`, `DiverShared`, `swift-eventsource`, `SpotifyAPI`).
+4. Select the **Diver** scheme and your target device.
+5. Build and Run (`Cmd+R`).
+
+---
+
 # Testing Diver
 
 This guide outlines how to verify the functionality of the Diver application, including Visual Intelligence capture, Session Management, and Link Enrichment.

@@ -1,0 +1,23 @@
+Building for debugging...
+[0/3] Write sources
+[1/3] Write swift-version--58304C5D6DBC2206.txt
+[3/7] Compiling SpotifyWebAPI SpotifyPlayerError.swift
+[4/7] Compiling SpotifyWebAPI URLSessionWrappers.swift
+[5/7] Compiling SpotifyWebAPI AudiobookChapter.swift
+[6/7] Emitting module SpotifyWebAPI
+[7/9] Emitting module DiverKit
+[8/9] Compiling DiverKit IntelligenceProcessor.swift
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/IntelligenceProcessor.swift:290:37: warning: 'characterDirection(forLanguage:)' was deprecated in macOS 13: Use `Locale.Language(identifier:).characterDirection` [#DeprecatedDeclaration]
+288 |              // Determine Layout Direction
+289 |              let languageCode = Locale.current.language.languageCode?.identifier ?? "en"
+290 |              let direction = Locale.characterDirection(forLanguage: languageCode)
+    |                                     `- warning: 'characterDirection(forLanguage:)' was deprecated in macOS 13: Use `Locale.Language(identifier:).characterDirection` [#DeprecatedDeclaration]
+291 |              let isRTL = direction == .rightToLeft
+292 |              
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[8/10] Write Objects.LinkFileList
+warning: (arm64) /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest+Context.swift.o unable to open object file: No such file or directory
+error: stat error: No such file or directory (2)
+[9/10] Linking DiverKitPackageTests
+error: fatalError

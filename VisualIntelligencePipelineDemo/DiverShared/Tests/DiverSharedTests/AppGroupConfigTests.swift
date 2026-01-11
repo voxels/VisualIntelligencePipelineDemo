@@ -4,7 +4,7 @@ import XCTest
 final class AppGroupConfigTests: XCTestCase {
     func testDefaultIdentifiers() {
         XCTAssertEqual(AppGroupConfig.default.groupIdentifier, "group.com.secretatomics.VisualIntelligence")
-        XCTAssertEqual(AppGroupConfig.default.keychainAccessGroup, "23264QUM9A.com.secretatomics.Diver.shared")
+        XCTAssertEqual(AppGroupConfig.default.keychainAccessGroup, "23264QUM9A.com.secretatomics.VisualIntelligence.shared")
         XCTAssertEqual(
             AppGroupConfig.default.cloudKitContainers,
             [

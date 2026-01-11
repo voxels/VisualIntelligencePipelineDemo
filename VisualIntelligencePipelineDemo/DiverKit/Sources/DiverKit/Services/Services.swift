@@ -12,6 +12,7 @@ public final class Services {
     public var activityService: ActivityEnrichmentService?
     public var knowledgeGraphService: (any KnowledgeGraphRetrievalService & KnowledgeGraphIndexingService)?
     public var contextQuestionService: ContextQuestionService?
+    public var dailyContextService: DailyContextService?
     public var pendingReprocessContext: ReprocessContext?
     
     private init() {}

@@ -17,7 +17,7 @@ public struct AppGroupConfig: Sendable, Equatable {
 
     public static let `default` = AppGroupConfig(
         groupIdentifier: "group.com.secretatomics.VisualIntelligence",
-        keychainAccessGroup: "23264QUM9A.com.secretatomics.Diver.shared",
+        keychainAccessGroup: "23264QUM9A.com.secretatomics.VisualIntelligence.shared",
         cloudKitContainers: [
             "iCloud.com.secretatomics.knowmaps.Cache",
             "iCloud.com.secretatomics.knowmaps.Keys"

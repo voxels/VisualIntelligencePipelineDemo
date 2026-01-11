@@ -50,6 +50,11 @@ struct SidebarView: View {
         List(selection: $selection) {
 
 
+            // Section 0.5: Daily Context
+            if let dailyService = Services.shared.dailyContextService {
+                DailyContextSection(service: dailyService)
+            }
+            
             // Section 0: Intelligence
             if IntelligenceCapability.isAvailable {
                 Section("Intelligence") {
@@ -1624,5 +1629,46 @@ struct SessionCardView: View {
         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
         .padding(.horizontal, 4) // Slight inset from list edges
         .padding(.vertical, 6)
+    }
+    }
+}
+
+// MARK: - Daily Context Section
+struct DailyContextSection: View {
+    @ObservedObject var service: DailyContextService
+    
+    var body: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 8) {
+                if service.isGenerating {
+                    HStack {
+                        Text("Summarizing day...")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        ProgressView()
+                            .scaleEffect(0.6)
+                    }
+                } else {
+                    Text(service.dailySummary)
+                        .font(.footnote)
+                        .foregroundStyle(.primary)
+                        .italic()
+                        .padding(.vertical, 4)
+                        .transition(.opacity)
+                }
+            }
+        } header: {
+            HStack {
+                Label("Today's Narrative", systemImage: "clock.arrow.circlepath")
+                Spacer()
+                Button {
+                    Task { await service.updateSummary() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.caption)
+                }
+            }
+        }
     }
 }

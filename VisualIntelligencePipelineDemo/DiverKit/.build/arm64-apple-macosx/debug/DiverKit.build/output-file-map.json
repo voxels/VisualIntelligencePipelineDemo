@@ -947,6 +947,13 @@
     "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/ContextQuestionService.swiftdeps",
     "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/ContextQuestionService.dia"
   },
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/DailyContextService.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/DailyContextService.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/DailyContextService.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/DailyContextService~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/DailyContextService.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/DailyContextService.dia"
+  },
   "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/DiverLinkGenerator.swift": {
     "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/DiverLinkGenerator.d",
     "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/DiverLinkGenerator.swift.o",

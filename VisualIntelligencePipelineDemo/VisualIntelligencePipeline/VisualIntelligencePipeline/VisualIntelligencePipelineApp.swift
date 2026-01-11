@@ -98,6 +98,7 @@ struct VisualIntelligencePipelineApp: App {
         let duckDuckGoContextService = DuckDuckGoEnrichmentService()
         let webViewService = WebViewLinkEnrichmentService()
         let contextService = ContextQuestionService()
+        let dailyContextService = DailyContextService()
         
         // Register in shared Services singleton for VisualIntelligenceViewModel
         Services.shared.locationService = locationService
@@ -107,6 +108,7 @@ struct VisualIntelligencePipelineApp: App {
         Services.shared.weatherService = weatherService
         Services.shared.activityService = activityService
         Services.shared.contextQuestionService = contextService
+        Services.shared.dailyContextService = dailyContextService
         
 //        // Initially use only Yahoo URL service
 //        let initialEnrichment = CompositeLinkEnrichmentService(services: [duckDuckGoContextService])

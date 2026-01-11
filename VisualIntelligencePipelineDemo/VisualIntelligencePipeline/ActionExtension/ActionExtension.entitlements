@@ -4,11 +4,11 @@
 <dict>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.secretatomics.VisualIntelligencePipeline</string>
+		<string>group.com.secretatomics.VisualIntelligence</string>
 	</array>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)com.secretatomics.VisualIntelligencePipeline.shared</string>
+		<string>$(AppIdentifierPrefix)com.secretatomics.VisualIntelligence.shared</string>
 	</array>
 </dict>
 </plist>
