@@ -1312,7 +1312,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // Stop recording but RESTART session for next capture
         stopRecording()
         Task {
-            await cameraManager.startSession()
+            cameraManager.startSession()
         }
         
         // Reset UI state

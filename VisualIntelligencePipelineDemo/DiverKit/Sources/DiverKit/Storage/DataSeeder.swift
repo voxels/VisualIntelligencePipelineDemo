@@ -177,12 +177,34 @@ public struct DataSeeder {
                     inputItem = item
                     
                 case .music(let p):
-                    // TODO: make references
-                    break
+                    if let ref = p.created_references?.first {
+                         let item = ProcessedItem(
+                             id: ref.id,
+                             url: ref.reference_metadata?.external_urls?.spotify,
+                             title: ref.reference_metadata?.title ?? ref.name,
+                             summary: "Music by \(ref.reference_metadata?.artists?.joined(separator: ", ") ?? "Unknown")",
+                             tags: ["Music", ref.entity_type],
+                             status: .ready,
+                             mediaType: "audio"
+                         )
+                         context.insert(item)
+                         inputItem = item
+                    }
                     
                 case .book(let p):
-                    // TODO: make references
-                    break
+                    if let ref = p.created_references?.first {
+                         let item = ProcessedItem(
+                             id: ref.id,
+                             url: nil,
+                             title: ref.reference_metadata?.title ?? ref.name,
+                             summary: "Book: \(ref.name)",
+                             tags: ["Book", ref.entity_type],
+                             status: .ready,
+                             mediaType: "text"
+                         )
+                         context.insert(item)
+                         inputItem = item
+                    }
                 case .unknown:
                     continue
                 }

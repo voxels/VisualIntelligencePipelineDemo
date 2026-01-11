@@ -384,6 +384,17 @@ public final class LocalPipelineService {
             let productQuery = descriptor?.title
             let service = duckDuckGoService
             
+            group.addTask {
+                if isProduct, let query = productQuery, let service = service {
+                    do {
+                         let data = try await service.enrich(query: query, location: nil)
+                         return ParallelEnrichmentResult(duckDuckGo: data)
+                    } catch {
+                        print("Failed to enrich product: \(error)")
+                    }
+                }
+                return nil
+            }
 
             
             // Collect results on MainActor
@@ -573,7 +584,7 @@ public final class LocalPipelineService {
                         // Recreate LocalInput if missing
                          let input = LocalInput(
                             id: inputID,
-                            createdAt: item.createdAt ?? Date(),
+                            createdAt: item.createdAt,
                             url: item.url,
                             text: item.summary,
                             source: item.source,
@@ -726,7 +737,7 @@ public final class LocalPipelineService {
         
         // Persist structured contexts if available
         if let newWeb = enrichment.webContext {
-            if var existingWeb = item.webContext {
+            if let existingWeb = item.webContext {
                 // Merge logic: existing preferred for snapshot if new is nil?
                 // Or new preferred? New enrichment implies a fresh fetch.
                 // However, for re-processing where fetch might fail (headless browser issue),
@@ -1008,7 +1019,7 @@ public final class LocalPipelineService {
             if items.isEmpty { return }
             
             // Limit to last 20 items to avoid token limits and keep it relevant
-            let recentItems = items.sorted(by: { ($0.createdAt ?? Date()) < ($1.createdAt ?? Date()) }).suffix(20)
+            let recentItems = items.sorted(by: { $0.createdAt < $1.createdAt }).suffix(20)
             
             var combinedText = ""
             for item in recentItems {
