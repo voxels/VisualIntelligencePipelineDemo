@@ -26,6 +26,9 @@ struct SettingsView: View {
     @State private var showingContactPicker = false
     @State private var selectedContactName: String?
     
+    @State private var showingLogExporter = false
+    @State private var exportedLogURL: URL?
+    
     // Dependencies
     private let contactService = Services.shared.contactService
 
@@ -111,6 +114,17 @@ struct SettingsView: View {
                     }
                     .sheet(isPresented: $showingReprocessingWizard) {
                          ReprocessingWizardView()
+                    }
+                    
+                    Button {
+                        exportProcessingLogs()
+                    } label: {
+                        Label("Export Processing Logs", systemImage: "square.and.arrow.up")
+                    }
+                    .sheet(isPresented: $showingLogExporter) {
+                        if let url = exportedLogURL {
+                            ShareSheet(activityItems: [url])
+                        }
                     }
                 } header: {
                     Text("Maintenance")
@@ -270,9 +284,86 @@ struct SettingsView: View {
             }
         }
     }
+    private func exportProcessingLogs() {
+        Task {
+            do {
+                let descriptor = FetchDescriptor<ProcessedItem>(sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
+                let items = try modelContext.fetch(descriptor)
+                
+                let exports = items.map { item in
+                    LogExport(
+                        id: item.id,
+                        title: item.title,
+                        createdAt: item.createdAt,
+                        logs: item.processingLog
+                    )
+                }
+                
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+                encoder.dateEncodingStrategy = .iso8601
+                let data = try encoder.encode(exports)
+                
+                let dateString = Date().ISO8601Format().replacingOccurrences(of: ":", with: "-")
+                let filename = "diver_processing_logs_\(dateString).json"
+                let tempDir = FileManager.default.temporaryDirectory
+                let fileURL = tempDir.appendingPathComponent(filename)
+                
+                try data.write(to: fileURL)
+                
+                await MainActor.run {
+                    self.exportedLogURL = fileURL
+                    self.showingLogExporter = true
+                }
+            } catch {
+                print("Failed to export logs: \(error)")
+            }
+        }
+    }
 }
 
-struct StorageInfoRow: View {
+struct LogExport: Codable {
+    let id: String
+    let title: String?
+    let createdAt: Date
+    let logs: [String]
+}
+
+#if os(iOS)
+struct ShareSheet: UIViewControllerRepresentable {
+    var activityItems: [Any]
+    var applicationActivities: [UIActivity]? = nil
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+#else
+struct ShareSheet: View {
+    var activityItems: [Any]
+    var body: some View {
+        VStack {
+            Text("Export Ready")
+                .font(.headline)
+            if let url = activityItems.first as? URL {
+                ShareLink(item: url) {
+                    Label("Save or Share JSON", systemImage: "square.and.arrow.up")
+                }
+                .padding()
+                
+                Button("Show in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([url])
+                }
+            }
+        }
+        .padding()
+        .frame(minWidth: 300, minHeight: 150)
+    }
+}
+#endif
     @Query private var processedItems: [ProcessedItem]
 
     var body: some View {

@@ -514,6 +514,17 @@ public final class LocalPipelineService {
             }
         }
 
+        // Update Daily Narrative
+        if let dailyService = Services.shared.dailyContextService {
+            let summaryText = processed.summary ?? processed.title ?? "Processed Item"
+            dailyService.addContext(summaryText)
+            
+            // Log contribution and current narrative state
+            let timestamp = Date().formatted(date: .omitted, time: .standard)
+            let currentNarrative = dailyService.dailySummary // Will be previous state until async update finishes, but acceptable
+            processed.processingLog.append("\(timestamp): Added to Daily Narrative. Current Narrative Snapshot: \(currentNarrative)")
+        }
+
         return processed
     }
 

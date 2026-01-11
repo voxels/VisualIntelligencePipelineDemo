@@ -607,13 +607,17 @@ struct ReferenceCardWrapper: View {
     let item: ProcessedItem
     
     var body: some View {
-        switch (item.entityType ?? "").lowercased() {
-        case "book":
-            BookReferenceView(item: item)
-        case "music", "music_album", "music_track":
-            SpotifyReferenceView(item: item)
-        default:
-            ReferenceCardView(item: item)
+        if item.webContext?.siteName == "Apple Music" {
+             AppleMusicReferenceView(item: item)
+        } else {
+             switch (item.entityType ?? "").lowercased() {
+             case "book":
+                 BookReferenceView(item: item)
+             case "music", "music_album", "music_track":
+                 SpotifyReferenceView(item: item)
+             default:
+                 ReferenceCardView(item: item)
+             }
         }
     }
 }

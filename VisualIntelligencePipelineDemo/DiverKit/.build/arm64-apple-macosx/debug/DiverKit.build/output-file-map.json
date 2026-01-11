@@ -912,6 +912,13 @@
     "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/ActivityEnrichmentService.swiftdeps",
     "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/ActivityEnrichmentService.dia"
   },
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/AppleMusicEnrichmentService.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/AppleMusicEnrichmentService.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/AppleMusicEnrichmentService.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/AppleMusicEnrichmentService~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/AppleMusicEnrichmentService.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/AppleMusicEnrichmentService.dia"
+  },
   "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/CameraManager.swift": {
     "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/CameraManager.d",
     "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit.build/CameraManager.swift.o",

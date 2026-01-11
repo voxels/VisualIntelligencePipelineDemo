@@ -97,6 +97,14 @@ struct VisualIntelligencePipelineApp: App {
         let foursquareContextService = FoursquareEnrichmentService(apiKey: "FOURSQUARE_API_KEY")
         let duckDuckGoContextService = DuckDuckGoEnrichmentService()
         let webViewService = WebViewLinkEnrichmentService()
+        let appleMusicService = AppleMusicEnrichmentService()
+        
+        // Composite Link Enrichment: Prioritize Apple Music, then fallback to generic Web View
+        let compositeLinkService = CompositeLinkEnrichmentService(services: [
+            appleMusicService,
+            webViewService
+        ])
+        
         let contextService = ContextQuestionService()
         let dailyContextService = DailyContextService()
         
@@ -116,7 +124,7 @@ struct VisualIntelligencePipelineApp: App {
         self.metadataPipelineService = MetadataPipelineService(
             queueStore: queueStore,
             modelContext: dataStore.mainContext,
-            enrichmentService: webViewService,
+            enrichmentService: compositeLinkService,
             locationService: locationService,
             foursquareService: foursquareContextService,
             duckDuckGoService: duckDuckGoContextService,

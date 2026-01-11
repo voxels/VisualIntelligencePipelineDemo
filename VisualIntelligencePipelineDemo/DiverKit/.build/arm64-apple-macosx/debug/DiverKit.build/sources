@@ -128,6 +128,7 @@
 /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Schemas/ValidationError.swift
 /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Schemas/ValidationErrorLocItem.swift
 /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/ActivityEnrichmentService.swift
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/AppleMusicEnrichmentService.swift
 /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/CameraManager.swift
 /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/CompositeLinkEnrichmentService.swift
 /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/ContactService.swift
