@@ -1,7 +1,7 @@
 dependencies: \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/module.modulemap \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/crypto/err/err.c \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_err.h \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/module.modulemap \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/crypto/err/err.c \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_err.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/Darwin.modulemap \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/stdio.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/DarwinFoundation2.modulemap \
@@ -180,12 +180,12 @@ dependencies: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/_time.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/sys/_types/_timespec.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/xlocale/_time.h \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_base.h \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_base.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/stddef.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stdint.h \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_is_boringssl.h \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_opensslconf.h \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_boringssl_prefix_symbols.h \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_is_boringssl.h \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_opensslconf.h \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_boringssl_prefix_symbols.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/assert.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/DarwinFoundation3.modulemap \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/pthread/pthread.h \
@@ -237,12 +237,12 @@ dependencies: \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/inttypes.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/inttypes.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/string.h \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_mem.h \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_mem.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/stdlib.h \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_thread.h \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/crypto/err/../internal.h \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_ex_data.h \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_stack.h \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_type_check.h \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_thread.h \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/crypto/err/../internal.h \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_ex_data.h \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_stack.h \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/CCryptoBoringSSL_type_check.h \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/stdalign.h \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/crypto/err/./internal.h
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/crypto/err/./internal.h

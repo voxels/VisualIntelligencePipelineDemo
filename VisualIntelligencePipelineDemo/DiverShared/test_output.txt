@@ -1,0 +1,92 @@
+Building for debugging...
+[0/3] Write sources
+[1/3] Write swift-version--58304C5D6DBC2206.txt
+[3/5] Emitting module DiverSharedTests
+[4/5] Compiling DiverSharedTests AppGroupConfigTests.swift
+[4/6] Write Objects.LinkFileList
+[5/6] Linking DiverSharedPackageTests
+Build complete! (0.65s)
+Test Suite 'All tests' started at 2026-01-11 07:29:44.617.
+Test Suite 'DiverSharedPackageTests.xctest' started at 2026-01-11 07:29:44.618.
+Test Suite 'AppGroupConfigTests' started at 2026-01-11 07:29:44.618.
+Test Case '-[DiverSharedTests.AppGroupConfigTests testContainerURLUsesProvider]' started.
+Test Case '-[DiverSharedTests.AppGroupConfigTests testContainerURLUsesProvider]' passed (0.002 seconds).
+Test Case '-[DiverSharedTests.AppGroupConfigTests testDataStoreURLUsesCustomName]' started.
+Test Case '-[DiverSharedTests.AppGroupConfigTests testDataStoreURLUsesCustomName]' passed (0.000 seconds).
+Test Case '-[DiverSharedTests.AppGroupConfigTests testDataStoreURLUsesDefaultName]' started.
+Test Case '-[DiverSharedTests.AppGroupConfigTests testDataStoreURLUsesDefaultName]' passed (0.000 seconds).
+Test Case '-[DiverSharedTests.AppGroupConfigTests testDefaultIdentifiers]' started.
+Test Case '-[DiverSharedTests.AppGroupConfigTests testDefaultIdentifiers]' passed (0.000 seconds).
+Test Case '-[DiverSharedTests.AppGroupConfigTests testMissingContainerThrows]' started.
+Test Case '-[DiverSharedTests.AppGroupConfigTests testMissingContainerThrows]' passed (0.000 seconds).
+Test Case '-[DiverSharedTests.AppGroupConfigTests testQueueDirectoryCreatesFolder]' started.
+Test Case '-[DiverSharedTests.AppGroupConfigTests testQueueDirectoryCreatesFolder]' passed (0.001 seconds).
+Test Suite 'AppGroupConfigTests' passed at 2026-01-11 07:29:44.622.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Suite 'DiverItemDescriptorTests' started at 2026-01-11 07:29:44.622.
+Test Case '-[DiverSharedTests.DiverItemDescriptorTests testPreferredListLabelFallsBackToCategory]' started.
+Test Case '-[DiverSharedTests.DiverItemDescriptorTests testPreferredListLabelFallsBackToCategory]' passed (0.000 seconds).
+Test Case '-[DiverSharedTests.DiverItemDescriptorTests testPreferredListLabelFallsBackToStyleTag]' started.
+Test Case '-[DiverSharedTests.DiverItemDescriptorTests testPreferredListLabelFallsBackToStyleTag]' passed (0.000 seconds).
+Test Case '-[DiverSharedTests.DiverItemDescriptorTests testPreferredListLabelUsesDefaultOtherwise]' started.
+Test Case '-[DiverSharedTests.DiverItemDescriptorTests testPreferredListLabelUsesDefaultOtherwise]' passed (0.000 seconds).
+Test Case '-[DiverSharedTests.DiverItemDescriptorTests testPreferredListLabelUsesProvidedValue]' started.
+Test Case '-[DiverSharedTests.DiverItemDescriptorTests testPreferredListLabelUsesProvidedValue]' passed (0.000 seconds).
+Test Suite 'DiverItemDescriptorTests' passed at 2026-01-11 07:29:44.622.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'LinkWrappingTests' started at 2026-01-11 07:29:44.622.
+Test Case '-[DiverSharedTests.LinkWrappingTests testResolveWithoutPayloadReturnsNil]' started.
+Test Case '-[DiverSharedTests.LinkWrappingTests testResolveWithoutPayloadReturnsNil]' passed (0.000 seconds).
+Test Case '-[DiverSharedTests.LinkWrappingTests testSaltChangesID]' started.
+Test Case '-[DiverSharedTests.LinkWrappingTests testSaltChangesID]' passed (0.000 seconds).
+Test Case '-[DiverSharedTests.LinkWrappingTests testSignatureValidationFailsOnTamper]' started.
+Test Case '-[DiverSharedTests.LinkWrappingTests testSignatureValidationFailsOnTamper]' passed (0.000 seconds).
+Test Case '-[DiverSharedTests.LinkWrappingTests testStableID]' started.
+Test Case '-[DiverSharedTests.LinkWrappingTests testStableID]' passed (0.000 seconds).
+Test Case '-[DiverSharedTests.LinkWrappingTests testWrapAndResolvePayload]' started.
+Test Case '-[DiverSharedTests.LinkWrappingTests testWrapAndResolvePayload]' passed (0.000 seconds).
+Test Suite 'LinkWrappingTests' passed at 2026-01-11 07:29:44.624.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'MessagesLaunchStoreTests' started at 2026-01-11 07:29:44.624.
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testConsumeRetrievesAndRemovesRequest]' started.
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testConsumeRetrievesAndRemovesRequest]' passed (0.002 seconds).
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testConsumeReturnsNilWhenNoRequest]' started.
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testConsumeReturnsNilWhenNoRequest]' passed (0.000 seconds).
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testConsumeWithCorruptedData]' started.
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testConsumeWithCorruptedData]' passed (0.001 seconds).
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testMultipleSavesOverwritePrevious]' started.
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testMultipleSavesOverwritePrevious]' passed (0.001 seconds).
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testSaveConsumeRoundtrip]' started.
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testSaveConsumeRoundtrip]' passed (0.001 seconds).
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testSaveStoresMessageLaunchRequest]' started.
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testSaveStoresMessageLaunchRequest]' passed (0.001 seconds).
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testSaveTrimsLongBody]' started.
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testSaveTrimsLongBody]' passed (0.001 seconds).
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testSaveWithNilBody]' started.
+Test Case '-[DiverSharedTests.MessagesLaunchStoreTests testSaveWithNilBody]' passed (0.001 seconds).
+Test Suite 'MessagesLaunchStoreTests' passed at 2026-01-11 07:29:44.635.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.010 (0.011) seconds
+Test Suite 'QueueStoreTests' started at 2026-01-11 07:29:44.635.
+Test Case '-[DiverSharedTests.QueueStoreTests testEnqueueCreatesFileAndReturnsRecord]' started.
+Test Case '-[DiverSharedTests.QueueStoreTests testEnqueueCreatesFileAndReturnsRecord]' passed (0.001 seconds).
+Test Case '-[DiverSharedTests.QueueStoreTests testPendingEntriesSortedByCreationDate]' started.
+Test Case '-[DiverSharedTests.QueueStoreTests testPendingEntriesSortedByCreationDate]' passed (0.002 seconds).
+Test Case '-[DiverSharedTests.QueueStoreTests testRemoveDeletesRecord]' started.
+Test Case '-[DiverSharedTests.QueueStoreTests testRemoveDeletesRecord]' passed (0.001 seconds).
+Test Suite 'QueueStoreTests' passed at 2026-01-11 07:29:44.639.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
+Test Suite 'ValidationTests' started at 2026-01-11 07:29:44.639.
+Test Case '-[DiverSharedTests.ValidationTests testIsValidURL_withInvalidURLs]' started.
+Test Case '-[DiverSharedTests.ValidationTests testIsValidURL_withInvalidURLs]' passed (0.001 seconds).
+Test Case '-[DiverSharedTests.ValidationTests testIsValidURL_withValidURLs]' started.
+Test Case '-[DiverSharedTests.ValidationTests testIsValidURL_withValidURLs]' passed (0.000 seconds).
+Test Suite 'ValidationTests' passed at 2026-01-11 07:29:44.640.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'DiverSharedPackageTests.xctest' passed at 2026-01-11 07:29:44.640.
+	 Executed 28 tests, with 0 failures (0 unexpected) in 0.020 (0.022) seconds
+Test Suite 'All tests' passed at 2026-01-11 07:29:44.640.
+	 Executed 28 tests, with 0 failures (0 unexpected) in 0.020 (0.023) seconds
+􀟈  Test run started.
+􀄵  Testing Library Version: 1501
+􀄵  Target Platform: arm64e-apple-macos14.0
+􁁛  Test run with 0 tests in 0 suites passed after 0.001 seconds.

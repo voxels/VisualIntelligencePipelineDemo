@@ -50,10 +50,16 @@ final class MetadataPipelineServiceTests: XCTestCase {
         XCTAssertTrue(pending.isEmpty)
 
         // And: A LocalInput should exist in SwiftData
+        // LocalInput should be consumed (deleted)
         let descriptorDetails = FetchDescriptor<LocalInput>()
         let inputs = try modelContext.fetch(descriptorDetails)
-        XCTAssertEqual(inputs.count, 1)
-        XCTAssertEqual(inputs.first?.url, "https://example.com")
-        XCTAssertEqual(inputs.first?.inputType, "web")
+        XCTAssertEqual(inputs.count, 0)
+        
+        // And: A ProcessedItem should exist
+        let processedDetails = FetchDescriptor<ProcessedItem>()
+        let items = try modelContext.fetch(processedDetails)
+        XCTAssertEqual(items.count, 1)
+        XCTAssertEqual(items.first?.url, "https://example.com")
+        XCTAssertEqual(items.first?.entityType, "web")
     }
 }

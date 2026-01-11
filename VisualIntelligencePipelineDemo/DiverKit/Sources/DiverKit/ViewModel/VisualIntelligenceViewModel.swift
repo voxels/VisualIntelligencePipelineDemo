@@ -1107,7 +1107,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 return
             }
             
-            let queueItem = DiverQueueItem.from(documentImage: data, title: title, tags: tags, text: text, purposes: purposes)
+            
+            let lat = await MainActor.run { self.currentCaptureCoordinate?.latitude }
+            let lng = await MainActor.run { self.currentCaptureCoordinate?.longitude }
+            let placeID = await MainActor.run { self.currentCapturePlaceID }
+            let locationName = await MainActor.run { self.selectedPlace?.title }
+
+            let queueItem = DiverQueueItem.from(documentImage: data, title: title, tags: tags, text: text, purposes: purposes, placeID: placeID, latitude: lat, longitude: lng, locationName: locationName)
             
             do {
                 try queueStore.enqueue(queueItem)
@@ -1317,6 +1323,24 @@ public class VisualIntelligenceViewModel: ObservableObject {
         activeObservation = nil
         peelAmount = 0
         lastCaptureTime = nil
+        sessionImages = []
+        
+        // Reset process state
+        isSaving = false
+        showingSaveError = false
+        saveErrorMessage = nil
+        isSavingDocument = false
+        
+        // Reset Selection & Metadata
+        selectedPurposes = []
+        selectedResults = []
+        sessionTitle = nil
+        placeCandidates = []
+        selectedPlace = nil
+        showingPlaceSelection = false
+        rectifiedDocument = nil
+        rectifiedDocumentText = nil
+        showingDocumentView = false
         
         // Reset internal state
         isAnalyzing = false

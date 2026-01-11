@@ -1,6 +1,6 @@
 dependencies: \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/module.modulemap \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/crypto/fipsmodule/fips_shared_support.c \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/include/module.modulemap \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/swift-crypto/Sources/CCryptoBoringSSL/crypto/fipsmodule/fips_shared_support.c \
   /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include/module.modulemap \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/Darwin.modulemap \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/DarwinFoundation2.modulemap \

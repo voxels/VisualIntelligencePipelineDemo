@@ -3,7 +3,7 @@ import Foundation
 extension Foundation.Bundle {
     static let module: Bundle = {
         let mainPath = Bundle.main.bundleURL.appendingPathComponent("DiverKit_DiverKitTests.bundle").path
-        let buildPath = "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverKit_DiverKitTests.bundle"
+        let buildPath = "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/DiverKit_DiverKitTests.bundle"
 
         let preferredBundle = Bundle(path: mainPath)
 

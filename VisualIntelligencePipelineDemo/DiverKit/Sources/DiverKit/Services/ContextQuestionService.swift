@@ -18,11 +18,10 @@ public final class ContextQuestionService: Sendable {
     /// Generates precise definitive statements about the possible activity and an automated purpose based on enrichment data.
     /// - Parameter data: The enrichment data to process.
     /// - Returns: A tuple containing a concise summary, a list of potential activity statements, a determined purpose, and tags.
-    @MainActor
     public func processContext(from data: EnrichmentData) async throws -> (summary: String?, statements: [String], purpose: String?, tags: [String]) {
         // Retrieve weighted context from Knowledge Graph if available
         var knowledgeContext: [(text: String, weight: Double)] = []
-        if let kgService = Services.shared.knowledgeGraphService {
+        if let kgService = await Services.shared.knowledgeGraphService {
              // Use visual title and description as query to leverage full rich context
              let query = [data.title, data.descriptionText].compactMap { $0 }.joined(separator: "\n")
              if !query.isEmpty {
@@ -158,7 +157,7 @@ public final class ContextQuestionService: Sendable {
     }
     
     #if canImport(FoundationModels)
-    @available(iOS 26.0, macOS 19.0, *)
+    @available(iOS 26.0, macOS 26.0, *)
     private func summarizeChunk(_ text: String) async throws -> String {
         let instructions = "Summarize the following text segment, retaining key details about activities, objects, and specific content."
         let session = LanguageModelSession(instructions: instructions)
@@ -184,7 +183,7 @@ public final class ContextQuestionService: Sendable {
     }
     
     #if canImport(FoundationModels)
-    @available(iOS 26.0, macOS 19.0, *)
+    @available(iOS 26.0, macOS 26.0, *)
     @Generable
     struct ContextAnalysis {
         @Guide(description: "A concise summary of the place context in 2 sentences.")

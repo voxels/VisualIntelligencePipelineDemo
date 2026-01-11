@@ -228,3 +228,17 @@ private class WebSocketMetadataLoader: NSObject, WKNavigationDelegate {
     }
 }
 
+
+#if canImport(AppKit) && !targetEnvironment(macCatalyst)
+import AppKit
+
+extension NSImage {
+    func jpegData(compressionQuality: CGFloat) -> Data? {
+        guard let tiffRepresentation = tiffRepresentation,
+              let bitmapImage = NSBitmapImageRep(data: tiffRepresentation) else {
+            return nil
+        }
+        return bitmapImage.representation(using: .jpeg, properties: [.compressionFactor: compressionQuality])
+    }
+}
+#endif

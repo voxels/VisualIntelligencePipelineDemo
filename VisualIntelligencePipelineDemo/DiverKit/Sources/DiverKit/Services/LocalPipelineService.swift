@@ -304,7 +304,7 @@ public final class LocalPipelineService {
                     var result = ParallelEnrichmentResult(foursquare: fsEnrichment)
                     
                     if let venueName = fsEnrichment.title {
-                        if let ddgService = duckDuckGoService as? DuckDuckGoEnrichmentService {
+                        if let ddgService = duckDuckGoService {
                             // 1. Venue Description
                             if let ddgEnrichment = try? await ddgService.enrich(query: venueName, location: coords) {
                                 result.duckDuckGo = ddgEnrichment
@@ -981,7 +981,7 @@ public final class LocalPipelineService {
     }
     }
     
-    private func searchLiveEvents(place: String, service: DuckDuckGoEnrichmentService) async -> String? {
+    private func searchLiveEvents(place: String, service: ContextualEnrichmentService) async -> String? {
         let date = Date().formatted(date: .abbreviated, time: .omitted)
         let query = "\(place) events \(date)"
         

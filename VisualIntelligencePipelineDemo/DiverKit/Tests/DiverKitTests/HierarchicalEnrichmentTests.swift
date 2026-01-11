@@ -32,12 +32,12 @@ final class HierarchicalEnrichmentTests: XCTestCase {
         )
         let foursquareService = HierarchicalMockEnrichmentService(data: fsEnrichment)
         
-        let yahooEnrichment = EnrichmentData(
-            title: "Yahoo Result: Foursquare Coffee Shop",
-            descriptionText: "Best coffee in LA according to Yahoo",
+        let ddgEnrichment = EnrichmentData(
+            title: "DuckDuckGo Result: Foursquare Coffee Shop",
+            descriptionText: "Best coffee in LA according to DDG",
             styleTags: ["Popular", "Local Favorite"]
         )
-        let yahooService = HierarchicalMockEnrichmentService(data: yahooEnrichment)
+        let ddgService = HierarchicalMockEnrichmentService(data: ddgEnrichment)
         
         // 2. Setup Input
         let input = LocalInput(url: "https://example.com/checkin", inputType: "web")
@@ -48,20 +48,20 @@ final class HierarchicalEnrichmentTests: XCTestCase {
             input: input,
             locationService: locationProvider,
             foursquareService: foursquareService,
-            yahooService: yahooService
+            duckDuckGoService: ddgService
         )
         
         // 4. Verify Chaining
         // Foursquare should have been called first
         XCTAssertTrue(foursquareService.enrichLocationCalled)
         
-        // Yahoo should have been called with the Foursquare title
-        XCTAssertEqual(yahooService.lastQuery, "Foursquare Coffee Shop")
-        XCTAssertTrue(yahooService.enrichQueryCalled)
+        // DDG should have been called with the Foursquare title
+        XCTAssertTrue(ddgService.allQueries.contains("Foursquare Coffee Shop"))
+        XCTAssertTrue(ddgService.enrichQueryCalled)
         
         // Final item should have merged data
-        XCTAssertEqual(processed.title, "Yahoo Result: Foursquare Coffee Shop")
-        XCTAssertEqual(processed.summary, "Best coffee in LA according to Yahoo")
+        XCTAssertEqual(processed.title, "DuckDuckGo Result: Foursquare Coffee Shop")
+        XCTAssertEqual(processed.summary, "Best coffee in LA according to DDG")
         XCTAssertTrue(processed.tags.contains("Coffee"))
         XCTAssertTrue(processed.tags.contains("Popular"))
         XCTAssertEqual(processed.location, "LA Arts District")
@@ -83,6 +83,7 @@ final class HierarchicalMockEnrichmentService: ContextualEnrichmentService, @unc
     var enrichLocationCalled = false
     var enrichQueryCalled = false
     var lastQuery: String?
+    var allQueries: [String] = []
     
     init(data: EnrichmentData?) { self.data = data }
     
@@ -94,6 +95,15 @@ final class HierarchicalMockEnrichmentService: ContextualEnrichmentService, @unc
     func enrich(query: String, location: CLLocationCoordinate2D?) async throws -> EnrichmentData? {
         enrichQueryCalled = true
         lastQuery = query
+        allQueries.append(query)
         return data
+    }
+
+    func searchNearby(location: CLLocationCoordinate2D, limit: Int) async throws -> [EnrichmentData] {
+        return data != nil ? [data!] : []
+    }
+
+    func search(query: String, location: CLLocationCoordinate2D, limit: Int) async throws -> [EnrichmentData] {
+        return data != nil ? [data!] : []
     }
 }

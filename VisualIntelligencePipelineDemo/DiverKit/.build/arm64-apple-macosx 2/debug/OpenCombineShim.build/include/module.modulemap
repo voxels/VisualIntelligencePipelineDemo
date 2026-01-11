@@ -1,3 +1,0 @@
-module OpenCombineShim {
-    header "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/OpenCombineShim.build/include/OpenCombineShim-Swift.h"
-}

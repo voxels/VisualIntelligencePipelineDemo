@@ -1,6 +1,6 @@
 dependencies: \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/OpenCombine/Sources/COpenCombineHelpers/COpenCombineHelpers.cpp \
-  /Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/OpenCombine/Sources/COpenCombineHelpers/include/COpenCombineHelpers.h \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/OpenCombine/Sources/COpenCombineHelpers/COpenCombineHelpers.cpp \
+  /Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/OpenCombine/Sources/COpenCombineHelpers/include/COpenCombineHelpers.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/c++/v1/stdint.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/c++/v1/__config \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/usr/include/c++/v1/__config_site \

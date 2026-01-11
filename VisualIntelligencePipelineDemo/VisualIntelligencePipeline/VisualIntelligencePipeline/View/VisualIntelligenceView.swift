@@ -815,6 +815,18 @@ struct PlaceSelectionMapView: View {
             .onAppear {
                 loadAnnotations()
             }
+            .onChange(of: viewModel.selectedPlace?.title) { _ in
+                if let data = viewModel.selectedPlace,
+                   let lat = data.placeContext?.latitude,
+                   let lng = data.placeContext?.longitude {
+                    withAnimation {
+                        region = MKCoordinateRegion(
+                            center: CLLocationCoordinate2D(latitude: lat, longitude: lng),
+                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                        )
+                    }
+                }
+            }
         }
     }
     

@@ -3,6 +3,7 @@
 80552a3df455613ec4fc9aee68f07a728bdfac8f	not-for-merge	branch 'feat/integration-tests-ci' of https://github.com/supabase/supabase-swift
 f1d11f1f21340609a57c0b7096615a47033915e8	not-for-merge	branch 'feat/realtime-v2-serializer' of https://github.com/supabase/supabase-swift
 72fe1ffd949e3e9c9b168fd55bb4e46bcd4fef7e	not-for-merge	branch 'fix/realtime-race-conditions-and-bugs' of https://github.com/supabase/supabase-swift
+fe5ba333388e1bce4a196388fc04ffd5fd9f29df	not-for-merge	branch 'fix/release-workflow-permissions' of https://github.com/supabase/supabase-swift
 4649955d712e00f07c5ee082df9aa1688996bbc1	not-for-merge	branch 'guilherme/adopt-swift-http-client' of https://github.com/supabase/supabase-swift
 79de2568ed66a5dc7cdaae32a1f3dbb8fd2c0e29	not-for-merge	branch 'guilherme/android-ci' of https://github.com/supabase/supabase-swift
 dd1306b333cffee6e8f8c40e4a16cd657a13bbf3	not-for-merge	branch 'guilherme/functions-v3' of https://github.com/supabase/supabase-swift
@@ -630,6 +631,8 @@ e1a12c569292f617394bf19bbaa822057142afb0	not-for-merge	'refs/pull/868/head' of h
 2520f8da7c45231196af4c66e5b58c0cfeaf485d	not-for-merge	'refs/pull/875/head' of https://github.com/supabase/supabase-swift
 3f64b07d5872e755859d7156e6b4c384eb091c8f	not-for-merge	'refs/pull/875/merge' of https://github.com/supabase/supabase-swift
 9822238103a192210e6e9a2e9229ec317f3e4323	not-for-merge	'refs/pull/878/head' of https://github.com/supabase/supabase-swift
+fe5ba333388e1bce4a196388fc04ffd5fd9f29df	not-for-merge	'refs/pull/879/head' of https://github.com/supabase/supabase-swift
+4827ca0b12401004296f054f3483989684c9bdc8	not-for-merge	'refs/pull/879/merge' of https://github.com/supabase/supabase-swift
 f9599aa73b81a177b128c3bdc078a0849fe97706	not-for-merge	'refs/pull/88/head' of https://github.com/supabase/supabase-swift
 20e5deffd1ba0f9f53e29863ecdd62d03e170c91	not-for-merge	'refs/pull/90/head' of https://github.com/supabase/supabase-swift
 b1169bb2a3bb3084cea92f94d119bee0a4d9c3ea	not-for-merge	'refs/pull/92/head' of https://github.com/supabase/supabase-swift

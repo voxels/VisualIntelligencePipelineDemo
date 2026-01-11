@@ -50,7 +50,7 @@ final class AppGroupConfigTests: XCTestCase {
 
     func testMissingContainerThrows() {
         XCTAssertThrowsError(try AppGroupContainer.containerURL(urlProvider: { _ in nil })) { error in
-            XCTAssertEqual(error.localizedDescription, "App group container unavailable for group.com.secretatomics.VisualIntelligen.")
+            XCTAssertEqual(error.localizedDescription, "App group container unavailable for group.com.secretatomics.VisualIntelligence.")
         }
     }
 }

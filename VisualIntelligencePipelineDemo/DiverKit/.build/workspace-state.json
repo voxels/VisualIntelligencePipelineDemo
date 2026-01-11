@@ -9,12 +9,12 @@
         "packageRef" : {
           "identity" : "divershared",
           "kind" : "fileSystem",
-          "location" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared",
+          "location" : "/Users/voxels/Documents/dev/visualintelligence/VisualIntelligencePipelineDemo/DiverShared",
           "name" : "DiverShared"
         },
         "state" : {
           "name" : "fileSystem",
-          "path" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared"
+          "path" : "/Users/voxels/Documents/dev/visualintelligence/VisualIntelligencePipelineDemo/DiverShared"
         },
         "subpath" : "divershared"
       },

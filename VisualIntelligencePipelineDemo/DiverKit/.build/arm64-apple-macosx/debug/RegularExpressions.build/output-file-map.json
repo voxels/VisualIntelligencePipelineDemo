@@ -1,82 +1,82 @@
 {
   "": {
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/master.swiftdeps"
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/master.swiftdeps"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/PatternMatching.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/PatternMatching.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/PatternMatching.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/PatternMatching~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/PatternMatching.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/PatternMatching.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/PatternMatching.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/PatternMatching.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/PatternMatching.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/PatternMatching~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/PatternMatching.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/PatternMatching.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/RegexFindAll.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexFindAll.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexFindAll.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexFindAll~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexFindAll.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexFindAll.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/RegexFindAll.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexFindAll.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexFindAll.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexFindAll~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexFindAll.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexFindAll.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/RegexMatch.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatch.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatch.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatch~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatch.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatch.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/RegexMatch.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatch.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatch.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatch~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatch.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatch.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/RegexMatchWrapper.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchWrapper.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchWrapper.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchWrapper~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchWrapper.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchWrapper.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/RegexMatchWrapper.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchWrapper.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchWrapper.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchWrapper~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchWrapper.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchWrapper.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/RegexSplit.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSplit.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSplit.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSplit~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSplit.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSplit.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/RegexSplit.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSplit.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSplit.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSplit~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSplit.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSplit.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/RegexSub.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSub.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSub.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSub~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSub.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSub.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/RegexSub.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSub.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSub.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSub~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSub.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSub.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/RegexSubReplacer.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSubReplacer.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSubReplacer.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSubReplacer~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSubReplacer.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSubReplacer.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Methods/RegexSubReplacer.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSubReplacer.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSubReplacer.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSubReplacer~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSubReplacer.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexSubReplacer.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Objects/Regex.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/Regex.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/Regex.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/Regex~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/Regex.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/Regex.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Objects/Regex.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/Regex.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/Regex.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/Regex~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/Regex.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/Regex.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Objects/RegexError.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexError.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexError.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexError~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexError.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexError.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Objects/RegexError.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexError.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexError.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexError~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexError.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexError.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Objects/RegexGroup.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexGroup.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexGroup.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexGroup~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexGroup.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexGroup.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Objects/RegexGroup.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexGroup.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexGroup.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexGroup~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexGroup.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexGroup.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Objects/RegexMatchStruct.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchStruct.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchStruct.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchStruct~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchStruct.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchStruct.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/checkouts/RegularExpressions/Sources/RegularExpressions/Regex Objects/RegexMatchStruct.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchStruct.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchStruct.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchStruct~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchStruct.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/RegexMatchStruct.dia"
   }
 }

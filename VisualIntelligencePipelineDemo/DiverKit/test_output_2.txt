@@ -1,0 +1,261 @@
+Building for debugging...
+[0/3] Write sources
+[1/3] Write swift-version--58304C5D6DBC2206.txt
+[3/5] Compiling DiverKit LocalPipelineService.swift
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/LocalPipelineService.swift:383:17: warning: initialization of immutable value 'isProduct' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 381 |             
+ 382 |             // 6. Product Concepts & URL
+ 383 |             let isProduct = descriptor?.type == .product
+     |                 `- warning: initialization of immutable value 'isProduct' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 384 |             let productQuery = descriptor?.title
+ 385 |             let service = duckDuckGoService
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/LocalPipelineService.swift:384:17: warning: initialization of immutable value 'productQuery' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 382 |             // 6. Product Concepts & URL
+ 383 |             let isProduct = descriptor?.type == .product
+ 384 |             let productQuery = descriptor?.title
+     |                 `- warning: initialization of immutable value 'productQuery' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 385 |             let service = duckDuckGoService
+ 386 |             
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/LocalPipelineService.swift:385:17: warning: initialization of immutable value 'service' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 383 |             let isProduct = descriptor?.type == .product
+ 384 |             let productQuery = descriptor?.title
+ 385 |             let service = duckDuckGoService
+     |                 `- warning: initialization of immutable value 'service' was never used; consider replacing with assignment to '_' or removing it [#no-usage]
+ 386 |             
+ 387 | 
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/LocalPipelineService.swift:576:55: warning: left side of nil coalescing operator '??' has non-optional type 'Date', so the right side is never used
+ 574 |                          let input = LocalInput(
+ 575 |                             id: inputID,
+ 576 |                             createdAt: item.createdAt ?? Date(),
+     |                                                       `- warning: left side of nil coalescing operator '??' has non-optional type 'Date', so the right side is never used
+ 577 |                             url: item.url,
+ 578 |                             text: item.summary,
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/LocalPipelineService.swift:729:20: warning: variable 'existingWeb' was never mutated; consider changing to 'let' constant
+ 727 |         // Persist structured contexts if available
+ 728 |         if let newWeb = enrichment.webContext {
+ 729 |             if var existingWeb = item.webContext {
+     |                    `- warning: variable 'existingWeb' was never mutated; consider changing to 'let' constant
+ 730 |                 // Merge logic: existing preferred for snapshot if new is nil?
+ 731 |                 // Or new preferred? New enrichment implies a fresh fetch.
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/LocalPipelineService.swift:1011:64: warning: left side of nil coalescing operator '??' has non-optional type 'Date', so the right side is never used
+1009 |             
+1010 |             // Limit to last 20 items to avoid token limits and keep it relevant
+1011 |             let recentItems = items.sorted(by: { ($0.createdAt ?? Date()) < ($1.createdAt ?? Date()) }).suffix(20)
+     |                                                                `- warning: left side of nil coalescing operator '??' has non-optional type 'Date', so the right side is never used
+1012 |             
+1013 |             var combinedText = ""
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/LocalPipelineService.swift:1011:91: warning: left side of nil coalescing operator '??' has non-optional type 'Date', so the right side is never used
+1009 |             
+1010 |             // Limit to last 20 items to avoid token limits and keep it relevant
+1011 |             let recentItems = items.sorted(by: { ($0.createdAt ?? Date()) < ($1.createdAt ?? Date()) }).suffix(20)
+     |                                                                                           `- warning: left side of nil coalescing operator '??' has non-optional type 'Date', so the right side is never used
+1012 |             
+1013 |             var combinedText = ""
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/ContextQuestionService.swift:187:6: warning: '19.0' is not a valid version number for macOS
+185 |     
+186 |     #if canImport(FoundationModels)
+187 |     @available(iOS 26.0, macOS 19.0, *)
+    |      `- warning: '19.0' is not a valid version number for macOS
+188 |     @Generable
+189 |     struct ContextAnalysis {
+[4/5] Emitting module DiverKit
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/ContextQuestionService.swift:161:6: warning: '19.0' is not a valid version number for macOS
+159 |     
+160 |     #if canImport(FoundationModels)
+161 |     @available(iOS 26.0, macOS 19.0, *)
+    |      `- warning: '19.0' is not a valid version number for macOS
+162 |     private func summarizeChunk(_ text: String) async throws -> String {
+163 |         let instructions = "Summarize the following text segment, retaining key details about activities, objects, and specific content."
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/ContextQuestionService.swift:187:6: warning: '19.0' is not a valid version number for macOS
+185 |     
+186 |     #if canImport(FoundationModels)
+187 |     @available(iOS 26.0, macOS 19.0, *)
+    |      `- warning: '19.0' is not a valid version number for macOS
+188 |     @Generable
+189 |     struct ContextAnalysis {
+[5/6] Compiling DiverKit MetadataPipelineService.swift
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/MetadataPipelineService.swift:215:41: warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+213 |                 id: id,
+214 |                 url: descriptor.url,
+215 |                 title: descriptor.title ?? "Processing Failed",
+    |                                         `- warning: left side of nil coalescing operator '??' has non-optional type 'String', so the right side is never used
+216 |                 summary: "Failed to process: \(error.localizedDescription)",
+217 |                 entityType: descriptor.type.rawValue,
+[6/10] Compiling DiverKitTests LinkEnrichmentServiceTests.swift
+[7/10] Compiling DiverKitTests LocalPipelineServiceTests.swift
+[8/10] Emitting module DiverKitTests
+[9/10] Compiling DiverKitTests HierarchicalEnrichmentTests.swift
+[9/11] Write Objects.LinkFileList
+[10/11] Linking DiverKitPackageTests
+Build complete! (4.49s)
+Test Suite 'All tests' started at 2026-01-11 07:38:02.658.
+Test Suite 'DiverKitPackageTests.xctest' started at 2026-01-11 07:38:02.658.
+Test Suite 'ContextualServicesTests' started at 2026-01-11 07:38:02.658.
+Test Case '-[DiverKitTests.ContextualServicesTests testContextQuestionServiceProcessing]' started.
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/ContextualServicesTests.swift:34: error: -[DiverKitTests.ContextualServicesTests testContextQuestionServiceProcessing] : XCTAssertEqual failed: ("Optional("Testing and quality assurance")") is not equal to ("Optional("Researching Test Place")")
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/ContextualServicesTests.swift:35: error: -[DiverKitTests.ContextualServicesTests testContextQuestionServiceProcessing] : XCTAssertTrue failed
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/ContextualServicesTests.swift:36: error: -[DiverKitTests.ContextualServicesTests testContextQuestionServiceProcessing] : XCTAssertEqual failed: ("["Testing", "Quality Assurance"]") is not equal to ("["Testing"]")
+Test Case '-[DiverKitTests.ContextualServicesTests testContextQuestionServiceProcessing]' failed (2.616 seconds).
+Test Case '-[DiverKitTests.ContextualServicesTests testDuckDuckGoEnrichmentServiceGeneratesQuestions]' started.
+Test Case '-[DiverKitTests.ContextualServicesTests testDuckDuckGoEnrichmentServiceGeneratesQuestions]' passed (1.693 seconds).
+Test Suite 'ContextualServicesTests' failed at 2026-01-11 07:38:06.968.
+	 Executed 2 tests, with 3 failures (0 unexpected) in 4.309 (4.309) seconds
+Test Suite 'DiverLinkGeneratorTests' started at 2026-01-11 07:38:06.968.
+Test Case '-[DiverKitTests.DiverLinkGeneratorTests testCreateAndSaveLink]' started.
+Test Case '-[DiverKitTests.DiverLinkGeneratorTests testCreateAndSaveLink]' passed (0.002 seconds).
+Test Suite 'DiverLinkGeneratorTests' passed at 2026-01-11 07:38:06.970.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'EnrichmentServiceTests' started at 2026-01-11 07:38:06.970.
+Test Case '-[DiverKitTests.EnrichmentServiceTests testDuckDuckGoEnrichment]' started.
+Test Case '-[DiverKitTests.EnrichmentServiceTests testDuckDuckGoEnrichment]' passed (1.794 seconds).
+Test Case '-[DiverKitTests.EnrichmentServiceTests testFoursquareEnrichmentMock]' started.
+Test Case '-[DiverKitTests.EnrichmentServiceTests testFoursquareEnrichmentMock]' passed (0.000 seconds).
+Test Case '-[DiverKitTests.EnrichmentServiceTests testHierarchicalFlowMock]' started.
+Test Case '-[DiverKitTests.EnrichmentServiceTests testHierarchicalFlowMock]' passed (0.069 seconds).
+Test Suite 'EnrichmentServiceTests' passed at 2026-01-11 07:38:08.833.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 1.863 (1.863) seconds
+Test Suite 'HierarchicalEnrichmentTests' started at 2026-01-11 07:38:08.833.
+Test Case '-[DiverKitTests.HierarchicalEnrichmentTests testEndToEndHierarchicalFlow]' started.
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/HierarchicalEnrichmentTests.swift:59: error: -[DiverKitTests.HierarchicalEnrichmentTests testEndToEndHierarchicalFlow] : XCTAssertEqual failed: ("Optional("Foursquare Coffee Shop events Jan 11, 2026")") is not equal to ("Optional("Foursquare Coffee Shop")")
+Test Case '-[DiverKitTests.HierarchicalEnrichmentTests testEndToEndHierarchicalFlow]' failed (0.014 seconds).
+Test Suite 'HierarchicalEnrichmentTests' failed at 2026-01-11 07:38:08.847.
+	 Executed 1 test, with 1 failure (0 unexpected) in 0.014 (0.014) seconds
+Test Suite 'IntelligenceProcessorTests' started at 2026-01-11 07:38:08.847.
+Test Case '-[DiverKitTests.IntelligenceProcessorTests testEntertainmentSecondaryActionURLs]' started.
+Test Case '-[DiverKitTests.IntelligenceProcessorTests testEntertainmentSecondaryActionURLs]' passed (0.000 seconds).
+Test Case '-[DiverKitTests.IntelligenceProcessorTests testIntelligenceResultMetadata]' started.
+Test Case '-[DiverKitTests.IntelligenceProcessorTests testIntelligenceResultMetadata]' passed (0.000 seconds).
+Test Case '-[DiverKitTests.IntelligenceProcessorTests testProcessPipelineStability]' started.
+Test Case '-[DiverKitTests.IntelligenceProcessorTests testProcessPipelineStability]' passed (0.222 seconds).
+Test Suite 'IntelligenceProcessorTests' passed at 2026-01-11 07:38:09.069.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 0.222 (0.222) seconds
+Test Suite 'LinkEnrichmentServiceTests' started at 2026-01-11 07:38:09.069.
+Test Case '-[DiverKitTests.LinkEnrichmentServiceTests testEnrichmentDoesNotOverwriteExistingData]' started.
+Test Case '-[DiverKitTests.LinkEnrichmentServiceTests testEnrichmentDoesNotOverwriteExistingData]' passed (0.003 seconds).
+Test Case '-[DiverKitTests.LinkEnrichmentServiceTests testEnrichmentUpdatesProcessedItem]' started.
+Test Case '-[DiverKitTests.LinkEnrichmentServiceTests testEnrichmentUpdatesProcessedItem]' passed (0.005 seconds).
+Test Suite 'LinkEnrichmentServiceTests' passed at 2026-01-11 07:38:09.078.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.008 (0.008) seconds
+Test Suite 'LocalPipelineServiceTests' started at 2026-01-11 07:38:09.078.
+Test Case '-[DiverKitTests.LocalPipelineServiceTests testProcessDocumentItemWithPayload]' started.
+Test Case '-[DiverKitTests.LocalPipelineServiceTests testProcessDocumentItemWithPayload]' passed (0.004 seconds).
+Test Case '-[DiverKitTests.LocalPipelineServiceTests testProcessExistingItemUpdatesAttributionAndStatus]' started.
+Test Case '-[DiverKitTests.LocalPipelineServiceTests testProcessExistingItemUpdatesAttributionAndStatus]' passed (0.003 seconds).
+Test Case '-[DiverKitTests.LocalPipelineServiceTests testProcessNewItemWithAttribution]' started.
+Test Case '-[DiverKitTests.LocalPipelineServiceTests testProcessNewItemWithAttribution]' passed (0.004 seconds).
+Test Case '-[DiverKitTests.LocalPipelineServiceTests testProcessWithoutDescriptorDerivesInfo]' started.
+Test Case '-[DiverKitTests.LocalPipelineServiceTests testProcessWithoutDescriptorDerivesInfo]' passed (0.004 seconds).
+Test Suite 'LocalPipelineServiceTests' passed at 2026-01-11 07:38:09.094.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.016 (0.017) seconds
+Test Suite 'MetadataPipelineServiceTests' started at 2026-01-11 07:38:09.094.
+Test Case '-[DiverKitTests.MetadataPipelineServiceTests testProcessPendingQueueCreatesLocalInput]' started.
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/MetadataPipelineServiceTests.swift:55: error: -[DiverKitTests.MetadataPipelineServiceTests testProcessPendingQueueCreatesLocalInput] : XCTAssertEqual failed: ("0") is not equal to ("1")
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/MetadataPipelineServiceTests.swift:56: error: -[DiverKitTests.MetadataPipelineServiceTests testProcessPendingQueueCreatesLocalInput] : XCTAssertEqual failed: ("nil") is not equal to ("Optional("https://example.com")")
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/MetadataPipelineServiceTests.swift:57: error: -[DiverKitTests.MetadataPipelineServiceTests testProcessPendingQueueCreatesLocalInput] : XCTAssertEqual failed: ("nil") is not equal to ("Optional("web")")
+Test Case '-[DiverKitTests.MetadataPipelineServiceTests testProcessPendingQueueCreatesLocalInput]' failed (0.010 seconds).
+Test Suite 'MetadataPipelineServiceTests' failed at 2026-01-11 07:38:09.104.
+	 Executed 1 test, with 3 failures (0 unexpected) in 0.010 (0.010) seconds
+Test Suite 'PipelineLogFixtureTests' started at 2026-01-11 07:38:09.104.
+Test Case '-[DiverKitTests.PipelineLogFixtureTests testExtractCandidates]' started.
+Test Case '-[DiverKitTests.PipelineLogFixtureTests testExtractCandidates]' passed (0.003 seconds).
+Test Case '-[DiverKitTests.PipelineLogFixtureTests testExtractReferences]' started.
+Test Case '-[DiverKitTests.PipelineLogFixtureTests testExtractReferences]' passed (0.001 seconds).
+Test Case '-[DiverKitTests.PipelineLogFixtureTests testFixtureLogStructure]' started.
+Test Case '-[DiverKitTests.PipelineLogFixtureTests testFixtureLogStructure]' passed (0.001 seconds).
+Test Case '-[DiverKitTests.PipelineLogFixtureTests testLoadDefaultFixture]' started.
+Test Case '-[DiverKitTests.PipelineLogFixtureTests testLoadDefaultFixture]' passed (0.001 seconds).
+Test Case '-[DiverKitTests.PipelineLogFixtureTests testMultipleReferenceTypes]' started.
+Test Case '-[DiverKitTests.PipelineLogFixtureTests testMultipleReferenceTypes]' passed (0.001 seconds).
+Test Case '-[DiverKitTests.PipelineLogFixtureTests testReferenceMetadataStructure]' started.
+Test Case '-[DiverKitTests.PipelineLogFixtureTests testReferenceMetadataStructure]' passed (0.001 seconds).
+Test Suite 'PipelineLogFixtureTests' passed at 2026-01-11 07:38:09.111.
+	 Executed 6 tests, with 0 failures (0 unexpected) in 0.006 (0.007) seconds
+Test Suite 'ProcessedItemMigrationTests' started at 2026-01-11 07:38:09.111.
+Test Case '-[DiverKitTests.ProcessedItemMigrationTests testExistingFieldsPreservedAfterMigration]' started.
+Test Case '-[DiverKitTests.ProcessedItemMigrationTests testExistingFieldsPreservedAfterMigration]' passed (0.004 seconds).
+Test Case '-[DiverKitTests.ProcessedItemMigrationTests testNewFieldsHaveDefaultValues]' started.
+Test Case '-[DiverKitTests.ProcessedItemMigrationTests testNewFieldsHaveDefaultValues]' passed (0.002 seconds).
+Test Case '-[DiverKitTests.ProcessedItemMigrationTests testQueryByNewStatusField]' started.
+Test Case '-[DiverKitTests.ProcessedItemMigrationTests testQueryByNewStatusField]' passed (0.005 seconds).
+Test Case '-[DiverKitTests.ProcessedItemMigrationTests testSortByUpdatedAt]' started.
+Test Case '-[DiverKitTests.ProcessedItemMigrationTests testSortByUpdatedAt]' passed (0.004 seconds).
+Test Case '-[DiverKitTests.ProcessedItemMigrationTests testUpdateNewFieldsAfterMigration]' started.
+Test Case '-[DiverKitTests.ProcessedItemMigrationTests testUpdateNewFieldsAfterMigration]' passed (0.004 seconds).
+Test Suite 'ProcessedItemMigrationTests' passed at 2026-01-11 07:38:09.131.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.019 (0.020) seconds
+Test Suite 'ProcessedItemTests' started at 2026-01-11 07:38:09.131.
+Test Case '-[DiverKitTests.ProcessedItemTests testEmptyPayload]' started.
+Test Case '-[DiverKitTests.ProcessedItemTests testEmptyPayload]' passed (0.000 seconds).
+Test Case '-[DiverKitTests.ProcessedItemTests testMediaInfoAbstraction]' started.
+Test Case '-[DiverKitTests.ProcessedItemTests testMediaInfoAbstraction]' passed (0.000 seconds).
+Test Case '-[DiverKitTests.ProcessedItemTests testProcessedItemDefaultValues]' started.
+Test Case '-[DiverKitTests.ProcessedItemTests testProcessedItemDefaultValues]' passed (0.000 seconds).
+Test Case '-[DiverKitTests.ProcessedItemTests testProcessedItemWithNewFields]' started.
+Test Case '-[DiverKitTests.ProcessedItemTests testProcessedItemWithNewFields]' passed (0.000 seconds).
+Test Case '-[DiverKitTests.ProcessedItemTests testProcessingStatusCodable]' started.
+Test Case '-[DiverKitTests.ProcessedItemTests testProcessingStatusCodable]' passed (0.000 seconds).
+Test Case '-[DiverKitTests.ProcessedItemTests testProcessingStatusDefaultValue]' started.
+Test Case '-[DiverKitTests.ProcessedItemTests testProcessingStatusDefaultValue]' passed (0.000 seconds).
+Test Case '-[DiverKitTests.ProcessedItemTests testRawPayloadEncodingDecoding]' started.
+Test Case '-[DiverKitTests.ProcessedItemTests testRawPayloadEncodingDecoding]' passed (0.000 seconds).
+Test Case '-[DiverKitTests.ProcessedItemTests testReferenceCountIncrement]' started.
+Test Case '-[DiverKitTests.ProcessedItemTests testReferenceCountIncrement]' passed (0.000 seconds).
+Test Case '-[DiverKitTests.ProcessedItemTests testStatusTransitions]' started.
+Test Case '-[DiverKitTests.ProcessedItemTests testStatusTransitions]' passed (0.000 seconds).
+Test Suite 'ProcessedItemTests' passed at 2026-01-11 07:38:09.133.
+	 Executed 9 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'VisualIntelligenceViewModelTests' started at 2026-01-11 07:38:09.133.
+Test Case '-[DiverKitTests.VisualIntelligenceViewModelTests testHandleCaptureWithQR]' started.
+objc[15746]: class `NSKVONotifying_AVCapturePhotoOutput' not linked into application
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/VisualIntelligenceViewModelTests.swift:65: error: -[DiverKitTests.VisualIntelligenceViewModelTests testHandleCaptureWithQR] : XCTAssertEqual failed: ("2") is not equal to ("1")
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/VisualIntelligenceViewModelTests.swift:66: error: -[DiverKitTests.VisualIntelligenceViewModelTests testHandleCaptureWithQR] : XCTAssertEqual failed: ("Optional("diver-capture://B23C2B70-2C2E-4D8F-8201-22FEB6F121D4")") is not equal to ("Optional("https://example.com")")
+Test Case '-[DiverKitTests.VisualIntelligenceViewModelTests testHandleCaptureWithQR]' failed (1.018 seconds).
+Test Case '-[DiverKitTests.VisualIntelligenceViewModelTests testInitialState]' started.
+Test Case '-[DiverKitTests.VisualIntelligenceViewModelTests testInitialState]' passed (0.006 seconds).
+Test Case '-[DiverKitTests.VisualIntelligenceViewModelTests testResetClearsState]' started.
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/VisualIntelligenceViewModelTests.swift:89: error: -[DiverKitTests.VisualIntelligenceViewModelTests testResetClearsState] : XCTAssertTrue failed
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/VisualIntelligenceViewModelTests.swift:90: error: -[DiverKitTests.VisualIntelligenceViewModelTests testResetClearsState] : XCTAssertFalse failed
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/VisualIntelligenceViewModelTests.swift:91: error: -[DiverKitTests.VisualIntelligenceViewModelTests testResetClearsState] : XCTAssertFalse failed
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Tests/DiverKitTests/VisualIntelligenceViewModelTests.swift:92: error: -[DiverKitTests.VisualIntelligenceViewModelTests testResetClearsState] : XCTAssertNil failed: "Error"
+Test Case '-[DiverKitTests.VisualIntelligenceViewModelTests testResetClearsState]' failed (0.001 seconds).
+Test Case '-[DiverKitTests.VisualIntelligenceViewModelTests testStartStopRecording]' started.
+Test Case '-[DiverKitTests.VisualIntelligenceViewModelTests testStartStopRecording]' passed (0.000 seconds).
+Test Case '-[DiverKitTests.VisualIntelligenceViewModelTests testUpdatePeelAmount]' started.
+Test Case '-[DiverKitTests.VisualIntelligenceViewModelTests testUpdatePeelAmount]' passed (0.000 seconds).
+Test Suite 'VisualIntelligenceViewModelTests' failed at 2026-01-11 07:38:10.159.
+	 Executed 5 tests, with 6 failures (0 unexpected) in 1.025 (1.026) seconds
+Test Suite 'DiverKitPackageTests.xctest' failed at 2026-01-11 07:38:10.159.
+	 Executed 42 tests, with 13 failures (0 unexpected) in 7.496 (7.500) seconds
+Test Suite 'All tests' failed at 2026-01-11 07:38:10.159.
+	 Executed 42 tests, with 13 failures (0 unexpected) in 7.496 (7.501) seconds
+🧠 IntelligenceProcessor: Starting Pipeline (Mode: liveSifting)
+Found entity types: ["book", "music_album"]
+📸 Capturing photo for review view feedback...
+📸 CameraManager: Test mode, simulating capture...
+📸 Camera: Photo captured, analyzing full frame using subject priority...
+🧠 IntelligenceProcessor: Starting Pipeline (Mode: fullAnalysis)
+🧠 IntelligenceProcessor: Starting Full Analysis Pass
+🌍 No Subject Sifted - Analyzing Full Scene
+✅ IntelligenceProcessor: Finished with 1 results
+🚀 Enrichment Pipeline: Starting Concurrent Enrichment...
+✅ Multi-Photo: Merged 2 new results. Total: 2
+✅ Analysis Complete: Found 1 results
+🚀 Express Capture: Auto-saving...
+💾 commitReviewSave: Crystalizing Logic...
+🔍 Starting Background Verification (HandleCapture)...
+🧠 IntelligenceProcessor: Starting Verification Round
+✅ IntelligenceProcessor: Verification Complete
+🔄 Visual Intelligence VM: State Reset
+🔄 Visual Intelligence VM: State Reset
+􀟈  Test run started.
+􀄵  Testing Library Version: 1501
+􀄵  Target Platform: arm64e-apple-macos14.0
+􁁛  Test run with 0 tests in 0 suites passed after 0.001 seconds.

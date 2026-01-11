@@ -189,11 +189,28 @@ struct SettingsView: View {
 
         Task {
             do {
-                // 1. Clear File Queue (prevent re-ingest)
-                if let queueDir = AppGroupContainer.queueDirectoryURL() {
-                    let queueStore = try? DiverQueueStore(directoryURL: queueDir)
-                    try? queueStore?.removeAll()
-                    print("✅ Queue cleared")
+                // 1. Clear Main App Group Container (Documents, Queue, etc.)
+                if let appGroupURL = try? AppGroupContainer.containerURL() {
+                    let fileManager = FileManager.default
+                    // We specifically target the 'Documents' and 'Queue' folders where source files live.
+                    let targetDirs = ["Documents", "Queue", "SourceImages", "Snapshots"]
+                    
+                    for dirName in targetDirs {
+                        let dirURL = appGroupURL.appendingPathComponent(dirName, isDirectory: true)
+                        if fileManager.fileExists(atPath: dirURL.path) {
+                             try? fileManager.removeItem(at: dirURL)
+                             print("✅ Deleted AppGroup Directory: \(dirName)")
+                        }
+                    }
+                    
+                    // Also clear root files that look like orphaned images or JSON
+                    if let contents = try? fileManager.contentsOfDirectory(at: appGroupURL, includingPropertiesForKeys: nil) {
+                        for url in contents {
+                            if ["jpg", "jpeg", "png", "json", "txt"].contains(url.pathExtension.lowercased()) {
+                                try? fileManager.removeItem(at: url)
+                            }
+                        }
+                    }
                 }
                 
                 // 2. Delete all main entities

@@ -1,3 +1,0 @@
-module Logging {
-    header "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/Logging.build/include/Logging-Swift.h"
-}

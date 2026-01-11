@@ -1,47 +1,47 @@
 {
   "": {
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/master.swiftdeps"
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/master.swiftdeps"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/AppGroupConfigTests.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/AppGroupConfigTests.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/DiverItemDescriptorTests.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/DiverItemDescriptorTests.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/LinkWrappingTests.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/LinkWrappingTests.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/MessagesLaunchStoreTests.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/MessagesLaunchStoreTests.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/QueueStoreTests.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/QueueStoreTests.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.dia"
   },
-  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/ValidationTests.swift": {
-    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.d",
-    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.swift.o",
-    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests~partial.swiftmodule",
-    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.swiftdeps",
-    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.dia"
+  "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/ValidationTests.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.d",
+    "object": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.dia"
   }
 }

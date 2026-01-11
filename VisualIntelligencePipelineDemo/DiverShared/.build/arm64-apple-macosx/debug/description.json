@@ -1,8 +1,8 @@
 {
   "builtTestProducts" : [
     {
-      "binaryPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.xctest/Contents/MacOS/DiverSharedPackageTests",
-      "packagePath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared",
+      "binaryPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.xctest/Contents/MacOS/DiverSharedPackageTests",
+      "packagePath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared",
       "productName" : "DiverSharedPackageTests"
     }
   ],
@@ -23,62 +23,67 @@
   "swiftCommands" : {
     "C.DiverShared-arm64-apple-macosx26.0-debug.module" : {
       "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
-      "fileList" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/sources",
-      "importPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules",
+      "fileList" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/sources",
+      "importPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules",
       "inputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/AppGroupConfig.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/AppGroupConfig.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/ContextSnapshot.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/ContextSnapshot.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/DiverItemDescriptor.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/DiverItemDescriptor.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/LinkWrapping.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/IntelligenceCapability.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/MessagesLaunchStore.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/LinkWrapping.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/Notification+Extension.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/MessagesLaunchStore.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/QueueStore.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/Notification+Extension.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/Validation.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/QueueStore.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/Validation.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/sources"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/sources"
         }
       ],
       "isLibrary" : true,
       "moduleName" : "DiverShared",
-      "moduleOutputPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverShared.swiftmodule",
+      "moduleOutputPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverShared.swiftmodule",
       "objects" : [
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/AppGroupConfig.swift.o",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/ContextSnapshot.swift.o",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/DiverItemDescriptor.swift.o",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/LinkWrapping.swift.o",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/MessagesLaunchStore.swift.o",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/Notification+Extension.swift.o",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/QueueStore.swift.o",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/Validation.swift.o"
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/AppGroupConfig.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/ContextSnapshot.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/DiverItemDescriptor.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/IntelligenceCapability.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/LinkWrapping.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/MessagesLaunchStore.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/Notification+Extension.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/QueueStore.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/Validation.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -87,7 +92,7 @@
         "-enable-batch-mode",
         "-serialize-diagnostics",
         "-index-store-path",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/index/store",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/index/store",
         "-Onone",
         "-enable-testing",
         "-j12",
@@ -95,13 +100,12 @@
         "-DDEBUG",
         "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
         "-module-cache-path",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/ModuleCache",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/ModuleCache",
         "-parseable-output",
         "-parse-as-library",
         "-emit-objc-header",
         "-emit-objc-header-path",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/include/DiverShared-Swift.h",
-        "-color-diagnostics",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/include/DiverShared-Swift.h",
         "-swift-version",
         "5",
         "-plugin-path",
@@ -136,86 +140,91 @@
         "-package-name",
         "divershared"
       ],
-      "outputFileMapPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/output-file-map.json",
+      "outputFileMapPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/output-file-map.json",
       "outputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/AppGroupConfig.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/AppGroupConfig.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/ContextSnapshot.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/ContextSnapshot.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/DiverItemDescriptor.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/DiverItemDescriptor.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/LinkWrapping.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/IntelligenceCapability.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/MessagesLaunchStore.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/LinkWrapping.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/Notification+Extension.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/MessagesLaunchStore.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/QueueStore.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/Notification+Extension.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/Validation.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/QueueStore.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverShared.swiftmodule"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/Validation.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverShared.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/AppGroupConfig.swift",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/ContextSnapshot.swift",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/DiverItemDescriptor.swift",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/LinkWrapping.swift",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/MessagesLaunchStore.swift",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/Notification+Extension.swift",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/QueueStore.swift",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/Validation.swift"
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/AppGroupConfig.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/ContextSnapshot.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/DiverItemDescriptor.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/IntelligenceCapability.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/LinkWrapping.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/MessagesLaunchStore.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/Notification+Extension.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/QueueStore.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/Validation.swift"
       ],
-      "tempsPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build",
+      "tempsPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build",
       "wholeModuleOptimization" : false
     },
     "C.DiverSharedPackageTests-arm64-apple-macosx26.0-debug.module" : {
       "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
-      "fileList" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/sources",
-      "importPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules",
+      "fileList" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/sources",
+      "importPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules",
       "inputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.derived/runner.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.derived/runner.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverSharedTests.swiftmodule"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverSharedTests.swiftmodule"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/sources"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/sources"
         }
       ],
       "isLibrary" : true,
       "moduleName" : "DiverSharedPackageTests",
-      "moduleOutputPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverSharedPackageTests.swiftmodule",
+      "moduleOutputPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverSharedPackageTests.swiftmodule",
       "objects" : [
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/runner.swift.o"
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/runner.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -224,7 +233,7 @@
         "-enable-batch-mode",
         "-serialize-diagnostics",
         "-index-store-path",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/index/store",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/index/store",
         "-Onone",
         "-enable-testing",
         "-Xfrontend",
@@ -234,13 +243,12 @@
         "-DDEBUG",
         "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
         "-module-cache-path",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/ModuleCache",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/ModuleCache",
         "-parseable-output",
         "-parse-as-library",
         "-emit-objc-header",
         "-emit-objc-header-path",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/include/DiverSharedPackageTests-Swift.h",
-        "-color-diagnostics",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/include/DiverSharedPackageTests-Swift.h",
         "-plugin-path",
         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
         "-sdk",
@@ -273,76 +281,76 @@
         "-package-name",
         "divershared"
       ],
-      "outputFileMapPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/output-file-map.json",
+      "outputFileMapPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/output-file-map.json",
       "outputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/runner.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/runner.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverSharedPackageTests.swiftmodule"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverSharedPackageTests.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.derived/runner.swift"
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.derived/runner.swift"
       ],
-      "tempsPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build",
+      "tempsPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build",
       "wholeModuleOptimization" : false
     },
     "C.DiverSharedTests-arm64-apple-macosx26.0-debug.module" : {
       "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
-      "fileList" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/sources",
-      "importPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules",
+      "fileList" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/sources",
+      "importPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules",
       "inputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/AppGroupConfigTests.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/AppGroupConfigTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/DiverItemDescriptorTests.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/DiverItemDescriptorTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/LinkWrappingTests.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/LinkWrappingTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/MessagesLaunchStoreTests.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/MessagesLaunchStoreTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/QueueStoreTests.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/QueueStoreTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/ValidationTests.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/ValidationTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverShared.swiftmodule"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverShared.swiftmodule"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/sources"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/sources"
         }
       ],
       "isLibrary" : true,
       "moduleName" : "DiverSharedTests",
-      "moduleOutputPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverSharedTests.swiftmodule",
+      "moduleOutputPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverSharedTests.swiftmodule",
       "objects" : [
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.swift.o",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.swift.o",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.swift.o",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.swift.o",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.swift.o",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.swift.o"
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.swift.o",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -351,7 +359,7 @@
         "-enable-batch-mode",
         "-serialize-diagnostics",
         "-index-store-path",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/index/store",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/index/store",
         "-Onone",
         "-enable-testing",
         "-Xfrontend",
@@ -361,10 +369,9 @@
         "-DDEBUG",
         "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
         "-module-cache-path",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/ModuleCache",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/ModuleCache",
         "-parseable-output",
         "-parse-as-library",
-        "-color-diagnostics",
         "-swift-version",
         "5",
         "-plugin-path",
@@ -399,47 +406,47 @@
         "-package-name",
         "divershared"
       ],
-      "outputFileMapPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/output-file-map.json",
+      "outputFileMapPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/output-file-map.json",
       "outputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverSharedTests.swiftmodule"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules/DiverSharedTests.swiftmodule"
         }
       ],
       "prepareForIndexing" : false,
       "sources" : [
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/AppGroupConfigTests.swift",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/DiverItemDescriptorTests.swift",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/LinkWrappingTests.swift",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/MessagesLaunchStoreTests.swift",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/QueueStoreTests.swift",
-        "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/ValidationTests.swift"
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/AppGroupConfigTests.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/DiverItemDescriptorTests.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/LinkWrappingTests.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/MessagesLaunchStoreTests.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/QueueStoreTests.swift",
+        "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/ValidationTests.swift"
       ],
-      "tempsPath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build",
+      "tempsPath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build",
       "wholeModuleOptimization" : false
     }
   },
@@ -454,23 +461,24 @@
       "-package-name",
       "divershared",
       "-c",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/AppGroupConfig.swift",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/ContextSnapshot.swift",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/DiverItemDescriptor.swift",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/LinkWrapping.swift",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/MessagesLaunchStore.swift",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/Notification+Extension.swift",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/QueueStore.swift",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/Validation.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/AppGroupConfig.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/ContextSnapshot.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/DiverItemDescriptor.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/IntelligenceCapability.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/LinkWrapping.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/MessagesLaunchStore.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/Notification+Extension.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/QueueStore.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/Validation.swift",
       "-I",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules",
       "-target",
       "arm64-apple-macosx14.0",
       "-incremental",
       "-enable-batch-mode",
       "-serialize-diagnostics",
       "-index-store-path",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/index/store",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/index/store",
       "-Onone",
       "-enable-testing",
       "-j12",
@@ -478,13 +486,12 @@
       "-DDEBUG",
       "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
       "-module-cache-path",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/ModuleCache",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/ModuleCache",
       "-parseable-output",
       "-parse-as-library",
       "-emit-objc-header",
       "-emit-objc-header-path",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/include/DiverShared-Swift.h",
-      "-color-diagnostics",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/include/DiverShared-Swift.h",
       "-swift-version",
       "5",
       "-plugin-path",
@@ -528,16 +535,16 @@
       "-package-name",
       "divershared",
       "-c",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.derived/runner.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.derived/runner.swift",
       "-I",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules",
       "-target",
       "arm64-apple-macosx14.0",
       "-incremental",
       "-enable-batch-mode",
       "-serialize-diagnostics",
       "-index-store-path",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/index/store",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/index/store",
       "-Onone",
       "-enable-testing",
       "-Xfrontend",
@@ -547,13 +554,12 @@
       "-DDEBUG",
       "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
       "-module-cache-path",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/ModuleCache",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/ModuleCache",
       "-parseable-output",
       "-parse-as-library",
       "-emit-objc-header",
       "-emit-objc-header-path",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/include/DiverSharedPackageTests-Swift.h",
-      "-color-diagnostics",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/include/DiverSharedPackageTests-Swift.h",
       "-plugin-path",
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
       "-sdk",
@@ -595,21 +601,21 @@
       "-package-name",
       "divershared",
       "-c",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/AppGroupConfigTests.swift",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/DiverItemDescriptorTests.swift",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/LinkWrappingTests.swift",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/MessagesLaunchStoreTests.swift",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/QueueStoreTests.swift",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/ValidationTests.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/AppGroupConfigTests.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/DiverItemDescriptorTests.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/LinkWrappingTests.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/MessagesLaunchStoreTests.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/QueueStoreTests.swift",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/ValidationTests.swift",
       "-I",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/Modules",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/Modules",
       "-target",
       "arm64-apple-macosx14.0",
       "-incremental",
       "-enable-batch-mode",
       "-serialize-diagnostics",
       "-index-store-path",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/index/store",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/index/store",
       "-Onone",
       "-enable-testing",
       "-Xfrontend",
@@ -619,10 +625,9 @@
       "-DDEBUG",
       "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
       "-module-cache-path",
-      "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/ModuleCache",
+      "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/ModuleCache",
       "-parseable-output",
       "-parse-as-library",
-      "-color-diagnostics",
       "-swift-version",
       "5",
       "-plugin-path",
@@ -676,14 +681,14 @@
 
   },
   "testEntryPointCommands" : {
-    "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.derived/runner.swift" : {
+    "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.derived/runner.swift" : {
       "inputs" : [
 
       ],
       "outputs" : [
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.derived/runner.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.derived/runner.swift"
         }
       ]
     }
@@ -694,7 +699,7 @@
     }
   },
   "writeCommands" : {
-    "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/sources" : {
+    "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -703,40 +708,44 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/AppGroupConfig.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/AppGroupConfig.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/ContextSnapshot.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/ContextSnapshot.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/DiverItemDescriptor.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/DiverItemDescriptor.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/LinkWrapping.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/IntelligenceCapability.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/MessagesLaunchStore.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/LinkWrapping.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/Notification+Extension.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/MessagesLaunchStore.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/QueueStore.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/Notification+Extension.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/Validation.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/QueueStore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/Validation.swift"
         }
       ],
-      "outputFilePath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/sources"
+      "outputFilePath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/sources"
     },
-    "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/sources" : {
+    "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -745,12 +754,12 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.derived/runner.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.derived/runner.swift"
         }
       ],
-      "outputFilePath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/sources"
+      "outputFilePath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/sources"
     },
-    "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.product/Objects.LinkFileList" : {
+    "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.product/Objects.LinkFileList" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -759,68 +768,72 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/AppGroupConfig.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/AppGroupConfig.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/ContextSnapshot.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/ContextSnapshot.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/DiverItemDescriptor.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/DiverItemDescriptor.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/LinkWrapping.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/IntelligenceCapability.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/MessagesLaunchStore.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/LinkWrapping.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/Notification+Extension.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/MessagesLaunchStore.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/QueueStore.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/Notification+Extension.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/Validation.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/QueueStore.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/runner.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverShared.build/Validation.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.build/runner.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/AppGroupConfigTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/DiverItemDescriptorTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/LinkWrappingTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/MessagesLaunchStoreTests.swift.o"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.swift.o"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/QueueStoreTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/ValidationTests.swift.o"
         }
       ],
-      "outputFilePath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.product/Objects.LinkFileList"
+      "outputFilePath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.product/Objects.LinkFileList"
     },
-    "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/sources" : {
+    "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
@@ -829,32 +842,32 @@
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/AppGroupConfigTests.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/AppGroupConfigTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/DiverItemDescriptorTests.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/DiverItemDescriptorTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/LinkWrappingTests.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/LinkWrappingTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/MessagesLaunchStoreTests.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/MessagesLaunchStoreTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/QueueStoreTests.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/QueueStoreTests.swift"
         },
         {
           "kind" : "file",
-          "name" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Tests/DiverSharedTests/ValidationTests.swift"
+          "name" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Tests/DiverSharedTests/ValidationTests.swift"
         }
       ],
-      "outputFilePath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/sources"
+      "outputFilePath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedTests.build/sources"
     },
-    "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+    "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
       "alwaysOutOfDate" : true,
       "inputs" : [
         {
@@ -866,7 +879,7 @@
           "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
         }
       ],
-      "outputFilePath" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+      "outputFilePath" : "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
     }
   }
 }

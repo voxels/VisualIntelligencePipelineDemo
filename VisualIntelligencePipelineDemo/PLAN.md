@@ -155,9 +155,24 @@ Diver is a cross-platform SwiftUI app utilizing SwiftData, app group storage, de
   - Add opt-out toggle
   - Write coverage tests for ingestion, shelf, pruning, opt-out
 
+- **Visual Intelligence Proximity Sharing** (Immediate Priority)
+  - Implement GroupActivities for proximity sharing ("bump").
+  - Define `VisualIntelligenceContext` and sharing service.
+  - See `PLAN_VISUAL_INTELLIGENCE_SHARING.md` for details.
+
 - **After that:** Proceed to Foursquare expansion, Know-Maps ranking/feedback, and full E2E test.
 
 ---
+
+## Phase 5.5: Visual Intelligence Proximity Sharing (Tomorrow)
+- **Goal**: Enable users to share their current visual intelligence context by bringing devices close together.
+- **Scope**:
+  - `VisualIntelligenceContext` data model.
+  - `GroupActivity` implementation (`VisualIntelligenceSharingActivity`).
+  - Proximity trigger via `prepareForActivation`.
+  - Receiver UI for shared context.
+- **Details**: See `PLAN_VISUAL_INTELLIGENCE_SHARING.md`.
+
 
 # Diver Plan
 

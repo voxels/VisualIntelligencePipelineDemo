@@ -1,0 +1,132 @@
+Building for debugging...
+[0/2] Write sources
+[1/2] Write swift-version--58304C5D6DBC2206.txt
+[3/5] Compiling DiverKit WebViewLinkEnrichmentService.swift
+[4/7] Compiling DiverKit DataSeeder.swift
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Storage/DataSeeder.swift:179:33: warning: immutable value 'p' was never used; consider replacing with '_' or removing it [#no-usage]
+177 |                     inputItem = item
+178 |                     
+179 |                 case .music(let p):
+    |                                 `- warning: immutable value 'p' was never used; consider replacing with '_' or removing it [#no-usage]
+180 |                     // Skip references
+181 |                     break
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Storage/DataSeeder.swift:183:32: warning: immutable value 'p' was never used; consider replacing with '_' or removing it [#no-usage]
+181 |                     break
+182 |                     
+183 |                 case .book(let p):
+    |                                `- warning: immutable value 'p' was never used; consider replacing with '_' or removing it [#no-usage]
+184 |                     // Skip references
+185 |                     break
+[5/7] Emitting module DiverKit
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/ContextQuestionService.swift:161:6: warning: '19.0' is not a valid version number for macOS
+159 |     
+160 |     #if canImport(FoundationModels)
+161 |     @available(iOS 26.0, macOS 19.0, *)
+    |      `- warning: '19.0' is not a valid version number for macOS
+162 |     private func summarizeChunk(_ text: String) async throws -> String {
+163 |         let instructions = "Summarize the following text segment, retaining key details about activities, objects, and specific content."
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/ContextQuestionService.swift:187:6: warning: '19.0' is not a valid version number for macOS
+185 |     
+186 |     #if canImport(FoundationModels)
+187 |     @available(iOS 26.0, macOS 19.0, *)
+    |      `- warning: '19.0' is not a valid version number for macOS
+188 |     @Generable
+189 |     struct ContextAnalysis {
+[6/7] Compiling DiverKit CameraManager.swift
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/CameraManager.swift:41:30: warning: capture of 'self' with non-Sendable type 'CameraManager?' in a '@Sendable' closure [#SendableClosureCaptures]
+ 10 | 
+ 11 | /// Agent [CORE] - Responsible for Camera Session and Intent Launch Foundation
+ 12 | public final class CameraManager: NSObject, ObservableObject {
+    |                    `- note: class 'CameraManager' does not conform to the 'Sendable' protocol
+ 13 |     @Published public var isReady = false
+ 14 |     @Published public var session = AVCaptureSession()
+    :
+ 39 |         case .notDetermined:
+ 40 |             AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+ 41 |                 if granted { self?.startSession() }
+    |                              `- warning: capture of 'self' with non-Sendable type 'CameraManager?' in a '@Sendable' closure [#SendableClosureCaptures]
+ 42 |             }
+ 43 |         default:
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/CameraManager.swift:56:18: warning: capture of 'self' with non-Sendable type 'CameraManager?' in a '@Sendable' closure [#SendableClosureCaptures]
+ 10 | 
+ 11 | /// Agent [CORE] - Responsible for Camera Session and Intent Launch Foundation
+ 12 | public final class CameraManager: NSObject, ObservableObject {
+    |                    `- note: class 'CameraManager' does not conform to the 'Sendable' protocol
+ 13 |     @Published public var isReady = false
+ 14 |     @Published public var session = AVCaptureSession()
+    :
+ 54 |              
+ 55 |              sessionQueue.async { [weak self] in
+ 56 |                  self?.session.startRunning()
+    |                  `- warning: capture of 'self' with non-Sendable type 'CameraManager?' in a '@Sendable' closure [#SendableClosureCaptures]
+ 57 |                  DispatchQueue.main.async {
+ 58 |                      self?.isReady = true
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/CameraManager.swift:67:17: warning: capture of 'self' with non-Sendable type 'CameraManager?' in a '@Sendable' closure [#SendableClosureCaptures]
+ 10 | 
+ 11 | /// Agent [CORE] - Responsible for Camera Session and Intent Launch Foundation
+ 12 | public final class CameraManager: NSObject, ObservableObject {
+    |                    `- note: class 'CameraManager' does not conform to the 'Sendable' protocol
+ 13 |     @Published public var isReady = false
+ 14 |     @Published public var session = AVCaptureSession()
+    :
+ 65 |         if session.isRunning {
+ 66 |             sessionQueue.async { [weak self] in
+ 67 |                 self?.session.stopRunning()
+    |                 `- warning: capture of 'self' with non-Sendable type 'CameraManager?' in a '@Sendable' closure [#SendableClosureCaptures]
+ 68 |                 DispatchQueue.main.async {
+ 69 |                     self?.isReady = false
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/CameraManager.swift:98:34: warning: 'isHighResolutionCaptureEnabled' was deprecated in macOS 13.0: Use maxPhotoDimensions instead. [#DeprecatedDeclaration]
+ 96 |             if self.session.canAddOutput(self.photoOutput) {
+ 97 |                 self.session.addOutput(self.photoOutput)
+ 98 |                 self.photoOutput.isHighResolutionCaptureEnabled = true
+    |                                  `- warning: 'isHighResolutionCaptureEnabled' was deprecated in macOS 13.0: Use maxPhotoDimensions instead. [#DeprecatedDeclaration]
+ 99 |             }
+100 |             
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/CameraManager.swift:77:30: warning: capture of 'self' with non-Sendable type 'CameraManager?' in a '@Sendable' closure [#SendableClosureCaptures]
+ 10 | 
+ 11 | /// Agent [CORE] - Responsible for Camera Session and Intent Launch Foundation
+ 12 | public final class CameraManager: NSObject, ObservableObject {
+    |                    `- note: class 'CameraManager' does not conform to the 'Sendable' protocol
+ 13 |     @Published public var isReady = false
+ 14 |     @Published public var session = AVCaptureSession()
+    :
+ 75 |     private func configureSession() {
+ 76 |         sessionQueue.async { [weak self] in
+ 77 |             guard let self = self else { return }
+    |                              `- warning: capture of 'self' with non-Sendable type 'CameraManager?' in a '@Sendable' closure [#SendableClosureCaptures]
+ 78 |             self.session.beginConfiguration()
+ 79 |             
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/CameraManager.swift:129:18: warning: 'isHighResolutionPhotoEnabled' was deprecated in macOS 13.0: Use maxPhotoDimensions instead. [#DeprecatedDeclaration]
+127 |         
+128 |         let settings = AVCapturePhotoSettings()
+129 |         settings.isHighResolutionPhotoEnabled = true
+    |                  `- warning: 'isHighResolutionPhotoEnabled' was deprecated in macOS 13.0: Use maxPhotoDimensions instead. [#DeprecatedDeclaration]
+130 |         photoOutput.capturePhoto(with: settings, delegate: self)
+131 |     }
+
+[#DeprecatedDeclaration]: <https://docs.swift.org/compiler/documentation/diagnostics/deprecated-declaration>
+[#SendableClosureCaptures]: <https://docs.swift.org/compiler/documentation/diagnostics/sendable-closure-captures>
+[7/7] Compiling DiverKit VisualIntelligenceViewModel.swift
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/ViewModel/VisualIntelligenceViewModel.swift:1315:13: warning: no 'async' operations occur within 'await' expression
+1313 |         stopRecording()
+1314 |         Task {
+1315 |             await cameraManager.startSession()
+     |             `- warning: no 'async' operations occur within 'await' expression
+1316 |         }
+1317 |         
+
+/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/ContextQuestionService.swift:187:6: warning: '19.0' is not a valid version number for macOS
+185 |     
+186 |     #if canImport(FoundationModels)
+187 |     @available(iOS 26.0, macOS 19.0, *)
+    |      `- warning: '19.0' is not a valid version number for macOS
+188 |     @Generable
+189 |     struct ContextAnalysis {
+Build complete! (3.63s)

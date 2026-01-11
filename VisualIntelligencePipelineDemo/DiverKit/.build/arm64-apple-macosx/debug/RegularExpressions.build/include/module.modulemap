@@ -1,3 +1,3 @@
 module RegularExpressions {
-    header "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/include/RegularExpressions-Swift.h"
+    header "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/RegularExpressions.build/include/RegularExpressions-Swift.h"
 }

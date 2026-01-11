@@ -3,7 +3,7 @@ import Foundation
 extension Foundation.Bundle {
     static let module: Bundle = {
         let mainPath = Bundle.main.bundleURL.appendingPathComponent("SpotifyAPI_SpotifyExampleContent.bundle").path
-        let buildPath = "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyAPI_SpotifyExampleContent.bundle"
+        let buildPath = "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/SpotifyAPI_SpotifyExampleContent.bundle"
 
         let preferredBundle = Bundle(path: mainPath)
 
