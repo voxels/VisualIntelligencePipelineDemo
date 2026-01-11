@@ -1,0 +1,4 @@
+module SpotifyWebAPI {
+header "SpotifyWebAPI-Swift.h"
+export *
+}

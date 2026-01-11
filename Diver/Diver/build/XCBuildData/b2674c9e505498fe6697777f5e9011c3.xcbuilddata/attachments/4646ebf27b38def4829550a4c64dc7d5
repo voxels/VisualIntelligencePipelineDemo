@@ -1,0 +1,36 @@
+{
+  "" : {
+    "const-values" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/LDSwiftEventSource-primary.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/LDSwiftEventSource-primary.d",
+    "diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/LDSwiftEventSource-primary.dia",
+    "emit-module-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/LDSwiftEventSource-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/LDSwiftEventSource-primary-emit-module.dia",
+    "pch" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/LDSwiftEventSource-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/LDSwiftEventSource-primary.swiftdeps"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/Source/EventParser.swift" : {
+    "index-unit-output-path" : "/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/EventParser.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/EventParser.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/EventParser.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/Source/LDSwiftEventSource.swift" : {
+    "index-unit-output-path" : "/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/LDSwiftEventSource.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/LDSwiftEventSource.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/LDSwiftEventSource.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/Source/Logs.swift" : {
+    "index-unit-output-path" : "/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/Logs.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/Logs.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/Logs.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/Source/Types.swift" : {
+    "index-unit-output-path" : "/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/Types.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/Types.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/Types.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/Source/UTF8LineParser.swift" : {
+    "index-unit-output-path" : "/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/UTF8LineParser.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/UTF8LineParser.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/swift-eventsource/build/LDSwiftEventSource.build/Release-iphoneos/LDSwiftEventSource.build/Objects-normal/arm64/UTF8LineParser.o"
+  }
+}

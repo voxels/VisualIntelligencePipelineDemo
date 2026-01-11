@@ -1,0 +1,36 @@
+{
+  "" : {
+    "const-values" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONSafeEncoding-primary.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONSafeEncoding-primary.d",
+    "diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONSafeEncoding-primary.dia",
+    "emit-module-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONSafeEncoding-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONSafeEncoding-primary-emit-module.dia",
+    "pch" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONSafeEncoding-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONSafeEncoding-primary.swiftdeps"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/Sources/JSONSafeEncoding/Extensions.swift" : {
+    "index-unit-output-path" : "/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/Extensions.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/Extensions.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/Extensions.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/Sources/JSONSafeEncoding/JSONError.swift" : {
+    "index-unit-output-path" : "/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONError.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONError.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONError.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/Sources/JSONSafeEncoding/JSONSafeEncoder.swift" : {
+    "index-unit-output-path" : "/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONSafeEncoder.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONSafeEncoder.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONSafeEncoder.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/Sources/JSONSafeEncoding/JSONValue.swift" : {
+    "index-unit-output-path" : "/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONValue.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONValue.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/JSONValue.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/Sources/JSONSafeEncoding/Version.swift" : {
+    "index-unit-output-path" : "/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/Version.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/Version.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/jsonsafeencoding-swift/build/JSONSafeEncoding.build/Release-iphoneos/JSONSafeEncoding.build/Objects-normal/arm64/Version.o"
+  }
+}

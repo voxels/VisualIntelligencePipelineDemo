@@ -1,0 +1,40 @@
+{
+  "": {
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/master.swiftdeps"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-eventsource/Source/EventParser.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/EventParser.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/EventParser.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/EventParser~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/EventParser.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/EventParser.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-eventsource/Source/LDSwiftEventSource.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/LDSwiftEventSource.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/LDSwiftEventSource.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/LDSwiftEventSource~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/LDSwiftEventSource.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/LDSwiftEventSource.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-eventsource/Source/Logs.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/Logs.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/Logs.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/Logs~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/Logs.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/Logs.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-eventsource/Source/Types.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/Types.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/Types.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/Types~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/Types.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/Types.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/swift-eventsource/Source/UTF8LineParser.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/UTF8LineParser.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/UTF8LineParser.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/UTF8LineParser~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/UTF8LineParser.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/LDSwiftEventSource.build/UTF8LineParser.dia"
+  }
+}

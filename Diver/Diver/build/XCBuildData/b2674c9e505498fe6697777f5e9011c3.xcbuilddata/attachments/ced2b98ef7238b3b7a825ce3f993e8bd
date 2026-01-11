@@ -1,0 +1,4 @@
+module LDSwiftEventSource {
+header "LDSwiftEventSource-Swift.h"
+export *
+}

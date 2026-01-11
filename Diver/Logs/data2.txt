@@ -1,0 +1,3513 @@
+🔐 Logging in to get JWT token...
+✅ Logged in successfully
+🔑 JWT Token: eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...
+
+
+============================================================
+💬 Fetching Messages for Job: 019b2468-d98c-76f1-bc55-b7f2d12bfc99
+============================================================
+
+📊 Input Status: ✅ Complete
+   Input ID: 019b2468-d98c-76f1-bc55-b7f2d12bfc99
+   Source: https://vt.tiktok.com/ZSHGnBxtWNo1a-Xve4I/
+   Type: tiktok
+   Items: 1
+      • Item 019b2469-04c1-73e1-807f-e9b9de3ae58d: ✅ ready
+
+
+✅ Found 6 message(s):
+
+1. 🤖 [agent] queue-service
+   Type: processing_status
+   Time: 2025-12-15T23:47:15.241172Z
+   ✅ Schema validation passed
+   Status: unknown - analyzing
+   Message: Gemini visual analysis complete. item_id=TextMetadataValue(text='019b2469-04c1-73e1-807f-e9b9de3ae58d'), has_video=BoolMetadataValue(value=True), has_transcription=BoolMetadataValue(value=True)
+
+2. 🤖 [agent] queue-service
+   Type: media_analysis
+   Time: 2025-12-15T23:47:18.482175Z
+   📊 Media Analysis:
+      Media ID: 019b2469-4884-7401-89b2-d8ed3ec336c9
+      Item ID: 019b2469-04c1-73e1-807f-e9b9de3ae58d
+      Media Type: video
+      Title: N/A
+      Thumbnails: 0
+      Has Transcription: Yes
+      Has Extracted Text: Yes
+      Detected Objects: 7
+      Description: A man with short brown hair, a beard, and glasses is sitting in front of a bookshelf, talking about ...
+   ✅ Schema validation passed
+   📊 Media Analysis Data:
+      {
+      "message_type": "media_analysis",
+      "media_id": "019b2469-4884-7401-89b2-d8ed3ec336c9",
+      "item_id": "019b2469-04c1-73e1-807f-e9b9de3ae58d",
+      "media_data": {
+            "filename": "video.mp4",
+            "original_filename": null,
+            "s3_key": "jobs/019b2468-d98c-76f1-bc55-b7f2d12bfc99/media/video.mp4",
+            "file_size": 1772071,
+            "media_type": "video",
+            "mime_type": "video/mp4",
+            "width": null,
+            "height": null,
+            "duration": null,
+            "aspect_ratio": null,
+            "title": null,
+            "description": "A man with short brown hair, a beard, and glasses is sitting in front of a bookshelf, talking about books. He is wearing a black t-shirt. His left arm has tattoos, and he holds different books throughout the video. A microphone with a green light is visible in front of him. The background is dimly lit, with bookshelves filled with books.",
+            "alt_text": null,
+            "tags": null,
+            "transcription": "I study philosophy and religion and these books f**ked me up. The Glass Bead Game by Herman Hesse is a utopian society where philosophy, math, music, and art reign supreme and one man begins to question whether a life of pure intellect is truly meaningful. The Castle by Kafka shows a man who's trying to reach a castle for a job that he was promised, but is left with very little help. shows how systems can create meaninglessness and how chasing purpose can become a prison. The Trouble With Being Born shows how life can be absolutely dreadful. This book will change your life for better or for worse.",
+            "extracted_text": "I study philosophy and religion and these books f**ked me up. The Glass Bead Game by Herman Hesse is a utopian society where philosophy, math, music, and art reign supreme and one man begins to question whether a life of pure intellect is truly meaningful. The Castle by Kafka shows a man who's trying to reach a castle for a job that he was promised but is left with very little help. shows how systems can create meaninglessness and how chasing purpose can become a prison. The Trouble With Being Born shows how life can be absolutely dreadful. this book will change your life for better or for worse.",
+            "detected_objects": [
+                  "man",
+                  "glasses",
+                  "beard",
+                  "tattoos",
+                  "books",
+                  "bookshelf",
+                  "microphone"
+            ],
+            "colors": null,
+            "mood": null,
+            "color_palette": null,
+            "color_distribution": null,
+            "color_temperature": null,
+            "color_harmony": null,
+            "dominant_hue": null,
+            "color_vibrancy": null,
+            "color_scheme": null,
+            "style": null,
+            "composition": null,
+            "lighting": null,
+            "setting": null,
+            "people_count": null,
+            "faces_detected": null,
+            "themes": [
+                  "philosophy",
+                  "religion",
+                  "literature",
+                  "meaning of life",
+                  "dread",
+                  "purpose",
+                  "intellectualism",
+                  "utopia",
+                  "dystopia"
+            ],
+            "concepts": null,
+            "activities": null,
+            "brands_detected": null,
+            "blur_level": null,
+            "saturation": null,
+            "contrast": null,
+            "brightness": null,
+            "texture": null,
+            "quality_score": null,
+            "view_count": 0,
+            "download_count": 0,
+            "source_url": null,
+            "source_platform": null,
+            "sequence_order": null,
+            "analysis_result": null,
+            "thumbnails": null,
+            "id": "019b2469-4884-7401-89b2-d8ed3ec336c9",
+            "item_id": "019b2469-04c1-73e1-807f-e9b9de3ae58d",
+            "created_at": "2025-12-15T23:47:18.276120Z",
+            "updated_at": "2025-12-15T23:47:18.276122Z",
+            "url": "http://localhost:9000/brainv3-storage/jobs/019b2468-d98c-76f1-bc55-b7f2d12bfc99/media/video.mp4?AWSAccessKeyId=minioadmin&Signature=L%2FCwyFYMs88D37rkqnbwcH7C1AI%3D&Expires=1765846038"
+      }
+}
+
+3. 🤖 [agent] queue-service
+   Type: item_classification
+   Time: 2025-12-15T23:47:32.159963Z
+   ✅ Schema validation passed
+
+4. 🤖 [agent] queue-service
+   Type: reference_hypotheses
+   Time: 2025-12-15T23:47:38.571295Z
+   ✅ Schema validation passed
+   ## 📚 Book Reference Hypotheses
+
+**Titles:** The Glass Bead Game, The Castle, The Trouble With Being Born
+**Authors:** Herman Hesse, Kafka, Cioran
+   📊 Full hypotheses data:
+      {
+      "type": "book",
+      "titles": [
+            "The Glass Bead Game",
+            "The Castle",
+            "The Trouble With Being Born"
+      ],
+      "authors": [
+            "Herman Hesse",
+            "Kafka",
+            "Cioran"
+      ],
+      "rationales": "The content mentions specific book titles and their authors in the transcription and extracted text. It lists 'The Glass Bead Game' by Herman Hesse and 'The Castle' by Kafka. Additionally, 'The Trouble With Being Born' is a known work by Cioran."
+}
+
+5. 🤖 [agent] queue-service
+   Type: reference_candidates
+   Time: 2025-12-15T23:47:47.191942Z
+   ✅ Schema validation passed
+   Found OpenLibrary search results
+   🔍 Candidates: 60
+   🎶 [book] Das Glasperlenspiel. Sonderausgabe - Unknown Artist
+   🎶 [book] The Glass Bead Game (Penguin Modern Classics) - Unknown Artist
+   🎶 [book] The Glass Bead Game - Unknown Artist
+   🎶 [book] The Glass Bead Game - Unknown Artist
+   🎶 [book] The Glass Bead Game - Unknown Artist
+   🎶 [book] The Glass Bead Game - Unknown Artist
+   🎶 [book] Beyond the glass bead game - Unknown Artist
+   🎶 [book] Magister Ludi ( the Glass Bead Game) - Unknown Artist
+   🎶 [book] Bazi Mohrey shishe - Unknown Artist
+   🎶 [book] Magister Ludi - Unknown Artist
+   🎶 [book] The Castle of Otranto - Unknown Artist
+   🎶 [book] Das Schloß - Unknown Artist
+   🎶 [book] I Capture the Castle - Unknown Artist
+   🎶 [book] The Enchanted Castle - Unknown Artist
+   🎶 [book] The blue castle - Unknown Artist
+   🎶 [book] The Man in the High Castle - Unknown Artist
+   🎶 [book] We Have Always Lived in the Castle - Unknown Artist
+   🎶 [book] The king of the castle - Unknown Artist
+   🎶 [book] The Castle of Llyr - Unknown Artist
+   🎶 [book] The Gruffalo - Unknown Artist
+   🎶 [book] De l'inconvénient d'être né - Unknown Artist
+   🎶 [book] The Trouble With Being Born - Unknown Artist
+   🎶 [book] The trouble with being born - Unknown Artist
+   🎶 [book] Ἰλιάς - Unknown Artist
+   🎶 [book] Les Trois Mousquetaires - Unknown Artist
+   🎶 [book] Oliver Twist - Unknown Artist
+   🎶 [book] Study Guide - Unknown Artist
+   🎶 [book] Unicorn Coloring Book - Unknown Artist
+   🎶 [book] Coloring Book - Unknown Artist
+   🎶 [book] Born to Be Trouble - Unknown Artist
+   🎶 [book] Herman Hesse - Unknown Artist
+   🎶 [book] Herman Hesse - Unknown Artist
+   🎶 [book] Herman Hesse - Unknown Artist
+   🎶 [book] Herman Hesse - Unknown Artist
+   🎶 [book] Siddhartha Herman Hesse - Unknown Artist
+   🎶 [book] Siddhartha Herman Hesse - Unknown Artist
+   🎶 [book] Herman Hesse, der Steppenwolf - Unknown Artist
+   🎶 [book] Herman Hesse - Unknown Artist
+   🎶 [book] Herman Hesse - Unknown Artist
+   🎶 [book] Der Steppenwolf - Unknown Artist
+   🎶 [book] Die Verwandlung - Unknown Artist
+   🎶 [book] Der Proceß - Unknown Artist
+   🎶 [book] Das Schloß - Unknown Artist
+   🎶 [book] Briefe an Milena - Unknown Artist
+   🎶 [book] Amerika - Unknown Artist
+   🎶 [book] 海辺のカフカ - Unknown Artist
+   🎶 [book] Study Guide - Unknown Artist
+   🎶 [book] Ulysses - Unknown Artist
+   🎶 [book] Tao te Ching - Unknown Artist
+   🎶 [book] Short stories - Unknown Artist
+   🎶 [book] De l'inconvénient d'être né - Unknown Artist
+   🎶 [book] Sur les Cimes du Desespoir - Unknown Artist
+   🎶 [book] Pre cis de de composition - Unknown Artist
+   🎶 [book] La tentation d'exister - Unknown Artist
+   🎶 [book] Cioran avant Cioran - Unknown Artist
+   🎶 [book] Cioran - Unknown Artist
+   🎶 [book] Cioran - Unknown Artist
+   🎶 [book] Cioran - Unknown Artist
+   🎶 [book] Cioran - Unknown Artist
+   🎶 [book] Ensayo sobre Cioran - Unknown Artist
+   📊 Full search results:
+      {
+      "type": "book",
+      "candidates": [
+            {
+                  "title": "Das Glasperlenspiel. Sonderausgabe",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Hermann Hesse",
+                              "key": "OL76437A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1943",
+                  "isbn": "0030815169",
+                  "publisher": "Fretz & Wasmuth",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/1017235-L.jpg",
+                  "key": "/works/OL872724W",
+                  "type": "book",
+                  "cover_i": 1017235,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL24213197M",
+                                    "title": "Magister Ludi",
+                                    "cover_i": 6534244,
+                                    "subtitle": "the glass bead game",
+                                    "publisher": [
+                                          "Bantam Books"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 19,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL76437A"
+                  ],
+                  "author_name": [
+                        "Hermann Hesse"
+                  ],
+                  "first_publish_year": 1943
+            },
+            {
+                  "title": "The Glass Bead Game (Penguin Modern Classics)",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Hermann Hesse",
+                              "key": "OL76437A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1972",
+                  "isbn": "0140034382",
+                  "publisher": "Penguin Books Ltd",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL24842672W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL7346208M",
+                                    "isbn": [
+                                          "9780140034387",
+                                          "0140034382"
+                                    ],
+                                    "title": "The Glass Bead Game",
+                                    "publisher": [
+                                          "Penguin Books Ltd"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL76437A"
+                  ],
+                  "author_name": [
+                        "Hermann Hesse"
+                  ],
+                  "first_publish_year": 1972
+            },
+            {
+                  "title": "The Glass Bead Game",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "James Beckel",
+                              "key": "OL3527885A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2001",
+                  "isbn": "9780634027994",
+                  "publisher": "Hal Leonard Corporation",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/2544063-L.jpg",
+                  "key": "/works/OL9520564W",
+                  "type": "book",
+                  "cover_i": 2544063,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL11018623M",
+                                    "isbn": [
+                                          "9780634027994",
+                                          "0634027999"
+                                    ],
+                                    "title": "The Glass Bead Game",
+                                    "cover_i": 2544063,
+                                    "subtitle": "Concerto for Horn",
+                                    "publisher": [
+                                          "Hal Leonard Corporation"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL3527885A"
+                  ],
+                  "author_name": [
+                        "James Beckel"
+                  ],
+                  "first_publish_year": 2001
+            },
+            {
+                  "title": "The Glass Bead Game",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Hermann Hesse",
+                              "key": "OL76437A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1991",
+                  "isbn": "9780805018707",
+                  "publisher": "Henry Holt & Co",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL872805W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL7931682M",
+                                    "isbn": [
+                                          "9780805018707",
+                                          "0805018700"
+                                    ],
+                                    "title": "The Glass Bead Game",
+                                    "publisher": [
+                                          "Henry Holt & Co"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL76437A"
+                  ],
+                  "author_name": [
+                        "Hermann Hesse"
+                  ],
+                  "first_publish_year": 1991
+            },
+            {
+                  "title": "The Glass Bead Game",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Hermann Hesse",
+                              "key": "OL76437A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1972",
+                  "isbn": "0140034382",
+                  "publisher": "Penguin Books Ltd",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL24842676W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL9300861M",
+                                    "isbn": [
+                                          "9780140034387",
+                                          "0140034382"
+                                    ],
+                                    "title": "The Glass Bead Game",
+                                    "publisher": [
+                                          "Penguin Books Ltd"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL76437A"
+                  ],
+                  "author_name": [
+                        "Hermann Hesse"
+                  ],
+                  "first_publish_year": 1972
+            },
+            {
+                  "title": "The Glass Bead Game",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Hermann Hesse",
+                              "key": "OL76437A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "David Colacci",
+                              "key": "OL8013707A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2008",
+                  "isbn": "9780792758310",
+                  "publisher": "Blackstone Audiobooks",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/11547809-L.jpg",
+                  "key": "/works/OL24788083W",
+                  "type": "book",
+                  "cover_i": 11547809,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL32925254M",
+                                    "isbn": [
+                                          "9780792758310",
+                                          "0792758315"
+                                    ],
+                                    "title": "The Glass Bead Game",
+                                    "cover_i": 11547809,
+                                    "publisher": [
+                                          "Blackstone Audiobooks"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL76437A",
+                        "OL8013707A"
+                  ],
+                  "author_name": [
+                        "Hermann Hesse",
+                        "David Colacci"
+                  ],
+                  "first_publish_year": 2008
+            },
+            {
+                  "title": "Beyond the glass bead game",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Jonathan M. Burchell",
+                              "key": "OL71289A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1989",
+                  "isbn": "0809806831",
+                  "publisher": "University of Natal Press",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL42641272W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL57957437M",
+                                    "isbn": [
+                                          "0809806831"
+                                    ],
+                                    "title": "Beyond the glass bead game",
+                                    "subtitle": "reshaping academic legal research",
+                                    "publisher": [
+                                          "University of Natal Press"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL71289A"
+                  ],
+                  "author_name": [
+                        "Jonathan M. Burchell"
+                  ],
+                  "first_publish_year": 1989
+            },
+            {
+                  "title": "Magister Ludi ( the Glass Bead Game)",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Hermann Hesse",
+                              "key": "OL76437A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1972",
+                  "isbn": null,
+                  "publisher": "Bantam",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/15010279-L.jpg",
+                  "key": "/works/OL36435470W",
+                  "type": "book",
+                  "cover_i": 15010279,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL49229719M",
+                                    "title": "Magister Ludi ( the Glass Bead Game)",
+                                    "cover_i": 15010279,
+                                    "publisher": [
+                                          "Bantam"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL76437A"
+                  ],
+                  "author_name": [
+                        "Hermann Hesse"
+                  ],
+                  "first_publish_year": 1972
+            },
+            {
+                  "title": "Bazi Mohrey shishe",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Hermann Hesse",
+                              "key": "OL76437A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2002",
+                  "isbn": "9643310752",
+                  "publisher": null,
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL16245145W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL15992230M",
+                                    "isbn": [
+                                          "9643310752",
+                                          "9789643310752"
+                                    ],
+                                    "title": "Bazi Mohrey shishe"
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL76437A"
+                  ],
+                  "author_name": [
+                        "Hermann Hesse"
+                  ],
+                  "first_publish_year": 2002
+            },
+            {
+                  "title": "Magister Ludi",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Hermann Hesse",
+                              "key": "OL76437A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1970",
+                  "isbn": "9780553139563",
+                  "publisher": "Bantam Books",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL29275748W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL40257113M",
+                                    "isbn": [
+                                          "0553139568",
+                                          "9780553139563"
+                                    ],
+                                    "title": "Magister Ludi",
+                                    "subtitle": "the glass bead game",
+                                    "publisher": [
+                                          "Bantam Books"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL76437A"
+                  ],
+                  "author_name": [
+                        "Hermann Hesse"
+                  ],
+                  "first_publish_year": 1970
+            },
+            {
+                  "title": "The Castle of Otranto",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Horace Walpole",
+                              "key": "OL2180322A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1764",
+                  "isbn": "9780198704447",
+                  "publisher": "Nabu Press",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/6468730-L.jpg",
+                  "key": "/works/OL183675W",
+                  "type": "book",
+                  "cover_i": 6468730,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL37044696M",
+                                    "title": "The Castle of Otranto",
+                                    "cover_i": 12621986,
+                                    "publisher": [
+                                          "Standard Ebooks"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 151,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL2180322A"
+                  ],
+                  "author_name": [
+                        "Horace Walpole"
+                  ],
+                  "first_publish_year": 1764
+            },
+            {
+                  "title": "Das Schlo\u00df",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Franz Kafka",
+                              "key": "OL33146A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1926",
+                  "isbn": "9869016049",
+                  "publisher": "Emece Editores",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/12605605-L.jpg",
+                  "key": "/works/OL498434W",
+                  "type": "book",
+                  "cover_i": 12605605,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL26398835M",
+                                    "title": "The Castle",
+                                    "cover_i": 8096204,
+                                    "publisher": [
+                                          "Knopf"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 61,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL33146A"
+                  ],
+                  "author_name": [
+                        "Franz Kafka"
+                  ],
+                  "first_publish_year": 1926
+            },
+            {
+                  "title": "I Capture the Castle",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Dodie Smith",
+                              "key": "OL161177A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1948",
+                  "isbn": "9780753161852",
+                  "publisher": "Red Fox",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/5080686-L.jpg",
+                  "key": "/works/OL1518582W",
+                  "type": "book",
+                  "cover_i": 5080686,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL25127343M",
+                                    "isbn": [
+                                          "9780099845003",
+                                          "0099845008"
+                                    ],
+                                    "title": "I Capture the Castle",
+                                    "cover_i": 6988346,
+                                    "publisher": [
+                                          "Red Fox"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 74,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL161177A"
+                  ],
+                  "author_name": [
+                        "Dodie Smith"
+                  ],
+                  "first_publish_year": 1948
+            },
+            {
+                  "title": "The Enchanted Castle",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Edith Nesbit",
+                              "key": "OL18053A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1907",
+                  "isbn": "1544016638",
+                  "publisher": "Independently published",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/6644514-L.jpg",
+                  "key": "/works/OL99541W",
+                  "type": "book",
+                  "cover_i": 6644514,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL37044497M",
+                                    "title": "The Enchanted Castle",
+                                    "cover_i": 12621744,
+                                    "publisher": [
+                                          "Standard Ebooks"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 472,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL18053A"
+                  ],
+                  "author_name": [
+                        "Edith Nesbit"
+                  ],
+                  "first_publish_year": 1907
+            },
+            {
+                  "title": "The blue castle",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Lucy Maud Montgomery",
+                              "key": "OL39485A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1926",
+                  "isbn": "1987467809",
+                  "publisher": "Bantam Seal",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/14640067-L.jpg",
+                  "key": "/works/OL77775W",
+                  "type": "book",
+                  "cover_i": 14640067,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL46930495M",
+                                    "isbn": [
+                                          "9782382262320",
+                                          "238226232X"
+                                    ],
+                                    "title": "The Blue Castle",
+                                    "cover_i": 14639109,
+                                    "publisher": [
+                                          "[publisher not identified]"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 291,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL39485A"
+                  ],
+                  "author_name": [
+                        "Lucy Maud Montgomery"
+                  ],
+                  "first_publish_year": 1926
+            },
+            {
+                  "title": "The Man in the High Castle",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Philip K. Dick",
+                              "key": "OL274606A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "Michelle Charrier",
+                              "key": "OL3121003A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1962",
+                  "isbn": "8683591344",
+                  "publisher": "Ace Books",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/420452-L.jpg",
+                  "key": "/works/OL2172403W",
+                  "type": "book",
+                  "cover_i": 420452,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL31977870M",
+                                    "isbn": [
+                                          "9780544817289",
+                                          "0544817281"
+                                    ],
+                                    "title": "The man in the high castle",
+                                    "cover_i": 10654426,
+                                    "publisher": [
+                                          "Houghton Mifflin Harcourt"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 59,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL274606A",
+                        "OL3121003A"
+                  ],
+                  "author_name": [
+                        "Philip K. Dick",
+                        "Michelle Charrier"
+                  ],
+                  "first_publish_year": 1962
+            },
+            {
+                  "title": "We Have Always Lived in the Castle",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Shirley Jackson",
+                              "key": "OL507165A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "Bernadette Dunne",
+                              "key": "OL2865699A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1962",
+                  "isbn": "1445836335",
+                  "publisher": "Pocket",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/11545332-L.jpg",
+                  "key": "/works/OL3171087W",
+                  "type": "book",
+                  "cover_i": 11545332,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL21142070M",
+                                    "isbn": [
+                                          "0140071075",
+                                          "9780140071078"
+                                    ],
+                                    "title": "We Have Always Lived in the Castle",
+                                    "cover_i": 14812400,
+                                    "publisher": [
+                                          "Penguin Books"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 36,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL507165A",
+                        "OL2865699A"
+                  ],
+                  "author_name": [
+                        "Shirley Jackson",
+                        "Bernadette Dunne"
+                  ],
+                  "first_publish_year": 1962
+            },
+            {
+                  "title": "The king of the castle",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Eleanor Burford",
+                              "key": "OL442995A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "Virginia Holt",
+                              "key": "OL950283A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "Phil Carr",
+                              "key": "OL12554970A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1967",
+                  "isbn": "9788423311057",
+                  "publisher": "Ediciones Destino",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/3332266-L.jpg",
+                  "key": "/works/OL3931519W",
+                  "type": "book",
+                  "cover_i": 3332266,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL26328036M",
+                                    "isbn": [
+                                          "9780449200339",
+                                          "0449200337"
+                                    ],
+                                    "title": "The king of the castle",
+                                    "cover_i": 15107734,
+                                    "publisher": [
+                                          "Fawcett Crest"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 34,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL442995A",
+                        "OL950283A",
+                        "OL12554970A"
+                  ],
+                  "author_name": [
+                        "Eleanor Burford",
+                        "Virginia Holt",
+                        "Phil Carr"
+                  ],
+                  "first_publish_year": 1967
+            },
+            {
+                  "title": "The Castle of Llyr",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Lloyd Alexander",
+                              "key": "OL236182A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1966",
+                  "isbn": "9994798987",
+                  "publisher": "Dell",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/8311440-L.jpg",
+                  "key": "/works/OL1966676W",
+                  "type": "book",
+                  "cover_i": 8311440,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL42879527M",
+                                    "title": "The Castle of Llyr",
+                                    "cover_i": 14925085,
+                                    "publisher": [
+                                          "Yearling Book"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 40,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL236182A"
+                  ],
+                  "author_name": [
+                        "Lloyd Alexander"
+                  ],
+                  "first_publish_year": 1966
+            },
+            {
+                  "title": "The Gruffalo",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Julia Donaldson",
+                              "key": "OL232548A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1999",
+                  "isbn": "9780230747937",
+                  "publisher": "Puffin/Penguin Books, New York",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/8561698-L.jpg",
+                  "key": "/works/OL1938178W",
+                  "type": "book",
+                  "cover_i": 8561698,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL16184549M",
+                                    "isbn": [
+                                          "9780333710937",
+                                          "0333710932"
+                                    ],
+                                    "title": "The Gruffalo",
+                                    "cover_i": 10549185,
+                                    "publisher": [
+                                          "Macmillan Children's Books"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 44,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL232548A"
+                  ],
+                  "author_name": [
+                        "Julia Donaldson"
+                  ],
+                  "first_publish_year": 1999
+            },
+            {
+                  "title": "De l'inconv\u00e9nient d'\u00eatre n\u00e9",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Emil Cioran",
+                              "key": "OL145170A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1973",
+                  "isbn": "9780704301801",
+                  "publisher": "Henry Holt & Co (P)",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/4486369-L.jpg",
+                  "key": "/works/OL1407429W",
+                  "type": "book",
+                  "cover_i": 4486369,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL5207299M",
+                                    "isbn": [
+                                          "0670732621",
+                                          "9780670732623"
+                                    ],
+                                    "title": "The trouble with being born",
+                                    "cover_i": 14852032,
+                                    "publisher": [
+                                          "Viking Press"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 5,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL145170A"
+                  ],
+                  "author_name": [
+                        "Emil Cioran"
+                  ],
+                  "first_publish_year": 1973
+            },
+            {
+                  "title": "The Trouble With Being Born",
+                  "openlibrary_id": null,
+                  "authors": [],
+                  "published_date": "1986",
+                  "isbn": "0394178475",
+                  "publisher": "Henry Holt & Company, Inc.",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL10158920M",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL10158920M",
+                                    "isbn": [
+                                          "9780394178479",
+                                          "0394178475"
+                                    ],
+                                    "title": "The Trouble With Being Born",
+                                    "publisher": [
+                                          "Henry Holt & Company, Inc."
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "first_publish_year": 1986
+            },
+            {
+                  "title": "The trouble with being born",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Jeffrey DeShell",
+                              "key": "OL536997A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2008",
+                  "isbn": "1573668109",
+                  "publisher": "University of Alabama Press",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/8204059-L.jpg",
+                  "key": "/works/OL3285983W",
+                  "type": "book",
+                  "cover_i": 8204059,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL23160591M",
+                                    "isbn": [
+                                          "9781573661416",
+                                          "1573661414"
+                                    ],
+                                    "title": "The trouble with being born",
+                                    "cover_i": 8204059,
+                                    "publisher": [
+                                          "FC2"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 2,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL536997A"
+                  ],
+                  "author_name": [
+                        "Jeffrey DeShell"
+                  ],
+                  "first_publish_year": 2008
+            },
+            {
+                  "title": "\u1f38\u03bb\u03b9\u03ac\u03c2",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "\u038c\u03bc\u03b7\u03c1\u03bf\u03c2",
+                              "key": "OL18404A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1505",
+                  "isbn": "9780198797357",
+                  "publisher": "Printed for John White by Richard Taylor",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/7083790-L.jpg",
+                  "key": "/works/OL61981W",
+                  "type": "book",
+                  "cover_i": 7083790,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL7015179M",
+                                    "title": "The Iliad of Homer with a verse translation.",
+                                    "cover_i": 5884068,
+                                    "publisher": [
+                                          "Longmans and Co."
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 545,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL18404A"
+                  ],
+                  "author_name": [
+                        "\u038c\u03bc\u03b7\u03c1\u03bf\u03c2"
+                  ],
+                  "first_publish_year": 1505
+            },
+            {
+                  "title": "Les Trois Mousquetaires",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Alexandre Dumas",
+                              "key": "OL18236A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "Auguste Maquet",
+                              "key": "OL6006699A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1844",
+                  "isbn": "1534656316",
+                  "publisher": "Nabu Press",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/11929973-L.jpg",
+                  "key": "/works/OL36861W",
+                  "type": "book",
+                  "cover_i": 11929973,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL23371343M",
+                                    "title": "The three musketeers (being the first of the D'Artagnan romances.)",
+                                    "cover_i": 14539831,
+                                    "subtitle": "Twenty years after, a sequel ...",
+                                    "publisher": [
+                                          "Collier"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 361,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL18236A",
+                        "OL6006699A"
+                  ],
+                  "author_name": [
+                        "Alexandre Dumas",
+                        "Auguste Maquet"
+                  ],
+                  "first_publish_year": 1844
+            },
+            {
+                  "title": "Oliver Twist",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Charles Dickens",
+                              "key": "OL24638A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1822",
+                  "isbn": "9781973843641",
+                  "publisher": "\u0425\u0443\u0434\u043e\u0436\u0435\u0441\u0442\u0432\u0435\u043d\u043d\u0430\u044f \u043b\u0438\u0442\u0435\u0440\u0430\u0442\u0443\u0440\u0430",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/13300802-L.jpg",
+                  "key": "/works/OL8193478W",
+                  "type": "book",
+                  "cover_i": 13300802,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL44206797M",
+                                    "title": "The Adventures of Oliver Twist",
+                                    "cover_i": 13107130,
+                                    "publisher": [
+                                          "Ticknor and Fields"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 263,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL24638A"
+                  ],
+                  "author_name": [
+                        "Charles Dickens"
+                  ],
+                  "first_publish_year": 1822
+            },
+            {
+                  "title": "Study Guide",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "SuperSummary",
+                              "key": "OL8354734A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2017",
+                  "isbn": "9798630821072",
+                  "publisher": "Independently published",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/12366237-L.jpg",
+                  "key": "/works/OL21868175W",
+                  "type": "book",
+                  "cover_i": 12366237,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL40561929M",
+                                    "isbn": [
+                                          "9781792070143",
+                                          "1792070144"
+                                    ],
+                                    "title": "Study Guide",
+                                    "subtitle": "Gender Trouble by Judith Butler",
+                                    "publisher": [
+                                          "Independently Published"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 258,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL8354734A"
+                  ],
+                  "author_name": [
+                        "SuperSummary"
+                  ],
+                  "first_publish_year": 2017
+            },
+            {
+                  "title": "Unicorn Coloring Book",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "kids M. shop notebook",
+                              "key": "OL11119378A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2019",
+                  "isbn": "9781679569470",
+                  "publisher": "Independently Published",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL30297379W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL41701993M",
+                                    "isbn": [
+                                          "9781679358333",
+                                          "1679358332"
+                                    ],
+                                    "title": "Unicorn Coloring Book",
+                                    "subtitle": "Born to Be a Uni - 44 Pages - 8 X 10 Inches",
+                                    "publisher": [
+                                          "Independently Published"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 103,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL11119378A"
+                  ],
+                  "author_name": [
+                        "kids M. shop notebook"
+                  ],
+                  "first_publish_year": 2019
+            },
+            {
+                  "title": "Coloring Book",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Donald Nguyen",
+                              "key": "OL11147769A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2019",
+                  "isbn": "9781677506903",
+                  "publisher": "Independently Published",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL30432218W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL46831212M",
+                                    "isbn": [
+                                          "9781678546427",
+                                          "1678546429"
+                                    ],
+                                    "title": "Coloring Book",
+                                    "subtitle": "Born to Be a Stay at Home Dog Mom 69 Pages - 8 X 10 Inches",
+                                    "publisher": [
+                                          "Independently Published"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 144,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL11147769A"
+                  ],
+                  "author_name": [
+                        "Donald Nguyen"
+                  ],
+                  "first_publish_year": 2019
+            },
+            {
+                  "title": "Born to Be Trouble",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Sheila Jeffries",
+                              "key": "OL3683001A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2017",
+                  "isbn": "1471154955",
+                  "publisher": "Simon & Schuster, Limited",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL21596470W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL29322156M",
+                                    "isbn": [
+                                          "9781471154942",
+                                          "1471154947"
+                                    ],
+                                    "title": "Born to Be Trouble",
+                                    "publisher": [
+                                          "Simon & Schuster, Limited"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 2,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL3683001A"
+                  ],
+                  "author_name": [
+                        "Sheila Jeffries"
+                  ],
+                  "first_publish_year": 2017
+            },
+            {
+                  "title": "Herman Hesse",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Franz Baumer",
+                              "key": "OL288524A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1959",
+                  "isbn": null,
+                  "publisher": "Colloquium Verlag",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL2234683W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL22350870M",
+                                    "title": "Herman Hesse.",
+                                    "publisher": [
+                                          "Colloquium Verlag"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 2,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL288524A"
+                  ],
+                  "author_name": [
+                        "Franz Baumer"
+                  ],
+                  "first_publish_year": 1959
+            },
+            {
+                  "title": "Herman Hesse",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "S. Unseld",
+                              "key": "OL4726410A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1973",
+                  "isbn": null,
+                  "publisher": null,
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL11272061W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL14865921M",
+                                    "title": "Herman Hesse",
+                                    "subtitle": "eine Werkgesichte."
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL4726410A"
+                  ],
+                  "author_name": [
+                        "S. Unseld"
+                  ],
+                  "first_publish_year": 1973
+            },
+            {
+                  "title": "Herman Hesse",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "H. Stolte",
+                              "key": "OL4726086A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1971",
+                  "isbn": null,
+                  "publisher": null,
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL11271612W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL14865267M",
+                                    "title": "Herman Hesse",
+                                    "subtitle": "Weltscheu und Lebensliebe."
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL4726086A"
+                  ],
+                  "author_name": [
+                        "H. Stolte"
+                  ],
+                  "first_publish_year": 1971
+            },
+            {
+                  "title": "Herman Hesse",
+                  "openlibrary_id": null,
+                  "authors": [],
+                  "published_date": "1975",
+                  "isbn": null,
+                  "publisher": "Farrar, Straus & Giroux, New York",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL33700991W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL45665206M",
+                                    "title": "Herman Hesse",
+                                    "subtitle": "A Pictorial Biography",
+                                    "publisher": [
+                                          "Farrar, Straus & Giroux, New York"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "first_publish_year": 1975
+            },
+            {
+                  "title": "Siddhartha Herman Hesse",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Hermann Hesse",
+                              "key": "OL76437A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2022",
+                  "isbn": "9798433242654",
+                  "publisher": "Independently Published",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL27905681W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL38486876M",
+                                    "isbn": [
+                                          "9798411030952"
+                                    ],
+                                    "title": "Siddhartha Herman Hesse",
+                                    "publisher": [
+                                          "Independently Published"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 6,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL76437A"
+                  ],
+                  "author_name": [
+                        "Hermann Hesse"
+                  ],
+                  "first_publish_year": 2022
+            },
+            {
+                  "title": "Siddhartha Herman Hesse",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Hermann Hesse",
+                              "key": "OL76437A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2021",
+                  "isbn": "9798778653474",
+                  "publisher": "Independently Published",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL31026850W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL42613144M",
+                                    "isbn": [
+                                          "9798792385542"
+                                    ],
+                                    "title": "Siddhartha Herman Hesse",
+                                    "publisher": [
+                                          "Independently Published"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 6,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL76437A"
+                  ],
+                  "author_name": [
+                        "Hermann Hesse"
+                  ],
+                  "first_publish_year": 2021
+            },
+            {
+                  "title": "Herman Hesse, der Steppenwolf",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Helga Esselborn-Krumbiegel",
+                              "key": "OL784444A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1985",
+                  "isbn": "9783486874914",
+                  "publisher": "R. Oldenbourg",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/5302076-L.jpg",
+                  "key": "/works/OL4157550W",
+                  "type": "book",
+                  "cover_i": 5302076,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL13546569M",
+                                    "isbn": [
+                                          "3486874918",
+                                          "9783486874914"
+                                    ],
+                                    "title": "Herman Hesse, der Steppenwolf",
+                                    "cover_i": 5302076,
+                                    "subtitle": "interpretation",
+                                    "publisher": [
+                                          "R. Oldenbourg"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL784444A"
+                  ],
+                  "author_name": [
+                        "Helga Esselborn-Krumbiegel"
+                  ],
+                  "first_publish_year": 1985
+            },
+            {
+                  "title": "Herman Hesse",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Gotthilf Mafner",
+                              "key": "OL4329800A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1954",
+                  "isbn": null,
+                  "publisher": "Carl",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL10435224W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL13654525M",
+                                    "title": "Herman Hesse",
+                                    "subtitle": "Werk und Leben: ein Dichterbildnis.",
+                                    "publisher": [
+                                          "Carl"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL4329800A"
+                  ],
+                  "author_name": [
+                        "Gotthilf Mafner"
+                  ],
+                  "first_publish_year": 1954
+            },
+            {
+                  "title": "Herman Hesse",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Michael Limberg",
+                              "key": "OL1448215A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1996",
+                  "isbn": "9783921841549",
+                  "publisher": "Gengenbach",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL43520974W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL59322746M",
+                                    "isbn": [
+                                          "3921841542",
+                                          "9783921841549"
+                                    ],
+                                    "title": "Herman Hesse",
+                                    "subtitle": "und die welt der b\u00fccher",
+                                    "publisher": [
+                                          "Gengenbach"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL1448215A"
+                  ],
+                  "author_name": [
+                        "Michael Limberg"
+                  ],
+                  "first_publish_year": 1996
+            },
+            {
+                  "title": "Der Steppenwolf",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Hermann Hesse",
+                              "key": "OL76437A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1927",
+                  "isbn": "055304789",
+                  "publisher": "Manesse Verlag",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/3221083-L.jpg",
+                  "key": "/works/OL872773W",
+                  "type": "book",
+                  "cover_i": 3221083,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL43278726M",
+                                    "title": "steppenwolf herman hesse",
+                                    "publisher": [
+                                          "Bantam"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 239,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL76437A"
+                  ],
+                  "author_name": [
+                        "Hermann Hesse"
+                  ],
+                  "first_publish_year": 1927
+            },
+            {
+                  "title": "Die Verwandlung",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Franz Kafka",
+                              "key": "OL33146A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1915",
+                  "isbn": "8119307534",
+                  "publisher": "Emece Editores",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/12820198-L.jpg",
+                  "key": "/works/OL498556W",
+                  "type": "book",
+                  "cover_i": 12820198,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL24506210M",
+                                    "title": "Metamorphosis",
+                                    "cover_i": 15113281,
+                                    "publisher": [
+                                          "Project Gutenberg"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 953,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL33146A"
+                  ],
+                  "author_name": [
+                        "Franz Kafka"
+                  ],
+                  "first_publish_year": 1915
+            },
+            {
+                  "title": "Der Proce\u00df",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Franz Kafka",
+                              "key": "OL33146A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1825",
+                  "isbn": "9780435385002",
+                  "publisher": "Heinemann (Txt)",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/997423-L.jpg",
+                  "key": "/works/OL498463W",
+                  "type": "book",
+                  "cover_i": 997423,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL46919838M",
+                                    "title": "The Trial (Penguin Books. no. 907.)",
+                                    "cover_i": 15082914,
+                                    "publisher": [
+                                          "Penguin Press"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 782,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL33146A"
+                  ],
+                  "author_name": [
+                        "Franz Kafka"
+                  ],
+                  "first_publish_year": 1825
+            },
+            {
+                  "title": "Das Schlo\u00df",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Franz Kafka",
+                              "key": "OL33146A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1926",
+                  "isbn": "9869016049",
+                  "publisher": "Emece Editores",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/12605605-L.jpg",
+                  "key": "/works/OL498434W",
+                  "type": "book",
+                  "cover_i": 12605605,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL26398835M",
+                                    "title": "The Castle",
+                                    "cover_i": 8096204,
+                                    "publisher": [
+                                          "Knopf"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 166,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL33146A"
+                  ],
+                  "author_name": [
+                        "Franz Kafka"
+                  ],
+                  "first_publish_year": 1926
+            },
+            {
+                  "title": "Briefe an Milena",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Franz Kafka",
+                              "key": "OL33146A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1952",
+                  "isbn": "605832355X",
+                  "publisher": "Olimpos Yay\u0131nlar\u0131",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/4066124-L.jpg",
+                  "key": "/works/OL498788W",
+                  "type": "book",
+                  "cover_i": 4066124,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL6150239M",
+                                    "title": "Letters to Milena",
+                                    "cover_i": 15095900,
+                                    "publisher": [
+                                          "Schocken Books"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 84,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL33146A"
+                  ],
+                  "author_name": [
+                        "Franz Kafka"
+                  ],
+                  "first_publish_year": 1952
+            },
+            {
+                  "title": "Amerika",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Franz Kafka",
+                              "key": "OL33146A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "Ritchie Robertson",
+                              "key": "OL866650A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1927",
+                  "isbn": "4042083056",
+                  "publisher": "Penguin Group UK",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/3080557-L.jpg",
+                  "key": "/works/OL498411W",
+                  "type": "book",
+                  "cover_i": 3080557,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL19341754M",
+                                    "title": "Franz Kafka's Amerika",
+                                    "publisher": [
+                                          "New Directions"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 94,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL33146A",
+                        "OL866650A"
+                  ],
+                  "author_name": [
+                        "Franz Kafka",
+                        "Ritchie Robertson"
+                  ],
+                  "first_publish_year": 1927
+            },
+            {
+                  "title": "\u6d77\u8fba\u306e\u30ab\u30d5\u30ab",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "\u6751\u4e0a\u6625\u6a39",
+                              "key": "OL382524A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2001",
+                  "isbn": "0099593866",
+                  "publisher": "Labutxaca",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/4982600-L.jpg",
+                  "key": "/works/OL2625431W",
+                  "type": "book",
+                  "cover_i": 4982600,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL39215508M",
+                                    "isbn": [
+                                          "9788806216948",
+                                          "8806216945"
+                                    ],
+                                    "title": "Kafka sulla spiaggia",
+                                    "cover_i": 14485022,
+                                    "publisher": [
+                                          "Einaudi"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 59,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL382524A"
+                  ],
+                  "author_name": [
+                        "\u6751\u4e0a\u6625\u6a39"
+                  ],
+                  "first_publish_year": 2001
+            },
+            {
+                  "title": "Study Guide",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "SuperSummary",
+                              "key": "OL8354734A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2017",
+                  "isbn": "9798630821072",
+                  "publisher": "Independently published",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/12366237-L.jpg",
+                  "key": "/works/OL21868175W",
+                  "type": "book",
+                  "cover_i": 12366237,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL41034994M",
+                                    "isbn": [
+                                          "9781731424068",
+                                          "173142406X"
+                                    ],
+                                    "title": "Study Guide",
+                                    "subtitle": "the Metamorphosis by Franz Kafka",
+                                    "publisher": [
+                                          "Independently Published"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL8354734A"
+                  ],
+                  "author_name": [
+                        "SuperSummary"
+                  ],
+                  "first_publish_year": 2017
+            },
+            {
+                  "title": "Ulysses",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "James Joyce",
+                              "key": "OL31827A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "James Joyce",
+                              "key": "OL11598064A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "james joyce",
+                              "key": "OL12387151A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1914",
+                  "isbn": "1513264516",
+                  "publisher": "The Modern Library",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/13136548-L.jpg",
+                  "key": "/works/OL86318W",
+                  "type": "book",
+                  "cover_i": 13136548,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL35318432M",
+                                    "isbn": [
+                                          "9786054820917",
+                                          "6054820915"
+                                    ],
+                                    "title": "Ulysses",
+                                    "cover_i": 12129260,
+                                    "publisher": [
+                                          "Kafka Yay\u0131nevi"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL31827A",
+                        "OL11598064A",
+                        "OL12387151A"
+                  ],
+                  "author_name": [
+                        "James Joyce",
+                        "James Joyce",
+                        "james joyce"
+                  ],
+                  "first_publish_year": 1914
+            },
+            {
+                  "title": "Tao te Ching",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "\u8001\u5b50",
+                              "key": "OL18293A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "James Legge",
+                              "key": "OL116786A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "Gia-Fu Feng",
+                              "key": "OL2728157A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "Stacie Mallinson",
+                              "key": "OL11784505A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "Jeff Mallinson",
+                              "key": "OL7656984A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "Peter Kang",
+                              "key": "OL7679278A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "John Minford",
+                              "key": "OL2658936A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        },
+                        {
+                              "name": "Stephen Mitchell",
+                              "key": "OL835792A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1842",
+                  "isbn": "0857083341",
+                  "publisher": "Masonic Publishing Company, The",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/662232-L.jpg",
+                  "key": "/works/OL45499W",
+                  "type": "book",
+                  "cover_i": 662232,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL35389153M",
+                                    "isbn": [
+                                          "9786054820771",
+                                          "605482077X"
+                                    ],
+                                    "title": "Tao Te Ching",
+                                    "cover_i": 12231734,
+                                    "publisher": [
+                                          "Kafka Yayinevi"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL18293A",
+                        "OL116786A",
+                        "OL2728157A",
+                        "OL11784505A",
+                        "OL7656984A",
+                        "OL7679278A",
+                        "OL2658936A",
+                        "OL835792A"
+                  ],
+                  "author_name": [
+                        "\u8001\u5b50",
+                        "James Legge",
+                        "Gia-Fu Feng",
+                        "Stacie Mallinson",
+                        "Jeff Mallinson",
+                        "Peter Kang",
+                        "John Minford",
+                        "Stephen Mitchell"
+                  ],
+                  "first_publish_year": 1842
+            },
+            {
+                  "title": "Short stories",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Franz Kafka",
+                              "key": "OL33146A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1946",
+                  "isbn": "0140283366",
+                  "publisher": "Cardinal",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/4216964-L.jpg",
+                  "key": "/works/OL498623W",
+                  "type": "book",
+                  "cover_i": 4216964,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL22287183M",
+                                    "isbn": [
+                                          "0747407258",
+                                          "9780747407256"
+                                    ],
+                                    "title": "Stories 1904-1924",
+                                    "cover_i": 10616388,
+                                    "publisher": [
+                                          "Cardinal"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 45,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL33146A"
+                  ],
+                  "author_name": [
+                        "Franz Kafka"
+                  ],
+                  "first_publish_year": 1946
+            },
+            {
+                  "title": "De l'inconv\u00e9nient d'\u00eatre n\u00e9",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Emil Cioran",
+                              "key": "OL145170A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1973",
+                  "isbn": "9780704301801",
+                  "publisher": "Henry Holt & Co (P)",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/4486369-L.jpg",
+                  "key": "/works/OL1407429W",
+                  "type": "book",
+                  "cover_i": 4486369,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL5207299M",
+                                    "isbn": [
+                                          "0670732621",
+                                          "9780670732623"
+                                    ],
+                                    "title": "The trouble with being born",
+                                    "cover_i": 14852032,
+                                    "publisher": [
+                                          "Viking Press"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 8,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL145170A"
+                  ],
+                  "author_name": [
+                        "Emil Cioran"
+                  ],
+                  "first_publish_year": 1973
+            },
+            {
+                  "title": "Sur les Cimes du Desespoir",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Emil Cioran",
+                              "key": "OL145170A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1990",
+                  "isbn": "0704302225",
+                  "publisher": "Quartet Encounters",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/13493049-L.jpg",
+                  "key": "/works/OL1407408W",
+                  "type": "book",
+                  "cover_i": 13493049,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL15111012M",
+                                    "isbn": [
+                                          "0704302225",
+                                          "9780704302228"
+                                    ],
+                                    "title": "On the heightsof despair",
+                                    "cover_i": 15030175,
+                                    "publisher": [
+                                          "Quartet Encounters"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 8,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL145170A"
+                  ],
+                  "author_name": [
+                        "Emil Cioran"
+                  ],
+                  "first_publish_year": 1990
+            },
+            {
+                  "title": "Pre cis de de composition",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Emil Cioran",
+                              "key": "OL145170A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1949",
+                  "isbn": "0704301024",
+                  "publisher": "Distributed by Little, Brown and Co.",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/13286082-L.jpg",
+                  "key": "/works/OL1407417W",
+                  "type": "book",
+                  "cover_i": 13286082,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL21226745M",
+                                    "isbn": [
+                                          "0670641227",
+                                          "9780670641222"
+                                    ],
+                                    "title": "A Short history of decay",
+                                    "cover_i": 15152099,
+                                    "publisher": [
+                                          "Viking Press"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 14,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL145170A"
+                  ],
+                  "author_name": [
+                        "Emil Cioran"
+                  ],
+                  "first_publish_year": 1949
+            },
+            {
+                  "title": "La tentation d'exister",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Emil Cioran",
+                              "key": "OL145170A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1956",
+                  "isbn": "9780785929345",
+                  "publisher": "Gallimard",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/140194-L.jpg",
+                  "key": "/works/OL1407424W",
+                  "type": "book",
+                  "cover_i": 140194,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL5533762M",
+                                    "title": "The temptation to exist",
+                                    "cover_i": 14544272,
+                                    "publisher": [
+                                          "Quadrangle Books"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 12,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL145170A"
+                  ],
+                  "author_name": [
+                        "Emil Cioran"
+                  ],
+                  "first_publish_year": 1956
+            },
+            {
+                  "title": "Cioran avant Cioran",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Vincent Piednoir",
+                              "key": "OL7083527A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2013",
+                  "isbn": "2356980369",
+                  "publisher": "\u00c9ditions Gaussen",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL23118238W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL30959938M",
+                                    "isbn": [
+                                          "9782356980366",
+                                          "2356980369"
+                                    ],
+                                    "title": "Cioran avant Cioran",
+                                    "subtitle": "histoire d'une transfiguration",
+                                    "publisher": [
+                                          "\u00c9ditions Gaussen"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL7083527A"
+                  ],
+                  "author_name": [
+                        "Vincent Piednoir"
+                  ],
+                  "first_publish_year": 2013
+            },
+            {
+                  "title": "Cioran",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Emil Stan",
+                              "key": "OL90325A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2005",
+                  "isbn": "9789736113291",
+                  "publisher": "Institutul European",
+                  "description": null,
+                  "cover_url": null,
+                  "key": "/works/OL982638W",
+                  "type": "book",
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL16880591M",
+                                    "isbn": [
+                                          "9789736113291",
+                                          "9736113299"
+                                    ],
+                                    "title": "Cioran",
+                                    "subtitle": "vitalitatea renunt\u0326a\u0306rii",
+                                    "publisher": [
+                                          "Institutul European"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL90325A"
+                  ],
+                  "author_name": [
+                        "Emil Stan"
+                  ],
+                  "first_publish_year": 2005
+            },
+            {
+                  "title": "Cioran",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "St\u00e9phane Barsacq",
+                              "key": "OL3969587A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2011",
+                  "isbn": "9782020992978",
+                  "publisher": "SEUIL",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/13896836-L.jpg",
+                  "key": "/works/OL22368148W",
+                  "type": "book",
+                  "cover_i": 13896836,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL30452602M",
+                                    "isbn": [
+                                          "9782020992978",
+                                          "2020992973"
+                                    ],
+                                    "title": "Cioran",
+                                    "cover_i": 13896836,
+                                    "subtitle": "\u00e9jaculations mystiques",
+                                    "publisher": [
+                                          "Seuil",
+                                          "SEUIL"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 1,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL3969587A"
+                  ],
+                  "author_name": [
+                        "St\u00e9phane Barsacq"
+                  ],
+                  "first_publish_year": 2011
+            },
+            {
+                  "title": "Cioran",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Simona Modreanu",
+                              "key": "OL1410208A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2003",
+                  "isbn": "2848980079",
+                  "publisher": "Oxus",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/13810780-L.jpg",
+                  "key": "/works/OL5775674W",
+                  "type": "book",
+                  "cover_i": 13810780,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL19229833M",
+                                    "isbn": [
+                                          "2848980079",
+                                          "9782848980072"
+                                    ],
+                                    "title": "Cioran",
+                                    "cover_i": 13810780,
+                                    "publisher": [
+                                          "Oxus",
+                                          "OXUS"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 5,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL1410208A"
+                  ],
+                  "author_name": [
+                        "Simona Modreanu"
+                  ],
+                  "first_publish_year": 2003
+            },
+            {
+                  "title": "Cioran",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Vincent Piednoir",
+                              "key": "OL7083527A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "2009",
+                  "isbn": "2851971611",
+                  "publisher": "Herne",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/13189475-L.jpg",
+                  "key": "/works/OL18554200W",
+                  "type": "book",
+                  "cover_i": 13189475,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL23648268M",
+                                    "isbn": [
+                                          "9782851971616",
+                                          "2851971611"
+                                    ],
+                                    "title": "Cioran",
+                                    "cover_i": 13189475,
+                                    "publisher": [
+                                          "Herne"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 2,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL7083527A"
+                  ],
+                  "author_name": [
+                        "Vincent Piednoir"
+                  ],
+                  "first_publish_year": 2009
+            },
+            {
+                  "title": "Ensayo sobre Cioran",
+                  "openlibrary_id": null,
+                  "authors": [
+                        {
+                              "name": "Fernando Savater",
+                              "key": "OL277179A",
+                              "personal_name": null,
+                              "bio": null,
+                              "birth_date": null,
+                              "death_date": null,
+                              "remote_ids": null,
+                              "photos": null,
+                              "links": null
+                        }
+                  ],
+                  "published_date": "1974",
+                  "isbn": "8423972887",
+                  "publisher": "Espasa Calpe",
+                  "description": null,
+                  "cover_url": "https://covers.openlibrary.org/b/id/7910759-L.jpg",
+                  "key": "/works/OL2184616W",
+                  "type": "book",
+                  "cover_i": 7910759,
+                  "editions": {
+                        "docs": [
+                              {
+                                    "key": "/books/OL52461513M",
+                                    "isbn": [
+                                          "9732808578",
+                                          "9789732808573"
+                                    ],
+                                    "title": "Eseu despre Cioran",
+                                    "publisher": [
+                                          "Humanitas"
+                                    ]
+                              }
+                        ],
+                        "start": 0,
+                        "numFound": 3,
+                        "numFoundExact": true
+                  },
+                  "author_key": [
+                        "OL277179A"
+                  ],
+                  "author_name": [
+                        "Fernando Savater"
+                  ],
+                  "first_publish_year": 1974
+            }
+      ]
+}
+
+6. 🤖 [agent] queue-service
+   Type: reference_results
+   Time: 2025-12-15T23:47:54.062330Z
+   ✅ Schema validation passed
+   ✅ DecisionResults schema validation passed
+   📊 Decision Type: book
+   📚 References: 3
+   ⚠️  WARNING: No reasoning provided!
+
+   Created 3 references
+   ✅ Created: 3 references
+   📚 The Glass Bead Game (book) - ID: 019b2469-d392-7bd1-be07-d68a358a45d8
+   📚 I Capture the Castle (book) - ID: 019b2469-d39e-77a0-bf6a-16d486335497
+   📚 The Trouble With Being Born (book) - ID: 019b2469-d3a9-7d22-a97e-69ca0ec616f6
+
+   📊 Full decision results:
+      {
+      "type": "book",
+      "created_references": [
+            {
+                  "entity_type": "book",
+                  "name": "The Glass Bead Game",
+                  "reference_metadata": {
+                        "key": "/works/OL9520564W",
+                        "isbn": "9780634027994",
+                        "title": "The Glass Bead Game",
+                        "authors": [
+                              {
+                                    "bio": null,
+                                    "key": "OL3527885A",
+                                    "name": "James Beckel",
+                                    "links": null,
+                                    "photos": null,
+                                    "birth_date": null,
+                                    "death_date": null,
+                                    "remote_ids": null,
+                                    "personal_name": null
+                              }
+                        ],
+                        "cover_i": 2544063,
+                        "editions": {
+                              "docs": [
+                                    {
+                                          "key": "/books/OL11018623M",
+                                          "isbn": [
+                                                "9780634027994",
+                                                "0634027999"
+                                          ],
+                                          "title": "The Glass Bead Game",
+                                          "cover_i": 2544063,
+                                          "subtitle": "Concerto for Horn",
+                                          "publisher": [
+                                                "Hal Leonard Corporation"
+                                          ]
+                                    }
+                              ],
+                              "start": 0,
+                              "numFound": 1,
+                              "numFoundExact": true
+                        },
+                        "cover_url": "https://covers.openlibrary.org/b/id/2544063-L.jpg",
+                        "publisher": "Hal Leonard Corporation",
+                        "author_key": [
+                              "OL3527885A"
+                        ],
+                        "author_name": [
+                              "James Beckel"
+                        ],
+                        "description": null,
+                        "published_date": "2001",
+                        "first_publish_year": 2001
+                  },
+                  "id": "019b2469-d392-7bd1-be07-d68a358a45d8",
+                  "user_id": "019a25f2-9977-79a0-a706-c879b1fe7442",
+                  "status": "pending",
+                  "created_at": "2025-12-15T23:47:53.874212Z",
+                  "updated_at": "2025-12-15T23:47:53.874213Z"
+            },
+            {
+                  "entity_type": "book",
+                  "name": "I Capture the Castle",
+                  "reference_metadata": {
+                        "key": "/works/OL1518582W",
+                        "isbn": "9780753161852",
+                        "title": "I Capture the Castle",
+                        "authors": [
+                              {
+                                    "bio": null,
+                                    "key": "OL161177A",
+                                    "name": "Dodie Smith",
+                                    "links": null,
+                                    "photos": null,
+                                    "birth_date": null,
+                                    "death_date": null,
+                                    "remote_ids": null,
+                                    "personal_name": null
+                              }
+                        ],
+                        "cover_i": 5080686,
+                        "editions": {
+                              "docs": [
+                                    {
+                                          "key": "/books/OL25127343M",
+                                          "isbn": [
+                                                "9780099845003",
+                                                "0099845008"
+                                          ],
+                                          "title": "I Capture the Castle",
+                                          "cover_i": 6988346,
+                                          "publisher": [
+                                                "Red Fox"
+                                          ]
+                                    }
+                              ],
+                              "start": 0,
+                              "numFound": 74,
+                              "numFoundExact": true
+                        },
+                        "cover_url": "https://covers.openlibrary.org/b/id/5080686-L.jpg",
+                        "publisher": "Red Fox",
+                        "author_key": [
+                              "OL161177A"
+                        ],
+                        "author_name": [
+                              "Dodie Smith"
+                        ],
+                        "description": null,
+                        "published_date": "1948",
+                        "first_publish_year": 1948
+                  },
+                  "id": "019b2469-d39e-77a0-bf6a-16d486335497",
+                  "user_id": "019a25f2-9977-79a0-a706-c879b1fe7442",
+                  "status": "pending",
+                  "created_at": "2025-12-15T23:47:53.886178Z",
+                  "updated_at": "2025-12-15T23:47:53.886180Z"
+            },
+            {
+                  "entity_type": "book",
+                  "name": "The Trouble With Being Born",
+                  "reference_metadata": {
+                        "key": "/works/OL10158920M",
+                        "isbn": "0394178475",
+                        "title": "The Trouble With Being Born",
+                        "authors": [],
+                        "editions": {
+                              "docs": [
+                                    {
+                                          "key": "/books/OL10158920M",
+                                          "isbn": [
+                                                "9780394178479",
+                                                "0394178475"
+                                          ],
+                                          "title": "The Trouble With Being Born",
+                                          "publisher": [
+                                                "Henry Holt & Company, Inc."
+                                          ]
+                                    }
+                              ],
+                              "start": 0,
+                              "numFound": 1,
+                              "numFoundExact": true
+                        },
+                        "cover_url": null,
+                        "publisher": "Henry Holt & Company, Inc.",
+                        "description": null,
+                        "published_date": "1986",
+                        "first_publish_year": 1986
+                  },
+                  "id": "019b2469-d3a9-7d22-a97e-69ca0ec616f6",
+                  "user_id": "019a25f2-9977-79a0-a706-c879b1fe7442",
+                  "status": "pending",
+                  "created_at": "2025-12-15T23:47:53.897967Z",
+                  "updated_at": "2025-12-15T23:47:53.897969Z"
+            }
+      ],
+      "reasoning": ""
+}
+
+============================================================

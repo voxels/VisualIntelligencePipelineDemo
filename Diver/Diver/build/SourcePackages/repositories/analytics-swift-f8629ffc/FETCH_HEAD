@@ -1,0 +1,327 @@
+cbe566c579c25325da532560df64231a2c9aa877	not-for-merge	branch 'MichaelGHSeg/telemetry_plugin_names' of https://github.com/segmentio/analytics-swift
+a9707576ae7f50debdc47104eab8e26984c14b86	not-for-merge	branch 'brian/add-windows-support' of https://github.com/segmentio/analytics-swift
+bb3fa2515a318618260158e6c7a5b1bb84f2c683	not-for-merge	branch 'bsneed/lifecycle_rework' of https://github.com/segmentio/analytics-swift
+dd0f9c96637d518c6033d7025b1e8475fe749c98	not-for-merge	branch 'bsneed/linux-tests' of https://github.com/segmentio/analytics-swift
+7b231dd02e45fb28e5a6fdc2c85455c653fdfb77	not-for-merge	branch 'bsneed/network_path' of https://github.com/segmentio/analytics-swift
+f604cef21bb7269f76136c68bd664c6c993f8e28	not-for-merge	branch 'main' of https://github.com/segmentio/analytics-swift
+835ee0070ae5a7284daa2a9b33f4a05e04282fd7	not-for-merge	branch 'mgh/e2ecli' of https://github.com/segmentio/analytics-swift
+332f15fda20643d616add5c7df04d402dc264a64	not-for-merge	'refs/pull/1/head' of https://github.com/segmentio/analytics-swift
+f62af416b59a2ee69ba8fd47c3c7806e8f85bf7e	not-for-merge	'refs/pull/10/head' of https://github.com/segmentio/analytics-swift
+f78ddf9d4625764e4441960e781c8d6fcb0b013e	not-for-merge	'refs/pull/101/head' of https://github.com/segmentio/analytics-swift
+eaafcd64e7fe068cab3db472cdcf748ae16e626f	not-for-merge	'refs/pull/103/head' of https://github.com/segmentio/analytics-swift
+c872e9e5fd7cef4e5dba932b41b8a4ba1cb15f04	not-for-merge	'refs/pull/104/head' of https://github.com/segmentio/analytics-swift
+9d17eabb395c94786774d40cb243339627b61cce	not-for-merge	'refs/pull/105/head' of https://github.com/segmentio/analytics-swift
+916c391f157d50edfa697adb115249cfbb03506d	not-for-merge	'refs/pull/106/head' of https://github.com/segmentio/analytics-swift
+77c8aa9e074d1e4dba26b46265a36c2a37e81a84	not-for-merge	'refs/pull/107/head' of https://github.com/segmentio/analytics-swift
+f2f4b5ccc3cb3a6ebb8d141ea26a119f74ce39b4	not-for-merge	'refs/pull/108/head' of https://github.com/segmentio/analytics-swift
+7f74ad67e66d33a0f8928ac216f00917e2a48a9d	not-for-merge	'refs/pull/11/head' of https://github.com/segmentio/analytics-swift
+e6a28efec56af6e95a661485606d63f9413f9e23	not-for-merge	'refs/pull/111/head' of https://github.com/segmentio/analytics-swift
+74962606dd6fc42076170dc0c18908829732791f	not-for-merge	'refs/pull/112/head' of https://github.com/segmentio/analytics-swift
+43bd367c1f7dc3351fffeb88fba5cbb74b336c7d	not-for-merge	'refs/pull/114/head' of https://github.com/segmentio/analytics-swift
+2ef7c04553b2e734525fd2172fc9da89e32d41f8	not-for-merge	'refs/pull/115/head' of https://github.com/segmentio/analytics-swift
+9c4a0309177c9b2a0efdef96b1e22e2f02ec0d70	not-for-merge	'refs/pull/116/head' of https://github.com/segmentio/analytics-swift
+6d98bffd433ffeb7813611f2176c587e470f118d	not-for-merge	'refs/pull/117/head' of https://github.com/segmentio/analytics-swift
+1908aa248b3f488a82d2c9448b4e92cdbef0fcff	not-for-merge	'refs/pull/118/head' of https://github.com/segmentio/analytics-swift
+b4ae07c24963bbeff37a1418e208c649522f317f	not-for-merge	'refs/pull/119/head' of https://github.com/segmentio/analytics-swift
+c6bc4d7f1c0c048f2724b72915b90a792bc133ab	not-for-merge	'refs/pull/12/head' of https://github.com/segmentio/analytics-swift
+fbb6d8dfe2ba0563175cb8e930767517ad8a7830	not-for-merge	'refs/pull/121/head' of https://github.com/segmentio/analytics-swift
+2615b7aa0de0b46e27d9437108d5236a2541588e	not-for-merge	'refs/pull/123/head' of https://github.com/segmentio/analytics-swift
+c2490192effa82546d612efbd23c5916cb824e01	not-for-merge	'refs/pull/124/head' of https://github.com/segmentio/analytics-swift
+1ec3911fc8c641b6d99a5d16c96fc610713fd8ef	not-for-merge	'refs/pull/125/head' of https://github.com/segmentio/analytics-swift
+51dd40d3decfcf1032347de9134276f166762b4f	not-for-merge	'refs/pull/126/head' of https://github.com/segmentio/analytics-swift
+e1a2d2ed7a6efc17e14a7653ec2df892972683fb	not-for-merge	'refs/pull/127/head' of https://github.com/segmentio/analytics-swift
+172ee1d92d7d7d973f92821e406134309ab8094c	not-for-merge	'refs/pull/128/head' of https://github.com/segmentio/analytics-swift
+0bc2c3bbef02b8921945090bad9b730bcd002102	not-for-merge	'refs/pull/13/head' of https://github.com/segmentio/analytics-swift
+c2b87e2b2490dfa8c37d2bc7f6e6d2225d146128	not-for-merge	'refs/pull/130/head' of https://github.com/segmentio/analytics-swift
+2c2fb0f3e9dc513c87e521ae305961cf4d2ae7df	not-for-merge	'refs/pull/131/head' of https://github.com/segmentio/analytics-swift
+bcbc2d4150a2043389f944a857f738452787399d	not-for-merge	'refs/pull/132/head' of https://github.com/segmentio/analytics-swift
+7c543bb104ae9bf389d105927a5870737ecd5fa9	not-for-merge	'refs/pull/134/head' of https://github.com/segmentio/analytics-swift
+c5b729a23c3824a567020a0d23c2ebe2ea6eab78	not-for-merge	'refs/pull/135/head' of https://github.com/segmentio/analytics-swift
+48918bfbd1c8a210d5a8603620709d9aab2819bd	not-for-merge	'refs/pull/136/head' of https://github.com/segmentio/analytics-swift
+c0fa521e3612b6261638c19bd5976c2b5232948f	not-for-merge	'refs/pull/139/head' of https://github.com/segmentio/analytics-swift
+f41b2066eb658223f1ac62b35fc64977861fffd9	not-for-merge	'refs/pull/14/head' of https://github.com/segmentio/analytics-swift
+7f31f2b1e977372ae6695eee213755f25d26457e	not-for-merge	'refs/pull/140/head' of https://github.com/segmentio/analytics-swift
+e2275f0271d7a68276f03fc73773c09b0c045a56	not-for-merge	'refs/pull/141/head' of https://github.com/segmentio/analytics-swift
+e7ff262ed83770e46891236cf21bc7f6eb002046	not-for-merge	'refs/pull/142/head' of https://github.com/segmentio/analytics-swift
+eb5c4ac71339c80b8c63a6228541058a9108553c	not-for-merge	'refs/pull/143/head' of https://github.com/segmentio/analytics-swift
+916c391f157d50edfa697adb115249cfbb03506d	not-for-merge	'refs/pull/144/head' of https://github.com/segmentio/analytics-swift
+46662121183c51d2346480103ff36bf8dc0e27ce	not-for-merge	'refs/pull/146/head' of https://github.com/segmentio/analytics-swift
+606cc97219c63822a3013d59e8c47ed5bcf216aa	not-for-merge	'refs/pull/147/head' of https://github.com/segmentio/analytics-swift
+184c40fc37ed6bb1df8c0404a63ca483736bd9f1	not-for-merge	'refs/pull/148/head' of https://github.com/segmentio/analytics-swift
+32bd42a58b49916069874dbafb2a07f754d9f7a9	not-for-merge	'refs/pull/15/head' of https://github.com/segmentio/analytics-swift
+d02d88f3cbd12738cf0e6b0071b919e63016d948	not-for-merge	'refs/pull/153/head' of https://github.com/segmentio/analytics-swift
+6d684c795ed75ad2940fcf82234dcd50dec5452c	not-for-merge	'refs/pull/16/head' of https://github.com/segmentio/analytics-swift
+18114284afcc148f6118d805d794ae05482a14d3	not-for-merge	'refs/pull/160/head' of https://github.com/segmentio/analytics-swift
+59e0e22e0f4e7b692591ac72d7207b6595c73fb3	not-for-merge	'refs/pull/161/head' of https://github.com/segmentio/analytics-swift
+0d34e4680d84991b8f330361297e091ae019043e	not-for-merge	'refs/pull/163/head' of https://github.com/segmentio/analytics-swift
+2bab74e49b82de1136ff611e7216a1884a2cc13e	not-for-merge	'refs/pull/164/head' of https://github.com/segmentio/analytics-swift
+49934fd114122f80e3106304a18d9beddcbfb6aa	not-for-merge	'refs/pull/165/head' of https://github.com/segmentio/analytics-swift
+7f7992372d34005cecd1decf4ba025216235deda	not-for-merge	'refs/pull/168/head' of https://github.com/segmentio/analytics-swift
+b52379a22bec324d90e1d557b12e15e4a780bd7f	not-for-merge	'refs/pull/17/head' of https://github.com/segmentio/analytics-swift
+bb418e3af55df6c92d73d5c0618bd13fd2f935e6	not-for-merge	'refs/pull/170/head' of https://github.com/segmentio/analytics-swift
+5950080eb805b87d3a196966e4b858a4f276edfd	not-for-merge	'refs/pull/171/head' of https://github.com/segmentio/analytics-swift
+dba99e8c83af94bae272d38649650dcf9fc81363	not-for-merge	'refs/pull/173/head' of https://github.com/segmentio/analytics-swift
+d0b0eac48937536047440f905f24915bc48cb918	not-for-merge	'refs/pull/175/head' of https://github.com/segmentio/analytics-swift
+82816e804f30d4b1aee5dc39808621e9952ca92a	not-for-merge	'refs/pull/176/head' of https://github.com/segmentio/analytics-swift
+21e5d784032e42f51c2d6cb8e76beb5ef7b4619e	not-for-merge	'refs/pull/178/head' of https://github.com/segmentio/analytics-swift
+05783f779d3a501587718a357fa17cef30848cb8	not-for-merge	'refs/pull/179/head' of https://github.com/segmentio/analytics-swift
+854d62fdefe55fefb972fa145e538496ec999037	not-for-merge	'refs/pull/18/head' of https://github.com/segmentio/analytics-swift
+bfb2de687818b6534e499edccbccdc805ca9b3e3	not-for-merge	'refs/pull/181/head' of https://github.com/segmentio/analytics-swift
+21b359a0108f87ce84f4777e4aee4782aef5a518	not-for-merge	'refs/pull/182/head' of https://github.com/segmentio/analytics-swift
+49531e029ac49d1e61146016faa595d1ddf96b1f	not-for-merge	'refs/pull/183/head' of https://github.com/segmentio/analytics-swift
+2786a9db91dfb57f341d474e5c01a6916d3c55b3	not-for-merge	'refs/pull/184/head' of https://github.com/segmentio/analytics-swift
+5a7ebaa555d84533104ea80dacfd1847abb89682	not-for-merge	'refs/pull/185/head' of https://github.com/segmentio/analytics-swift
+c82b2bcaccfb863bff2306c8ae4cde795e0d2202	not-for-merge	'refs/pull/186/head' of https://github.com/segmentio/analytics-swift
+a9599cb196467aa4d9200269a8fdb5c58397bcb3	not-for-merge	'refs/pull/188/head' of https://github.com/segmentio/analytics-swift
+bd8abb4a439d4c806ea534b6474bc7c2f88c8d08	not-for-merge	'refs/pull/19/head' of https://github.com/segmentio/analytics-swift
+e84933da620f2d4bd227ae6d3593e6c6524b9f32	not-for-merge	'refs/pull/192/head' of https://github.com/segmentio/analytics-swift
+54b563ae0f60e9737489c7d744d96eac3e857ef1	not-for-merge	'refs/pull/196/head' of https://github.com/segmentio/analytics-swift
+5551a88c3b1810c09c01bd8c451a3e6f10f6b859	not-for-merge	'refs/pull/199/head' of https://github.com/segmentio/analytics-swift
+0d014aa8ac5758530ca1e650a9a33bfdb7d37c77	not-for-merge	'refs/pull/2/head' of https://github.com/segmentio/analytics-swift
+1fc91b52f000ab91a4bd2251a87841d5bcc51644	not-for-merge	'refs/pull/20/head' of https://github.com/segmentio/analytics-swift
+59a4a23f49698bbfcf69d2ea2f8c1e4dddb11cea	not-for-merge	'refs/pull/200/head' of https://github.com/segmentio/analytics-swift
+10b5d29dc93546650528c4dc87c00830c22ad983	not-for-merge	'refs/pull/201/head' of https://github.com/segmentio/analytics-swift
+a54311a559b206e36f3c7a255e000474e9ce5506	not-for-merge	'refs/pull/202/head' of https://github.com/segmentio/analytics-swift
+29d4e0b53388e9384b3fb048e83d9d2487fb3345	not-for-merge	'refs/pull/204/head' of https://github.com/segmentio/analytics-swift
+c57f9e9b396ecb1c58cb67fdd98ee7cebd228e3e	not-for-merge	'refs/pull/208/head' of https://github.com/segmentio/analytics-swift
+2da71ee8370af5d3542c09be8864da82daa2e792	not-for-merge	'refs/pull/209/head' of https://github.com/segmentio/analytics-swift
+fe60d22cd5fcc4b1647c4054f42363358721bdf4	not-for-merge	'refs/pull/21/head' of https://github.com/segmentio/analytics-swift
+952db74685f878d06202182e5b476bac8e668b19	not-for-merge	'refs/pull/212/head' of https://github.com/segmentio/analytics-swift
+e261e134981bde4f7ec8a8d62625751c155352f7	not-for-merge	'refs/pull/214/head' of https://github.com/segmentio/analytics-swift
+a022307263ce10df51e9e46ac923ef5f0ab48ebc	not-for-merge	'refs/pull/215/head' of https://github.com/segmentio/analytics-swift
+a5d21c2374856564ea505fafb5acb75cc4e18cdc	not-for-merge	'refs/pull/216/head' of https://github.com/segmentio/analytics-swift
+6d7c1716f96a90c3be25f42d2187cd9228b6e80b	not-for-merge	'refs/pull/219/head' of https://github.com/segmentio/analytics-swift
+d6dbdd937c72c17a30e57de4f08c8c681a4aa1cb	not-for-merge	'refs/pull/22/head' of https://github.com/segmentio/analytics-swift
+dc5db598952aef2271bd19f7e695f4a13a099a3e	not-for-merge	'refs/pull/220/head' of https://github.com/segmentio/analytics-swift
+15d1467b78b146ac84936b333cf6e223dbe85f60	not-for-merge	'refs/pull/222/head' of https://github.com/segmentio/analytics-swift
+e6a847a3cbf976572c2227120d125cb289f5c76c	not-for-merge	'refs/pull/225/head' of https://github.com/segmentio/analytics-swift
+f97d7225f42e2093e9154c2d780b8b5f1ac4bcb0	not-for-merge	'refs/pull/226/head' of https://github.com/segmentio/analytics-swift
+9bcf9eb7a175b71f7d46f5e9a7be45d3fb76486d	not-for-merge	'refs/pull/23/head' of https://github.com/segmentio/analytics-swift
+321f8b179d133edd1955ee46b79c179f82072443	not-for-merge	'refs/pull/230/head' of https://github.com/segmentio/analytics-swift
+baeb54055d55e73984ab851875709cb84329736b	not-for-merge	'refs/pull/236/head' of https://github.com/segmentio/analytics-swift
+1e74776098347e9b098078631f1f69795c6266d1	not-for-merge	'refs/pull/237/head' of https://github.com/segmentio/analytics-swift
+aa2d705840c4cac9b4b9ded1c3c189cb72945b80	not-for-merge	'refs/pull/238/head' of https://github.com/segmentio/analytics-swift
+bd155ed4ba387f49e92994a3dc35057562b3d74f	not-for-merge	'refs/pull/24/head' of https://github.com/segmentio/analytics-swift
+230998bb0561120398c7ca26ac66e1530eab3b46	not-for-merge	'refs/pull/240/head' of https://github.com/segmentio/analytics-swift
+73281cd64ee69cd34a5fcf85546e7f828b51c0f2	not-for-merge	'refs/pull/249/head' of https://github.com/segmentio/analytics-swift
+fd21f448fc981547878f195d0b8f8154f5a02766	not-for-merge	'refs/pull/25/head' of https://github.com/segmentio/analytics-swift
+70c6daf8eea4ff0a4eb63b24f32bc803c869c524	not-for-merge	'refs/pull/252/head' of https://github.com/segmentio/analytics-swift
+5e260cad02dc5a81bd7f8c0f1ff9df8c65a0dd2b	not-for-merge	'refs/pull/253/head' of https://github.com/segmentio/analytics-swift
+4abfadae40ec863602d17d88963013a7cacd800f	not-for-merge	'refs/pull/255/head' of https://github.com/segmentio/analytics-swift
+d9c8be34927024468ca5fc00ede6e5b1e2706fd0	not-for-merge	'refs/pull/256/head' of https://github.com/segmentio/analytics-swift
+3066c42fa9d11b48f63d72823fc19840d31d886a	not-for-merge	'refs/pull/258/head' of https://github.com/segmentio/analytics-swift
+774510417fe6ff6f20995367542f713597a6e996	not-for-merge	'refs/pull/259/head' of https://github.com/segmentio/analytics-swift
+6a1021d74f266c19a44f96b079e97637bf8740a4	not-for-merge	'refs/pull/26/head' of https://github.com/segmentio/analytics-swift
+bf3bce043a98f026918d620b3f84d5c9d6b2378b	not-for-merge	'refs/pull/261/head' of https://github.com/segmentio/analytics-swift
+4b77bd20f3fa74dccb6ef5ce6b825e2a1d9569d1	not-for-merge	'refs/pull/262/head' of https://github.com/segmentio/analytics-swift
+ed36f014adeca6091bc45f9f9ef24b1599d856e6	not-for-merge	'refs/pull/263/head' of https://github.com/segmentio/analytics-swift
+0687397c3a3f8abefb1677e9efca9d349864976b	not-for-merge	'refs/pull/267/head' of https://github.com/segmentio/analytics-swift
+08075a025641e84711cc8b106bdb0a1f7ecf0a71	not-for-merge	'refs/pull/268/head' of https://github.com/segmentio/analytics-swift
+f95d84152262bf5b93c70e3190ab9fe763a1cfb6	not-for-merge	'refs/pull/269/head' of https://github.com/segmentio/analytics-swift
+d9ba7a7c6f3612bdff5bbe2b6144b579c6d75976	not-for-merge	'refs/pull/27/head' of https://github.com/segmentio/analytics-swift
+29279ba616102d428c3652b2240567f0cac93297	not-for-merge	'refs/pull/270/head' of https://github.com/segmentio/analytics-swift
+dc5e402f3db90f75b08f32eabe828e42541d36ca	not-for-merge	'refs/pull/271/head' of https://github.com/segmentio/analytics-swift
+9a44d97951e4c89fd16d8da1c2c189ac951f4e2c	not-for-merge	'refs/pull/272/head' of https://github.com/segmentio/analytics-swift
+331f4bda5c5631237580c8d96abe7372d2e7edcf	not-for-merge	'refs/pull/273/head' of https://github.com/segmentio/analytics-swift
+1a58ddfb9b9c02433d075e490f8c6218036fb58f	not-for-merge	'refs/pull/274/head' of https://github.com/segmentio/analytics-swift
+324cbefde74e143cd45eaf5b8444e0bd14a49019	not-for-merge	'refs/pull/275/head' of https://github.com/segmentio/analytics-swift
+3d4e721a18f70b93b3bf66a85cda80dcb66c830d	not-for-merge	'refs/pull/276/head' of https://github.com/segmentio/analytics-swift
+b08be9a0c3bb222b1b9a8c179bb91e2bff4ae46f	not-for-merge	'refs/pull/28/head' of https://github.com/segmentio/analytics-swift
+a20b1a1701ca4c839eec2a46ce0e1dfeb342426b	not-for-merge	'refs/pull/280/head' of https://github.com/segmentio/analytics-swift
+b2b1e5dc521731aeef65c5cae9934741802c8829	not-for-merge	'refs/pull/281/head' of https://github.com/segmentio/analytics-swift
+08352c5b7dac2ee3c71dd737e6dd8d8b18362871	not-for-merge	'refs/pull/282/head' of https://github.com/segmentio/analytics-swift
+0bd6e3828a8764b2fca826c0f75973aff5f7f508	not-for-merge	'refs/pull/285/head' of https://github.com/segmentio/analytics-swift
+7389c037fa1cf9f3c70952ea57e994c03e87d1b1	not-for-merge	'refs/pull/289/head' of https://github.com/segmentio/analytics-swift
+889968c5473de71668e95835d88014e4c1106886	not-for-merge	'refs/pull/29/head' of https://github.com/segmentio/analytics-swift
+8dfe1701dfc3731b3aa2e9ba7c1bae0792563831	not-for-merge	'refs/pull/291/head' of https://github.com/segmentio/analytics-swift
+204892af302c980fed21e9f26fc517c170174cc3	not-for-merge	'refs/pull/292/head' of https://github.com/segmentio/analytics-swift
+528bd77a92b961db3699bf93ce6ce6b340959f01	not-for-merge	'refs/pull/293/head' of https://github.com/segmentio/analytics-swift
+bc04cadc8ff93aace966aac961bbd1ce7a6a41d7	not-for-merge	'refs/pull/294/head' of https://github.com/segmentio/analytics-swift
+2094f3d26bab2014718b2de20176e4a43f648b5c	not-for-merge	'refs/pull/295/head' of https://github.com/segmentio/analytics-swift
+5fb4c4a889705f866eb24a72cea51523ceccac5f	not-for-merge	'refs/pull/296/head' of https://github.com/segmentio/analytics-swift
+b5d5fa9006580627980ff4d465d8fb6e3493fef5	not-for-merge	'refs/pull/298/head' of https://github.com/segmentio/analytics-swift
+8dbc3d4c6a56b330ce7ff38fcb9a533e6fcf3ec1	not-for-merge	'refs/pull/299/head' of https://github.com/segmentio/analytics-swift
+b099142274f887036b5440da1f7c8650d1c84fb4	not-for-merge	'refs/pull/3/head' of https://github.com/segmentio/analytics-swift
+a026ddf7956c5eb2b157f5cb2437680cceedface	not-for-merge	'refs/pull/30/head' of https://github.com/segmentio/analytics-swift
+87bafbb255412eea105802f8642e3dd04af09ee3	not-for-merge	'refs/pull/300/head' of https://github.com/segmentio/analytics-swift
+e826fa5e8956933f6bae0393b0fac70559841001	not-for-merge	'refs/pull/302/head' of https://github.com/segmentio/analytics-swift
+bba08cfd8bf23d1bef7f4f859e552c2b30e1984f	not-for-merge	'refs/pull/303/head' of https://github.com/segmentio/analytics-swift
+ba426858385ae02071b02b26392ab1ddc4566257	not-for-merge	'refs/pull/304/head' of https://github.com/segmentio/analytics-swift
+b9822a30ac1d67d08b87cbc53f54c4170370c833	not-for-merge	'refs/pull/305/head' of https://github.com/segmentio/analytics-swift
+ede3e99e2bb564ad34a77ecd0a788f346ab83994	not-for-merge	'refs/pull/306/head' of https://github.com/segmentio/analytics-swift
+755c4075acf41d92aba2e078ba5526888421cdf0	not-for-merge	'refs/pull/307/head' of https://github.com/segmentio/analytics-swift
+b0adfbbd6172dbb1da73690486f7754d161c2534	not-for-merge	'refs/pull/31/head' of https://github.com/segmentio/analytics-swift
+1b8b93af6439a2d530c2dad055807eee5f22f152	not-for-merge	'refs/pull/310/head' of https://github.com/segmentio/analytics-swift
+644c78e8b10ae8d95cdebf467f0555363d3f12c5	not-for-merge	'refs/pull/311/head' of https://github.com/segmentio/analytics-swift
+f198e5e2b8625fe323eb45344359ef5f3f1018b0	not-for-merge	'refs/pull/313/head' of https://github.com/segmentio/analytics-swift
+43ec0afd6568880028d0fa82a16cec46ac92f445	not-for-merge	'refs/pull/314/head' of https://github.com/segmentio/analytics-swift
+397bcb986bed6e41a6a9dc7632ea922cf823600d	not-for-merge	'refs/pull/315/head' of https://github.com/segmentio/analytics-swift
+c909e9418e18571f8bb3a91c25fd973d71e3f0ac	not-for-merge	'refs/pull/318/head' of https://github.com/segmentio/analytics-swift
+fd267184f20f62f843aa0fa0cb0a2ac36c46ad20	not-for-merge	'refs/pull/319/head' of https://github.com/segmentio/analytics-swift
+d0bb0ec54450c73867cd9e8c4637bbcf46f78851	not-for-merge	'refs/pull/321/head' of https://github.com/segmentio/analytics-swift
+c1d23747972e7faf950d5b56409c253e18cd9e0b	not-for-merge	'refs/pull/325/head' of https://github.com/segmentio/analytics-swift
+018912b1139388621c22c0da2dee80ee9e5447bc	not-for-merge	'refs/pull/327/head' of https://github.com/segmentio/analytics-swift
+43e96da8c00360ed3c34035a1246a25adbd822c7	not-for-merge	'refs/pull/328/head' of https://github.com/segmentio/analytics-swift
+ab8b6e558def0b844475ae665cea99396f1a22bb	not-for-merge	'refs/pull/329/head' of https://github.com/segmentio/analytics-swift
+703ea0dc035eb08d0787908079ed827ded0739e0	not-for-merge	'refs/pull/33/head' of https://github.com/segmentio/analytics-swift
+40372d6d279a89b7e8e1886cde4474200288cd8c	not-for-merge	'refs/pull/330/head' of https://github.com/segmentio/analytics-swift
+8a2f984270b231ad3f2946ea5b7e45ed219bcdec	not-for-merge	'refs/pull/331/head' of https://github.com/segmentio/analytics-swift
+3666addac77b5c5c87e5cc9cf31499371a947a07	not-for-merge	'refs/pull/334/head' of https://github.com/segmentio/analytics-swift
+0f3b18c6d83e5607baddc690ccdc1a0459843c90	not-for-merge	'refs/pull/335/head' of https://github.com/segmentio/analytics-swift
+c45af32163ced206068df1862b2cd40431c835c5	not-for-merge	'refs/pull/340/head' of https://github.com/segmentio/analytics-swift
+c40e31c4238dadf3b7da5b34266ed222d197845c	not-for-merge	'refs/pull/341/head' of https://github.com/segmentio/analytics-swift
+5b979a2a43e8b62ae08abc8d1be1f4c051ce6451	not-for-merge	'refs/pull/342/head' of https://github.com/segmentio/analytics-swift
+0de31c9b9ceaf11c919bac83a73e9c510145500c	not-for-merge	'refs/pull/343/head' of https://github.com/segmentio/analytics-swift
+b7433de17d7770a838300f74ff088b40a257c37b	not-for-merge	'refs/pull/344/head' of https://github.com/segmentio/analytics-swift
+3031680431e5c9486187609d9305844d8edc1b30	not-for-merge	'refs/pull/347/head' of https://github.com/segmentio/analytics-swift
+9bb33b46dd41a572b21599403f0c4576ca233c5d	not-for-merge	'refs/pull/348/head' of https://github.com/segmentio/analytics-swift
+d793652785adda93a90b4c4fca87a04f4fe3cee3	not-for-merge	'refs/pull/35/head' of https://github.com/segmentio/analytics-swift
+4090ffa55b83965b8bc75931bb12933ece6cbe43	not-for-merge	'refs/pull/350/head' of https://github.com/segmentio/analytics-swift
+14ac114f4dd008db2278ddf7cee6a09f46642c34	not-for-merge	'refs/pull/351/head' of https://github.com/segmentio/analytics-swift
+3a20ee140aa8986807a0679f53178d979e5acf25	not-for-merge	'refs/pull/352/head' of https://github.com/segmentio/analytics-swift
+7b231dd02e45fb28e5a6fdc2c85455c653fdfb77	not-for-merge	'refs/pull/355/head' of https://github.com/segmentio/analytics-swift
+ac009cd24ee3ce81396a9bbb0e43d6d14f08d802	not-for-merge	'refs/pull/356/head' of https://github.com/segmentio/analytics-swift
+bc39e299999f08e5bebd8d2570d918bc27762c20	not-for-merge	'refs/pull/358/head' of https://github.com/segmentio/analytics-swift
+65959126061ba129a8a2cd0f60d16fcb1ebed513	not-for-merge	'refs/pull/359/head' of https://github.com/segmentio/analytics-swift
+b7dcc0022521665e970776e37f7fd4115fbf919d	not-for-merge	'refs/pull/36/head' of https://github.com/segmentio/analytics-swift
+d50697a6f148b59648b09ba9827e44dc69b46b36	not-for-merge	'refs/pull/362/head' of https://github.com/segmentio/analytics-swift
+10535d3ea7978d84f53385d561f7e6a7fa8a6201	not-for-merge	'refs/pull/363/head' of https://github.com/segmentio/analytics-swift
+8b198c6c92bde18187df065bd9ce7b1fc3fd1f29	not-for-merge	'refs/pull/366/head' of https://github.com/segmentio/analytics-swift
+2350acfde810172c5c7d2e9fe85dae92e037a8ef	not-for-merge	'refs/pull/367/head' of https://github.com/segmentio/analytics-swift
+b393f0599df70457e942e94e4fa9ca02c43852b3	not-for-merge	'refs/pull/369/head' of https://github.com/segmentio/analytics-swift
+5549cd80c894da76b394b35548963c9084cb1b20	not-for-merge	'refs/pull/37/head' of https://github.com/segmentio/analytics-swift
+78f1d887af319e718a0759a5edd25be431441c1a	not-for-merge	'refs/pull/372/head' of https://github.com/segmentio/analytics-swift
+56f6f5a0a07cb163d866fb319e7e63eb18debcaf	not-for-merge	'refs/pull/374/head' of https://github.com/segmentio/analytics-swift
+5b0c67dd33b116f78390397671640c1ec5316d7d	not-for-merge	'refs/pull/376/head' of https://github.com/segmentio/analytics-swift
+dd0f9c96637d518c6033d7025b1e8475fe749c98	not-for-merge	'refs/pull/378/head' of https://github.com/segmentio/analytics-swift
+04487f7e153f94b3f67820192e9be7c86d6324c3	not-for-merge	'refs/pull/38/head' of https://github.com/segmentio/analytics-swift
+835ee0070ae5a7284daa2a9b33f4a05e04282fd7	not-for-merge	'refs/pull/382/head' of https://github.com/segmentio/analytics-swift
+62dd67347267abd80bfce5f87c82771f2a13fdd4	not-for-merge	'refs/pull/383/head' of https://github.com/segmentio/analytics-swift
+77bdd7e7530281bc6ec3e0c5df6b527aef1ce156	not-for-merge	'refs/pull/384/head' of https://github.com/segmentio/analytics-swift
+4a29739ba9b606616945f9c6ed845ca03b50137e	not-for-merge	'refs/pull/385/head' of https://github.com/segmentio/analytics-swift
+c94a54cfa9273bcfe3ffca1ef798db952a43c417	not-for-merge	'refs/pull/386/head' of https://github.com/segmentio/analytics-swift
+607b9023546b447a36e49e1afda295e34f6ea5fd	not-for-merge	'refs/pull/389/head' of https://github.com/segmentio/analytics-swift
+91ceed36df11314c5ed152d1142d79191310e0ac	not-for-merge	'refs/pull/39/head' of https://github.com/segmentio/analytics-swift
+2c7830136223073e008dd1781fb6a9ee23e177a5	not-for-merge	'refs/pull/390/head' of https://github.com/segmentio/analytics-swift
+0ad23bd982db2b16897e35ceb3bde9d889bd0e6a	not-for-merge	'refs/pull/391/head' of https://github.com/segmentio/analytics-swift
+dfaaf3a01924c700de931ad0d5594f90443f39a5	not-for-merge	'refs/pull/392/head' of https://github.com/segmentio/analytics-swift
+6608ab3a68a3fb52b6beb47d63f76d5b2b915eb8	not-for-merge	'refs/pull/394/head' of https://github.com/segmentio/analytics-swift
+024c239c7316b587d1a22431f99f7907dad45037	not-for-merge	'refs/pull/395/head' of https://github.com/segmentio/analytics-swift
+309b2d6f8d583ba1a50fd98042324cb62ae5204a	not-for-merge	'refs/pull/396/head' of https://github.com/segmentio/analytics-swift
+e46702135099b34ccac95971bffbf7396dfe2575	not-for-merge	'refs/pull/397/head' of https://github.com/segmentio/analytics-swift
+15136cc6cb0c08000fa112eb331796aff232d9b4	not-for-merge	'refs/pull/398/head' of https://github.com/segmentio/analytics-swift
+3701acc40d8bdc3504787c89ab33f8f624df2667	not-for-merge	'refs/pull/399/head' of https://github.com/segmentio/analytics-swift
+f0bdeda9ac7113c26dc85b43920305fc1b023a94	not-for-merge	'refs/pull/4/head' of https://github.com/segmentio/analytics-swift
+7146b4adccf8f52b2a1407c881f8a3eedcc25ce9	not-for-merge	'refs/pull/40/head' of https://github.com/segmentio/analytics-swift
+e79829c6608b2af8a1bdd5d59932d23319cf92f9	not-for-merge	'refs/pull/400/head' of https://github.com/segmentio/analytics-swift
+4e8e9bdac5068a0c8b1036d0673baabca283031f	not-for-merge	'refs/pull/401/head' of https://github.com/segmentio/analytics-swift
+fdbd9af8bc798a9db2b820b34a1f03a27dba0f6d	not-for-merge	'refs/pull/402/head' of https://github.com/segmentio/analytics-swift
+b966235c30769b474c5558beb3c11771c19d08b4	not-for-merge	'refs/pull/403/head' of https://github.com/segmentio/analytics-swift
+80e673e3f3484d9508d715348550fdd4dc5672b3	not-for-merge	'refs/pull/404/head' of https://github.com/segmentio/analytics-swift
+e605821358728936935bf442f38c721084017d43	not-for-merge	'refs/pull/405/head' of https://github.com/segmentio/analytics-swift
+1c8d8091bfd74471577a89edbf0c61936efcecbb	not-for-merge	'refs/pull/406/head' of https://github.com/segmentio/analytics-swift
+c9c0f7f83f9f9bb8879bf7e231a23486db947045	not-for-merge	'refs/pull/407/head' of https://github.com/segmentio/analytics-swift
+def5f8a2aa6dd39c4c5d877c29e1b8ed9db6dab8	not-for-merge	'refs/pull/408/head' of https://github.com/segmentio/analytics-swift
+7f300e05c2182fb86d1d37a887fc793540b242ba	not-for-merge	'refs/pull/409/head' of https://github.com/segmentio/analytics-swift
+bb3fa2515a318618260158e6c7a5b1bb84f2c683	not-for-merge	'refs/pull/411/head' of https://github.com/segmentio/analytics-swift
+ef903223795774b3a1c94027e373fc47b7baee3b	not-for-merge	'refs/pull/411/merge' of https://github.com/segmentio/analytics-swift
+4a45ca1d98065e87f667a50fd09a27b307cac969	not-for-merge	'refs/pull/43/head' of https://github.com/segmentio/analytics-swift
+610254e9107aa5efdd23ffa8d6122d235e880c89	not-for-merge	'refs/pull/44/head' of https://github.com/segmentio/analytics-swift
+fad9277d3579266dbf5fdffebe2343e3f14fe7ee	not-for-merge	'refs/pull/45/head' of https://github.com/segmentio/analytics-swift
+9f2bfad18ba583f840bcc89935f2d5edda5a19fe	not-for-merge	'refs/pull/46/head' of https://github.com/segmentio/analytics-swift
+4ddc18eb374f27ee0fbf0b6cf7ac035e16fb552e	not-for-merge	'refs/pull/49/head' of https://github.com/segmentio/analytics-swift
+2f2178607ef822719a263d57726c4ad5f4506ed5	not-for-merge	'refs/pull/50/head' of https://github.com/segmentio/analytics-swift
+37c2052035cd82fbd61e6860f9488a0c461612ae	not-for-merge	'refs/pull/52/head' of https://github.com/segmentio/analytics-swift
+51f113c12d501490d6adfc440b6d45bc0ea4c4b8	not-for-merge	'refs/pull/53/head' of https://github.com/segmentio/analytics-swift
+a70f05d5be9a8840ea1bef99fa8ff3a697db444f	not-for-merge	'refs/pull/56/head' of https://github.com/segmentio/analytics-swift
+b7c1c16d7d0ac6116e49faa61db572a8f68615a8	not-for-merge	'refs/pull/57/head' of https://github.com/segmentio/analytics-swift
+686ac20944bb3d9a279e0dea500a63b0bdd68527	not-for-merge	'refs/pull/59/head' of https://github.com/segmentio/analytics-swift
+3bad3404e7cd83f07b6401ee420de4ff6e833c4d	not-for-merge	'refs/pull/6/head' of https://github.com/segmentio/analytics-swift
+ab1adbf87956d5bcebda5fd81591755a30141dd3	not-for-merge	'refs/pull/60/head' of https://github.com/segmentio/analytics-swift
+5c5a68bf541d013a867861e77f3fc510170e8114	not-for-merge	'refs/pull/62/head' of https://github.com/segmentio/analytics-swift
+1f3447196c81f4416925f4d9dbdf3f5126479854	not-for-merge	'refs/pull/63/head' of https://github.com/segmentio/analytics-swift
+ac71a265abc0390cf1f5792a5065b46990bf3309	not-for-merge	'refs/pull/64/head' of https://github.com/segmentio/analytics-swift
+d46dc220f0cad4a8084441bb662231ce929c7a5f	not-for-merge	'refs/pull/65/head' of https://github.com/segmentio/analytics-swift
+246a4d22024a622a52f866546d2b21dadefec29f	not-for-merge	'refs/pull/66/head' of https://github.com/segmentio/analytics-swift
+4328776167ddd0360f6498484fc27444884705ab	not-for-merge	'refs/pull/67/head' of https://github.com/segmentio/analytics-swift
+915cd98e4f0856793bb0f5023cc9de7a4c2e981f	not-for-merge	'refs/pull/68/head' of https://github.com/segmentio/analytics-swift
+8b2c2f169db7548394015c0a02f39c1773a374ec	not-for-merge	'refs/pull/7/head' of https://github.com/segmentio/analytics-swift
+8b8ae5a1d3433cc691d40d354351e71e13be0f4c	not-for-merge	'refs/pull/70/head' of https://github.com/segmentio/analytics-swift
+1d6c27479280b2c44d0cfc11bb533badbe9a17af	not-for-merge	'refs/pull/71/head' of https://github.com/segmentio/analytics-swift
+cf362035e26e50de354d95217f3be6c1d6a80e8b	not-for-merge	'refs/pull/72/head' of https://github.com/segmentio/analytics-swift
+1016b3466ec2496cd745bb4c574142cbe6d59f87	not-for-merge	'refs/pull/73/head' of https://github.com/segmentio/analytics-swift
+63d3635c726cf3e37deaf0382e983256148cccb6	not-for-merge	'refs/pull/74/head' of https://github.com/segmentio/analytics-swift
+4586d11e4b666167bff2cf051e5d3b4605d05759	not-for-merge	'refs/pull/76/head' of https://github.com/segmentio/analytics-swift
+9d35972f96882f4ffc6e4f8fee8ba84aa0a11845	not-for-merge	'refs/pull/77/head' of https://github.com/segmentio/analytics-swift
+140ea4a0af7e12a941ef536319de8ed03482ed07	not-for-merge	'refs/pull/78/head' of https://github.com/segmentio/analytics-swift
+96d45b2a1de45109e12798391ab3ef6003b866bb	not-for-merge	'refs/pull/79/head' of https://github.com/segmentio/analytics-swift
+ace686d5addbd9b2499eea7ec7a0bf574b9a0723	not-for-merge	'refs/pull/8/head' of https://github.com/segmentio/analytics-swift
+1621cec6d6388dfd7c64b001e3eadfb61d9b567f	not-for-merge	'refs/pull/80/head' of https://github.com/segmentio/analytics-swift
+99fe4b8dd4b449b801cb48d44d7d1f4302e9d8a4	not-for-merge	'refs/pull/81/head' of https://github.com/segmentio/analytics-swift
+4e97c91f9a89a38ba13d767f2f87b2e2681d2d9a	not-for-merge	'refs/pull/82/head' of https://github.com/segmentio/analytics-swift
+73ef6cf519f16e2a02dc8fac9d240cf7d71e8f39	not-for-merge	'refs/pull/83/head' of https://github.com/segmentio/analytics-swift
+a5c5d62d0c1a598df0cb769ff8f24aff87bdb4ff	not-for-merge	'refs/pull/84/head' of https://github.com/segmentio/analytics-swift
+064ca368fe67572ff7bca713d33368c9a2e1fa30	not-for-merge	'refs/pull/86/head' of https://github.com/segmentio/analytics-swift
+6397e706f9ca870b01cdffcbfc1f0d30eea08dd7	not-for-merge	'refs/pull/87/head' of https://github.com/segmentio/analytics-swift
+a6ea35088031112e709c0d73fc56d3bcac2b66e7	not-for-merge	'refs/pull/88/head' of https://github.com/segmentio/analytics-swift
+802d7896c8cc768c09cbf319a50bf1848ab41fa1	not-for-merge	'refs/pull/9/head' of https://github.com/segmentio/analytics-swift
+153952061fe1a4f6ba122add1c4b67e1e9ffb4b1	not-for-merge	'refs/pull/90/head' of https://github.com/segmentio/analytics-swift
+d5703df70554ca36a859c13951443442749e825b	not-for-merge	'refs/pull/91/head' of https://github.com/segmentio/analytics-swift
+3869cfb059efabd768e9ffbd91d7a7ed1c2482a4	not-for-merge	'refs/pull/92/head' of https://github.com/segmentio/analytics-swift
+7db7fd90efd53e37a66203dd15e50a80e6259fe5	not-for-merge	'refs/pull/93/head' of https://github.com/segmentio/analytics-swift
+ac2f4a97aaed9d0f0cac7ef31972ea03ac72f4e5	not-for-merge	'refs/pull/94/head' of https://github.com/segmentio/analytics-swift
+c3ad6cfd1180d81e713951049082979da610d00b	not-for-merge	'refs/pull/95/head' of https://github.com/segmentio/analytics-swift
+7f9c4d2131caf0848b394cc3a3a166f1d6ebe2dc	not-for-merge	'refs/pull/96/head' of https://github.com/segmentio/analytics-swift
+ace08b6c6467d425a10d484c58870056444f3bfd	not-for-merge	'refs/pull/98/head' of https://github.com/segmentio/analytics-swift
+6d99b2df4a5b89ed76a387936418ca49a2868b8f	not-for-merge	'refs/pull/99/head' of https://github.com/segmentio/analytics-swift
+8eda1ac7fd7d4aa10e686f47712bd8f1eed9dbdb	not-for-merge	tag '1.0.0' of https://github.com/segmentio/analytics-swift
+98d4f4e927dc818a7c90cceb55a2da2a3304f060	not-for-merge	tag '1.0.2' of https://github.com/segmentio/analytics-swift
+ffc12658b60ff60ba8ab91f26a12768cb5e2902e	not-for-merge	tag '1.0.3' of https://github.com/segmentio/analytics-swift
+e845872e39c88ef9ca133cbf1935f06a4066f059	not-for-merge	tag '1.0.4' of https://github.com/segmentio/analytics-swift
+15214bf65a01522af3df46d6b77d9c403afa4d66	not-for-merge	tag '1.0.5' of https://github.com/segmentio/analytics-swift
+e3225f5d796abba87e70fdef2141ec06a33e4d63	not-for-merge	tag '1.0.6' of https://github.com/segmentio/analytics-swift
+37a25031c5f83c661a0043aa77a70199b5c31ef7	not-for-merge	tag '1.1.0' of https://github.com/segmentio/analytics-swift
+9c7dff28353e8942c7bc3aa83a7ddbc4e2f763b7	not-for-merge	tag '1.1.1' of https://github.com/segmentio/analytics-swift
+76316a5009502de6e7c2788c295e9afc68793cd3	not-for-merge	tag '1.1.2' of https://github.com/segmentio/analytics-swift
+a8bcc148705a85e1fb300c8210a14dcbd4da43fc	not-for-merge	tag '1.2.0' of https://github.com/segmentio/analytics-swift
+343f98e8c33c26d2a4c6e6121d8cc94f0056fdd7	not-for-merge	tag '1.2.1' of https://github.com/segmentio/analytics-swift
+de5b831372057379e1f68c1fd809c6cd8f13e9e6	not-for-merge	tag '1.2.2' of https://github.com/segmentio/analytics-swift
+92cc824211160ab98c28c7d40c1e6d27645c2bf1	not-for-merge	tag '1.2.3' of https://github.com/segmentio/analytics-swift
+cf89d1791650fd61fffb08a9f5f6cd2cc60645e1	not-for-merge	tag '1.2.4' of https://github.com/segmentio/analytics-swift
+8ae3136bffaa139a690e7841bf63143605041540	not-for-merge	tag '1.3.0' of https://github.com/segmentio/analytics-swift
+ddbe8ef9f15b4e8f2f61ddf713f421702f0d2a52	not-for-merge	tag '1.3.1' of https://github.com/segmentio/analytics-swift
+26ca2e339c14552e58744ff6bd96d3df156dd310	not-for-merge	tag '1.3.2' of https://github.com/segmentio/analytics-swift
+939a04164cd4db7ca666dd1e09663edc2d34c4f3	not-for-merge	tag '1.3.3' of https://github.com/segmentio/analytics-swift
+af7f1d2fe6e48b1760538739f13f44ba71c1a61c	not-for-merge	tag '1.3.4' of https://github.com/segmentio/analytics-swift
+1b4fe3f314404d3e7458428493ce5f01adf2eed7	not-for-merge	tag '1.3.5' of https://github.com/segmentio/analytics-swift
+26f23a2ae9b8dd47aeee1bdaa1e203f3bed6044e	not-for-merge	tag '1.4.0' of https://github.com/segmentio/analytics-swift
+79fb17a5d4abf8f80e6a0935e57c7df7b670a6c0	not-for-merge	tag '1.4.1' of https://github.com/segmentio/analytics-swift
+01fa6d3f6ff4b25d1dd1c932e61182b0da3ee27a	not-for-merge	tag '1.4.2' of https://github.com/segmentio/analytics-swift
+4c7aab453b56a80d5d2577a378bced8dc20c8f2d	not-for-merge	tag '1.4.3' of https://github.com/segmentio/analytics-swift
+c7e3c1c31a5a281e94116852ef59e8221837dbb6	not-for-merge	tag '1.4.4' of https://github.com/segmentio/analytics-swift
+58d0ed5fae289771933f6aa334e7d2c1f95f38be	not-for-merge	tag '1.4.5' of https://github.com/segmentio/analytics-swift
+022ff15701bdc7d3405fe0155ba3c403f4df37ef	not-for-merge	tag '1.4.6' of https://github.com/segmentio/analytics-swift
+c8fd5fdf59299f00b3e4303a1b12a6d88893bf56	not-for-merge	tag '1.4.7' of https://github.com/segmentio/analytics-swift
+efc111b5fccaebd1063ef0db6d206c252da387ec	not-for-merge	tag '1.4.8' of https://github.com/segmentio/analytics-swift
+266c374bd9c55a3101e0b5f04a9f8cab4eee747a	not-for-merge	tag '1.5.0' of https://github.com/segmentio/analytics-swift
+cefc56ba65c2d26fb8574a10c613a14425ce3711	not-for-merge	tag '1.5.1' of https://github.com/segmentio/analytics-swift
+f6f3a7fafcace7bcdbda329f9b309f31bf9a42a1	not-for-merge	tag '1.5.11' of https://github.com/segmentio/analytics-swift
+5f1ec17c1e53073733f985b294b02f4cfd28aa10	not-for-merge	tag '1.5.12' of https://github.com/segmentio/analytics-swift
+51f56b972de8daee251f18fd2c91fa3a33c8d77e	not-for-merge	tag '1.5.2' of https://github.com/segmentio/analytics-swift
+067d089444856db64c06775b42d4993b21792bc7	not-for-merge	tag '1.5.3' of https://github.com/segmentio/analytics-swift
+be838a5e233c5c70ee99617475d6599443090ec7	not-for-merge	tag '1.5.4' of https://github.com/segmentio/analytics-swift
+33f07bd5e4d216de92a163a8edad2c3216087cd9	not-for-merge	tag '1.5.5' of https://github.com/segmentio/analytics-swift
+a59b6fe4b4b89e859a1ee02fee6872a4ae6032f7	not-for-merge	tag '1.5.6' of https://github.com/segmentio/analytics-swift
+718a26a11fe9bb8084eb3a25763a1befe718e884	not-for-merge	tag '1.5.7' of https://github.com/segmentio/analytics-swift
+1da1a3defba0a63a371cdade191c6e4f6f2d270b	not-for-merge	tag '1.5.8' of https://github.com/segmentio/analytics-swift
+7eeb2abf8452153af056baae5369679589f10936	not-for-merge	tag '1.5.9' of https://github.com/segmentio/analytics-swift
+338be8f55c83309f10d2cfd0193505117b4ab2d5	not-for-merge	tag '1.6.0' of https://github.com/segmentio/analytics-swift
+41df3103293bbed6f17489fcc28e16a6e495168d	not-for-merge	tag '1.6.1' of https://github.com/segmentio/analytics-swift
+825bac9da99ca02bacf85bdf95f707d8e9f786d1	not-for-merge	tag '1.6.2' of https://github.com/segmentio/analytics-swift
+64f8656e1577d017b0290cc2ef4872228a19639a	not-for-merge	tag '1.7.0' of https://github.com/segmentio/analytics-swift
+f6acb751ea058e6a4077a876595f40a827350b0e	not-for-merge	tag '1.7.1' of https://github.com/segmentio/analytics-swift
+bfa46967624eb54b046c994ac80b2d65ab24b59d	not-for-merge	tag '1.7.2' of https://github.com/segmentio/analytics-swift
+7d47f4b42e6d74fe2de73b8e3c3fc2eeae4a3efd	not-for-merge	tag '1.7.3' of https://github.com/segmentio/analytics-swift
+5d3a762da5412d324205a58358b95e1da334c21e	not-for-merge	tag '1.8.0' of https://github.com/segmentio/analytics-swift
+bd37869fe91828d19315c00d1f3c189b1193ee17	not-for-merge	tag '1.9.0' of https://github.com/segmentio/analytics-swift
+f604cef21bb7269f76136c68bd664c6c993f8e28	not-for-merge	tag '1.9.1' of https://github.com/segmentio/analytics-swift

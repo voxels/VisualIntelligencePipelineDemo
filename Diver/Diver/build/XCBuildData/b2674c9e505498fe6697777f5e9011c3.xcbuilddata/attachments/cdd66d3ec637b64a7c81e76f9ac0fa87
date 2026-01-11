@@ -1,0 +1,41 @@
+{
+  "" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/DiverShared-primary.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/DiverShared-primary.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/DiverShared-primary.dia",
+    "emit-module-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/DiverShared-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/DiverShared-primary-emit-module.dia",
+    "pch" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/DiverShared-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/DiverShared-primary.swiftdeps"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/AppGroupConfig.swift" : {
+    "index-unit-output-path" : "/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/AppGroupConfig.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/AppGroupConfig.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/AppGroupConfig.o"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/DiverItemDescriptor.swift" : {
+    "index-unit-output-path" : "/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/DiverItemDescriptor.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/DiverItemDescriptor.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/DiverItemDescriptor.o"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/LinkWrapping.swift" : {
+    "index-unit-output-path" : "/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/LinkWrapping.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/LinkWrapping.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/LinkWrapping.o"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/MessagesLaunchStore.swift" : {
+    "index-unit-output-path" : "/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/MessagesLaunchStore.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/MessagesLaunchStore.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/MessagesLaunchStore.o"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/QueueStore.swift" : {
+    "index-unit-output-path" : "/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/QueueStore.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/QueueStore.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/QueueStore.o"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/Validation.swift" : {
+    "index-unit-output-path" : "/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/Validation.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/Validation.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/build/DiverShared.build/Release-iphoneos/DiverShared.build/Objects-normal/arm64/Validation.o"
+  }
+}

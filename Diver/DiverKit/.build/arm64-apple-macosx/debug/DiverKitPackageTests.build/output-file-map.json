@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverKitPackageTests.build/master.swiftdeps"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverKitPackageTests.derived/runner.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverKitPackageTests.build/runner.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverKitPackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverKitPackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverKitPackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverKitPackageTests.build/runner.dia"
+  }
+}

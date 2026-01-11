@@ -1,0 +1,3 @@
+module DiverShared {
+    header "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/include/DiverShared-Swift.h"
+}

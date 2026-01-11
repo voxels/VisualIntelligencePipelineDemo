@@ -1,0 +1,276 @@
+🔐 Logging in to get JWT token...
+✅ Logged in successfully
+🔑 JWT Token: eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...
+
+
+============================================================
+💬 Fetching Messages for Job: 019b2468-ebaa-7620-9339-26304ac4e7db
+============================================================
+
+📊 Input Status: ✅ Complete
+   Input ID: 019b2468-ebaa-7620-9339-26304ac4e7db
+   Source: https://vt.tiktok.com/ZSUrrHaJh/
+   Type: tiktok
+   Items: 1
+      • Item 019b2469-2f83-7ff3-87fd-ed08ecb7af45: ✅ ready
+
+
+✅ Found 6 message(s):
+
+1. 🤖 [agent] queue-service
+   Type: processing_status
+   Time: 2025-12-15T23:47:36.039208Z
+   ✅ Schema validation passed
+   Status: unknown - analyzing
+   Message: Gemini visual analysis complete. item_id=TextMetadataValue(text='019b2469-2f83-7ff3-87fd-ed08ecb7af45'), has_video=BoolMetadataValue(value=True), has_transcription=BoolMetadataValue(value=True)
+
+2. 🤖 [agent] queue-service
+   Type: media_analysis
+   Time: 2025-12-15T23:47:39.218663Z
+   📊 Media Analysis:
+      Media ID: 019b2469-9972-7893-ab2b-086a22da5cde
+      Item ID: 019b2469-2f83-7ff3-87fd-ed08ecb7af45
+      Media Type: video
+      Title: N/A
+      Thumbnails: 0
+      Has Transcription: Yes
+      Has Extracted Text: Yes
+      Detected Objects: 9
+      Description: A woman with dark, curly hair and a black long-sleeved top is seated on a wooden chair with a light-...
+   ✅ Schema validation passed
+   📊 Media Analysis Data:
+      {
+      "message_type": "media_analysis",
+      "media_id": "019b2469-9972-7893-ab2b-086a22da5cde",
+      "item_id": "019b2469-2f83-7ff3-87fd-ed08ecb7af45",
+      "media_data": {
+            "filename": "video.mp4",
+            "original_filename": null,
+            "s3_key": "jobs/019b2468-ebaa-7620-9339-26304ac4e7db/media/video.mp4",
+            "file_size": 6073792,
+            "media_type": "video",
+            "mime_type": "video/mp4",
+            "width": null,
+            "height": null,
+            "duration": null,
+            "aspect_ratio": null,
+            "title": null,
+            "description": "A woman with dark, curly hair and a black long-sleeved top is seated on a wooden chair with a light-colored blanket. She is holding a small black microphone. Behind her, a framed picture hangs on a light-colored wall. Throughout the video, images of two composers, Edmund Finnis and Claire M Singer, appear at the bottom of the screen, along with screenshots of their Spotify profiles displaying album art and song titles.",
+            "alt_text": null,
+            "tags": null,
+            "transcription": "welcome back to another episode of Classical Musicians you've never heard of because the industry markets to themselves. On today's episode, I'm going to talk about two rising composers who are amazing, super different, actually go really well together. First is called Edmund Finnis, and he's a British composer that's really starting to generate a name for himself. And although a lot of his music is very beautiful, the one that I want to tell you about is called Devotions. It's made up of eight short pieces of music, and it really tells a story of romantic love, what it feels like, the excitement, but also the tension and mostly the yearning. It puts me into this really beautiful space where things kind of stop, and you're able to just enjoy that feeling. Second composer is called Claire M Singer. The album I've completely fallen in love with is called Solas. The main focus of her works is the organ, but she uses electronic music and string instruments in a way that almost creates this sort of ancient sound. The thing that I find most powerful about this artist is her restraint in the way that she uses these instruments and techniques to create something that feels really natural. Music like Edmund's really gives you that space for yourself. Edmund Finnis, Claire M Singer, two composers that are creating stunning classical music I think you're gonna fall in love with.",
+            "extracted_text": "welcome back to another episode of Classical, Musicians you've never heard of, because the industry markets to themselves, on today's episode, I'm gonna talk about two rising composers, who are amazing super different, actually go really well together, first is called Edmund Finnis, and he's a British composer that's really starting to generate a name for himself, and although a lot of his music is very beautiful, the one that I wanna tell you about is called devotions, Edmund Finnis, it's made up of eight short pieces of music, and it really tells a story of romantic love, what it feels like the excitement, but also the tension and mostly the yearning, puts me into this really beautiful space, where things kind of stop, and you're able to just enjoy that feeling, second composer is called Claire M Singer, Claire M Singer, album I've completely fallen in love with is called solas, the main focus of her works is the organ, but she uses electronic music and string instruments, in a way that almost creates this sort of ancient sound, thing that I find most powerful about this artist is her restraint, in the way that she uses these instruments and techniques, to create something that feels really natural, music like Edmund's really gives you that space for yourself, Edmund Finnis, Claire M Singer, two composers that are creating stunning classical music, think you're gonna fall in love with",
+            "detected_objects": [
+                  "woman",
+                  "microphone",
+                  "wooden chair",
+                  "blanket",
+                  "framed picture",
+                  "gold ring",
+                  "Edmund Finnis (composer image)",
+                  "Spotify UI",
+                  "Claire M Singer (composer image)"
+            ],
+            "colors": null,
+            "mood": null,
+            "color_palette": null,
+            "color_distribution": null,
+            "color_temperature": null,
+            "color_harmony": null,
+            "dominant_hue": null,
+            "color_vibrancy": null,
+            "color_scheme": null,
+            "style": null,
+            "composition": null,
+            "lighting": null,
+            "setting": null,
+            "people_count": null,
+            "faces_detected": null,
+            "themes": [
+                  "classical music",
+                  "music discovery",
+                  "emerging artists",
+                  "emotional expression through music",
+                  "romantic love",
+                  "ancient soundscapes",
+                  "musical techniques and instrumentation"
+            ],
+            "concepts": null,
+            "activities": null,
+            "brands_detected": null,
+            "blur_level": null,
+            "saturation": null,
+            "contrast": null,
+            "brightness": null,
+            "texture": null,
+            "quality_score": null,
+            "view_count": 0,
+            "download_count": 0,
+            "source_url": null,
+            "source_platform": null,
+            "sequence_order": null,
+            "analysis_result": null,
+            "thumbnails": null,
+            "id": "019b2469-9972-7893-ab2b-086a22da5cde",
+            "item_id": "019b2469-2f83-7ff3-87fd-ed08ecb7af45",
+            "created_at": "2025-12-15T23:47:38.994224Z",
+            "updated_at": "2025-12-15T23:47:38.994227Z",
+            "url": "http://localhost:9000/brainv3-storage/jobs/019b2468-ebaa-7620-9339-26304ac4e7db/media/video.mp4?AWSAccessKeyId=minioadmin&Signature=GS6Vluk4LSCI%2BGaiACuWM4Aykhw%3D&Expires=1765846059"
+      }
+}
+
+3. 🤖 [agent] queue-service
+   Type: item_classification
+   Time: 2025-12-15T23:47:51.108778Z
+   ✅ Schema validation passed
+
+4. 🤖 [agent] queue-service
+   Type: reference_hypotheses
+   Time: 2025-12-15T23:47:57.527481Z
+   ✅ Schema validation passed
+   ## 🎵 Music Reference Hypotheses
+
+**Albums:** Devotions, Solas
+**Artists:** Edmund Finnis, Claire M Singer
+   🎵 Albums: Devotions, Solas
+   🎵 Artists: Edmund Finnis, Claire M Singer
+   📊 Full hypotheses data:
+      {
+      "type": "music",
+      "tracks": [],
+      "albums": [
+            "Devotions",
+            "Solas"
+      ],
+      "artists": [
+            "Edmund Finnis",
+            "Claire M Singer"
+      ],
+      "track_artist_pairs": [],
+      "album_artist_pairs": [
+            {
+                  "album": "Devotions",
+                  "artist": "Edmund Finnis"
+            },
+            {
+                  "album": "Solas",
+                  "artist": "Claire M Singer"
+            }
+      ],
+      "rationales": "The text provides explicit mentions of the album 'Devotions' by Edmund Finnis and the album 'Solas' by Claire M Singer, allowing for clear identification of music content. Both composer names and their corresponding albums were extracted as per their appearance in the text."
+}
+
+5. 🤖 [agent] queue-service
+   Type: reference_candidates
+   Time: 2025-12-15T23:48:01.644185Z
+   ✅ Schema validation passed
+   Found Spotify search results
+   🔍 Candidates: 2
+   🎶 [album] Devotions (String Quartet No 3): III. - Edmund Finnis, Solem Quartet
+   🎶 [album] Solas - Claire M Singer
+   📊 Full search results:
+      {
+      "type": "music",
+      "candidates": [
+            {
+                  "title": "Devotions (String Quartet No 3): III.",
+                  "openlibrary_id": null,
+                  "authors": [],
+                  "published_date": null,
+                  "isbn": null,
+                  "publisher": null,
+                  "description": null,
+                  "cover_url": null,
+                  "type": "album",
+                  "artists": [
+                        "Edmund Finnis",
+                        "Solem Quartet"
+                  ],
+                  "album_type": "single",
+                  "popularity": null,
+                  "spotify_id": "45vOywZwvefQaKNIhoyLrl",
+                  "entity_type": "music_album",
+                  "release_date": "2023-09-29",
+                  "total_tracks": 1,
+                  "external_urls": {
+                        "spotify": "https://open.spotify.com/album/45vOywZwvefQaKNIhoyLrl"
+                  }
+            },
+            {
+                  "title": "Solas",
+                  "openlibrary_id": null,
+                  "authors": [],
+                  "published_date": null,
+                  "isbn": null,
+                  "publisher": null,
+                  "description": null,
+                  "cover_url": null,
+                  "type": "album",
+                  "artists": [
+                        "Claire M Singer"
+                  ],
+                  "album_type": "album",
+                  "popularity": null,
+                  "spotify_id": "4EyTQditPnRH8YIssbxFdr",
+                  "entity_type": "music_album",
+                  "release_date": "2016-06-24",
+                  "total_tracks": 7,
+                  "external_urls": {
+                        "spotify": "https://open.spotify.com/album/4EyTQditPnRH8YIssbxFdr"
+                  }
+            }
+      ]
+}
+
+6. 🤖 [agent] queue-service
+   Type: reference_results
+   Time: 2025-12-15T23:48:08.478950Z
+   ✅ Schema validation passed
+   ✅ DecisionResults schema validation passed
+   📊 Decision Type: music
+   📚 References: 1
+   💭 Reasoning Length: 463 chars
+   💭 Reasoning Preview: The content mentions the album 'Solas' by Claire M Singer, and there is a corresponding entry in the search results for this album (search_index 1) wi...
+
+   🧠 FULL AI REASONING:
+   --------------------------------------------------------
+   The content mentions the album 'Solas' by Claire M Singer, and there is a corresponding entry in the search results for this album (search_index 1) with matching artist details. The album 'Devotions' by Edmund Finnis is also mentioned in the content, but the search result (search_index 0) is for a single piece and not the full album, hence it is not selected. The primary focus is on selecting albums, which matches the details provided in the original content.
+   --------------------------------------------------------
+
+   Created 1 references
+   ✅ Created: 1 references
+   📚 Solas (music_album) - ID: 019b246a-0c04-7fb2-9a06-9d5f129ea3a2
+
+   📊 Full decision results:
+      {
+      "type": "music",
+      "created_references": [
+            {
+                  "entity_type": "music_album",
+                  "name": "Solas",
+                  "reference_metadata": {
+                        "title": "Solas",
+                        "artists": [
+                              "Claire M Singer"
+                        ],
+                        "album_type": "album",
+                        "popularity": null,
+                        "spotify_id": "4EyTQditPnRH8YIssbxFdr",
+                        "entity_type": "music_album",
+                        "release_date": "2016-06-24",
+                        "total_tracks": 7,
+                        "external_urls": {
+                              "spotify": "https://open.spotify.com/album/4EyTQditPnRH8YIssbxFdr"
+                        }
+                  },
+                  "id": "019b246a-0c04-7fb2-9a06-9d5f129ea3a2",
+                  "user_id": "019a25f2-9977-79a0-a706-c879b1fe7442",
+                  "status": "pending",
+                  "created_at": "2025-12-15T23:48:08.324881Z",
+                  "updated_at": "2025-12-15T23:48:08.324883Z"
+            }
+      ],
+      "reasoning": "The content mentions the album 'Solas' by Claire M Singer, and there is a corresponding entry in the search results for this album (search_index 1) with matching artist details. The album 'Devotions' by Edmund Finnis is also mentioned in the content, but the search result (search_index 0) is for a single piece and not the full album, hence it is not selected. The primary focus is on selecting albums, which matches the details provided in the original content."
+}
+
+============================================================

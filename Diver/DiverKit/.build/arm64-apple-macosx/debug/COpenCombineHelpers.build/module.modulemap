@@ -1,0 +1,4 @@
+module COpenCombineHelpers {
+    umbrella header "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/OpenCombine/Sources/COpenCombineHelpers/include/COpenCombineHelpers.h"
+    export *
+}

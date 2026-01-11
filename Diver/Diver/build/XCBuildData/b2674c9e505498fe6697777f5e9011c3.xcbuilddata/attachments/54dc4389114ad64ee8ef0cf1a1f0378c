@@ -1,0 +1,4 @@
+module knowmaps {
+header "knowmaps-Swift.h"
+export *
+}

@@ -1,0 +1,3 @@
+module Crypto {
+    header "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/Crypto.build/include/Crypto-Swift.h"
+}

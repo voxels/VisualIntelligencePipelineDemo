@@ -1,0 +1,5 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/.build/arm64-apple-macosx/debug/DiverSharedPackageTests.xctest/Contents/MacOS/DiverSharedPackageTests'
+relocations:     []
+...

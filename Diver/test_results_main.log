@@ -1,0 +1,29 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild test -project Diver/Diver.xcodeproj -scheme Diver_iOS -destination "platform=iOS Simulator,name=iPhone 17 Pro"
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  swift-crypto: https://github.com/apple/swift-crypto.git @ 1.1.7
+  OpenCombine: https://github.com/OpenCombine/OpenCombine.git @ 0.14.0
+  swift-http-types: https://github.com/apple/swift-http-types.git @ 1.5.1
+  swift-concurrency-extras: https://github.com/pointfreeco/swift-concurrency-extras @ 1.3.2
+  knowmaps: https://github.com/voxels/Know-Maps @ main (c60782f)
+  DiverKit: /Users/voxels/Documents/dev/Superbright/Diver/DiverKit
+  swift-log: https://github.com/apple/swift-log.git @ 1.8.0
+  Segment: https://github.com/segmentio/analytics-swift @ 1.6.2
+  JSONSafeEncoding: https://github.com/segmentio/jsonsafeencoding-swift.git @ 2.0.0
+  DiverShared: /Users/voxels/Documents/dev/Superbright/Diver/DiverShared
+  Nuke: https://github.com/kean/Nuke @ 12.8.0
+  RegularExpressions: https://github.com/Peter-Schorn/RegularExpressions.git @ 2.2.0
+  xctest-dynamic-overlay: https://github.com/pointfreeco/xctest-dynamic-overlay @ 1.8.0
+  swift-clocks: https://github.com/pointfreeco/swift-clocks @ 1.0.6
+  SpotifyAPI: https://github.com/Peter-Schorn/SpotifyAPI @ 4.0.2
+  Supabase: https://github.com/supabase/supabase-swift @ 2.33.1
+  LDSwiftEventSource: https://github.com/launchdarkly/swift-eventsource @ 3.3.0
+  Sovran: https://github.com/segmentio/sovran-swift.git @ 1.1.2
+
+2025-12-24 06:01:13.389 xcodebuild[42526:4709080] Writing error result bundle to /var/folders/2p/tyjrzcsd0cb1b1n6tn978g4h0000gn/T/ResultBundle_2025-24-12_06-01-0013.xcresult
+xcodebuild: error: Scheme Diver_iOS is not currently configured for the test action.
+

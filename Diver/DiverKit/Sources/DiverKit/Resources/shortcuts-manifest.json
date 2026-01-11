@@ -1,0 +1,327 @@
+{
+    "version": "1.0",
+    "shortcuts": [
+        {
+            "id": "quick-share-to-messages",
+            "name": "Quick Share to Messages",
+            "description": "Share the current page as a wrapped Diver link directly to Messages",
+            "icon": "message.fill",
+            "color": "blue",
+            "category": "sharing",
+            "difficulty": "easy",
+            "estimatedTime": "2 minutes",
+            "actions": [
+                {
+                    "type": "intent",
+                    "intent": "ShareLinkIntent",
+                    "parameters": {
+                        "url": "shortcut_input",
+                        "title": "ask_each_time"
+                    }
+                },
+                {
+                    "type": "system",
+                    "action": "Share",
+                    "parameters": {
+                        "input": "shortcut_result",
+                        "destination": "messages"
+                    }
+                }
+            ],
+            "useCases": [
+                "Share from Safari via share sheet",
+                "Action Button quick share",
+                "Share from clipboard"
+            ],
+            "customizations": [
+                "Change destination to Mail, Slack, Discord, etc.",
+                "Add custom message before sharing",
+                "Save to specific contact/conversation"
+            ]
+        },
+        {
+            "id": "search-and-share",
+            "name": "Search and Share",
+            "description": "Search your Diver library and share the wrapped link",
+            "icon": "magnifyingglass",
+            "color": "purple",
+            "category": "search",
+            "difficulty": "medium",
+            "estimatedTime": "3 minutes",
+            "actions": [
+                {
+                    "type": "intent",
+                    "intent": "SearchLinksIntent",
+                    "parameters": {
+                        "query": "ask_each_time",
+                        "limit": 1
+                    }
+                },
+                {
+                    "type": "scripting",
+                    "action": "Get Details",
+                    "parameters": {
+                        "input": "shortcut_result",
+                        "detail": "wrappedLink"
+                    }
+                },
+                {
+                    "type": "system",
+                    "action": "Share",
+                    "parameters": {
+                        "input": "details"
+                    }
+                }
+            ],
+            "useCases": [
+                "Voice command: 'Hey Siri, search and share'",
+                "Find specific saved link to share",
+                "Quick access from widget"
+            ],
+            "customizations": [
+                "Add tag filtering",
+                "Increase limit for multiple results",
+                "Copy to clipboard instead of sharing"
+            ]
+        },
+        {
+            "id": "save-with-tags",
+            "name": "Save with Tags",
+            "description": "Save a link with predefined tags for organization",
+            "icon": "bookmark.fill",
+            "color": "orange",
+            "category": "saving",
+            "difficulty": "easy",
+            "estimatedTime": "3 minutes",
+            "actions": [
+                {
+                    "type": "system",
+                    "action": "Get Clipboard"
+                },
+                {
+                    "type": "intent",
+                    "intent": "SaveLinkIntent",
+                    "parameters": {
+                        "url": "clipboard",
+                        "title": "ask_each_time",
+                        "tags": {
+                            "type": "choose_from_list",
+                            "options": [
+                                "work",
+                                "personal",
+                                "vacation",
+                                "recipes",
+                                "articles",
+                                "videos"
+                            ]
+                        }
+                    }
+                }
+            ],
+            "useCases": [
+                "Copy URL → Run shortcut → Choose tags",
+                "Organize links by category",
+                "Quick save from any app"
+            ],
+            "customizations": [
+                "Customize tag list for your workflow",
+                "Allow multiple tag selection",
+                "Set default tags for specific times/locations"
+            ]
+        },
+        {
+            "id": "open-recent-link",
+            "name": "Open Recent Link",
+            "description": "Opens your most recently saved link in Safari",
+            "icon": "arrow.right.circle.fill",
+            "color": "green",
+            "category": "quick-access",
+            "difficulty": "easy",
+            "estimatedTime": "2 minutes",
+            "actions": [
+                {
+                    "type": "intent",
+                    "intent": "SearchLinksIntent",
+                    "parameters": {
+                        "query": "",
+                        "limit": 1
+                    }
+                },
+                {
+                    "type": "scripting",
+                    "action": "Get Details",
+                    "parameters": {
+                        "input": "shortcut_result",
+                        "detail": "url"
+                    }
+                },
+                {
+                    "type": "system",
+                    "action": "Open URLs",
+                    "parameters": {
+                        "input": "details"
+                    }
+                }
+            ],
+            "useCases": [
+                "Voice: 'Hey Siri, open recent link'",
+                "Action Button quick access",
+                "Widget single-tap action"
+            ],
+            "customizations": [
+                "Show menu of recent links (increase limit)",
+                "Filter by specific tags",
+                "Open in specific browser"
+            ]
+        },
+        {
+            "id": "find-by-tag",
+            "name": "Find by Tag",
+            "description": "Search links by tag and display results",
+            "icon": "tag.fill",
+            "color": "yellow",
+            "category": "search",
+            "difficulty": "medium",
+            "estimatedTime": "3 minutes",
+            "actions": [
+                {
+                    "type": "intent",
+                    "intent": "SearchLinksIntent",
+                    "parameters": {
+                        "query": "",
+                        "tags": "ask_each_time",
+                        "limit": 10
+                    }
+                },
+                {
+                    "type": "scripting",
+                    "action": "Choose from List",
+                    "parameters": {
+                        "input": "shortcut_result"
+                    }
+                },
+                {
+                    "type": "system",
+                    "action": "Open URLs",
+                    "parameters": {
+                        "input": "chosen_item"
+                    }
+                }
+            ],
+            "useCases": [
+                "Voice: 'Hey Siri, find by tag vacation'",
+                "Browse saved links by category",
+                "Filter library by topic"
+            ],
+            "customizations": [
+                "Predefined tag list instead of asking",
+                "Adjust result limit",
+                "Show preview before opening"
+            ]
+        }
+    ],
+    "widgets": [
+        {
+            "id": "recent-links-grid",
+            "name": "Recent Links",
+            "description": "Browse and open your most recently saved links.",
+            "type": "Standard",
+            "sizes": [
+                "Small",
+                "Medium",
+                "Large"
+            ],
+            "icon": "square.grid.2x2.fill"
+        },
+        {
+            "id": "quick-save-lock",
+            "name": "Quick Save",
+            "description": "Save from clipboard with one tap from the Lock Screen.",
+            "type": "Lock Screen",
+            "sizes": [
+                "Circular",
+                "Rectangular"
+            ],
+            "icon": "plus.circle.fill"
+        },
+        {
+            "id": "interactive-search",
+            "name": "Diver Search",
+            "description": "Interactive search results directly on your Home Screen.",
+            "type": "Interactive",
+            "sizes": [
+                "Medium",
+                "Large"
+            ],
+            "icon": "magnifyingglass.circle.fill"
+        }
+    ],
+    "advanced_workflows": [
+        {
+            "id": "save-and-process",
+            "name": "Save and Process",
+            "description": "Saves a link and waits for processing, then notifies when complete",
+            "difficulty": "advanced",
+            "actions": [
+                "SaveLinkIntent",
+                "Wait",
+                "SearchLinksIntent",
+                "Show Notification"
+            ]
+        },
+        {
+            "id": "batch-share",
+            "name": "Batch Share",
+            "description": "Share multiple links from library at once",
+            "difficulty": "advanced",
+            "actions": [
+                "SearchLinksIntent",
+                "Choose from List (multi)",
+                "Get Details",
+                "Combine Text",
+                "Share"
+            ]
+        },
+        {
+            "id": "widget-menu",
+            "name": "Widget Menu",
+            "description": "Menu-driven shortcut for widget actions",
+            "difficulty": "advanced",
+            "actions": [
+                "Choose from Menu",
+                "SearchLinksIntent/SaveLinkIntent/OpenLinkIntent"
+            ]
+        }
+    ],
+    "intents_reference": {
+        "SaveLinkIntent": {
+            "parameters": [
+                "url",
+                "title",
+                "tags"
+            ],
+            "returns": "confirmation_dialog"
+        },
+        "ShareLinkIntent": {
+            "parameters": [
+                "url",
+                "title"
+            ],
+            "returns": "wrapped_link_string"
+        },
+        "SearchLinksIntent": {
+            "parameters": [
+                "query",
+                "tags",
+                "limit"
+            ],
+            "returns": "link_entity"
+        },
+        "OpenLinkIntent": {
+            "parameters": [
+                "link"
+            ],
+            "returns": "confirmation_dialog"
+        }
+    }
+}

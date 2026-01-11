@@ -1,0 +1,127 @@
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Albums.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Artists.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Audiobooks.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Browse.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Episodes.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Follow.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Library.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Markets.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Personalization.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Player.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Playlists.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Search.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Shows.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Tracks.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+UserProfile.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Utilities.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Wrappers.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/AuthorizationCodeFlowManager.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/AuthorizationCodeFlowManagerBase.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/AuthorizationCodeFlowPKCEManager.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/AuthorizationScopes.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationBackends.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationCodeFlowClientBackend.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationCodeFlowPKCEClientBackend.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationCodeFlowPKCEProxyBackend.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationCodeFlowProxyBackend.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/ClientCredentialsFlowClientBackend.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/ClientCredentialsFlowProxyBackend.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/ClientCredentialsFlowManager.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/SpotifyAuthorizationManager.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/SpotifyScopeAuthorizationManager.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/RateLimitedError.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyAuthenticationError.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyAuthorizationError.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyDecodingError.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyError.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyGeneralError.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyPlayerError.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Audio\ Analysis\ Objects/AudioAnalysis.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Audio\ Analysis\ Objects/AudioFeatures.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Audio\ Analysis\ Objects/Section.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Audio\ Analysis\ Objects/Segment.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Audio\ Analysis\ Objects/SpotifyTimeInterval.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Audiobook\ Objects/Audiobook.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Audiobook\ Objects/AudiobookAuthor.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Audiobook\ Objects/AudiobookChapter.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Authorization\ Objects/AuthInfo.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Authorization\ Objects/ClientCredentialsTokensRequest.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Authorization\ Objects/PKCERefreshTokensRequest.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Authorization\ Objects/PKCETokensRequest.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Authorization\ Objects/ProxyPKCERefreshTokensRequest.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Authorization\ Objects/ProxyPKCETokensRequest.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Authorization\ Objects/ProxyTokensRequest.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Authorization\ Objects/RefreshTokensRequest.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Authorization\ Objects/TokensRequest.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Browse\ Objects/RecommendationSeed.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Browse\ Objects/RecommendationsResponse.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Music\ Objects/Album.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Music\ Objects/Artist.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Music\ Objects/Track.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/AlbumType.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/Copyright.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/CursorPagingObject.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/FeaturedPlaylists.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/Followers.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/NewAlbumReleases.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/PagingObject.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/SavedItem.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/SearchResult.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/SpotifyCategory.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/SpotifyCursor.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/SpotifyImage.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/SpotifyUser.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Other\ Spotify\ Objects/TrackLink.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Player\ Objects/CurrentlyPlayingContext.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Player\ Objects/Device.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Player\ Objects/DeviceType.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Player\ Objects/PlayHistory.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Player\ Objects/PlaybackActions.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Player\ Objects/RepeatMode.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Player\ Objects/ResumePoint.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Player\ Objects/SpotifyContext.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Player\ Objects/SpotifyQueue.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Playlist\ Objects/Playlist.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Playlist\ Objects/PlaylistItem.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Playlist\ Objects/PlaylistItemContainer.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Playlist\ Objects/PlaylistItemsReference.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Podcast\ Objects/Episode.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Podcast\ Objects/Show.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Post\ Request\ Objects/Other\ Objects/AttributeRange.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Post\ Request\ Objects/Other\ Objects/TimeRange.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Post\ Request\ Objects/Other\ Objects/TrackAttributes.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Post\ Request\ Objects/Player\ Objects/PlaybackRequest+Context.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Post\ Request\ Objects/Player\ Objects/PlaybackRequest+Offset.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Post\ Request\ Objects/Player\ Objects/PlaybackRequest.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Post\ Request\ Objects/Player\ Objects/TimeReference.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Post\ Request\ Objects/Player\ Objects/TransferPlaybackRequest.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Post\ Request\ Objects/Playlist\ Objects/PlaylistDetails.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Post\ Request\ Objects/Playlist\ Objects/ReorderPlaylistItems.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Post\ Request\ Objects/Playlist\ Objects/URIsContainer.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/Post\ Request\ Objects/Playlist\ Objects/URIsDictWithInsertionIndex.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object\ Model/TypeAliases.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/ApproximateEquality.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/ApproximatelyEquatable.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/AuthorizationManagerLoggers.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/CodingExtensions.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/DataExtensions.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/DateExtensions.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/DateFormatterExtensions.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/DebugHooks.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/Endpoints.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/Headers.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/IDCategory.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/LogHandler.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/MiscellaneousUtilities.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/Paginated.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/SpotifyIdentifier.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/SpotifyURIConvertible.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/StringExtensions.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Publisher\ Extensions/DelayedConditionalRetryPublisher.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Publisher\ Extensions/OtherPublisherExtensions.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Publisher\ Extensions/SpotifyObjectDecoding.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/URLExtensions/URLComponentsExtensions.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/URLExtensions/URLExtensions.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/URLExtensions/URLQueryItemExtensions.swift
+/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/URLExtensions/URLSessionWrappers.swift

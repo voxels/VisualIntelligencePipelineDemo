@@ -1,0 +1,4 @@
+module OpenCombineDispatch {
+header "OpenCombineDispatch-Swift.h"
+export *
+}

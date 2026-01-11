@@ -1,0 +1,646 @@
+{
+  "" : {
+    "const-values" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyWebAPI-primary.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyWebAPI-primary.d",
+    "diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyWebAPI-primary.dia",
+    "emit-module-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyWebAPI-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyWebAPI-primary-emit-module.dia",
+    "pch" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyWebAPI-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyWebAPI-primary.swiftdeps"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Albums.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Albums.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Albums.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Albums.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Artists.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Artists.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Artists.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Artists.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Audiobooks.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Audiobooks.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Audiobooks.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Audiobooks.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Browse.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Browse.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Browse.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Browse.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Episodes.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Episodes.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Episodes.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Episodes.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Follow.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Follow.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Follow.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Follow.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Library.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Library.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Library.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Library.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Markets.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Markets.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Markets.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Markets.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Personalization.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Personalization.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Personalization.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Personalization.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Player.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Player.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Player.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Player.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Playlists.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Playlists.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Playlists.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Playlists.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Search.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Search.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Search.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Search.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Shows.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Shows.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Shows.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Shows.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Tracks.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Tracks.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Tracks.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Tracks.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+UserProfile.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+UserProfile.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+UserProfile.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+UserProfile.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Utilities.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Utilities.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Utilities.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Utilities.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Wrappers.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Wrappers.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Wrappers.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI+Wrappers.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAPI.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/AuthorizationCodeFlowManager.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowManager.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowManager.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowManager.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/AuthorizationCodeFlowManagerBase.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowManagerBase.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowManagerBase.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowManagerBase.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/AuthorizationCodeFlowPKCEManager.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowPKCEManager.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowPKCEManager.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowPKCEManager.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/AuthorizationScopes.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationScopes.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationScopes.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationScopes.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationBackends.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationBackends.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationBackends.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationBackends.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationCodeFlowClientBackend.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowClientBackend.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowClientBackend.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowClientBackend.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationCodeFlowPKCEClientBackend.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowPKCEClientBackend.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowPKCEClientBackend.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowPKCEClientBackend.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationCodeFlowPKCEProxyBackend.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowPKCEProxyBackend.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowPKCEProxyBackend.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowPKCEProxyBackend.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationCodeFlowProxyBackend.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowProxyBackend.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowProxyBackend.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationCodeFlowProxyBackend.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/ClientCredentialsFlowClientBackend.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ClientCredentialsFlowClientBackend.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ClientCredentialsFlowClientBackend.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ClientCredentialsFlowClientBackend.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/ClientCredentialsFlowProxyBackend.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ClientCredentialsFlowProxyBackend.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ClientCredentialsFlowProxyBackend.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ClientCredentialsFlowProxyBackend.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/ClientCredentialsFlowManager.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ClientCredentialsFlowManager.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ClientCredentialsFlowManager.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ClientCredentialsFlowManager.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/SpotifyAuthorizationManager.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAuthorizationManager.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAuthorizationManager.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAuthorizationManager.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/SpotifyScopeAuthorizationManager.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyScopeAuthorizationManager.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyScopeAuthorizationManager.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyScopeAuthorizationManager.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/RateLimitedError.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RateLimitedError.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RateLimitedError.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RateLimitedError.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyAuthenticationError.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAuthenticationError.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAuthenticationError.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAuthenticationError.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyAuthorizationError.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAuthorizationError.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAuthorizationError.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyAuthorizationError.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyDecodingError.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyDecodingError.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyDecodingError.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyDecodingError.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyError.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyError.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyError.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyError.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyGeneralError.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyGeneralError.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyGeneralError.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyGeneralError.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyPlayerError.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyPlayerError.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyPlayerError.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyPlayerError.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audio Analysis Objects/AudioAnalysis.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AudioAnalysis.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AudioAnalysis.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AudioAnalysis.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audio Analysis Objects/AudioFeatures.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AudioFeatures.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AudioFeatures.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AudioFeatures.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audio Analysis Objects/Section.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Section.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Section.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Section.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audio Analysis Objects/Segment.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Segment.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Segment.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Segment.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audio Analysis Objects/SpotifyTimeInterval.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyTimeInterval.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyTimeInterval.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyTimeInterval.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audiobook Objects/Audiobook.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Audiobook.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Audiobook.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Audiobook.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audiobook Objects/AudiobookAuthor.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AudiobookAuthor.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AudiobookAuthor.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AudiobookAuthor.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audiobook Objects/AudiobookChapter.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AudiobookChapter.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AudiobookChapter.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AudiobookChapter.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/AuthInfo.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthInfo.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthInfo.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthInfo.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/ClientCredentialsTokensRequest.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ClientCredentialsTokensRequest.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ClientCredentialsTokensRequest.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ClientCredentialsTokensRequest.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/PKCERefreshTokensRequest.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PKCERefreshTokensRequest.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PKCERefreshTokensRequest.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PKCERefreshTokensRequest.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/PKCETokensRequest.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PKCETokensRequest.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PKCETokensRequest.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PKCETokensRequest.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/ProxyPKCERefreshTokensRequest.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ProxyPKCERefreshTokensRequest.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ProxyPKCERefreshTokensRequest.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ProxyPKCERefreshTokensRequest.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/ProxyPKCETokensRequest.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ProxyPKCETokensRequest.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ProxyPKCETokensRequest.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ProxyPKCETokensRequest.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/ProxyTokensRequest.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ProxyTokensRequest.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ProxyTokensRequest.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ProxyTokensRequest.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/RefreshTokensRequest.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RefreshTokensRequest.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RefreshTokensRequest.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RefreshTokensRequest.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/TokensRequest.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TokensRequest.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TokensRequest.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TokensRequest.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Browse Objects/RecommendationSeed.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RecommendationSeed.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RecommendationSeed.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RecommendationSeed.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Browse Objects/RecommendationsResponse.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RecommendationsResponse.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RecommendationsResponse.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RecommendationsResponse.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Music Objects/Album.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Album.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Album.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Album.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Music Objects/Artist.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Artist.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Artist.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Artist.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Music Objects/Track.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Track.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Track.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Track.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/AlbumType.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AlbumType.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AlbumType.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AlbumType.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/Copyright.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Copyright.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Copyright.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Copyright.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/CursorPagingObject.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/CursorPagingObject.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/CursorPagingObject.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/CursorPagingObject.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/FeaturedPlaylists.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/FeaturedPlaylists.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/FeaturedPlaylists.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/FeaturedPlaylists.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/Followers.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Followers.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Followers.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Followers.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/NewAlbumReleases.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/NewAlbumReleases.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/NewAlbumReleases.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/NewAlbumReleases.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/PagingObject.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PagingObject.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PagingObject.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PagingObject.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/SavedItem.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SavedItem.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SavedItem.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SavedItem.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/SearchResult.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SearchResult.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SearchResult.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SearchResult.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/SpotifyCategory.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyCategory.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyCategory.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyCategory.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/SpotifyCursor.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyCursor.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyCursor.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyCursor.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/SpotifyImage.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyImage.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyImage.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyImage.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/SpotifyUser.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyUser.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyUser.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyUser.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/TrackLink.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TrackLink.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TrackLink.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TrackLink.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/CurrentlyPlayingContext.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/CurrentlyPlayingContext.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/CurrentlyPlayingContext.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/CurrentlyPlayingContext.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/Device.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Device.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Device.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Device.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/DeviceType.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DeviceType.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DeviceType.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DeviceType.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/PlayHistory.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlayHistory.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlayHistory.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlayHistory.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/PlaybackActions.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaybackActions.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaybackActions.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaybackActions.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/RepeatMode.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RepeatMode.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RepeatMode.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/RepeatMode.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/ResumePoint.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ResumePoint.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ResumePoint.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ResumePoint.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/SpotifyContext.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyContext.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyContext.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyContext.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/SpotifyQueue.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyQueue.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyQueue.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyQueue.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Playlist Objects/Playlist.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Playlist.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Playlist.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Playlist.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Playlist Objects/PlaylistItem.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaylistItem.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaylistItem.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaylistItem.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Playlist Objects/PlaylistItemContainer.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaylistItemContainer.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaylistItemContainer.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaylistItemContainer.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Playlist Objects/PlaylistItemsReference.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaylistItemsReference.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaylistItemsReference.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaylistItemsReference.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Podcast Objects/Episode.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Episode.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Episode.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Episode.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Podcast Objects/Show.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Show.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Show.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Show.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Other Objects/AttributeRange.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AttributeRange.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AttributeRange.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AttributeRange.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Other Objects/TimeRange.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TimeRange.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TimeRange.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TimeRange.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Other Objects/TrackAttributes.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TrackAttributes.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TrackAttributes.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TrackAttributes.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Player Objects/PlaybackRequest+Context.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaybackRequest+Context.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaybackRequest+Context.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaybackRequest+Context.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Player Objects/PlaybackRequest+Offset.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaybackRequest+Offset.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaybackRequest+Offset.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaybackRequest+Offset.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Player Objects/PlaybackRequest.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaybackRequest.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaybackRequest.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaybackRequest.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Player Objects/TimeReference.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TimeReference.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TimeReference.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TimeReference.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Player Objects/TransferPlaybackRequest.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TransferPlaybackRequest.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TransferPlaybackRequest.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TransferPlaybackRequest.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Playlist Objects/PlaylistDetails.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaylistDetails.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaylistDetails.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/PlaylistDetails.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Playlist Objects/ReorderPlaylistItems.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ReorderPlaylistItems.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ReorderPlaylistItems.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ReorderPlaylistItems.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Playlist Objects/URIsContainer.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URIsContainer.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URIsContainer.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URIsContainer.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Playlist Objects/URIsDictWithInsertionIndex.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URIsDictWithInsertionIndex.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URIsDictWithInsertionIndex.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URIsDictWithInsertionIndex.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/TypeAliases.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TypeAliases.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TypeAliases.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/TypeAliases.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/ApproximateEquality.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ApproximateEquality.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ApproximateEquality.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ApproximateEquality.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/ApproximatelyEquatable.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ApproximatelyEquatable.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ApproximatelyEquatable.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/ApproximatelyEquatable.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/AuthorizationManagerLoggers.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationManagerLoggers.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationManagerLoggers.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/AuthorizationManagerLoggers.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/CodingExtensions.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/CodingExtensions.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/CodingExtensions.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/CodingExtensions.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/DataExtensions.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DataExtensions.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DataExtensions.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DataExtensions.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/DateExtensions.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DateExtensions.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DateExtensions.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DateExtensions.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/DateFormatterExtensions.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DateFormatterExtensions.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DateFormatterExtensions.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DateFormatterExtensions.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/DebugHooks.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DebugHooks.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DebugHooks.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DebugHooks.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/Endpoints.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Endpoints.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Endpoints.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Endpoints.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/Headers.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Headers.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Headers.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Headers.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/IDCategory.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/IDCategory.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/IDCategory.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/IDCategory.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/LogHandler.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/LogHandler.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/LogHandler.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/LogHandler.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/MiscellaneousUtilities.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/MiscellaneousUtilities.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/MiscellaneousUtilities.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/MiscellaneousUtilities.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/Paginated.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Paginated.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Paginated.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/Paginated.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/SpotifyIdentifier.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyIdentifier.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyIdentifier.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyIdentifier.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/SpotifyURIConvertible.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyURIConvertible.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyURIConvertible.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyURIConvertible.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/StringExtensions.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/StringExtensions.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/StringExtensions.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/StringExtensions.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Publisher Extensions/DelayedConditionalRetryPublisher.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DelayedConditionalRetryPublisher.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DelayedConditionalRetryPublisher.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/DelayedConditionalRetryPublisher.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Publisher Extensions/OtherPublisherExtensions.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/OtherPublisherExtensions.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/OtherPublisherExtensions.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/OtherPublisherExtensions.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Publisher Extensions/SpotifyObjectDecoding.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyObjectDecoding.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyObjectDecoding.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/SpotifyObjectDecoding.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/URLExtensions/URLComponentsExtensions.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URLComponentsExtensions.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URLComponentsExtensions.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URLComponentsExtensions.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/URLExtensions/URLExtensions.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URLExtensions.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URLExtensions.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URLExtensions.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/URLExtensions/URLQueryItemExtensions.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URLQueryItemExtensions.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URLQueryItemExtensions.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URLQueryItemExtensions.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/URLExtensions/URLSessionWrappers.swift" : {
+    "index-unit-output-path" : "/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URLSessionWrappers.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URLSessionWrappers.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/SpotifyAPI/build/SpotifyAPI.build/Release-iphoneos/SpotifyWebAPI.build/Objects-normal/arm64/URLSessionWrappers.o"
+  }
+}

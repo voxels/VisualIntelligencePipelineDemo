@@ -1,0 +1,3 @@
+module YahooSearchWrapper {
+    header "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/YahooSearchWrapper.build/include/YahooSearchWrapper-Swift.h"
+}

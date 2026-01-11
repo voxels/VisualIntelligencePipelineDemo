@@ -1,0 +1,4 @@
+module JSONSafeEncoding {
+header "JSONSafeEncoding-Swift.h"
+export *
+}

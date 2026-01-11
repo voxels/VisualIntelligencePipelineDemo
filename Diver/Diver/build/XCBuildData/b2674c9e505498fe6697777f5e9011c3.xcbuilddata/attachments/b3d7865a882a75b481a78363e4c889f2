@@ -1,0 +1,4 @@
+module Segment {
+header "Segment-Swift.h"
+export *
+}

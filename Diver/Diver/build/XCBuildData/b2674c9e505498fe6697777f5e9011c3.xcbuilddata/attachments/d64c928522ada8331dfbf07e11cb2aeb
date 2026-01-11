@@ -1,0 +1,4 @@
+module COpenCombineHelpers {
+umbrella header "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/Sources/COpenCombineHelpers/include/COpenCombineHelpers.h"
+export *
+}

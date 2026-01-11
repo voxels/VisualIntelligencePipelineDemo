@@ -1,0 +1,894 @@
+{
+  "": {
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/master.swiftdeps"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Albums.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Albums.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Albums.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Albums~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Albums.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Albums.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Artists.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Artists.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Artists.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Artists~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Artists.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Artists.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Audiobooks.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Audiobooks.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Audiobooks.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Audiobooks~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Audiobooks.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Audiobooks.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Browse.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Browse.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Browse.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Browse~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Browse.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Browse.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Episodes.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Episodes.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Episodes.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Episodes~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Episodes.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Episodes.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Follow.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Follow.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Follow.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Follow~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Follow.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Follow.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Library.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Library.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Library.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Library~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Library.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Library.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Markets.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Markets.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Markets.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Markets~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Markets.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Markets.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Personalization.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Personalization.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Personalization.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Personalization~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Personalization.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Personalization.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Player.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Player.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Player.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Player~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Player.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Player.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Playlists.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Playlists.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Playlists.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Playlists~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Playlists.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Playlists.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Search.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Search.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Search.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Search~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Search.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Search.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Shows.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Shows.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Shows.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Shows~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Shows.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Shows.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Tracks.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Tracks.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Tracks.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Tracks~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Tracks.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Tracks.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+UserProfile.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+UserProfile.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+UserProfile.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+UserProfile~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+UserProfile.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+UserProfile.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Utilities.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Utilities.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Utilities.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Utilities~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Utilities.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Utilities.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI+Wrappers.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Wrappers.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Wrappers.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Wrappers~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Wrappers.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI+Wrappers.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/API/SpotifyAPI.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAPI.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/AuthorizationCodeFlowManager.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowManager.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowManager.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowManager.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowManager.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/AuthorizationCodeFlowManagerBase.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowManagerBase.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowManagerBase.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowManagerBase~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowManagerBase.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowManagerBase.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/AuthorizationCodeFlowPKCEManager.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEManager.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEManager.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEManager.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEManager.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/AuthorizationScopes.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationScopes.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationScopes.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationScopes~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationScopes.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationScopes.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationBackends.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationBackends.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationBackends.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationBackends~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationBackends.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationBackends.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationCodeFlowClientBackend.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowClientBackend.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowClientBackend.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowClientBackend~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowClientBackend.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowClientBackend.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationCodeFlowPKCEClientBackend.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEClientBackend.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEClientBackend.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEClientBackend~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEClientBackend.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEClientBackend.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationCodeFlowPKCEProxyBackend.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEProxyBackend.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEProxyBackend.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEProxyBackend~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEProxyBackend.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowPKCEProxyBackend.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/AuthorizationCodeFlowProxyBackend.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowProxyBackend.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowProxyBackend.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowProxyBackend~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowProxyBackend.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationCodeFlowProxyBackend.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/ClientCredentialsFlowClientBackend.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowClientBackend.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowClientBackend.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowClientBackend~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowClientBackend.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowClientBackend.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/Backends/ClientCredentialsFlowProxyBackend.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowProxyBackend.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowProxyBackend.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowProxyBackend~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowProxyBackend.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowProxyBackend.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/ClientCredentialsFlowManager.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowManager.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowManager.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowManager.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsFlowManager.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/SpotifyAuthorizationManager.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthorizationManager.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthorizationManager.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthorizationManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthorizationManager.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthorizationManager.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Authorization/SpotifyScopeAuthorizationManager.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyScopeAuthorizationManager.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyScopeAuthorizationManager.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyScopeAuthorizationManager~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyScopeAuthorizationManager.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyScopeAuthorizationManager.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/RateLimitedError.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RateLimitedError.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RateLimitedError.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RateLimitedError~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RateLimitedError.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RateLimitedError.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyAuthenticationError.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthenticationError.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthenticationError.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthenticationError~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthenticationError.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthenticationError.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyAuthorizationError.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthorizationError.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthorizationError.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthorizationError~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthorizationError.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyAuthorizationError.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyDecodingError.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyDecodingError.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyDecodingError.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyDecodingError~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyDecodingError.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyDecodingError.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyError.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyError.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyError.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyError~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyError.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyError.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyGeneralError.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyGeneralError.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyGeneralError.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyGeneralError~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyGeneralError.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyGeneralError.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Errors/SpotifyPlayerError.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyPlayerError.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyPlayerError.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyPlayerError~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyPlayerError.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyPlayerError.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audio Analysis Objects/AudioAnalysis.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudioAnalysis.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudioAnalysis.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudioAnalysis~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudioAnalysis.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudioAnalysis.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audio Analysis Objects/AudioFeatures.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudioFeatures.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudioFeatures.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudioFeatures~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudioFeatures.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudioFeatures.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audio Analysis Objects/Section.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Section.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Section.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Section~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Section.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Section.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audio Analysis Objects/Segment.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Segment.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Segment.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Segment~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Segment.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Segment.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audio Analysis Objects/SpotifyTimeInterval.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyTimeInterval.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyTimeInterval.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyTimeInterval~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyTimeInterval.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyTimeInterval.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audiobook Objects/Audiobook.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Audiobook.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Audiobook.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Audiobook~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Audiobook.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Audiobook.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audiobook Objects/AudiobookAuthor.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudiobookAuthor.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudiobookAuthor.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudiobookAuthor~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudiobookAuthor.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudiobookAuthor.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Audiobook Objects/AudiobookChapter.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudiobookChapter.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudiobookChapter.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudiobookChapter~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudiobookChapter.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AudiobookChapter.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/AuthInfo.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthInfo.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthInfo.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthInfo~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthInfo.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthInfo.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/ClientCredentialsTokensRequest.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsTokensRequest.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsTokensRequest.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsTokensRequest~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsTokensRequest.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ClientCredentialsTokensRequest.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/PKCERefreshTokensRequest.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PKCERefreshTokensRequest.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PKCERefreshTokensRequest.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PKCERefreshTokensRequest~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PKCERefreshTokensRequest.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PKCERefreshTokensRequest.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/PKCETokensRequest.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PKCETokensRequest.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PKCETokensRequest.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PKCETokensRequest~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PKCETokensRequest.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PKCETokensRequest.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/ProxyPKCERefreshTokensRequest.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyPKCERefreshTokensRequest.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyPKCERefreshTokensRequest.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyPKCERefreshTokensRequest~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyPKCERefreshTokensRequest.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyPKCERefreshTokensRequest.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/ProxyPKCETokensRequest.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyPKCETokensRequest.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyPKCETokensRequest.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyPKCETokensRequest~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyPKCETokensRequest.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyPKCETokensRequest.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/ProxyTokensRequest.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyTokensRequest.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyTokensRequest.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyTokensRequest~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyTokensRequest.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ProxyTokensRequest.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/RefreshTokensRequest.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RefreshTokensRequest.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RefreshTokensRequest.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RefreshTokensRequest~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RefreshTokensRequest.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RefreshTokensRequest.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Authorization Objects/TokensRequest.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TokensRequest.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TokensRequest.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TokensRequest~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TokensRequest.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TokensRequest.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Browse Objects/RecommendationSeed.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RecommendationSeed.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RecommendationSeed.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RecommendationSeed~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RecommendationSeed.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RecommendationSeed.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Browse Objects/RecommendationsResponse.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RecommendationsResponse.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RecommendationsResponse.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RecommendationsResponse~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RecommendationsResponse.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RecommendationsResponse.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Music Objects/Album.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Album.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Album.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Album~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Album.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Album.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Music Objects/Artist.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Artist.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Artist.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Artist~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Artist.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Artist.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Music Objects/Track.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Track.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Track.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Track~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Track.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Track.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/AlbumType.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AlbumType.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AlbumType.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AlbumType~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AlbumType.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AlbumType.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/Copyright.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Copyright.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Copyright.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Copyright~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Copyright.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Copyright.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/CursorPagingObject.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CursorPagingObject.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CursorPagingObject.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CursorPagingObject~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CursorPagingObject.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CursorPagingObject.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/FeaturedPlaylists.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/FeaturedPlaylists.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/FeaturedPlaylists.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/FeaturedPlaylists~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/FeaturedPlaylists.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/FeaturedPlaylists.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/Followers.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Followers.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Followers.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Followers~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Followers.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Followers.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/NewAlbumReleases.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/NewAlbumReleases.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/NewAlbumReleases.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/NewAlbumReleases~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/NewAlbumReleases.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/NewAlbumReleases.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/PagingObject.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PagingObject.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PagingObject.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PagingObject~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PagingObject.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PagingObject.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/SavedItem.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SavedItem.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SavedItem.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SavedItem~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SavedItem.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SavedItem.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/SearchResult.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SearchResult.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SearchResult.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SearchResult~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SearchResult.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SearchResult.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/SpotifyCategory.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyCategory.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyCategory.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyCategory~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyCategory.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyCategory.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/SpotifyCursor.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyCursor.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyCursor.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyCursor~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyCursor.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyCursor.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/SpotifyImage.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyImage.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyImage.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyImage~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyImage.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyImage.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/SpotifyUser.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyUser.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyUser.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyUser~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyUser.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyUser.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Other Spotify Objects/TrackLink.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TrackLink.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TrackLink.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TrackLink~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TrackLink.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TrackLink.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/CurrentlyPlayingContext.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CurrentlyPlayingContext.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CurrentlyPlayingContext.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CurrentlyPlayingContext~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CurrentlyPlayingContext.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CurrentlyPlayingContext.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/Device.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Device.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Device.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Device~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Device.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Device.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/DeviceType.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DeviceType.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DeviceType.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DeviceType~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DeviceType.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DeviceType.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/PlayHistory.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlayHistory.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlayHistory.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlayHistory~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlayHistory.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlayHistory.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/PlaybackActions.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackActions.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackActions.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackActions~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackActions.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackActions.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/RepeatMode.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RepeatMode.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RepeatMode.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RepeatMode~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RepeatMode.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/RepeatMode.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/ResumePoint.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ResumePoint.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ResumePoint.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ResumePoint~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ResumePoint.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ResumePoint.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/SpotifyContext.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyContext.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyContext.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyContext~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyContext.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyContext.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Player Objects/SpotifyQueue.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyQueue.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyQueue.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyQueue~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyQueue.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyQueue.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Playlist Objects/Playlist.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Playlist.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Playlist.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Playlist~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Playlist.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Playlist.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Playlist Objects/PlaylistItem.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItem.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItem.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItem~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItem.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItem.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Playlist Objects/PlaylistItemContainer.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItemContainer.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItemContainer.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItemContainer~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItemContainer.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItemContainer.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Playlist Objects/PlaylistItemsReference.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItemsReference.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItemsReference.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItemsReference~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItemsReference.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistItemsReference.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Podcast Objects/Episode.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Episode.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Episode.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Episode~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Episode.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Episode.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Podcast Objects/Show.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Show.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Show.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Show~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Show.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Show.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Other Objects/AttributeRange.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AttributeRange.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AttributeRange.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AttributeRange~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AttributeRange.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AttributeRange.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Other Objects/TimeRange.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TimeRange.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TimeRange.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TimeRange~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TimeRange.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TimeRange.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Other Objects/TrackAttributes.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TrackAttributes.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TrackAttributes.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TrackAttributes~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TrackAttributes.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TrackAttributes.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Player Objects/PlaybackRequest+Context.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest+Context.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest+Context.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest+Context~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest+Context.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest+Context.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Player Objects/PlaybackRequest+Offset.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest+Offset.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest+Offset.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest+Offset~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest+Offset.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest+Offset.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Player Objects/PlaybackRequest.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaybackRequest.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Player Objects/TimeReference.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TimeReference.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TimeReference.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TimeReference~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TimeReference.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TimeReference.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Player Objects/TransferPlaybackRequest.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TransferPlaybackRequest.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TransferPlaybackRequest.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TransferPlaybackRequest~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TransferPlaybackRequest.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TransferPlaybackRequest.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Playlist Objects/PlaylistDetails.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistDetails.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistDetails.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistDetails~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistDetails.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/PlaylistDetails.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Playlist Objects/ReorderPlaylistItems.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ReorderPlaylistItems.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ReorderPlaylistItems.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ReorderPlaylistItems~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ReorderPlaylistItems.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ReorderPlaylistItems.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Playlist Objects/URIsContainer.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URIsContainer.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URIsContainer.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URIsContainer~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URIsContainer.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URIsContainer.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/Post Request Objects/Playlist Objects/URIsDictWithInsertionIndex.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URIsDictWithInsertionIndex.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URIsDictWithInsertionIndex.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URIsDictWithInsertionIndex~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URIsDictWithInsertionIndex.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URIsDictWithInsertionIndex.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Object Model/TypeAliases.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TypeAliases.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TypeAliases.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TypeAliases~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TypeAliases.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/TypeAliases.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/ApproximateEquality.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ApproximateEquality.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ApproximateEquality.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ApproximateEquality~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ApproximateEquality.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ApproximateEquality.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/ApproximatelyEquatable.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ApproximatelyEquatable.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ApproximatelyEquatable.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ApproximatelyEquatable~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ApproximatelyEquatable.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/ApproximatelyEquatable.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/AuthorizationManagerLoggers.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationManagerLoggers.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationManagerLoggers.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationManagerLoggers~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationManagerLoggers.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/AuthorizationManagerLoggers.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/CodingExtensions.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CodingExtensions.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CodingExtensions.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CodingExtensions~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CodingExtensions.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/CodingExtensions.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/DataExtensions.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DataExtensions.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DataExtensions.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DataExtensions~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DataExtensions.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DataExtensions.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/DateExtensions.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DateExtensions.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DateExtensions.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DateExtensions~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DateExtensions.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DateExtensions.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/DateFormatterExtensions.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DateFormatterExtensions.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DateFormatterExtensions.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DateFormatterExtensions~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DateFormatterExtensions.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DateFormatterExtensions.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/DebugHooks.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DebugHooks.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DebugHooks.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DebugHooks~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DebugHooks.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DebugHooks.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/Endpoints.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Endpoints.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Endpoints.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Endpoints~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Endpoints.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Endpoints.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/Headers.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Headers.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Headers.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Headers~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Headers.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Headers.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/IDCategory.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/IDCategory.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/IDCategory.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/IDCategory~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/IDCategory.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/IDCategory.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/LogHandler.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/LogHandler.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/LogHandler.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/LogHandler~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/LogHandler.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/LogHandler.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/MiscellaneousUtilities.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/MiscellaneousUtilities.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/MiscellaneousUtilities.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/MiscellaneousUtilities~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/MiscellaneousUtilities.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/MiscellaneousUtilities.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/Paginated.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Paginated.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Paginated.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Paginated~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Paginated.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/Paginated.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/SpotifyIdentifier.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyIdentifier.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyIdentifier.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyIdentifier~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyIdentifier.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyIdentifier.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/SpotifyURIConvertible.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyURIConvertible.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyURIConvertible.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyURIConvertible~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyURIConvertible.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyURIConvertible.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Other/StringExtensions.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/StringExtensions.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/StringExtensions.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/StringExtensions~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/StringExtensions.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/StringExtensions.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Publisher Extensions/DelayedConditionalRetryPublisher.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DelayedConditionalRetryPublisher.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DelayedConditionalRetryPublisher.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DelayedConditionalRetryPublisher~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DelayedConditionalRetryPublisher.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/DelayedConditionalRetryPublisher.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Publisher Extensions/OtherPublisherExtensions.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/OtherPublisherExtensions.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/OtherPublisherExtensions.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/OtherPublisherExtensions~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/OtherPublisherExtensions.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/OtherPublisherExtensions.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/Publisher Extensions/SpotifyObjectDecoding.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyObjectDecoding.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyObjectDecoding.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyObjectDecoding~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyObjectDecoding.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/SpotifyObjectDecoding.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/URLExtensions/URLComponentsExtensions.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLComponentsExtensions.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLComponentsExtensions.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLComponentsExtensions~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLComponentsExtensions.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLComponentsExtensions.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/URLExtensions/URLExtensions.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLExtensions.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLExtensions.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLExtensions~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLExtensions.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLExtensions.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/URLExtensions/URLQueryItemExtensions.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLQueryItemExtensions.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLQueryItemExtensions.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLQueryItemExtensions~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLQueryItemExtensions.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLQueryItemExtensions.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/checkouts/SpotifyAPI/Sources/SpotifyWebAPI/URLExtensions/URLSessionWrappers.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLSessionWrappers.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLSessionWrappers.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLSessionWrappers~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLSessionWrappers.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/URLSessionWrappers.dia"
+  }
+}

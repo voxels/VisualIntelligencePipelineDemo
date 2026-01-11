@@ -1,0 +1,626 @@
+# File-by-file diff: main vs UI branch
+
+Generated from `git diff --name-status main..UI`.
+
+## Added (504)
+- .DS_Store
+- AGENTS.md
+- CLAUDE.md
+- Diver/ActionExtension/ActionViewController.swift
+- Diver/Diver/Assets.xcassets/AppIcon.appiconset/sa_logo_icon.png
+- Diver/Diver/Diver.entitlements
+- Diver/Diver/DiverApp.swift
+- Diver/Diver/Info.plist
+- Diver/Diver/Model/Schema/Item.swift
+- Diver/Diver/Services/DiverQueueProcessingService.swift
+- Diver/Diver/Services/KnowMapsAdapter.swift
+- Diver/Diver/Services/KnowMapsCacheStore.swift
+- Diver/Diver/Services/KnowMapsServiceContainer.swift
+- Diver/Diver/View/ContentView.swift
+- Diver/DiverTests/ActionViewControllerTests.swift
+- Diver/DiverTests/CloudKitTestSupport.swift
+- Diver/DiverTests/Fixtures/pipeline_logs.json
+- Diver/DiverTests/KnowMapsAdapterTests.swift
+- Diver/DiverTests/KnowMapsCacheStoreTests.swift
+- Diver/DiverTests/KnowMapsServiceContainerTests.swift
+- Diver/DiverTests/TestAnalyticsService.swift
+- DiverKit/.DS_Store
+- DiverKit/Archive/API-sdk.zip
+- DiverKit/Package.swift
+- DiverKit/Sources/.DS_Store
+- DiverKit/Sources/DiverKit/.DS_Store
+- DiverKit/Sources/DiverKit/Agents/AgentsClient.swift
+- DiverKit/Sources/DiverKit/Auth/AuthClient.swift
+- DiverKit/Sources/DiverKit/Authentication/AppleAuthenticationService.swift
+- DiverKit/Sources/DiverKit/Authentication/AuthManager.swift
+- DiverKit/Sources/DiverKit/Authentication/AuthenticationState.swift
+- DiverKit/Sources/DiverKit/Authentication/KeychainService.swift
+- DiverKit/Sources/DiverKit/Authentication/TokenValidation.swift
+- DiverKit/Sources/DiverKit/Config/APIConfig.swift
+- DiverKit/Sources/DiverKit/Core/APIErrorResponse.swift
+- DiverKit/Sources/DiverKit/Core/ApiClient.swift
+- DiverKit/Sources/DiverKit/Core/CalendarDate.swift
+- DiverKit/Sources/DiverKit/Core/ClientConfig.swift
+- DiverKit/Sources/DiverKit/Core/ClientError.swift
+- DiverKit/Sources/DiverKit/Core/FormFile.swift
+- DiverKit/Sources/DiverKit/Core/JSONValue.swift
+- DiverKit/Sources/DiverKit/Core/LinkUnpacker.swift
+- DiverKit/Sources/DiverKit/Core/Networking/Data+UTF8Append.swift
+- DiverKit/Sources/DiverKit/Core/Networking/HTTP.swift
+- DiverKit/Sources/DiverKit/Core/Networking/HTTPClient.swift
+- DiverKit/Sources/DiverKit/Core/Networking/MultipartFormData.swift
+- DiverKit/Sources/DiverKit/Core/Networking/MultipartFormDataConvertible.swift
+- DiverKit/Sources/DiverKit/Core/Networking/MultipartFormField.swift
+- DiverKit/Sources/DiverKit/Core/Networking/QueryParameter.swift
+- DiverKit/Sources/DiverKit/Core/Nullable.swift
+- DiverKit/Sources/DiverKit/Core/OpaqueLinkService.swift
+- DiverKit/Sources/DiverKit/Core/RequestOptions.swift
+- DiverKit/Sources/DiverKit/Core/Serde/Decoder+AdditionalProperties.swift
+- DiverKit/Sources/DiverKit/Core/Serde/EncodableValue.swift
+- DiverKit/Sources/DiverKit/Core/Serde/Encoder+AdditionalProperties.swift
+- DiverKit/Sources/DiverKit/Core/Serde/JSONEncoder+EncodableValue.swift
+- DiverKit/Sources/DiverKit/Core/Serde/KeyedDecodingContainer+Nullable.swift
+- DiverKit/Sources/DiverKit/Core/Serde/KeyedEncodingContainer+Nullable.swift
+- DiverKit/Sources/DiverKit/Core/Serde/Serde.swift
+- DiverKit/Sources/DiverKit/Core/Serde/StringKey.swift
+- DiverKit/Sources/DiverKit/Core/StoreHealthMonitor.swift
+- DiverKit/Sources/DiverKit/DiverKit.swift
+- DiverKit/Sources/DiverKit/Inputs/InputsClient.swift
+- DiverKit/Sources/DiverKit/Items/ItemsClient.swift
+- DiverKit/Sources/DiverKit/Jobs/JobsClient.swift
+- DiverKit/Sources/DiverKit/Media/MediaClient.swift
+- DiverKit/Sources/DiverKit/Messages/MessagesClient.swift
+- DiverKit/Sources/DiverKit/Models/.DS_Store
+- DiverKit/Sources/DiverKit/Models/JSONCoding.swift
+- DiverKit/Sources/DiverKit/Models/LocalInput.swift
+- DiverKit/Sources/DiverKit/Models/ProcessedItem.swift
+- DiverKit/Sources/DiverKit/Models/TikTokMetadata.swift
+- DiverKit/Sources/DiverKit/Models/TypeAliases.swift
+- DiverKit/Sources/DiverKit/Models/UserConcept.swift
+- DiverKit/Sources/DiverKit/References/ReferencesClient.swift
+- DiverKit/Sources/DiverKit/Requests/Requests+AgentRegister.swift
+- DiverKit/Sources/DiverKit/Requests/Requests+BodyResetForgotPasswordAuthResetPasswordForgotPasswordPost.swift
+- DiverKit/Sources/DiverKit/Requests/Requests+BodyResetResetPasswordAuthResetPasswordResetPasswordPost.swift
+- DiverKit/Sources/DiverKit/Requests/Requests+BodyVerifyRequestTokenAuthVerifyRequestVerifyTokenPost.swift
+- DiverKit/Sources/DiverKit/Requests/Requests+BodyVerifyVerifyAuthVerifyVerifyPost.swift
+- DiverKit/Sources/DiverKit/Requests/Requests+InputCreate.swift
+- DiverKit/Sources/DiverKit/Requests/Requests+ItemCreate.swift
+- DiverKit/Sources/DiverKit/Requests/Requests+MediaCreate.swift
+- DiverKit/Sources/DiverKit/Requests/Requests+MediaUpdate.swift
+- DiverKit/Sources/DiverKit/Requests/Requests+MessageCreate.swift
+- DiverKit/Sources/DiverKit/Requests/Requests+ReferenceCreate.swift
+- DiverKit/Sources/DiverKit/Requests/Requests+UserCreate.swift
+- DiverKit/Sources/DiverKit/Requests/Requests.swift
+- DiverKit/Sources/DiverKit/Schemas/AgentRead.swift
+- DiverKit/Sources/DiverKit/Schemas/AlbumArtistPair.swift
+- DiverKit/Sources/DiverKit/Schemas/Author.swift
+- DiverKit/Sources/DiverKit/Schemas/AuthorBio.swift
+- DiverKit/Sources/DiverKit/Schemas/AuthorLink.swift
+- DiverKit/Sources/DiverKit/Schemas/AuthorPhotosItem.swift
+- DiverKit/Sources/DiverKit/Schemas/BearerResponse.swift
+- DiverKit/Sources/DiverKit/Schemas/Bio.swift
+- DiverKit/Sources/DiverKit/Schemas/BodyAuthJwtLoginAuthJwtLoginPost.swift
+- DiverKit/Sources/DiverKit/Schemas/BookHypotheses.swift
+- DiverKit/Sources/DiverKit/Schemas/DecisionResults.swift
+- DiverKit/Sources/DiverKit/Schemas/Detail.swift
+- DiverKit/Sources/DiverKit/Schemas/ErrorMessageData.swift
+- DiverKit/Sources/DiverKit/Schemas/ErrorModel.swift
+- DiverKit/Sources/DiverKit/Schemas/GetTypedMessageMessagesJobUuidTypedMessageIdGetResponse.swift
+- DiverKit/Sources/DiverKit/Schemas/HttpValidationError.swift
+- DiverKit/Sources/DiverKit/Schemas/Hypotheses.swift
+- DiverKit/Sources/DiverKit/Schemas/InputRead.swift
+- DiverKit/Sources/DiverKit/Schemas/InputTypeEnum.swift
+- DiverKit/Sources/DiverKit/Schemas/ItemClassificationData.swift
+- DiverKit/Sources/DiverKit/Schemas/ItemRead.swift
+- DiverKit/Sources/DiverKit/Schemas/ItemReadWithRelations.swift
+- DiverKit/Sources/DiverKit/Schemas/ItemStatusEnum.swift
+- DiverKit/Sources/DiverKit/Schemas/MediaAnalysisData.swift
+- DiverKit/Sources/DiverKit/Schemas/MediaRead.swift
+- DiverKit/Sources/DiverKit/Schemas/MediaTypeEnum.swift
+- DiverKit/Sources/DiverKit/Schemas/MessageCreateMessageData.swift
+- DiverKit/Sources/DiverKit/Schemas/MessageListResponse.swift
+- DiverKit/Sources/DiverKit/Schemas/MessageRead.swift
+- DiverKit/Sources/DiverKit/Schemas/MessageReadMessageData.swift
+- DiverKit/Sources/DiverKit/Schemas/MusicHypotheses.swift
+- DiverKit/Sources/DiverKit/Schemas/OpenLibraryBook.swift
+- DiverKit/Sources/DiverKit/Schemas/ProcessingStatusData.swift
+- DiverKit/Sources/DiverKit/Schemas/ReferenceCandidatesData.swift
+- DiverKit/Sources/DiverKit/Schemas/ReferenceHypothesesData.swift
+- DiverKit/Sources/DiverKit/Schemas/ReferenceRead.swift
+- DiverKit/Sources/DiverKit/Schemas/ReferenceResultsData.swift
+- DiverKit/Sources/DiverKit/Schemas/SearchResults.swift
+- DiverKit/Sources/DiverKit/Schemas/SearchResultsInputCandidatesItem.swift
+- DiverKit/Sources/DiverKit/Schemas/SearchResultsOutputCandidatesItem.swift
+- DiverKit/Sources/DiverKit/Schemas/SearchSource.swift
+- DiverKit/Sources/DiverKit/Schemas/SpotifyAlbum.swift
+- DiverKit/Sources/DiverKit/Schemas/SpotifyArtist.swift
+- DiverKit/Sources/DiverKit/Schemas/SpotifyExternalIds.swift
+- DiverKit/Sources/DiverKit/Schemas/SpotifyExternalUrls.swift
+- DiverKit/Sources/DiverKit/Schemas/SpotifyImage.swift
+- DiverKit/Sources/DiverKit/Schemas/SpotifyTrack.swift
+- DiverKit/Sources/DiverKit/Schemas/SystemNotificationData.swift
+- DiverKit/Sources/DiverKit/Schemas/TextMessageData.swift
+- DiverKit/Sources/DiverKit/Schemas/TrackArtistPair.swift
+- DiverKit/Sources/DiverKit/Schemas/Type.swift
+- DiverKit/Sources/DiverKit/Schemas/UserProfile.swift
+- DiverKit/Sources/DiverKit/Schemas/UserRead.swift
+- DiverKit/Sources/DiverKit/Schemas/UserUpdate.swift
+- DiverKit/Sources/DiverKit/Schemas/ValidationError.swift
+- DiverKit/Sources/DiverKit/Schemas/ValidationErrorLocItem.swift
+- DiverKit/Sources/DiverKit/Services/.DS_Store
+- DiverKit/Sources/DiverKit/Services/LocalPipelineService.swift
+- DiverKit/Sources/DiverKit/Services/MetadataPipelineService.swift
+- DiverKit/Sources/DiverKit/Storage/StorageClient.swift
+- DiverKit/Sources/DiverKit/Storage/UnifiedDataManager.swift
+- DiverKit/Tests/.DS_Store
+- DiverKit/Tests/DiverKitTests/MetadataPipelineServiceTests.swift
+- DiverShared/Package.swift
+- DiverShared/Sources/DiverShared/AppGroupConfig.swift
+- DiverShared/Sources/DiverShared/DiverItemDescriptor.swift
+- DiverShared/Sources/DiverShared/LinkWrapping.swift
+- DiverShared/Sources/DiverShared/MessagesLaunchStore.swift
+- DiverShared/Sources/DiverShared/QueueStore.swift
+- DiverShared/Sources/DiverShared/Validation.swift
+- DiverShared/Tests/DiverSharedTests/AppGroupConfigTests.swift
+- DiverShared/Tests/DiverSharedTests/DiverItemDescriptorTests.swift
+- DiverShared/Tests/DiverSharedTests/LinkWrappingTests.swift
+- DiverShared/Tests/DiverSharedTests/QueueStoreTests.swift
+- DiverShared/Tests/DiverSharedTests/ValidationTests.swift
+- Documentation/Accelerating app interactions with App Intents | Apple Developer Documentation.pdf
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSample-Watch-App-Info.plist
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/BuyDayPass.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/Entities/ActivityStatisticsSummary+Transferable.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/Entities/ActivityStatisticsSummary.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/Entities/FeaturedCollectionEntityQuery.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/Entities/LocationOptionsProvider.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/Entities/TrailEntity.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/Entities/TrailEntityQuery+PropertyQuery.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/Entities/TrailEntityQuery.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/GetTrailInfo.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/NextTrailManeuver.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/OpenFavorites.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/OpenTrail.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/SuggestTrails.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/TrailIntentError.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/TrailShortcuts.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/Workout Intents/PauseResumeEndTrailActivity.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/Workout Intents/StartTrailActivity.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/App Intents/Workout Intents/SummarizeActivities.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/AppIntentsSampleApp.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Model/AccountManager.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Model/Activity.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Model/ActivityStyle.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Model/ActivityTracker.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Model/NavigationModel.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Model/Trail.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Model/TrailCollection.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Model/TrailDataManager+Spotlight.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Model/TrailDataManager.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/AppIntentsSampleApp.entitlements
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/AppShortcuts.xcstrings
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/AccentColor.colorset/Contents.json
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/ComplementingGradientColor1.colorset/Contents.json
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/ComplementingGradientColor2.colorset/Contents.json
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Contents.json
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Forest.imageset/Contents.json
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Forest.imageset/Landscape_31_Forest.jpeg
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Mountains_with_Snow.imageset/Contents.json
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Mountains_with_Snow.imageset/Landscape_3_Mountains_with_Snow.jpeg
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Purple_Sky.imageset/Contents.json
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Purple_Sky.imageset/Landscape_28_Purple_Sky.jpeg
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Rocks.imageset/Contents.json
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Rocks.imageset/Landscape_32_Rocks.jpeg
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Stream.imageset/Contents.json
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Stream.imageset/Landscape_17_Stream.jpeg
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Sunset.imageset/Contents.json
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Assets.xcassets/Sunset.imageset/Landscape_2_Sunset.jpeg
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Info.plist
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/Localizable.xcstrings
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/TrailData.plist
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Resources/en.lproj/AppIntents.stringsdict
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Utililty/CLLocationCoordinate2D+String.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Utililty/Logging.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Views/ActiveActivityInfoView.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Views/ActivityHistoryItem.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Views/AuthenticationItem.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Views/ContentView.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Views/DetailItem.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Views/SidebarColumn.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Views/TrailDetailColumn.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Views/TrailDetailView.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Views/TrailInfoView.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp/Views/TrailList.swift
+- Documentation/AcceleratingAppInteractionsWithAppIntents/Configuration/SampleCode.xcconfig
+- Documentation/AcceleratingAppInteractionsWithAppIntents/LICENSE.txt
+- Documentation/AcceleratingAppInteractionsWithAppIntents/README.md
+- Documentation/Action button on iPhone and Apple Watch | Apple Developer Documentation.pdf
+- Documentation/Adding Sticker packs and iMessage apps to the system Stickers app, Messages camera, and FaceTime | Apple Developer Documentation.pdf
+- Documentation/Adding custom collaboration to your app | Apple Developer Documentation.pdf
+- Documentation/Adding parameters to an app intent | Apple Developer Documentation.pdf
+- Documentation/Adding shared content collaboration to your app | Apple Developer Documentation.pdf
+- Documentation/Adopting App Intents to support system experiences | Apple Developer Documentation.pdf
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Entities/CollectionEntity.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Entities/LandmarkEntity+Image.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Entities/LandmarkEntity.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Entities/SettingsEntity.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Enums/NavigationOption.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/FindTickets/FindTicketsIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/FindTickets/Request/ConfigureGuestsIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/FindTickets/Request/SearchRequestEntity.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/FindTickets/Request/TicketRequestSnippetIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/FindTickets/Request/TicketRequestView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/FindTickets/Result/LandmarkTicketPriceView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/FindTickets/Result/TicketResultSnippetIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Intents/ClosestLandmarkIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Intents/DeleteCollectionIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Intents/GetCrowdStatusIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Intents/NavigateIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Intents/OpenCollectionIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Intents/OpenLandmarkIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Intents/RemoveCollectionIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Intents/UpdateFavoritesIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Snippets/LandmarkSnippetIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/TravelTrackerAppShortcuts.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Views/CollectionSnippetPreview.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/Views/LandmarkView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/VisualSearch/LandmarkIntentValueQuery.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntents/VisualSearch/ShowSearchResultsIntent.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntentsTravelTracking.entitlements
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/AppIntentsTravelTracking.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Model/Collection.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Model/Constants.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Model/Landmark.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Model/LandmarkCollectionData.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Model/LandmarkData.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Model/LocationFinder.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Model/ModelData.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Model/SearchToken.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/AccentColor.colorset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1001.imageset/1001@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1001.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1002.imageset/1002@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1002.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1003.imageset/1003@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1003.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1004.imageset/1004@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1004.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1005.imageset/1005@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1005.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1006.imageset/1006@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1006.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1007.imageset/1007@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1007.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1008.imageset/1008@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1008.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1009.imageset/1009@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1009.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1010.imageset/1010@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1010.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1011.imageset/1011@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1011.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1012.imageset/1012@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1012.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1014.imageset/1014@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1014.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1015.imageset/1015@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1015.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1016.imageset/1016@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1016.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1017.imageset/1017@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1017.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1018.imageset/1018@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1018.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1019.imageset/1019@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1019.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1020.imageset/1020@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1020.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1021.imageset/1021@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1021.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1022.imageset/1022@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/1022.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark backgrounds/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1001-thumb.imageset/1001-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1001-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1002-thumb.imageset/1002-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1002-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1003-thumb.imageset/1003-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1003-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1004-thumb.imageset/1004-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1004-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1005-thumb.imageset/1005-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1005-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1006-thumb.imageset/1006-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1006-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1007-thumb.imageset/1007-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1007-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1008-thumb.imageset/1008-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1008-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1009-thumb.imageset/1009-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1009-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1010-thumb.imageset/1010-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1010-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1011-thumb.imageset/1011-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1011-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1012-thumb.imageset/1012-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1012-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1014-thumb.imageset/1014-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1014-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1015-thumb.imageset/1015-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1015-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1016-thumb.imageset/1016-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1016-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1017-thumb.imageset/1017-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1017-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1018-thumb.imageset/1018-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1018-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1019-thumb.imageset/1019-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1019-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1020-thumb.imageset/1020-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1020-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1021-thumb.imageset/1021-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1021-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1022-thumb.imageset/1022-thumb@2x.jpg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/1022-thumb.imageset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/Landmark thumbnails/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Assets.xcassets/LearnMoreButtonForeground.colorset/Contents.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Base.lproj/AppIntents.strings
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Base.lproj/AppIntents.stringsdict
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/LandmarkCollectionData.xcstrings
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/LandmarkData.xcstrings
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Landmarks App Icon.icon/Assets/landmarks-app-icon-layer-1.svg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Landmarks App Icon.icon/Assets/landmarks-app-icon-layer-2.svg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Landmarks App Icon.icon/Assets/landmarks-app-icon-layer-3.svg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Landmarks App Icon.icon/Assets/landmarks-app-icon-layer-4.svg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Landmarks App Icon.icon/Assets/landmarks-app-icon-layer-5.svg
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Landmarks App Icon.icon/icon.json
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/Localizable.xcstrings
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/ViewingNiagaraFalls.gpx
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/en.lproj/AppIntents.strings
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Resources/en.lproj/AppIntents.stringsdict
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Utilities/ButtonStyle.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Utilities/EntityDonator.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Utilities/ModelDataIntentHelpers.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Utilities/Navigator.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Utilities/SearchEngine.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Collections/Collection Detail/CollectionDetailDisplayView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Collections/Collection Detail/CollectionDetailEditingView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Collections/Collection Detail/CollectionDetailView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Collections/Collections/CollectionListItemView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Collections/Collections/CollectionsGrid.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Collections/Collections/CollectionsView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks Split View/LandmarksSplitView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmark Detail/LandmarkDetailInspectorView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmark Detail/LandmarkDetailMapView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmark Detail/LandmarkDetailView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmark Grid/LandmarkGridItemView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmark Grid/LandmarksGrid.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmark Selection/LandmarksSectionListItem.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmark Selection/LandmarksSelectionList.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmarks View/LandmarkFeaturedItemView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmarks View/LandmarkHorizontalListView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmarks View/LandmarkListItemView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmarks View/LandmarkNavigationStack.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmarks View/LandmarksView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Landmarks/Landmarks View/ReadabilityRoundedRectangle.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking/Views/Map/MapView.swift
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/Configuration/SampleCode.xcconfig
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/LICENSE.txt
+- Documentation/AdoptingAppIntentsToSupportSystemExperiences/README.md
+- Documentation/App Intents & Apple Intelligence: Enhance App Experience | by Rizwana Desai | Simform Engineering | .pdf
+- "Documentation/App Intents Tutorial: A Field Guide for iOS Developers \342\200\224 Superwall - Superwall.pdf"
+- Documentation/App Intents updates | Apple Developer Documentation.pdf
+- Documentation/App Intents | Apple Developer Documentation.pdf
+- Documentation/App Shortcuts | Apple Developer Documentation.pdf
+- Documentation/App intent domains | Apple Developer Documentation.pdf
+- Documentation/App intents 2 | Apple Developer Documentation.pdf
+- Documentation/AppEntity | Apple Developer Documentation.pdf
+- Documentation/Collaboration views | Apple Developer Documentation.pdf
+- Documentation/Configuring the View Controller for Your Custom Interface | Apple Developer Documentation.pdf
+- Documentation/Creating an Intents UI Extension | Apple Developer Documentation.pdf
+- Documentation/Creating your first app intent | Apple Developer Documentation.pdf
+- Documentation/Developing a WidgetKit strategy | Apple Developer Documentation.pdf
+- Documentation/Displaying static and interactive snippets | Apple Developer Documentation.pdf
+- Documentation/Entity queries | Apple Developer Documentation.pdf
+- Documentation/ExecutionPrompts.md
+- Documentation/How to Future-Proof Your iOS App With App Intents.pdf
+- Documentation/Integrating actions with Siri and Apple Intelligence | Apple Developer Documentation.pdf
+- Documentation/Integrating custom data types into your intents | Apple Developer Documentation.pdf
+- Documentation/Integrating your app with visual intelligence | Apple Developer Documentation.pdf
+- Documentation/Intent discovery | Apple Developer Documentation.pdf
+- Documentation/KnowMaps Importer Dry Run.md
+- Documentation/KnowMaps PlaceResponseFormatter Integration.md
+- Documentation/Making actions and content discoverable and widely available | Apple Developer Documentation.pdf
+- Documentation/Making app entities available in Spotlight | Apple Developer Documentation.pdf
+- Documentation/Making onscreen content available to Siri and Apple Intelligence | Apple Developer Documentation.pdf
+- Documentation/Making your app content shareable | Apple Developer Documentation.pdf
+- "Documentation/Making your app\342\200\231s functionality available to Siri | Apple Developer Documentation.pdf"
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/AppIntents/Album/AlbumEntity.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/AppIntents/Album/AlbumIntents.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/AppIntents/Album/AlbumType.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/AppIntents/Asset/AssetEntity.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/AppIntents/Asset/AssetIntents.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/AppIntents/Asset/AssetType.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/AppIntents/ShortcutsProvider.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/AssistantSchemasExampleApp.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/ContentView.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Extensions/Image+Extensions.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Managers/ImageManager.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Managers/LocationManager.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Managers/MediaLibrary.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Managers/NavigationManager.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Model/Album.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Model/Asset.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Preview Content/Album+Preview.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Preview Content/Preview Assets.xcassets/Contents.json
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/Assets.xcassets/AccentColor.colorset/Contents.json
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/Assets.xcassets/AppIcon.appiconset/1024.png
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/Assets.xcassets/AppIcon.appiconset/128.png
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/Assets.xcassets/AppIcon.appiconset/16.png
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/Assets.xcassets/AppIcon.appiconset/256.png
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/Assets.xcassets/AppIcon.appiconset/32.png
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/Assets.xcassets/AppIcon.appiconset/512.png
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/Assets.xcassets/AppIcon.appiconset/64.png
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/Assets.xcassets/AppIcon.appiconset/Contents.json
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/Assets.xcassets/AppIcon.appiconset/sample-app-icon-blue.png
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/Assets.xcassets/Contents.json
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/AssistantSchemasExample.entitlements
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Resources/Info.plist
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Views/Album/AlbumAssetPicker.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Views/Album/AlbumDetailView.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Views/Album/AlbumGrid.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Views/Album/AlbumItem.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Views/Album/AlbumNameView.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Views/Album/AlbumStack.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Views/Asset/AssetDetailView.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Views/Asset/AssetGrid.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Views/Asset/AssetItem.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Views/Asset/AssetStack.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample/Views/FavoriteView.swift
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/Configuration/SampleCode.xcconfig
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/LICENSE.txt
+- Documentation/MakingYourAppsFunctionalityAvailableToSiri/README.md
+- Documentation/PREFLIGHT_CHECKLIST.md
+- Documentation/Parameter resolution | Apple Developer Documentation.pdf
+- Documentation/RISK_ANALYSIS.md
+- Documentation/Responding to the Action button on Apple Watch Ultra | Apple Developer Documentation.pdf
+- Documentation/STRATEGY_DECISIONS.md
+- Documentation/SemanticContentDescriptor | Apple Developer Documentation.pdf
+- Documentation/Shared content interactions | Apple Developer Documentation.pdf
+- Documentation/Shared with You Core | Apple Developer Documentation.pdf
+- Documentation/Shared with You | Apple Developer Documentation.pdf
+- Documentation/Shortcut-Related UI | Apple Developer Documentation.pdf
+- Documentation/SnippetIntent | Apple Developer Documentation.pdf
+- Documentation/Soup Chef with App Intents: Migrating custom intents | Apple Developer Documentation.pdf
+- Documentation/Supporting associated domains | Apple Developer Documentation.pdf
+- Documentation/Supporting universal links in your app | Apple Developer Documentation.pdf
+- Documentation/Transferable | Apple Developer Documentation.pdf
+- Documentation/Unified SwiftData Architecture for Apple Intelligence.md
+- Documentation/Visual Intelligence | Apple Developer Documentation.pdf
+- Documentation/appEntityIdentifier | Apple Developer Documentation.pdf
+- Documentation/extract_pdfs.swift
+- Documentation/extracted_content.txt
+- Documentation/iMessage apps and stickers | Apple Developer Documentation.pdf
+- GEMINI.md
+- IMPROVED_STRATEGY.md
+- Logs/data1.txt
+- Logs/data2.txt
+- PLAN.md
+
+## Modified (2)
+- .gitignore
+- README.md
+
+## Deleted (89)
+- CHAT_ARCHITECTURE.md
+- Diver.xcodeproj/project.pbxproj
+- Diver.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+- Diver.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+- Diver/Config/APIConfig.swift
+- Diver/Config/GridConfig.swift
+- Diver/DiverApp.swift
+- Diver/DiverMac.entitlements
+- Diver/Extensions/Color+Hex.swift
+- Diver/Extensions/ColorSwatchPreview.swift
+- Diver/Extensions/InputRead+Extensions.swift
+- Diver/Extensions/ItemRead+Extensions.swift
+- Diver/Extensions/MessageDataExtensions.swift
+- Diver/Extensions/Theme+ChatDark.swift
+- Diver/Extensions/UserRead+Extensions.swift
+- Diver/Info.plist
+- Diver/Models/AccountSetting.swift
+- Diver/Models/DocumentViewModel.swift
+- Diver/Models/MarkdownDocument.swift
+- Diver/Models/TypeAliases.swift
+- Diver/Services/AppRouter.swift
+- Diver/Services/AuthManager.swift
+- Diver/Services/MenuBarManager.swift
+- Diver/Services/NetworkActivityMonitor.swift
+- Diver/Utilities/AppConstants.swift
+- Diver/Utilities/LinkToMarkdown.swift
+- Diver/Utilities/URLValidator.swift
+- Diver/ViewModels/ChatViewModel.swift
+- Diver/Views/Account/Settings/ProfileDetailView.swift
+- Diver/Views/Account/iOS/IOSAccountSettingsView.swift
+- Diver/Views/Account/iOS/IOSAccountUserView.swift
+- Diver/Views/Account/iOS/IOSAccountView.swift
+- Diver/Views/Account/macOS/MacOSAccountView.swift
+- Diver/Views/Auth/AppLayoutsSignUpView.swift
+- Diver/Views/Auth/IOSLoginView.swift
+- Diver/Views/Auth/IOSSignUpView.swift
+- Diver/Views/Chat/Bubbles/ErrorBubbleContent.swift
+- Diver/Views/Chat/Bubbles/ItemClassificationBubbleContent.swift
+- Diver/Views/Chat/Bubbles/MediaAnalysisBubbleContent.swift
+- Diver/Views/Chat/Bubbles/ProcessingStatusBubbleContent.swift
+- Diver/Views/Chat/Bubbles/ReferenceCandidatesBubbleContent.swift
+- Diver/Views/Chat/Bubbles/ReferenceHypothesesBubbleContent.swift
+- Diver/Views/Chat/Bubbles/ReferenceResultsBubbleContent.swift
+- Diver/Views/Chat/Bubbles/SystemNotificationBubbleContent.swift
+- Diver/Views/Chat/Bubbles/TextBubbleContent.swift
+- Diver/Views/Chat/ChatInputView.swift
+- Diver/Views/Chat/ChatItemView.swift
+- Diver/Views/Chat/ChatView.swift
+- Diver/Views/Chat/FlowLayout.swift
+- Diver/Views/Chat/Helpers/FlexibleView.swift
+- Diver/Views/Chat/Helpers/MessageCardView.swift
+- Diver/Views/Chat/Helpers/TagFlowView.swift
+- Diver/Views/Chat/Helpers/ThemeFlowView.swift
+- Diver/Views/Chat/MessageView.swift
+- Diver/Views/Chat/References/BookReferenceView.swift
+- Diver/Views/Chat/References/ChatTrackRowView.swift
+- Diver/Views/Chat/References/MediaReferenceView.swift
+- Diver/Views/Chat/References/ReferenceCardView.swift
+- Diver/Views/Chat/References/SpotifyReferenceView.swift
+- Diver/Views/Components/AnimatedGradientBackground.swift
+- Diver/Views/Components/SettingLabelView.swift
+- Diver/Views/Components/SwissGridOverlay.swift
+- Diver/Views/Components/ToastView.swift
+- Diver/Views/LoginView.swift
+- Diver/Views/Main/IOSMainView.swift
+- Diver/Views/Main/MacOSSidebarView.swift
+- Diver/Views/Main/macOS/MacOSCreateInputView.swift
+- Diver/Views/Main/macOS/MacOSDocumentWorkspace.swift
+- Diver/Views/Main/macOS/MacOSInputDetailContentView.swift
+- Diver/Views/Main/macOS/MacOSInputListContentView.swift
+- Diver/Views/Main/macOS/MacOSJobProgressView.swift
+- Diver/Views/MenuBar/MenuBarContentView.swift
+- Diver/Views/Onboarding/OnboardingView.swift
+- Diver/Views/Paywall/IOSPaywallView.swift
+- Diver/Views/Paywall/MacOSPaywallView.swift
+- Diver/Views/RegistrationView.swift
+- Diver/Views/RouterView.swift
+- DiverMacOsShareExtension/DiverMacOsShareExtension.entitlements
+- DiverMacOsShareExtension/ShareViewController.swift
+- DiverMacOsShareExtension/icon.icns
+- DiverShareExtension/Info.plist
+- DiverShareExtension/ShareViewController.swift
+- MACOS_SETUP.md
+- MIGRATION_SUMMARY.md
+- SETUP.md
+- Sources/Diver/Diver.swift
+- TEST_INSTRUCTIONS.md
+- Tests/DiverTests/DiverTests.swift
+- chatmigration.md
+
+## Renamed (20)
+- Diver/Diver.entitlements -> Diver/ActionExtension/ActionExtension.entitlements (R071)
+- DiverMacOsShareExtension/Info.plist -> Diver/ActionExtension/Info.plist (R066)
+- Diver/Assets.xcassets/AccentColor.colorset/Contents.json -> Diver/Diver/Assets.xcassets/AccentColor.colorset/Contents.json (R100)
+- Diver/Assets.xcassets/AppIcon.appiconset/Contents.json -> Diver/Diver/Assets.xcassets/AppIcon.appiconset/Contents.json (R097)
+- Diver/Assets.xcassets/Contents.json -> Diver/Diver/Assets.xcassets/Contents.json (R100)
+- DiverTests/DiverTests.swift -> Diver/DiverTests/DiverTests.swift (R082)
+- DiverUITests/DiverUITests.swift -> Diver/DiverUITests/DiverUITests.swift (R096)
+- DiverUITests/DiverUITestsLaunchTests.swift -> Diver/DiverUITests/DiverUITestsLaunchTests.swift (R094)
+- Diver/Config/Config.md -> DiverKit/Sources/DiverKit/Config/Config.md (R100)
+- Diver/Config/IconService.swift -> DiverKit/Sources/DiverKit/Config/IconService.swift (R094)
+- Diver/Config/Localisation/Localisation.md -> DiverKit/Sources/DiverKit/Config/Localisation/Localisation.md (R100)
+- Diver/Config/Localisation/LocalizationExport.swift -> DiverKit/Sources/DiverKit/Config/Localisation/LocalizationExport.swift (R100)
+- Diver/Config/Localisation/LocalizedStrings.swift -> DiverKit/Sources/DiverKit/Config/Localisation/LocalizedStrings.swift (R099)
+- Diver/Managers/ToastManager+Examples.swift -> DiverKit/Sources/DiverKit/Managers/ToastManager+Examples.swift (R100)
+- Diver/Managers/ToastManager.swift -> DiverKit/Sources/DiverKit/Managers/ToastManager.swift (R100)
+- Diver/Models/JobProgress.swift -> DiverKit/Sources/DiverKit/Models/JobProgress.swift (R100)
+- Diver/Models/SSEEvent.swift -> DiverKit/Sources/DiverKit/Models/SSEEvent.swift (R072)
+- Diver/Services/SSEStreamService.swift -> DiverKit/Sources/DiverKit/Services/SSEStreamService.swift (R098)
+- Diver/Services/SpotifyService.swift -> DiverKit/Sources/DiverKit/Services/SpotifyService.swift (R098)
+- DiverShareExtension/DiverShareExtension.entitlements -> Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSample Watch App/AppIntentsSample Watch App.entitlements (R059)

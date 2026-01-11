@@ -1,0 +1,4 @@
+module DiverShared {
+header "DiverShared-Swift.h"
+export *
+}

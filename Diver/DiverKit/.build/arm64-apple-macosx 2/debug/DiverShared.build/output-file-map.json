@@ -1,0 +1,54 @@
+{
+  "": {
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/master.swiftdeps"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/AppGroupConfig.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/AppGroupConfig.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/AppGroupConfig.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/AppGroupConfig~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/AppGroupConfig.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/AppGroupConfig.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/ContextSnapshot.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/ContextSnapshot.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/ContextSnapshot.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/ContextSnapshot~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/ContextSnapshot.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/ContextSnapshot.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/DiverItemDescriptor.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/DiverItemDescriptor.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/DiverItemDescriptor.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/DiverItemDescriptor~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/DiverItemDescriptor.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/DiverItemDescriptor.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/LinkWrapping.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/LinkWrapping.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/LinkWrapping.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/LinkWrapping~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/LinkWrapping.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/LinkWrapping.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/MessagesLaunchStore.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/MessagesLaunchStore.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/MessagesLaunchStore.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/MessagesLaunchStore~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/MessagesLaunchStore.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/MessagesLaunchStore.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/QueueStore.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/QueueStore.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/QueueStore.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/QueueStore~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/QueueStore.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/QueueStore.dia"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/DiverShared/Sources/DiverShared/Validation.swift": {
+    "dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/Validation.d",
+    "object": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/Validation.swift.o",
+    "swiftmodule": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/Validation~partial.swiftmodule",
+    "swift-dependencies": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/Validation.swiftdeps",
+    "diagnostics": "/Users/voxels/Documents/dev/Superbright/Diver/DiverKit/.build/arm64-apple-macosx/debug/DiverShared.build/Validation.dia"
+  }
+}

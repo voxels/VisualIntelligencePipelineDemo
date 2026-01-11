@@ -1,0 +1,36 @@
+{
+  "" : {
+    "const-values" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Supabase-primary.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Supabase-primary.d",
+    "diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Supabase-primary.dia",
+    "emit-module-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Supabase-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Supabase-primary-emit-module.dia",
+    "pch" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Supabase-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Supabase-primary.swiftdeps"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/Supabase/Constants.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Constants.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Constants.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Constants.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/Supabase/Deprecated.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Deprecated.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Deprecated.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Deprecated.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/Supabase/Exports.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Exports.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Exports.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Exports.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/Supabase/SupabaseClient.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/SupabaseClient.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/SupabaseClient.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/SupabaseClient.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/Supabase/Types.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Types.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Types.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/Supabase.build/Objects-normal/arm64/Types.o"
+  }
+}

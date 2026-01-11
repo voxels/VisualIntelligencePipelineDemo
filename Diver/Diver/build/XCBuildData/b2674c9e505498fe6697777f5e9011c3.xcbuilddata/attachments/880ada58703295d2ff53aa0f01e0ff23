@@ -1,0 +1,61 @@
+{
+  "" : {
+    "const-values" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgREST-primary.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgREST-primary.d",
+    "diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgREST-primary.dia",
+    "emit-module-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgREST-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgREST-primary-emit-module.dia",
+    "pch" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgREST-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgREST-primary.swiftdeps"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/PostgREST/Defaults.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/Defaults.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/Defaults.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/Defaults.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/PostgREST/Deprecated.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/Deprecated.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/Deprecated.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/Deprecated.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/PostgREST/Exports.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/Exports.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/Exports.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/Exports.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/PostgREST/PostgrestBuilder.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestBuilder.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestBuilder.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestBuilder.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/PostgREST/PostgrestClient.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestClient.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestClient.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestClient.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/PostgREST/PostgrestFilterBuilder.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestFilterBuilder.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestFilterBuilder.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestFilterBuilder.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/PostgREST/PostgrestFilterValue.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestFilterValue.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestFilterValue.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestFilterValue.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/PostgREST/PostgrestQueryBuilder.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestQueryBuilder.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestQueryBuilder.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestQueryBuilder.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/PostgREST/PostgrestTransformBuilder.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestTransformBuilder.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestTransformBuilder.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/PostgrestTransformBuilder.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/Sources/PostgREST/Types.swift" : {
+    "index-unit-output-path" : "/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/Types.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/Types.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/supabase-swift/build/Supabase.build/Release-iphoneos/PostgREST.build/Objects-normal/arm64/Types.o"
+  }
+}

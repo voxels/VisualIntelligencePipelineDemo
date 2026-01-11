@@ -1,0 +1,1780 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 70;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0089932D7893A6E1D0F0B990 /* knowmaps in Frameworks */ = {isa = PBXBuildFile; productRef = 25BB43E3937AEF12D808D0F9 /* knowmaps */; };
+		06FC5E7233A634C8222F1D14 /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = C8070B0F7C1FF128AFFE8ED4 /* DiverShared */; };
+		0DD8792C39F7A52E598E6988 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0DC61B742530514810719A37 /* Assets.xcassets */; };
+		107976A96B12CF2054008306 /* KnowMapsServiceContainerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87AB3C01B38C1569F168108F /* KnowMapsServiceContainerTests.swift */; };
+		128D1A51B201073DA21CC6B8 /* LinkPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CDDCCF965B4759AEBA1940F /* LinkPreviewView.swift */; };
+		12F0B2F9D28CFE46732020CC /* DiverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E5142F7BE0E8D92CE2D80C7 /* DiverTests.swift */; };
+		1421947BF0FCC193477038BB /* KnowMapsAdapterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 302C82230AAB7048E4F825EA /* KnowMapsAdapterTests.swift */; };
+		18DD303DE276163BF28BD02F /* ReferenceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898F03197EF75CDFD351E084 /* ReferenceDetailView.swift */; };
+		19BFDECDFE2A1D456CEABC86 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE51F7E92601A1166CD41ED /* SidebarView.swift */; };
+		1E03CF262EFAE80F0020DAA5 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E03CF0E2EFAE66F0020DAA5 /* UniformTypeIdentifiers.framework */; };
+		1E03CF322EFAE80F0020DAA5 /* ActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E03CF252EFAE80F0020DAA5 /* ActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1E03CF412EFAEB050020DAA5 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E03CF402EFAEB050020DAA5 /* MobileCoreServices.framework */; };
+		1E03CF432EFAEB0A0020DAA5 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E03CF422EFAEB0A0020DAA5 /* UIKit.framework */; };
+		1E03CF452EFAED0B0020DAA5 /* DiverKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1E03CF442EFAED0B0020DAA5 /* DiverKit */; };
+		1E03CF472EFAED0E0020DAA5 /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = 1E03CF462EFAED0E0020DAA5 /* DiverShared */; };
+		1E03CF572EFB16200020DAA5 /* SharedWithYouManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF562EFB16200020DAA5 /* SharedWithYouManager.swift */; };
+		1E03CF582EFB16200020DAA5 /* SharedWithYouManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF562EFB16200020DAA5 /* SharedWithYouManager.swift */; };
+		1E03CF5B2EFB163D0020DAA5 /* SharedWithYouView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF5A2EFB163D0020DAA5 /* SharedWithYouView.swift */; };
+		1E03CF5C2EFB163D0020DAA5 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF592EFB163D0020DAA5 /* SettingsView.swift */; };
+		1E03CF5D2EFB163D0020DAA5 /* SharedWithYouView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF5A2EFB163D0020DAA5 /* SharedWithYouView.swift */; };
+		1E03CF5E2EFB163D0020DAA5 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF592EFB163D0020DAA5 /* SettingsView.swift */; };
+		1E03CF6F2EFB20310020DAA5 /* SaveLinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF642EFB20310020DAA5 /* SaveLinkIntent.swift */; };
+		1E03CF702EFB20310020DAA5 /* SaveLinkSnippet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF692EFB20310020DAA5 /* SaveLinkSnippet.swift */; };
+		1E03CF712EFB20310020DAA5 /* SearchLinksIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF652EFB20310020DAA5 /* SearchLinksIntent.swift */; };
+		1E03CF722EFB20310020DAA5 /* LinkEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF5F2EFB20310020DAA5 /* LinkEntity.swift */; };
+		1E03CF732EFB20310020DAA5 /* OpenLinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF632EFB20310020DAA5 /* OpenLinkIntent.swift */; };
+		1E03CF742EFB20310020DAA5 /* ShareLinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF662EFB20310020DAA5 /* ShareLinkIntent.swift */; };
+		1E03CF752EFB20310020DAA5 /* IntentConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF682EFB20310020DAA5 /* IntentConfigurationView.swift */; };
+		1E03CF772EFB20310020DAA5 /* LinkEntityQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF602EFB20310020DAA5 /* LinkEntityQuery.swift */; };
+		1E03CF782EFB20310020DAA5 /* ShareLinkSnippet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF6A2EFB20310020DAA5 /* ShareLinkSnippet.swift */; };
+		1E03CF792EFB20310020DAA5 /* AppShortcutsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF6C2EFB20310020DAA5 /* AppShortcutsProvider.swift */; };
+		1E03CF7B2EFB20310020DAA5 /* SaveLinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF642EFB20310020DAA5 /* SaveLinkIntent.swift */; };
+		1E03CF7C2EFB20310020DAA5 /* SaveLinkSnippet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF692EFB20310020DAA5 /* SaveLinkSnippet.swift */; };
+		1E03CF7D2EFB20310020DAA5 /* SearchLinksIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF652EFB20310020DAA5 /* SearchLinksIntent.swift */; };
+		1E03CF7E2EFB20310020DAA5 /* LinkEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF5F2EFB20310020DAA5 /* LinkEntity.swift */; };
+		1E03CF7F2EFB20310020DAA5 /* OpenLinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF632EFB20310020DAA5 /* OpenLinkIntent.swift */; };
+		1E03CF802EFB20310020DAA5 /* ShareLinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF662EFB20310020DAA5 /* ShareLinkIntent.swift */; };
+		1E03CF812EFB20310020DAA5 /* IntentConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF682EFB20310020DAA5 /* IntentConfigurationView.swift */; };
+		1E03CF832EFB20310020DAA5 /* LinkEntityQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF602EFB20310020DAA5 /* LinkEntityQuery.swift */; };
+		1E03CF842EFB20310020DAA5 /* ShareLinkSnippet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF6A2EFB20310020DAA5 /* ShareLinkSnippet.swift */; };
+		1E03CF852EFB20310020DAA5 /* AppShortcutsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF6C2EFB20310020DAA5 /* AppShortcutsProvider.swift */; };
+		1E03CF882EFB20A40020DAA5 /* AppIntentsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF872EFB20A40020DAA5 /* AppIntentsUITests.swift */; };
+		1E03CF892EFB20A40020DAA5 /* AppIntentsUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF872EFB20A40020DAA5 /* AppIntentsUITests.swift */; };
+		1E03CF922EFB20E40020DAA5 /* SearchLinksIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF8F2EFB20E40020DAA5 /* SearchLinksIntentTests.swift */; };
+		1E03CF932EFB20E40020DAA5 /* OpenLinkIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF8D2EFB20E40020DAA5 /* OpenLinkIntentTests.swift */; };
+		1E03CF942EFB20E40020DAA5 /* LinkEntityQueryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF8B2EFB20E40020DAA5 /* LinkEntityQueryTests.swift */; };
+		1E03CF952EFB20E40020DAA5 /* LinkEntityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF8C2EFB20E40020DAA5 /* LinkEntityTests.swift */; };
+		1E03CF962EFB20E40020DAA5 /* SaveLinkIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF8E2EFB20E40020DAA5 /* SaveLinkIntentTests.swift */; };
+		1E03CF982EFB20E40020DAA5 /* ShareLinkIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF902EFB20E40020DAA5 /* ShareLinkIntentTests.swift */; };
+		1E03CF992EFB20E40020DAA5 /* SearchLinksIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF8F2EFB20E40020DAA5 /* SearchLinksIntentTests.swift */; };
+		1E03CF9A2EFB20E40020DAA5 /* OpenLinkIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF8D2EFB20E40020DAA5 /* OpenLinkIntentTests.swift */; };
+		1E03CF9B2EFB20E40020DAA5 /* LinkEntityQueryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF8B2EFB20E40020DAA5 /* LinkEntityQueryTests.swift */; };
+		1E03CF9C2EFB20E40020DAA5 /* LinkEntityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF8C2EFB20E40020DAA5 /* LinkEntityTests.swift */; };
+		1E03CF9D2EFB20E40020DAA5 /* SaveLinkIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF8E2EFB20E40020DAA5 /* SaveLinkIntentTests.swift */; };
+		1E03CF9F2EFB20E40020DAA5 /* ShareLinkIntentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF902EFB20E40020DAA5 /* ShareLinkIntentTests.swift */; };
+		1E03CFB42EFB55560020DAA5 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E03CFB32EFB55560020DAA5 /* WidgetKit.framework */; };
+		1E03CFB62EFB55560020DAA5 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E03CFB52EFB55560020DAA5 /* SwiftUI.framework */; };
+		1E03CFC72EFB55570020DAA5 /* DiverWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E03CFB22EFB55560020DAA5 /* DiverWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		1E03CFDE2EFB582B0020DAA5 /* DiverKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1E03CFDD2EFB582B0020DAA5 /* DiverKit */; };
+		1E03CFE02EFB582B0020DAA5 /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = 1E03CFDF2EFB582B0020DAA5 /* DiverShared */; };
+		1E03CFE12EFB58690020DAA5 /* LinkEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF5F2EFB20310020DAA5 /* LinkEntity.swift */; };
+		1E03CFE22EFB58690020DAA5 /* LinkEntityQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF602EFB20310020DAA5 /* LinkEntityQuery.swift */; };
+		1E03CFE32EFB58700020DAA5 /* SearchLinksIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF652EFB20310020DAA5 /* SearchLinksIntent.swift */; };
+		1E03CFE42EFB58700020DAA5 /* OpenLinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF632EFB20310020DAA5 /* OpenLinkIntent.swift */; };
+		1E03CFE52EFB58700020DAA5 /* ShareLinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF662EFB20310020DAA5 /* ShareLinkIntent.swift */; };
+		1E03CFE62EFB58700020DAA5 /* SaveLinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF642EFB20310020DAA5 /* SaveLinkIntent.swift */; };
+		1E03CFE72EFB58790020DAA5 /* IntentConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF682EFB20310020DAA5 /* IntentConfigurationView.swift */; };
+		1E03CFE82EFB58790020DAA5 /* SaveLinkSnippet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF692EFB20310020DAA5 /* SaveLinkSnippet.swift */; };
+		1E03CFE92EFB58790020DAA5 /* ShareLinkSnippet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF6A2EFB20310020DAA5 /* ShareLinkSnippet.swift */; };
+		1E03CFEA2EFB58800020DAA5 /* AppShortcutsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF6C2EFB20310020DAA5 /* AppShortcutsProvider.swift */; };
+		1E03D01F2EFBD2C20020DAA5 /* VisualIntelligenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D01E2EFBD2C20020DAA5 /* VisualIntelligenceView.swift */; };
+		1E03D0202EFBD2C20020DAA5 /* SiftedOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D01D2EFBD2C20020DAA5 /* SiftedOverlayView.swift */; };
+		1E03D0212EFBD2C20020DAA5 /* VisualIntelligenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D01E2EFBD2C20020DAA5 /* VisualIntelligenceView.swift */; };
+		1E03D0222EFBD2C20020DAA5 /* SiftedOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D01D2EFBD2C20020DAA5 /* SiftedOverlayView.swift */; };
+		1E03D0242EFBD2E00020DAA5 /* ShortcutGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0232EFBD2E00020DAA5 /* ShortcutGalleryView.swift */; };
+		1E03D0252EFBD2E00020DAA5 /* ShortcutGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0232EFBD2E00020DAA5 /* ShortcutGalleryView.swift */; };
+		1E03D0282EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0262EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift */; };
+		1E03D0292EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0272EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift */; };
+		1E03D02A2EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0262EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift */; };
+		1E03D02B2EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0272EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift */; };
+		1E03D02C2EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0262EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift */; };
+		1E03D02D2EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0272EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift */; };
+		1E03D0312EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D02F2EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift */; };
+		1E03D0322EFBD3F20020DAA5 /* ScreenshotProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D02E2EFBD3F20020DAA5 /* ScreenshotProcessor.swift */; };
+		1E03D0332EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D02F2EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift */; };
+		1E03D0342EFBD3F20020DAA5 /* ScreenshotProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D02E2EFBD3F20020DAA5 /* ScreenshotProcessor.swift */; };
+		1E03D0352EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D02F2EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift */; };
+		1E03D0362EFBD3F20020DAA5 /* ScreenshotProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D02E2EFBD3F20020DAA5 /* ScreenshotProcessor.swift */; };
+		1E03D03A2EFBFA3F0020DAA5 /* NavigationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0392EFBFA3F0020DAA5 /* NavigationManager.swift */; };
+		1E03D03B2EFBFA3F0020DAA5 /* NavigationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0392EFBFA3F0020DAA5 /* NavigationManager.swift */; };
+		1E03D03C2EFC1A950020DAA5 /* pipeline_logs.json in Resources */ = {isa = PBXBuildFile; fileRef = D3F518C128886017CE831B4F /* pipeline_logs.json */; };
+		1E03D03D2EFC1A950020DAA5 /* pipeline_logs.json in Resources */ = {isa = PBXBuildFile; fileRef = D3F518C128886017CE831B4F /* pipeline_logs.json */; };
+		1E03D0412EFC20E20020DAA5 /* knowmaps in Frameworks */ = {isa = PBXBuildFile; productRef = 1E03D0402EFC20E20020DAA5 /* knowmaps */; };
+		1E03D0432EFC24CB0020DAA5 /* CaptureReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0422EFC24CB0020DAA5 /* CaptureReviewView.swift */; };
+		1E03D0442EFC24CB0020DAA5 /* CaptureReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0422EFC24CB0020DAA5 /* CaptureReviewView.swift */; };
+		1E03D0482EFC3B670020DAA5 /* DiverAppAttributionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0472EFC3B670020DAA5 /* DiverAppAttributionView.swift */; };
+		1E03D0492EFC3B670020DAA5 /* DiverAppAttributionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0472EFC3B670020DAA5 /* DiverAppAttributionView.swift */; };
+		1EF240E31D7F8AEE3B29A86E /* DiverKit in Frameworks */ = {isa = PBXBuildFile; productRef = B6559717746D51E9C2DEA28E /* DiverKit */; };
+		238BEC0F22B92294CD561769 /* DiverUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 017D7749A3E3DB921F44A2C4 /* DiverUITests.swift */; };
+		25840A81BE4673C1F69FD96A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DEBECFBAC4353E5D8AE4A6E /* ContentView.swift */; };
+		27C2D998F88C5D7770B460DF /* LinkPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CDDCCF965B4759AEBA1940F /* LinkPreviewView.swift */; };
+		282153D2C15F2DFE03A1F7FB /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D231EE83CF65D9AC35B008C /* Item.swift */; };
+		2A8B04FD8FF3981945A6D38D /* KnowMapsAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB5AA16443590B3199E2113 /* KnowMapsAdapter.swift */; };
+		2B3656509ACFADC26AD3628C /* ActionViewControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E07633E6BD803CADEDC71A /* ActionViewControllerTests.swift */; };
+		2C90DC3C5B4A789C32BF0A1C /* CloudKitTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C6CAD26DB5DBCD80179B1F /* CloudKitTestSupport.swift */; };
+		33E1F0A50DB0703B9CE6E99B /* KnowMapsAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB5AA16443590B3199E2113 /* KnowMapsAdapter.swift */; };
+		37997726604359E13F76B1A0 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D231EE83CF65D9AC35B008C /* Item.swift */; };
+		3A32536C2FA1DF6EC0C11FC7 /* KnowMapsCacheStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5F7ECEBD4A56317495CB23 /* KnowMapsCacheStoreTests.swift */; };
+		3C668DAE3E62367FB8BE14C4 /* pipeline_logs.json in Resources */ = {isa = PBXBuildFile; fileRef = D3F518C128886017CE831B4F /* pipeline_logs.json */; };
+		436E36A6D83C0433CDF6D07F /* DiverKit in Frameworks */ = {isa = PBXBuildFile; productRef = 8285BE75BFE4572B41DBF50F /* DiverKit */; };
+		490FF136B95629B7A0F2B975 /* pipeline_logs.json in Resources */ = {isa = PBXBuildFile; fileRef = D3F518C128886017CE831B4F /* pipeline_logs.json */; };
+		4A56E688FF7DAA668529A522 /* knowmaps in Frameworks */ = {isa = PBXBuildFile; productRef = E3868CE0F6C1311492AD13DA /* knowmaps */; };
+		509E90F3732304106B92F65B /* KnowMapsAdapterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 302C82230AAB7048E4F825EA /* KnowMapsAdapterTests.swift */; };
+		614657885EE471E116CA4657 /* KnowMapsCacheStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5F7ECEBD4A56317495CB23 /* KnowMapsCacheStoreTests.swift */; };
+		65D57E8B638111F67E331E18 /* DiverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E5142F7BE0E8D92CE2D80C7 /* DiverTests.swift */; };
+		6B38751B4CB9C372675E2B68 /* KnowMapsCacheStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573D807F9496EBE7C68BF217 /* KnowMapsCacheStore.swift */; };
+		6C73332234F2B781B52900E1 /* DiverUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 017D7749A3E3DB921F44A2C4 /* DiverUITests.swift */; };
+		6EE835E3684D0AA4981D069F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0DC61B742530514810719A37 /* Assets.xcassets */; };
+		703C31A9FC71D8132CF9C709 /* KnowMapsServiceContainerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87AB3C01B38C1569F168108F /* KnowMapsServiceContainerTests.swift */; };
+		70F3ADB8AADAD2E6219F3B28 /* DiverQueueProcessingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B202E6BE357E18D064F157 /* DiverQueueProcessingService.swift */; };
+		7713566E5D34F49E33271E1C /* KnowMapsCacheStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573D807F9496EBE7C68BF217 /* KnowMapsCacheStore.swift */; };
+		7A97FA6E7E545D294AF576AF /* TestAnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B43CAFE7C5D15E858C87F0 /* TestAnalyticsService.swift */; };
+		8730250FFD9A0747B80E3ECB /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE51F7E92601A1166CD41ED /* SidebarView.swift */; };
+		9133AD759AFD71A72AF7CC9F /* DiverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A210F16E7A971A22AD25B3 /* DiverApp.swift */; };
+		9C1477C768B43E8BAF2FD052 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DEBECFBAC4353E5D8AE4A6E /* ContentView.swift */; };
+		9D7387990C610DC31DF602CB /* KnowMapsServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09530E9966028D5CC948DC91 /* KnowMapsServiceContainer.swift */; };
+		9EE8B468574234FF0A3BD035 /* DiverQueueItemHierarchyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3CA07A0775461AC2587072 /* DiverQueueItemHierarchyTests.swift */; };
+		A3982F3A0A03A7C76F0607BE /* DiverUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D00EAA88E023ADF17BF38A /* DiverUITestsLaunchTests.swift */; };
+		BBF1A088596B873D5B96B4A8 /* ReferenceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898F03197EF75CDFD351E084 /* ReferenceDetailView.swift */; };
+		C801C970A6F920AD638CB380 /* CloudKitTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C6CAD26DB5DBCD80179B1F /* CloudKitTestSupport.swift */; };
+		D003EEFCE2F68CB8B4BAC3D2 /* DiverQueueProcessingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B202E6BE357E18D064F157 /* DiverQueueProcessingService.swift */; };
+		D39E055BB52C5B748AAC3627 /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = 13F65F202B46C02117A3AE0B /* DiverShared */; };
+		DC4AEB7324CF4A05FE8A96A0 /* KnowMapsServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09530E9966028D5CC948DC91 /* KnowMapsServiceContainer.swift */; };
+		DCEA460EF75C41B8A0C66BE3 /* DiverApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A210F16E7A971A22AD25B3 /* DiverApp.swift */; };
+		EC2F090ED557029F6DD6EAF7 /* ActionViewControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E07633E6BD803CADEDC71A /* ActionViewControllerTests.swift */; };
+		F03D77C2FBCA039BBAF5426A /* DiverUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D00EAA88E023ADF17BF38A /* DiverUITestsLaunchTests.swift */; };
+		F47A70022C4EF00223456789 /* FoursquareLinkEnrichmentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F47A70012C4EF00123456789 /* FoursquareLinkEnrichmentService.swift */; };
+		F47A70032C4EF00323456789 /* FoursquareLinkEnrichmentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F47A70012C4EF00123456789 /* FoursquareLinkEnrichmentService.swift */; };
+		F4A86F0ECD3AC243E0C30248 /* TestAnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B43CAFE7C5D15E858C87F0 /* TestAnalyticsService.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0D7CF693D413A62924734BE8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 10C9E7F61D88F3A320926FDC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2679CC6DB50D8C109B6810CC;
+			remoteInfo = Diver_macOS;
+		};
+		1E03CF302EFAE80F0020DAA5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 10C9E7F61D88F3A320926FDC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1E03CF242EFAE80F0020DAA5;
+			remoteInfo = ActionExtension;
+		};
+		1E03CFC52EFB55570020DAA5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 10C9E7F61D88F3A320926FDC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1E03CFB12EFB55560020DAA5;
+			remoteInfo = DiverWidgetExtension;
+		};
+		4968C42CCA349C797ABB4E2E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 10C9E7F61D88F3A320926FDC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 87F388E85B00E01AD0AECC95;
+			remoteInfo = Diver_iOS;
+		};
+		67118A1674B3DA752B10E03F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 10C9E7F61D88F3A320926FDC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2679CC6DB50D8C109B6810CC;
+			remoteInfo = Diver_macOS;
+		};
+		AD3F0EC0A4FD587218AC88E4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 10C9E7F61D88F3A320926FDC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 87F388E85B00E01AD0AECC95;
+			remoteInfo = Diver_iOS;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8B6D7040C131BC79475E81E0 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9105D26A8E2E5D692F401EA2 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				1E03CF322EFAE80F0020DAA5 /* ActionExtension.appex in Embed Foundation Extensions */,
+				1E03CFC72EFB55570020DAA5 /* DiverWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		017D7749A3E3DB921F44A2C4 /* DiverUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiverUITests.swift; sourceTree = "<group>"; };
+		06A210F16E7A971A22AD25B3 /* DiverApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiverApp.swift; sourceTree = "<group>"; };
+		09530E9966028D5CC948DC91 /* KnowMapsServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowMapsServiceContainer.swift; sourceTree = "<group>"; };
+		0DC61B742530514810719A37 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		1991AB81F664330E14D86026 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		1E03CF0E2EFAE66F0020DAA5 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
+		1E03CF252EFAE80F0020DAA5 /* ActionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E03CF402EFAEB050020DAA5 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk/System/Library/Frameworks/MobileCoreServices.framework; sourceTree = DEVELOPER_DIR; };
+		1E03CF422EFAEB0A0020DAA5 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		1E03CF562EFB16200020DAA5 /* SharedWithYouManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedWithYouManager.swift; sourceTree = "<group>"; };
+		1E03CF592EFB163D0020DAA5 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		1E03CF5A2EFB163D0020DAA5 /* SharedWithYouView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedWithYouView.swift; sourceTree = "<group>"; };
+		1E03CF5F2EFB20310020DAA5 /* LinkEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkEntity.swift; sourceTree = "<group>"; };
+		1E03CF602EFB20310020DAA5 /* LinkEntityQuery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkEntityQuery.swift; sourceTree = "<group>"; };
+		1E03CF632EFB20310020DAA5 /* OpenLinkIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenLinkIntent.swift; sourceTree = "<group>"; };
+		1E03CF642EFB20310020DAA5 /* SaveLinkIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveLinkIntent.swift; sourceTree = "<group>"; };
+		1E03CF652EFB20310020DAA5 /* SearchLinksIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchLinksIntent.swift; sourceTree = "<group>"; };
+		1E03CF662EFB20310020DAA5 /* ShareLinkIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareLinkIntent.swift; sourceTree = "<group>"; };
+		1E03CF682EFB20310020DAA5 /* IntentConfigurationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntentConfigurationView.swift; sourceTree = "<group>"; };
+		1E03CF692EFB20310020DAA5 /* SaveLinkSnippet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveLinkSnippet.swift; sourceTree = "<group>"; };
+		1E03CF6A2EFB20310020DAA5 /* ShareLinkSnippet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareLinkSnippet.swift; sourceTree = "<group>"; };
+		1E03CF6C2EFB20310020DAA5 /* AppShortcutsProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShortcutsProvider.swift; sourceTree = "<group>"; };
+		1E03CF872EFB20A40020DAA5 /* AppIntentsUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntentsUITests.swift; sourceTree = "<group>"; };
+		1E03CF8B2EFB20E40020DAA5 /* LinkEntityQueryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkEntityQueryTests.swift; sourceTree = "<group>"; };
+		1E03CF8C2EFB20E40020DAA5 /* LinkEntityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkEntityTests.swift; sourceTree = "<group>"; };
+		1E03CF8D2EFB20E40020DAA5 /* OpenLinkIntentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenLinkIntentTests.swift; sourceTree = "<group>"; };
+		1E03CF8E2EFB20E40020DAA5 /* SaveLinkIntentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaveLinkIntentTests.swift; sourceTree = "<group>"; };
+		1E03CF8F2EFB20E40020DAA5 /* SearchLinksIntentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchLinksIntentTests.swift; sourceTree = "<group>"; };
+		1E03CF902EFB20E40020DAA5 /* ShareLinkIntentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareLinkIntentTests.swift; sourceTree = "<group>"; };
+		1E03CFB22EFB55560020DAA5 /* DiverWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DiverWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E03CFB32EFB55560020DAA5 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		1E03CFB52EFB55560020DAA5 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		1E03CFD42EFB56880020DAA5 /* DiverWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DiverWidgetExtension.entitlements; sourceTree = "<group>"; };
+		1E03D01D2EFBD2C20020DAA5 /* SiftedOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiftedOverlayView.swift; sourceTree = "<group>"; };
+		1E03D01E2EFBD2C20020DAA5 /* VisualIntelligenceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualIntelligenceView.swift; sourceTree = "<group>"; };
+		1E03D0232EFBD2E00020DAA5 /* ShortcutGalleryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutGalleryView.swift; sourceTree = "<group>"; };
+		1E03D0262EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenVisualIntelligenceIntent.swift; sourceTree = "<group>"; };
+		1E03D0272EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualIntelligenceIntent.swift; sourceTree = "<group>"; };
+		1E03D02E2EFBD3F20020DAA5 /* ScreenshotProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotProcessor.swift; sourceTree = "<group>"; };
+		1E03D02F2EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLCompletenessAnalyzer.swift; sourceTree = "<group>"; };
+		1E03D0392EFBFA3F0020DAA5 /* NavigationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationManager.swift; sourceTree = "<group>"; };
+		1E03D0422EFC24CB0020DAA5 /* CaptureReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureReviewView.swift; sourceTree = "<group>"; };
+		1E03D0472EFC3B670020DAA5 /* DiverAppAttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiverAppAttributionView.swift; sourceTree = "<group>"; };
+		1E160AC535402EF1545DA24A /* DiverUITests_iOS.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiverUITests_iOS.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		302C82230AAB7048E4F825EA /* KnowMapsAdapterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowMapsAdapterTests.swift; sourceTree = "<group>"; };
+		30C6CAD26DB5DBCD80179B1F /* CloudKitTestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitTestSupport.swift; sourceTree = "<group>"; };
+		3EE453BDEFB20800DBFF0B1B /* DiverTests_iOS.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = DiverTests_iOS.bundle; path = DiverTests_iOS.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4E3CA07A0775461AC2587072 /* DiverQueueItemHierarchyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiverQueueItemHierarchyTests.swift; sourceTree = "<group>"; };
+		5615B73F96C328A98E941CD5 /* Diver.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Diver.entitlements; sourceTree = "<group>"; };
+		573D807F9496EBE7C68BF217 /* KnowMapsCacheStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowMapsCacheStore.swift; sourceTree = "<group>"; };
+		5DE51F7E92601A1166CD41ED /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		6CDDCCF965B4759AEBA1940F /* LinkPreviewView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LinkPreviewView.swift; sourceTree = "<group>"; };
+		719569AECD525903D3285B12 /* Diver_macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Diver_macOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7D231EE83CF65D9AC35B008C /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
+		7DEBECFBAC4353E5D8AE4A6E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		87AB3C01B38C1569F168108F /* KnowMapsServiceContainerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowMapsServiceContainerTests.swift; sourceTree = "<group>"; };
+		898F03197EF75CDFD351E084 /* ReferenceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferenceDetailView.swift; sourceTree = "<group>"; };
+		92E07633E6BD803CADEDC71A /* ActionViewControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionViewControllerTests.swift; sourceTree = "<group>"; };
+		9E5142F7BE0E8D92CE2D80C7 /* DiverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiverTests.swift; sourceTree = "<group>"; };
+		A1F40E40FD53ECA425061490 /* DiverUITests_macOS.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiverUITests_macOS.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		A6B202E6BE357E18D064F157 /* DiverQueueProcessingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiverQueueProcessingService.swift; sourceTree = "<group>"; };
+		BA5F7ECEBD4A56317495CB23 /* KnowMapsCacheStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowMapsCacheStoreTests.swift; sourceTree = "<group>"; };
+		BF0988F262D06B9E86A3AEDF /* DiverShared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DiverShared; path = ../DiverShared; sourceTree = SOURCE_ROOT; };
+		D027BD82E576693E8A997539 /* DiverTests_macOS.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiverTests_macOS.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		D3F518C128886017CE831B4F /* pipeline_logs.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = pipeline_logs.json; sourceTree = "<group>"; };
+		D77C396762A1E09D7BD33BF2 /* Diver_iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Diver_iOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DCB5AA16443590B3199E2113 /* KnowMapsAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowMapsAdapter.swift; sourceTree = "<group>"; };
+		E7B43CAFE7C5D15E858C87F0 /* TestAnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestAnalyticsService.swift; sourceTree = "<group>"; };
+		F47A70012C4EF00123456789 /* FoursquareLinkEnrichmentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoursquareLinkEnrichmentService.swift; sourceTree = "<group>"; };
+		F839A486D17585DAC90936DC /* DiverKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DiverKit; path = ../DiverKit; sourceTree = SOURCE_ROOT; };
+		F9D00EAA88E023ADF17BF38A /* DiverUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiverUITestsLaunchTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		1E03CF332EFAE80F0020DAA5 /* Exceptions for "ActionExtension" folder in "ActionExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 1E03CF242EFAE80F0020DAA5 /* ActionExtension */;
+		};
+		1E03CFC82EFB55570020DAA5 /* Exceptions for "DiverWidget" folder in "DiverWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 1E03CFB12EFB55560020DAA5 /* DiverWidgetExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		1E03CF272EFAE80F0020DAA5 /* ActionExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1E03CF332EFAE80F0020DAA5 /* Exceptions for "ActionExtension" folder in "ActionExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = ActionExtension;
+			sourceTree = "<group>";
+		};
+		1E03CFB72EFB55560020DAA5 /* DiverWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				1E03CFC82EFB55570020DAA5 /* Exceptions for "DiverWidget" folder in "DiverWidgetExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = DiverWidget;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1E03CF222EFAE80F0020DAA5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1E03CF262EFAE80F0020DAA5 /* UniformTypeIdentifiers.framework in Frameworks */,
+				1E03CF432EFAEB0A0020DAA5 /* UIKit.framework in Frameworks */,
+				1E03CF452EFAED0B0020DAA5 /* DiverKit in Frameworks */,
+				1E03CF412EFAEB050020DAA5 /* MobileCoreServices.framework in Frameworks */,
+				1E03CF472EFAED0E0020DAA5 /* DiverShared in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1E03CFAF2EFB55560020DAA5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1E03CFE02EFB582B0020DAA5 /* DiverShared in Frameworks */,
+				1E03D0412EFC20E20020DAA5 /* knowmaps in Frameworks */,
+				1E03CFDE2EFB582B0020DAA5 /* DiverKit in Frameworks */,
+				1E03CFB62EFB55560020DAA5 /* SwiftUI.framework in Frameworks */,
+				1E03CFB42EFB55560020DAA5 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7A8F49C64BB0F2AD921C3802 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1EF240E31D7F8AEE3B29A86E /* DiverKit in Frameworks */,
+				D39E055BB52C5B748AAC3627 /* DiverShared in Frameworks */,
+				4A56E688FF7DAA668529A522 /* knowmaps in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F093CFE041F3A8A384F30047 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				436E36A6D83C0433CDF6D07F /* DiverKit in Frameworks */,
+				06FC5E7233A634C8222F1D14 /* DiverShared in Frameworks */,
+				0089932D7893A6E1D0F0B990 /* knowmaps in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1E03CF0D2EFAE66F0020DAA5 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1E03CF422EFAEB0A0020DAA5 /* UIKit.framework */,
+				1E03CF402EFAEB050020DAA5 /* MobileCoreServices.framework */,
+				1E03CF0E2EFAE66F0020DAA5 /* UniformTypeIdentifiers.framework */,
+				1E03CFB32EFB55560020DAA5 /* WidgetKit.framework */,
+				1E03CFB52EFB55560020DAA5 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		1E03CF612EFB20310020DAA5 /* Entities */ = {
+			isa = PBXGroup;
+			children = (
+				1E03CF5F2EFB20310020DAA5 /* LinkEntity.swift */,
+				1E03CF602EFB20310020DAA5 /* LinkEntityQuery.swift */,
+			);
+			path = Entities;
+			sourceTree = "<group>";
+		};
+		1E03CF672EFB20310020DAA5 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				1E03CF632EFB20310020DAA5 /* OpenLinkIntent.swift */,
+				1E03D0262EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift */,
+				1E03D0272EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift */,
+				1E03CF642EFB20310020DAA5 /* SaveLinkIntent.swift */,
+				1E03CF652EFB20310020DAA5 /* SearchLinksIntent.swift */,
+				1E03CF662EFB20310020DAA5 /* ShareLinkIntent.swift */,
+			);
+			path = Intents;
+			sourceTree = "<group>";
+		};
+		1E03CF6B2EFB20310020DAA5 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				1E03CF682EFB20310020DAA5 /* IntentConfigurationView.swift */,
+				1E03CF692EFB20310020DAA5 /* SaveLinkSnippet.swift */,
+				1E03CF6A2EFB20310020DAA5 /* ShareLinkSnippet.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		1E03CF6E2EFB20310020DAA5 /* AppIntents */ = {
+			isa = PBXGroup;
+			children = (
+				1E03CF612EFB20310020DAA5 /* Entities */,
+				1E03CF672EFB20310020DAA5 /* Intents */,
+				1E03D0302EFBD3F20020DAA5 /* Services */,
+				1E03CF6B2EFB20310020DAA5 /* Views */,
+				1E03CF6C2EFB20310020DAA5 /* AppShortcutsProvider.swift */,
+			);
+			path = AppIntents;
+			sourceTree = "<group>";
+		};
+		1E03CF912EFB20E40020DAA5 /* AppIntents */ = {
+			isa = PBXGroup;
+			children = (
+				1E03CF8B2EFB20E40020DAA5 /* LinkEntityQueryTests.swift */,
+				1E03CF8C2EFB20E40020DAA5 /* LinkEntityTests.swift */,
+				1E03CF8D2EFB20E40020DAA5 /* OpenLinkIntentTests.swift */,
+				1E03CF8E2EFB20E40020DAA5 /* SaveLinkIntentTests.swift */,
+				1E03CF8F2EFB20E40020DAA5 /* SearchLinksIntentTests.swift */,
+				1E03CF902EFB20E40020DAA5 /* ShareLinkIntentTests.swift */,
+			);
+			path = AppIntents;
+			sourceTree = "<group>";
+		};
+		1E03D0302EFBD3F20020DAA5 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				1E03D02E2EFBD3F20020DAA5 /* ScreenshotProcessor.swift */,
+				1E03D02F2EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift */,
+			);
+			name = Services;
+			path = Diver/AppIntents/Services;
+			sourceTree = SOURCE_ROOT;
+		};
+		1E22CEC1E3B0DD2512498573 = {
+			isa = PBXGroup;
+			children = (
+				1E03CFD42EFB56880020DAA5 /* DiverWidgetExtension.entitlements */,
+				681539DE547FD4B09850DC2E /* Diver */,
+				5EA35D532CF7BF41BAD5A40B /* DiverTests */,
+				704A1851081FEC5A8CC33A4E /* DiverUITests */,
+				329CD68C87A34E3987D6BC72 /* Packages */,
+				1E03CF272EFAE80F0020DAA5 /* ActionExtension */,
+				1E03CFB72EFB55560020DAA5 /* DiverWidget */,
+				1E03CF0D2EFAE66F0020DAA5 /* Frameworks */,
+				7D9E5CDB6F9092AB765657B4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		329CD68C87A34E3987D6BC72 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				F839A486D17585DAC90936DC /* DiverKit */,
+				BF0988F262D06B9E86A3AEDF /* DiverShared */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		41CC614E346564B65C440357 /* Fixtures */ = {
+			isa = PBXGroup;
+			children = (
+				D3F518C128886017CE831B4F /* pipeline_logs.json */,
+			);
+			path = Fixtures;
+			sourceTree = "<group>";
+		};
+		5EA35D532CF7BF41BAD5A40B /* DiverTests */ = {
+			isa = PBXGroup;
+			children = (
+				1E03CF912EFB20E40020DAA5 /* AppIntents */,
+				41CC614E346564B65C440357 /* Fixtures */,
+				92E07633E6BD803CADEDC71A /* ActionViewControllerTests.swift */,
+				30C6CAD26DB5DBCD80179B1F /* CloudKitTestSupport.swift */,
+				9E5142F7BE0E8D92CE2D80C7 /* DiverTests.swift */,
+				302C82230AAB7048E4F825EA /* KnowMapsAdapterTests.swift */,
+				BA5F7ECEBD4A56317495CB23 /* KnowMapsCacheStoreTests.swift */,
+				87AB3C01B38C1569F168108F /* KnowMapsServiceContainerTests.swift */,
+				E7B43CAFE7C5D15E858C87F0 /* TestAnalyticsService.swift */,
+				4E3CA07A0775461AC2587072 /* DiverQueueItemHierarchyTests.swift */,
+			);
+			path = DiverTests;
+			sourceTree = "<group>";
+		};
+		681539DE547FD4B09850DC2E /* Diver */ = {
+			isa = PBXGroup;
+			children = (
+				1E03CF6E2EFB20310020DAA5 /* AppIntents */,
+				BC72BC45423B7FDCA77B2374 /* Model */,
+				EB505A9A4B4E357A40F23909 /* Services */,
+				D2328F25AE3674D3A25348D5 /* View */,
+				0DC61B742530514810719A37 /* Assets.xcassets */,
+				5615B73F96C328A98E941CD5 /* Diver.entitlements */,
+				06A210F16E7A971A22AD25B3 /* DiverApp.swift */,
+				1991AB81F664330E14D86026 /* Info.plist */,
+			);
+			path = Diver;
+			sourceTree = "<group>";
+		};
+		704A1851081FEC5A8CC33A4E /* DiverUITests */ = {
+			isa = PBXGroup;
+			children = (
+				1E03CF872EFB20A40020DAA5 /* AppIntentsUITests.swift */,
+				017D7749A3E3DB921F44A2C4 /* DiverUITests.swift */,
+				F9D00EAA88E023ADF17BF38A /* DiverUITestsLaunchTests.swift */,
+			);
+			path = DiverUITests;
+			sourceTree = "<group>";
+		};
+		7D9E5CDB6F9092AB765657B4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D77C396762A1E09D7BD33BF2 /* Diver_iOS.app */,
+				719569AECD525903D3285B12 /* Diver_macOS.app */,
+				3EE453BDEFB20800DBFF0B1B /* DiverTests_iOS.bundle */,
+				D027BD82E576693E8A997539 /* DiverTests_macOS.bundle */,
+				1E160AC535402EF1545DA24A /* DiverUITests_iOS.bundle */,
+				A1F40E40FD53ECA425061490 /* DiverUITests_macOS.bundle */,
+				1E03CF252EFAE80F0020DAA5 /* ActionExtension.appex */,
+				1E03CFB22EFB55560020DAA5 /* DiverWidgetExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		BC72BC45423B7FDCA77B2374 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				C0934B2F89AABB821564735E /* Schema */,
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		C0934B2F89AABB821564735E /* Schema */ = {
+			isa = PBXGroup;
+			children = (
+				7D231EE83CF65D9AC35B008C /* Item.swift */,
+			);
+			path = Schema;
+			sourceTree = "<group>";
+		};
+		D2328F25AE3674D3A25348D5 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				1E03D0422EFC24CB0020DAA5 /* CaptureReviewView.swift */,
+				7DEBECFBAC4353E5D8AE4A6E /* ContentView.swift */,
+				1E03D0472EFC3B670020DAA5 /* DiverAppAttributionView.swift */,
+				898F03197EF75CDFD351E084 /* ReferenceDetailView.swift */,
+				5DE51F7E92601A1166CD41ED /* SidebarView.swift */,
+				1E03CF592EFB163D0020DAA5 /* SettingsView.swift */,
+				1E03CF5A2EFB163D0020DAA5 /* SharedWithYouView.swift */,
+				1E03D01D2EFBD2C20020DAA5 /* SiftedOverlayView.swift */,
+				1E03D01E2EFBD2C20020DAA5 /* VisualIntelligenceView.swift */,
+				1E03D0232EFBD2E00020DAA5 /* ShortcutGalleryView.swift */,
+				6CDDCCF965B4759AEBA1940F /* LinkPreviewView.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		EB505A9A4B4E357A40F23909 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A6B202E6BE357E18D064F157 /* DiverQueueProcessingService.swift */,
+				DCB5AA16443590B3199E2113 /* KnowMapsAdapter.swift */,
+				573D807F9496EBE7C68BF217 /* KnowMapsCacheStore.swift */,
+				F47A70012C4EF00123456789 /* FoursquareLinkEnrichmentService.swift */,
+				09530E9966028D5CC948DC91 /* KnowMapsServiceContainer.swift */,
+				1E03D0392EFBFA3F0020DAA5 /* NavigationManager.swift */,
+				1E03CF562EFB16200020DAA5 /* SharedWithYouManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		1E03CF242EFAE80F0020DAA5 /* ActionExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1E03CF342EFAE80F0020DAA5 /* Build configuration list for PBXNativeTarget "ActionExtension" */;
+			buildPhases = (
+				1E03CF212EFAE80F0020DAA5 /* Sources */,
+				1E03CF222EFAE80F0020DAA5 /* Frameworks */,
+				1E03CF232EFAE80F0020DAA5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				1E03CF272EFAE80F0020DAA5 /* ActionExtension */,
+			);
+			name = ActionExtension;
+			packageProductDependencies = (
+				1E03CF442EFAED0B0020DAA5 /* DiverKit */,
+				1E03CF462EFAED0E0020DAA5 /* DiverShared */,
+			);
+			productName = ActionExtension;
+			productReference = 1E03CF252EFAE80F0020DAA5 /* ActionExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		1E03CFB12EFB55560020DAA5 /* DiverWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1E03CFC92EFB55570020DAA5 /* Build configuration list for PBXNativeTarget "DiverWidgetExtension" */;
+			buildPhases = (
+				1E03CFAE2EFB55560020DAA5 /* Sources */,
+				1E03CFAF2EFB55560020DAA5 /* Frameworks */,
+				1E03CFB02EFB55560020DAA5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				1E03CFB72EFB55560020DAA5 /* DiverWidget */,
+			);
+			name = DiverWidgetExtension;
+			packageProductDependencies = (
+				1E03CFDD2EFB582B0020DAA5 /* DiverKit */,
+				1E03CFDF2EFB582B0020DAA5 /* DiverShared */,
+				1E03D0402EFC20E20020DAA5 /* knowmaps */,
+			);
+			productName = DiverWidgetExtension;
+			productReference = 1E03CFB22EFB55560020DAA5 /* DiverWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		2679CC6DB50D8C109B6810CC /* Diver_macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F9A2D1B0BB9F5C7EE3606DC5 /* Build configuration list for PBXNativeTarget "Diver_macOS" */;
+			buildPhases = (
+				5FFF1902F11C34CDDD96142D /* Sources */,
+				1013CCC82DD7215D586EFEDD /* Resources */,
+				F093CFE041F3A8A384F30047 /* Frameworks */,
+				8B6D7040C131BC79475E81E0 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Diver_macOS;
+			packageProductDependencies = (
+				8285BE75BFE4572B41DBF50F /* DiverKit */,
+				C8070B0F7C1FF128AFFE8ED4 /* DiverShared */,
+				25BB43E3937AEF12D808D0F9 /* knowmaps */,
+			);
+			productName = Diver_macOS;
+			productReference = 719569AECD525903D3285B12 /* Diver_macOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		2C5172D6F90533D12DE96E9F /* DiverTests_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CE1E6DE2FE17072049C7C923 /* Build configuration list for PBXNativeTarget "DiverTests_iOS" */;
+			buildPhases = (
+				D8937847D975543EAD97FC4E /* Sources */,
+				D9C42AEA4A99C870812FF2D6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				997CE29B1E8857AB98E9EBDC /* PBXTargetDependency */,
+			);
+			name = DiverTests_iOS;
+			productName = DiverTests_iOS;
+			productReference = 3EE453BDEFB20800DBFF0B1B /* DiverTests_iOS.bundle */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		5E9F14A5B740369163794194 /* DiverUITests_macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0C58871CF605F2C3EACE9AD2 /* Build configuration list for PBXNativeTarget "DiverUITests_macOS" */;
+			buildPhases = (
+				9497DC39D2A2DA1AF9B896E3 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				EF2AA06096393EBEA78F5048 /* PBXTargetDependency */,
+			);
+			name = DiverUITests_macOS;
+			productName = DiverUITests_macOS;
+			productReference = A1F40E40FD53ECA425061490 /* DiverUITests_macOS.bundle */;
+			productType = "com.apple.product-type.bundle";
+		};
+		87F388E85B00E01AD0AECC95 /* Diver_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DC012D005E4E1297F8A83D47 /* Build configuration list for PBXNativeTarget "Diver_iOS" */;
+			buildPhases = (
+				39039BF8536FC14F06DE92B5 /* Sources */,
+				4D650BAB0C1BFFEDC6DDCD27 /* Resources */,
+				7A8F49C64BB0F2AD921C3802 /* Frameworks */,
+				9105D26A8E2E5D692F401EA2 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1E03CF312EFAE80F0020DAA5 /* PBXTargetDependency */,
+				1E03CFC62EFB55570020DAA5 /* PBXTargetDependency */,
+			);
+			name = Diver_iOS;
+			packageProductDependencies = (
+				B6559717746D51E9C2DEA28E /* DiverKit */,
+				13F65F202B46C02117A3AE0B /* DiverShared */,
+				E3868CE0F6C1311492AD13DA /* knowmaps */,
+			);
+			productName = Diver_iOS;
+			productReference = D77C396762A1E09D7BD33BF2 /* Diver_iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F27D800C841D2305CDC76CF7 /* DiverUITests_iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 304B5FF3E633DF52D5EBBAAE /* Build configuration list for PBXNativeTarget "DiverUITests_iOS" */;
+			buildPhases = (
+				48175D86C9610A68E1922266 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DE4672F5AD6551559BF8264B /* PBXTargetDependency */,
+			);
+			name = DiverUITests_iOS;
+			productName = DiverUITests_iOS;
+			productReference = 1E160AC535402EF1545DA24A /* DiverUITests_iOS.bundle */;
+			productType = "com.apple.product-type.bundle";
+		};
+		FB45EBA8D8C09CA4808CD555 /* DiverTests_macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CD031626FE081F4C7F087D6F /* Build configuration list for PBXNativeTarget "DiverTests_macOS" */;
+			buildPhases = (
+				9238167AED04B8C3F121E57F /* Sources */,
+				7D2DB3729F4F309988AD968E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4DAA5639325FFE528E48E1DD /* PBXTargetDependency */,
+			);
+			name = DiverTests_macOS;
+			productName = DiverTests_macOS;
+			productReference = D027BD82E576693E8A997539 /* DiverTests_macOS.bundle */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		10C9E7F61D88F3A320926FDC /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					1E03CF242EFAE80F0020DAA5 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					1E03CFB12EFB55560020DAA5 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					2679CC6DB50D8C109B6810CC = {
+						ProvisioningStyle = Automatic;
+					};
+					87F388E85B00E01AD0AECC95 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 0BE4A650AC9C0C802496202B /* Build configuration list for PBXProject "Diver" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 1E22CEC1E3B0DD2512498573;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				768C9FC0535F0C6FE9CDA823 /* XCLocalSwiftPackageReference "Know-Maps" */,
+				C33B03A7450D89B7C1CA333C /* XCLocalSwiftPackageReference "DiverKit" */,
+				6C05A9FFCDA3479D80049137 /* XCLocalSwiftPackageReference "DiverShared" */,
+			);
+			productRefGroup = 7D9E5CDB6F9092AB765657B4 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				87F388E85B00E01AD0AECC95 /* Diver_iOS */,
+				2679CC6DB50D8C109B6810CC /* Diver_macOS */,
+				2C5172D6F90533D12DE96E9F /* DiverTests_iOS */,
+				FB45EBA8D8C09CA4808CD555 /* DiverTests_macOS */,
+				F27D800C841D2305CDC76CF7 /* DiverUITests_iOS */,
+				5E9F14A5B740369163794194 /* DiverUITests_macOS */,
+				1E03CF242EFAE80F0020DAA5 /* ActionExtension */,
+				1E03CFB12EFB55560020DAA5 /* DiverWidgetExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1013CCC82DD7215D586EFEDD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1E03D03D2EFC1A950020DAA5 /* pipeline_logs.json in Resources */,
+				0DD8792C39F7A52E598E6988 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1E03CF232EFAE80F0020DAA5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1E03CFB02EFB55560020DAA5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4D650BAB0C1BFFEDC6DDCD27 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1E03D03C2EFC1A950020DAA5 /* pipeline_logs.json in Resources */,
+				6EE835E3684D0AA4981D069F /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7D2DB3729F4F309988AD968E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3C668DAE3E62367FB8BE14C4 /* pipeline_logs.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D9C42AEA4A99C870812FF2D6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				490FF136B95629B7A0F2B975 /* pipeline_logs.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1E03CF212EFAE80F0020DAA5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1E03CFAE2EFB55560020DAA5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1E03CFE72EFB58790020DAA5 /* IntentConfigurationView.swift in Sources */,
+				1E03CFE82EFB58790020DAA5 /* SaveLinkSnippet.swift in Sources */,
+				1E03CFE92EFB58790020DAA5 /* ShareLinkSnippet.swift in Sources */,
+				1E03CFE32EFB58700020DAA5 /* SearchLinksIntent.swift in Sources */,
+				1E03D02C2EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift in Sources */,
+				1E03D02D2EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift in Sources */,
+				1E03CFE42EFB58700020DAA5 /* OpenLinkIntent.swift in Sources */,
+				1E03CFE52EFB58700020DAA5 /* ShareLinkIntent.swift in Sources */,
+				1E03D0312EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift in Sources */,
+				1E03D0322EFBD3F20020DAA5 /* ScreenshotProcessor.swift in Sources */,
+				1E03CFEA2EFB58800020DAA5 /* AppShortcutsProvider.swift in Sources */,
+				1E03CFE62EFB58700020DAA5 /* SaveLinkIntent.swift in Sources */,
+				1E03CFE12EFB58690020DAA5 /* LinkEntity.swift in Sources */,
+				1E03CFE22EFB58690020DAA5 /* LinkEntityQuery.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		39039BF8536FC14F06DE92B5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9C1477C768B43E8BAF2FD052 /* ContentView.swift in Sources */,
+				9133AD759AFD71A72AF7CC9F /* DiverApp.swift in Sources */,
+				1E03CF572EFB16200020DAA5 /* SharedWithYouManager.swift in Sources */,
+				1E03D0492EFC3B670020DAA5 /* DiverAppAttributionView.swift in Sources */,
+				70F3ADB8AADAD2E6219F3B28 /* DiverQueueProcessingService.swift in Sources */,
+				37997726604359E13F76B1A0 /* Item.swift in Sources */,
+				2A8B04FD8FF3981945A6D38D /* KnowMapsAdapter.swift in Sources */,
+				1E03CF6F2EFB20310020DAA5 /* SaveLinkIntent.swift in Sources */,
+				1E03CF702EFB20310020DAA5 /* SaveLinkSnippet.swift in Sources */,
+				1E03CF712EFB20310020DAA5 /* SearchLinksIntent.swift in Sources */,
+				1E03CF722EFB20310020DAA5 /* LinkEntity.swift in Sources */,
+				1E03D0442EFC24CB0020DAA5 /* CaptureReviewView.swift in Sources */,
+				1E03CF732EFB20310020DAA5 /* OpenLinkIntent.swift in Sources */,
+				1E03CF742EFB20310020DAA5 /* ShareLinkIntent.swift in Sources */,
+				1E03CF752EFB20310020DAA5 /* IntentConfigurationView.swift in Sources */,
+				1E03D0212EFBD2C20020DAA5 /* VisualIntelligenceView.swift in Sources */,
+				1E03D0222EFBD2C20020DAA5 /* SiftedOverlayView.swift in Sources */,
+				1E03D02A2EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift in Sources */,
+				1E03D02B2EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift in Sources */,
+				1E03CF772EFB20310020DAA5 /* LinkEntityQuery.swift in Sources */,
+				1E03CF782EFB20310020DAA5 /* ShareLinkSnippet.swift in Sources */,
+				1E03CF792EFB20310020DAA5 /* AppShortcutsProvider.swift in Sources */,
+				6B38751B4CB9C372675E2B68 /* KnowMapsCacheStore.swift in Sources */,
+				1E03D0332EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift in Sources */,
+				1E03D0342EFBD3F20020DAA5 /* ScreenshotProcessor.swift in Sources */,
+				F47A70022C4EF00223456789 /* FoursquareLinkEnrichmentService.swift in Sources */,
+				9D7387990C610DC31DF602CB /* KnowMapsServiceContainer.swift in Sources */,
+				1E03CF5D2EFB163D0020DAA5 /* SharedWithYouView.swift in Sources */,
+				1E03CF5E2EFB163D0020DAA5 /* SettingsView.swift in Sources */,
+				18DD303DE276163BF28BD02F /* ReferenceDetailView.swift in Sources */,
+				1E03D0242EFBD2E00020DAA5 /* ShortcutGalleryView.swift in Sources */,
+				8730250FFD9A0747B80E3ECB /* SidebarView.swift in Sources */,
+				1E03D03A2EFBFA3F0020DAA5 /* NavigationManager.swift in Sources */,
+				27C2D998F88C5D7770B460DF /* LinkPreviewView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		48175D86C9610A68E1922266 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				238BEC0F22B92294CD561769 /* DiverUITests.swift in Sources */,
+				A3982F3A0A03A7C76F0607BE /* DiverUITestsLaunchTests.swift in Sources */,
+				1E03CF882EFB20A40020DAA5 /* AppIntentsUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5FFF1902F11C34CDDD96142D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				25840A81BE4673C1F69FD96A /* ContentView.swift in Sources */,
+				DCEA460EF75C41B8A0C66BE3 /* DiverApp.swift in Sources */,
+				1E03CF582EFB16200020DAA5 /* SharedWithYouManager.swift in Sources */,
+				1E03D0482EFC3B670020DAA5 /* DiverAppAttributionView.swift in Sources */,
+				D003EEFCE2F68CB8B4BAC3D2 /* DiverQueueProcessingService.swift in Sources */,
+				282153D2C15F2DFE03A1F7FB /* Item.swift in Sources */,
+				33E1F0A50DB0703B9CE6E99B /* KnowMapsAdapter.swift in Sources */,
+				1E03CF7B2EFB20310020DAA5 /* SaveLinkIntent.swift in Sources */,
+				1E03CF7C2EFB20310020DAA5 /* SaveLinkSnippet.swift in Sources */,
+				1E03CF7D2EFB20310020DAA5 /* SearchLinksIntent.swift in Sources */,
+				1E03CF7E2EFB20310020DAA5 /* LinkEntity.swift in Sources */,
+				1E03D0432EFC24CB0020DAA5 /* CaptureReviewView.swift in Sources */,
+				1E03CF7F2EFB20310020DAA5 /* OpenLinkIntent.swift in Sources */,
+				1E03CF802EFB20310020DAA5 /* ShareLinkIntent.swift in Sources */,
+				1E03CF812EFB20310020DAA5 /* IntentConfigurationView.swift in Sources */,
+				1E03D01F2EFBD2C20020DAA5 /* VisualIntelligenceView.swift in Sources */,
+				1E03D0202EFBD2C20020DAA5 /* SiftedOverlayView.swift in Sources */,
+				1E03D0282EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift in Sources */,
+				1E03D0292EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift in Sources */,
+				1E03CF832EFB20310020DAA5 /* LinkEntityQuery.swift in Sources */,
+				1E03CF842EFB20310020DAA5 /* ShareLinkSnippet.swift in Sources */,
+				1E03CF852EFB20310020DAA5 /* AppShortcutsProvider.swift in Sources */,
+				F47A70032C4EF00323456789 /* FoursquareLinkEnrichmentService.swift in Sources */,
+				7713566E5D34F49E33271E1C /* KnowMapsCacheStore.swift in Sources */,
+				1E03D0352EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift in Sources */,
+				1E03D0362EFBD3F20020DAA5 /* ScreenshotProcessor.swift in Sources */,
+				DC4AEB7324CF4A05FE8A96A0 /* KnowMapsServiceContainer.swift in Sources */,
+				1E03CF5B2EFB163D0020DAA5 /* SharedWithYouView.swift in Sources */,
+				1E03CF5C2EFB163D0020DAA5 /* SettingsView.swift in Sources */,
+				BBF1A088596B873D5B96B4A8 /* ReferenceDetailView.swift in Sources */,
+				1E03D0252EFBD2E00020DAA5 /* ShortcutGalleryView.swift in Sources */,
+				19BFDECDFE2A1D456CEABC86 /* SidebarView.swift in Sources */,
+				1E03D03B2EFBFA3F0020DAA5 /* NavigationManager.swift in Sources */,
+				128D1A51B201073DA21CC6B8 /* LinkPreviewView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9238167AED04B8C3F121E57F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2B3656509ACFADC26AD3628C /* ActionViewControllerTests.swift in Sources */,
+				C801C970A6F920AD638CB380 /* CloudKitTestSupport.swift in Sources */,
+				65D57E8B638111F67E331E18 /* DiverTests.swift in Sources */,
+				509E90F3732304106B92F65B /* KnowMapsAdapterTests.swift in Sources */,
+				614657885EE471E116CA4657 /* KnowMapsCacheStoreTests.swift in Sources */,
+				1E03CF992EFB20E40020DAA5 /* SearchLinksIntentTests.swift in Sources */,
+				1E03CF9A2EFB20E40020DAA5 /* OpenLinkIntentTests.swift in Sources */,
+				1E03CF9B2EFB20E40020DAA5 /* LinkEntityQueryTests.swift in Sources */,
+				1E03CF9C2EFB20E40020DAA5 /* LinkEntityTests.swift in Sources */,
+				1E03CF9D2EFB20E40020DAA5 /* SaveLinkIntentTests.swift in Sources */,
+				1E03CF9F2EFB20E40020DAA5 /* ShareLinkIntentTests.swift in Sources */,
+				703C31A9FC71D8132CF9C709 /* KnowMapsServiceContainerTests.swift in Sources */,
+				F4A86F0ECD3AC243E0C30248 /* TestAnalyticsService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9497DC39D2A2DA1AF9B896E3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6C73332234F2B781B52900E1 /* DiverUITests.swift in Sources */,
+				F03D77C2FBCA039BBAF5426A /* DiverUITestsLaunchTests.swift in Sources */,
+				1E03CF892EFB20A40020DAA5 /* AppIntentsUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D8937847D975543EAD97FC4E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EC2F090ED557029F6DD6EAF7 /* ActionViewControllerTests.swift in Sources */,
+				2C90DC3C5B4A789C32BF0A1C /* CloudKitTestSupport.swift in Sources */,
+				12F0B2F9D28CFE46732020CC /* DiverTests.swift in Sources */,
+				1421947BF0FCC193477038BB /* KnowMapsAdapterTests.swift in Sources */,
+				3A32536C2FA1DF6EC0C11FC7 /* KnowMapsCacheStoreTests.swift in Sources */,
+				1E03CF922EFB20E40020DAA5 /* SearchLinksIntentTests.swift in Sources */,
+				1E03CF932EFB20E40020DAA5 /* OpenLinkIntentTests.swift in Sources */,
+				1E03CF942EFB20E40020DAA5 /* LinkEntityQueryTests.swift in Sources */,
+				1E03CF952EFB20E40020DAA5 /* LinkEntityTests.swift in Sources */,
+				1E03CF962EFB20E40020DAA5 /* SaveLinkIntentTests.swift in Sources */,
+				1E03CF982EFB20E40020DAA5 /* ShareLinkIntentTests.swift in Sources */,
+				107976A96B12CF2054008306 /* KnowMapsServiceContainerTests.swift in Sources */,
+				7A97FA6E7E545D294AF576AF /* TestAnalyticsService.swift in Sources */,
+				9EE8B468574234FF0A3BD035 /* DiverQueueItemHierarchyTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1E03CF312EFAE80F0020DAA5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1E03CF242EFAE80F0020DAA5 /* ActionExtension */;
+			targetProxy = 1E03CF302EFAE80F0020DAA5 /* PBXContainerItemProxy */;
+		};
+		1E03CFC62EFB55570020DAA5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1E03CFB12EFB55560020DAA5 /* DiverWidgetExtension */;
+			targetProxy = 1E03CFC52EFB55570020DAA5 /* PBXContainerItemProxy */;
+		};
+		4DAA5639325FFE528E48E1DD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2679CC6DB50D8C109B6810CC /* Diver_macOS */;
+			targetProxy = 67118A1674B3DA752B10E03F /* PBXContainerItemProxy */;
+		};
+		997CE29B1E8857AB98E9EBDC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 87F388E85B00E01AD0AECC95 /* Diver_iOS */;
+			targetProxy = AD3F0EC0A4FD587218AC88E4 /* PBXContainerItemProxy */;
+		};
+		DE4672F5AD6551559BF8264B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 87F388E85B00E01AD0AECC95 /* Diver_iOS */;
+			targetProxy = 4968C42CCA349C797ABB4E2E /* PBXContainerItemProxy */;
+		};
+		EF2AA06096393EBEA78F5048 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2679CC6DB50D8C109B6810CC /* Diver_macOS */;
+			targetProxy = 0D7CF693D413A62924734BE8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1334793CF5A0658723FD7011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.secretatomics.DiverUITests-macOS";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		14A3395FBC3859CE4D6E3EC0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.secretatomics.DiverTests-macOS";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		1E03CF352EFAE80F0020DAA5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = ActionExtension/ActionExtension.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ActionExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Process in Diver";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.Diver.ActionExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1E03CF362EFAE80F0020DAA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = ActionExtension/ActionExtension.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ActionExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Process in Diver";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.Diver.ActionExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		1E03CFCA2EFB55570020DAA5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = DiverWidgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DiverWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = DiverWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.Diver.DiverWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		1E03CFCB2EFB55570020DAA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = DiverWidgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DiverWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = DiverWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.Diver.DiverWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		2C4983DA9837B58D4D050601 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.secretatomics.DiverTests-macOS";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		34F6C33C23E613F7FF9318A2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 23264QUM9A;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		35D2C0611C29CDB5D917E0AF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Diver/Diver.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Diver/Info.plist;
+				INFOPLIST_KEY_BGTaskSchedulerPermittedIdentifiers = com.secretatomics.Diver.processQueue;
+				INFOPLIST_KEY_CFBundleDisplayName = DiverTest;
+				INFOPLIST_KEY_UIBackgroundModes = "remote-notification location processing fetch";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.Diver;
+				PRODUCT_MODULE_NAME = Diver;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		4E50B4F82837179352C83FD0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Diver/Diver.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Diver/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Diver;
+				INFOPLIST_KEY_UIBackgroundModes = "remote-notification location processing fetch";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.Diver;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		78C8CFACECB52D2ED21B7E48 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.secretatomics.DiverUITests-iOS";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		7E2C6D5E6B6711ACFA0B8C62 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 23264QUM9A;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		96B5CA3A336E541299B2F9FC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.secretatomics.DiverTests-iOS";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Diver_iOS.app/Diver_iOS";
+			};
+			name = Release;
+		};
+		C224DA4486541DAD31709EB0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Diver/Diver.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Diver/Info.plist;
+				INFOPLIST_KEY_BGTaskSchedulerPermittedIdentifiers = com.secretatomics.Diver.processQueue;
+				INFOPLIST_KEY_CFBundleDisplayName = DiverTest;
+				INFOPLIST_KEY_UIBackgroundModes = "remote-notification location processing fetch";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.Diver;
+				PRODUCT_MODULE_NAME = Diver;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D5D6B006D87EE8237206E2C3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.secretatomics.DiverUITests-macOS";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		D94C6C2948085AC18FE7E4CA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.secretatomics.DiverUITests-iOS";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E9BEAA73380D1D17459084C5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.secretatomics.DiverTests-iOS";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Diver_iOS.app/Diver_iOS";
+			};
+			name = Debug;
+		};
+		F0BD542ADBAE317353332976 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Diver/Diver.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Diver/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Diver;
+				INFOPLIST_KEY_UIBackgroundModes = "remote-notification location processing fetch";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.Diver;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0BE4A650AC9C0C802496202B /* Build configuration list for PBXProject "Diver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				34F6C33C23E613F7FF9318A2 /* Debug */,
+				7E2C6D5E6B6711ACFA0B8C62 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		0C58871CF605F2C3EACE9AD2 /* Build configuration list for PBXNativeTarget "DiverUITests_macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D5D6B006D87EE8237206E2C3 /* Debug */,
+				1334793CF5A0658723FD7011 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		1E03CF342EFAE80F0020DAA5 /* Build configuration list for PBXNativeTarget "ActionExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1E03CF352EFAE80F0020DAA5 /* Debug */,
+				1E03CF362EFAE80F0020DAA5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		1E03CFC92EFB55570020DAA5 /* Build configuration list for PBXNativeTarget "DiverWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1E03CFCA2EFB55570020DAA5 /* Debug */,
+				1E03CFCB2EFB55570020DAA5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		304B5FF3E633DF52D5EBBAAE /* Build configuration list for PBXNativeTarget "DiverUITests_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D94C6C2948085AC18FE7E4CA /* Debug */,
+				78C8CFACECB52D2ED21B7E48 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CD031626FE081F4C7F087D6F /* Build configuration list for PBXNativeTarget "DiverTests_macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2C4983DA9837B58D4D050601 /* Debug */,
+				14A3395FBC3859CE4D6E3EC0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CE1E6DE2FE17072049C7C923 /* Build configuration list for PBXNativeTarget "DiverTests_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E9BEAA73380D1D17459084C5 /* Debug */,
+				96B5CA3A336E541299B2F9FC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DC012D005E4E1297F8A83D47 /* Build configuration list for PBXNativeTarget "Diver_iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C224DA4486541DAD31709EB0 /* Debug */,
+				35D2C0611C29CDB5D917E0AF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F9A2D1B0BB9F5C7EE3606DC5 /* Build configuration list for PBXNativeTarget "Diver_macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4E50B4F82837179352C83FD0 /* Debug */,
+				F0BD542ADBAE317353332976 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		6C05A9FFCDA3479D80049137 /* XCLocalSwiftPackageReference "DiverShared" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../DiverShared;
+		};
+		768C9FC0535F0C6FE9CDA823 /* XCLocalSwiftPackageReference "Know-Maps" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../Know-Maps/Know-Maps";
+		};
+		C33B03A7450D89B7C1CA333C /* XCLocalSwiftPackageReference "DiverKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../DiverKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		13F65F202B46C02117A3AE0B /* DiverShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DiverShared;
+		};
+		1E03CF442EFAED0B0020DAA5 /* DiverKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DiverKit;
+		};
+		1E03CF462EFAED0E0020DAA5 /* DiverShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DiverShared;
+		};
+		1E03CFDD2EFB582B0020DAA5 /* DiverKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C33B03A7450D89B7C1CA333C /* XCLocalSwiftPackageReference "DiverKit" */;
+			productName = DiverKit;
+		};
+		1E03CFDF2EFB582B0020DAA5 /* DiverShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6C05A9FFCDA3479D80049137 /* XCLocalSwiftPackageReference "DiverShared" */;
+			productName = DiverShared;
+		};
+		1E03D0402EFC20E20020DAA5 /* knowmaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 768C9FC0535F0C6FE9CDA823 /* XCLocalSwiftPackageReference "Know-Maps" */;
+			productName = knowmaps;
+		};
+		25BB43E3937AEF12D808D0F9 /* knowmaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 768C9FC0535F0C6FE9CDA823 /* XCLocalSwiftPackageReference "Know-Maps" */;
+			productName = knowmaps;
+		};
+		8285BE75BFE4572B41DBF50F /* DiverKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DiverKit;
+		};
+		B6559717746D51E9C2DEA28E /* DiverKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DiverKit;
+		};
+		C8070B0F7C1FF128AFFE8ED4 /* DiverShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DiverShared;
+		};
+		E3868CE0F6C1311492AD13DA /* knowmaps */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 768C9FC0535F0C6FE9CDA823 /* XCLocalSwiftPackageReference "Know-Maps" */;
+			productName = knowmaps;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 10C9E7F61D88F3A320926FDC /* Project object */;
+}

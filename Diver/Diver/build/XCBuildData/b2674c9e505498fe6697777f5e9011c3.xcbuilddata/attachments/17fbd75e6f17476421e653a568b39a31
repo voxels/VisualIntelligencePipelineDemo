@@ -1,0 +1,209 @@
+{
+  "" : {
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetExtension-primary.dia",
+    "emit-module-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetExtension-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetExtension-primary-emit-module.dia",
+    "pch" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetExtension-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetExtension-primary.swiftdeps"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/AppShortcutsProvider.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/AppShortcutsProvider.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/AppShortcutsProvider.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/AppShortcutsProvider.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/AppShortcutsProvider.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/AppShortcutsProvider.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/AppShortcutsProvider.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/AppShortcutsProvider.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/AppShortcutsProvider~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Entities/LinkEntity.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntity.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntity.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntity.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntity.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntity.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntity.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntity.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntity~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Entities/LinkEntityQuery.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntityQuery.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntityQuery.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntityQuery.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntityQuery.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntityQuery.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntityQuery.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntityQuery.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkEntityQuery~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Intents/OpenLinkIntent.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenLinkIntent.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenLinkIntent.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenLinkIntent.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenLinkIntent.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenLinkIntent.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenLinkIntent.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenLinkIntent.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenLinkIntent~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Intents/OpenVisualIntelligenceIntent.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenVisualIntelligenceIntent.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenVisualIntelligenceIntent.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenVisualIntelligenceIntent.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenVisualIntelligenceIntent.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenVisualIntelligenceIntent.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenVisualIntelligenceIntent.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenVisualIntelligenceIntent.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/OpenVisualIntelligenceIntent~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Intents/SaveLinkIntent.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkIntent.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkIntent.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkIntent.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkIntent.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkIntent.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkIntent.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkIntent.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkIntent~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Intents/SearchLinksIntent.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SearchLinksIntent.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SearchLinksIntent.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SearchLinksIntent.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SearchLinksIntent.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SearchLinksIntent.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SearchLinksIntent.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SearchLinksIntent.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SearchLinksIntent~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Intents/ShareLinkIntent.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkIntent.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkIntent.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkIntent.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkIntent.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkIntent.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkIntent.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkIntent.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkIntent~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Intents/VisualIntelligenceIntent.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/VisualIntelligenceIntent.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/VisualIntelligenceIntent.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/VisualIntelligenceIntent.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/VisualIntelligenceIntent.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/VisualIntelligenceIntent.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/VisualIntelligenceIntent.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/VisualIntelligenceIntent.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/VisualIntelligenceIntent~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Services/ScreenshotProcessor.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ScreenshotProcessor.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ScreenshotProcessor.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ScreenshotProcessor.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ScreenshotProcessor.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ScreenshotProcessor.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ScreenshotProcessor.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ScreenshotProcessor.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ScreenshotProcessor~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Services/URLCompletenessAnalyzer.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/URLCompletenessAnalyzer.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/URLCompletenessAnalyzer.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/URLCompletenessAnalyzer.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/URLCompletenessAnalyzer.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/URLCompletenessAnalyzer.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/URLCompletenessAnalyzer.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/URLCompletenessAnalyzer.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/URLCompletenessAnalyzer~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Views/IntentConfigurationView.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/IntentConfigurationView.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/IntentConfigurationView.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/IntentConfigurationView.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/IntentConfigurationView.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/IntentConfigurationView.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/IntentConfigurationView.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/IntentConfigurationView.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/IntentConfigurationView~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Views/SaveLinkSnippet.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkSnippet.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkSnippet.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkSnippet.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkSnippet.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkSnippet.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkSnippet.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkSnippet.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/SaveLinkSnippet~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/AppIntents/Views/ShareLinkSnippet.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkSnippet.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkSnippet.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkSnippet.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkSnippet.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkSnippet.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkSnippet.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkSnippet.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/ShareLinkSnippet~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/DiverWidget/DiverHomeScreenWidget.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverHomeScreenWidget.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverHomeScreenWidget.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverHomeScreenWidget.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverHomeScreenWidget.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverHomeScreenWidget.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverHomeScreenWidget.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverHomeScreenWidget.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverHomeScreenWidget~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/DiverWidget/DiverInteractiveWidget.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverInteractiveWidget.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverInteractiveWidget.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverInteractiveWidget.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverInteractiveWidget.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverInteractiveWidget.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverInteractiveWidget.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverInteractiveWidget.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverInteractiveWidget~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/DiverWidget/DiverLockScreenWidget.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverLockScreenWidget.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverLockScreenWidget.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverLockScreenWidget.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverLockScreenWidget.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverLockScreenWidget.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverLockScreenWidget.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverLockScreenWidget.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverLockScreenWidget~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/DiverWidget/DiverWidgetBundle.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetBundle.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetBundle.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetBundle.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetBundle.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetBundle.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetBundle.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetBundle.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/DiverWidgetBundle~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/DiverWidget/Sources/LinkTimelineProvider.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkTimelineProvider.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkTimelineProvider.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkTimelineProvider.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkTimelineProvider.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkTimelineProvider.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkTimelineProvider.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkTimelineProvider.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/LinkTimelineProvider~partial.swiftmodule"
+  },
+  "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/voxels/Documents/dev/Superbright/Diver/Diver/build/Diver.build/Debug-iphoneos/DiverWidgetExtension.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

@@ -1,0 +1,11 @@
+# pack-refs with: peeled fully-peeled sorted 
+8bfc30ab55cac2eb427b3bd12c5e20264c6dda55 refs/heads/bsneed/rename
+788e11c493e9f6b5b7a6f6e1b1fb698f68dccd26 refs/heads/bsneed/xcframework
+af6a8b360984085e36c6341b21ecb35c12f47ebd refs/heads/main
+bdd2ad946b1e9a5cc627b18e157433cf4ee4a7ad refs/pull/1/head
+788e11c493e9f6b5b7a6f6e1b1fb698f68dccd26 refs/pull/2/head
+8bfc30ab55cac2eb427b3bd12c5e20264c6dda55 refs/pull/3/head
+0d144a9b0bc7c7ade27c220ea65228e91aa5eac2 refs/pull/4/head
+75ad40f07d4e0b938e3afb80811244d6b7acd4ba refs/tags/1.0.0
+8b70dc8c01b7b041912e30e29d2b488a43f782ac refs/tags/1.0.1
+af6a8b360984085e36c6341b21ecb35c12f47ebd refs/tags/2.0.0

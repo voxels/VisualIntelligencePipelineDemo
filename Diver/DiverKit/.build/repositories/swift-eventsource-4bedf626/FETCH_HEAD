@@ -1,0 +1,92 @@
+f4edbe61175178b457755860499a676acf1d9db9	not-for-merge	branch 'gh-pages' of https://github.com/launchdarkly/swift-eventsource
+44046a2fe325f630d5754bdc8dfc33e8948e0e68	not-for-merge	branch 'gw/http-tests' of https://github.com/launchdarkly/swift-eventsource
+b381d4a98f593f83194b4e7084f5b01c547e4d0b	not-for-merge	branch 'ld-github-standards/add-codeowners-file' of https://github.com/launchdarkly/swift-eventsource
+8078152912d81014f502a7152ee22fb3984606ee	not-for-merge	branch 'ld-github-standards/add-securitymd-file' of https://github.com/launchdarkly/swift-eventsource
+193c097f324666691f71b49b1e70249ef21f9f62	not-for-merge	branch 'main' of https://github.com/launchdarkly/swift-eventsource
+cab4a26edc90ded09772f720f1a73e4ab29d4292	not-for-merge	branch 'release-1.2.0' of https://github.com/launchdarkly/swift-eventsource
+ba3e894bb0487de00861bd0e11f20cae9bf30f8f	not-for-merge	'refs/pull/1/head' of https://github.com/launchdarkly/swift-eventsource
+ddfbb806c657dd14368883cbcedae5bb3875e584	not-for-merge	'refs/pull/10/head' of https://github.com/launchdarkly/swift-eventsource
+cab4a26edc90ded09772f720f1a73e4ab29d4292	not-for-merge	'refs/pull/11/head' of https://github.com/launchdarkly/swift-eventsource
+dcf6110b54dbd1c818b3c6cd413f5e3c749b1efb	not-for-merge	'refs/pull/13/head' of https://github.com/launchdarkly/swift-eventsource
+c70d242885915cff6ba5e884e18d6374d57795ff	not-for-merge	'refs/pull/14/head' of https://github.com/launchdarkly/swift-eventsource
+b5ad2e33f5e216b7b6cf50f0a9b5ed6a1691a28a	not-for-merge	'refs/pull/15/head' of https://github.com/launchdarkly/swift-eventsource
+22fc2e9a5ca10bfee0309f7c66479bb15c356d7f	not-for-merge	'refs/pull/16/head' of https://github.com/launchdarkly/swift-eventsource
+c3c8e11f8c944e40e5eaeaf9c38804baf05144c3	not-for-merge	'refs/pull/17/head' of https://github.com/launchdarkly/swift-eventsource
+d2d3fa828f5840d6955e57deaf3a18a61438f8c7	not-for-merge	'refs/pull/18/head' of https://github.com/launchdarkly/swift-eventsource
+ee6f4175c28e923994538a5aeed76c559cd70dc0	not-for-merge	'refs/pull/19/head' of https://github.com/launchdarkly/swift-eventsource
+2c25a0e9c70b0b15bf8c9d47425140ba2ee50660	not-for-merge	'refs/pull/2/head' of https://github.com/launchdarkly/swift-eventsource
+66108c55c706e0a8965b33de55ca1120c667a64a	not-for-merge	'refs/pull/22/head' of https://github.com/launchdarkly/swift-eventsource
+f62541f9d1cb9758a682e200280d26eb987dd78c	not-for-merge	'refs/pull/23/head' of https://github.com/launchdarkly/swift-eventsource
+87547ed0140df6125d5bd0974a715ea10e91c4df	not-for-merge	'refs/pull/25/head' of https://github.com/launchdarkly/swift-eventsource
+81ddd8a279f9b367f75dd14e66afe2e29f1c9646	not-for-merge	'refs/pull/26/head' of https://github.com/launchdarkly/swift-eventsource
+63c2d0221e1e6fe3010e1c19c09b736169bc557c	not-for-merge	'refs/pull/27/head' of https://github.com/launchdarkly/swift-eventsource
+735fe4bf5f3b6962c7afd1cac7036deb7f9458dd	not-for-merge	'refs/pull/28/head' of https://github.com/launchdarkly/swift-eventsource
+cfe9ea0b1e21ddd370105a1b7d9ea437eef339a0	not-for-merge	'refs/pull/29/head' of https://github.com/launchdarkly/swift-eventsource
+4f68684945a49aa3e1d478b49d142f61e292e59a	not-for-merge	'refs/pull/3/head' of https://github.com/launchdarkly/swift-eventsource
+c272431a8794ee9896ae19f60f22d9923f121c40	not-for-merge	'refs/pull/30/head' of https://github.com/launchdarkly/swift-eventsource
+1c5fe6fe8887ba63066065217df4802e8115c515	not-for-merge	'refs/pull/31/head' of https://github.com/launchdarkly/swift-eventsource
+812141ecf3c97a589adb6f298d437f013e1f13bb	not-for-merge	'refs/pull/32/head' of https://github.com/launchdarkly/swift-eventsource
+5049ff40ffee730dbd47474546e775d30eec2408	not-for-merge	'refs/pull/33/head' of https://github.com/launchdarkly/swift-eventsource
+86f8c5b75f50840da07fd7bb8f8ed79dd57bcc59	not-for-merge	'refs/pull/34/head' of https://github.com/launchdarkly/swift-eventsource
+96937ff07def6072204bc8c38eb418c1d79fc33e	not-for-merge	'refs/pull/35/head' of https://github.com/launchdarkly/swift-eventsource
+6a5cdf4280a764001044343c921042b00239df60	not-for-merge	'refs/pull/36/head' of https://github.com/launchdarkly/swift-eventsource
+0edd1a1d8679f157594f413b0a51e9f96df994ec	not-for-merge	'refs/pull/37/head' of https://github.com/launchdarkly/swift-eventsource
+3e95366c013fcea3d017e64371a226bb274e25c0	not-for-merge	'refs/pull/38/head' of https://github.com/launchdarkly/swift-eventsource
+4a009664e6772a1f518735e84afe062175fba2a7	not-for-merge	'refs/pull/39/head' of https://github.com/launchdarkly/swift-eventsource
+f14cc2aeca735e274edd91bd2fe148a5c277f6aa	not-for-merge	'refs/pull/4/head' of https://github.com/launchdarkly/swift-eventsource
+466673353915861c0d654b64994dcd61a796cbff	not-for-merge	'refs/pull/40/head' of https://github.com/launchdarkly/swift-eventsource
+b762e6787682d9259af4539656e3f66664fac3d6	not-for-merge	'refs/pull/41/head' of https://github.com/launchdarkly/swift-eventsource
+6b69f8e63b3e92f74ed76927265e41b0d0990520	not-for-merge	'refs/pull/42/head' of https://github.com/launchdarkly/swift-eventsource
+67909908afdcd5cccd1cc0fdc7fc3749cec86f77	not-for-merge	'refs/pull/43/head' of https://github.com/launchdarkly/swift-eventsource
+7a09aef61c46daff21ef3411c33165b72e067fcd	not-for-merge	'refs/pull/44/head' of https://github.com/launchdarkly/swift-eventsource
+7196d6f26de4f0b9e2c376407e31b87d1bfa5af9	not-for-merge	'refs/pull/45/head' of https://github.com/launchdarkly/swift-eventsource
+35e5d2c48e1b195fd126d5205dbe669311dc6158	not-for-merge	'refs/pull/46/head' of https://github.com/launchdarkly/swift-eventsource
+fe92166ad3b1fbdaaea714612ff72df7fdf06293	not-for-merge	'refs/pull/48/head' of https://github.com/launchdarkly/swift-eventsource
+ed75c550f01d49264866046687d41a41f3cacbaa	not-for-merge	'refs/pull/49/head' of https://github.com/launchdarkly/swift-eventsource
+547ff266fb53762c6f17c1bf579847b628a1e635	not-for-merge	'refs/pull/5/head' of https://github.com/launchdarkly/swift-eventsource
+a77221864103f1af63ea7869bde948748426aa81	not-for-merge	'refs/pull/51/head' of https://github.com/launchdarkly/swift-eventsource
+bbf67dffbdcfbe9510aab738d78a3ca87facdd0b	not-for-merge	'refs/pull/52/head' of https://github.com/launchdarkly/swift-eventsource
+54b374dcd8a34ed1559635f339afe4811673a367	not-for-merge	'refs/pull/55/head' of https://github.com/launchdarkly/swift-eventsource
+a643cce80373fe1bf58e1750af3c34a0eb6a8d95	not-for-merge	'refs/pull/55/merge' of https://github.com/launchdarkly/swift-eventsource
+1e5c0e051c1d54c67fe94431e262126cb0f05937	not-for-merge	'refs/pull/56/head' of https://github.com/launchdarkly/swift-eventsource
+3f2130fb6da9f6dea747e47f9624d45296b55780	not-for-merge	'refs/pull/57/head' of https://github.com/launchdarkly/swift-eventsource
+e66a7c0b01a2ae285c1a41a72878fd1e5e711deb	not-for-merge	'refs/pull/58/head' of https://github.com/launchdarkly/swift-eventsource
+ec703cb9557cce19d7b67518501c3ce79568a8bf	not-for-merge	'refs/pull/59/head' of https://github.com/launchdarkly/swift-eventsource
+418c44556064b128885c86b17552fd918d19145c	not-for-merge	'refs/pull/6/head' of https://github.com/launchdarkly/swift-eventsource
+ce6bcb19f9a40a356e2c3cc5d97114bc38a7515b	not-for-merge	'refs/pull/60/head' of https://github.com/launchdarkly/swift-eventsource
+00c112fa0c4530dfcc0c5f66685644c1721712a3	not-for-merge	'refs/pull/61/head' of https://github.com/launchdarkly/swift-eventsource
+bff5d01856ccf58fc978afb4f5a860bbe054de63	not-for-merge	'refs/pull/62/head' of https://github.com/launchdarkly/swift-eventsource
+fbb1c93afe5520cc95d9345a681ae2c19c13add8	not-for-merge	'refs/pull/63/head' of https://github.com/launchdarkly/swift-eventsource
+84b0e261774748990c86f4deffae6288d634e416	not-for-merge	'refs/pull/65/head' of https://github.com/launchdarkly/swift-eventsource
+d5adf3d8bf369724e9a1642af1804077f6084625	not-for-merge	'refs/pull/67/head' of https://github.com/launchdarkly/swift-eventsource
+9a8cbb75a53ba2134291d705a68eb2f60808a593	not-for-merge	'refs/pull/68/head' of https://github.com/launchdarkly/swift-eventsource
+5e3a6a8021d51856f2a2d9f013e75beaeb248214	not-for-merge	'refs/pull/7/head' of https://github.com/launchdarkly/swift-eventsource
+6c47ae0deb3a02ab42e3d8f5249eaec52b5bc783	not-for-merge	'refs/pull/70/head' of https://github.com/launchdarkly/swift-eventsource
+93b9210ba6c21aee2ce0fff2df4d6157038d268b	not-for-merge	'refs/pull/71/head' of https://github.com/launchdarkly/swift-eventsource
+4fb3e4a76f82e9f3ef95cba957c6cafd0a4f02d4	not-for-merge	'refs/pull/72/head' of https://github.com/launchdarkly/swift-eventsource
+72d4a138a4c611d0343fc74792a57ff8557fb48d	not-for-merge	'refs/pull/73/head' of https://github.com/launchdarkly/swift-eventsource
+08ee820e003c6c2f02da41bc33a10c8b59dccd9b	not-for-merge	'refs/pull/76/head' of https://github.com/launchdarkly/swift-eventsource
+10986092a8ee40d306cb5850b6601b7fbab5abc0	not-for-merge	'refs/pull/78/head' of https://github.com/launchdarkly/swift-eventsource
+5ca764de62310d0105b04a95b5eb7f264e22ab43	not-for-merge	'refs/pull/79/head' of https://github.com/launchdarkly/swift-eventsource
+3b10505c1e9805bd9b1da3c67d5e925bcf6c740a	not-for-merge	'refs/pull/8/head' of https://github.com/launchdarkly/swift-eventsource
+2f57e0acbe8ccad95c56d99622f48f4a51b12679	not-for-merge	'refs/pull/80/head' of https://github.com/launchdarkly/swift-eventsource
+d68747473c5a72009fb425d944f248c1c69a5adb	not-for-merge	'refs/pull/84/head' of https://github.com/launchdarkly/swift-eventsource
+f8998ec5ff8014b23ec209cdb501eaa1e31f8436	not-for-merge	'refs/pull/86/head' of https://github.com/launchdarkly/swift-eventsource
+d412fba12d02ef72a697b37662618a59979f1d5a	not-for-merge	'refs/pull/9/head' of https://github.com/launchdarkly/swift-eventsource
+6479070048f1a7bcabeb09633875a85d827cc469	not-for-merge	tag '0.1.0' of https://github.com/launchdarkly/swift-eventsource
+5844672d0ae25da42ef0b6e2a8e6a38331d274c0	not-for-merge	tag '0.2.0' of https://github.com/launchdarkly/swift-eventsource
+9335390060a7bac038b92f6d3f0407190f5470f2	not-for-merge	tag '0.3.0' of https://github.com/launchdarkly/swift-eventsource
+629026413dda4783ea344fcd1c984b3b4f19ba30	not-for-merge	tag '0.4.0' of https://github.com/launchdarkly/swift-eventsource
+f6c11468debe1caf54980363409b3cb0cd972a0f	not-for-merge	tag '0.5.0' of https://github.com/launchdarkly/swift-eventsource
+ac1f0e0c8fca0bf64fa1c82c5f2c615674a8e69a	not-for-merge	tag '1.0.0' of https://github.com/launchdarkly/swift-eventsource
+4f817e1a6ce5f8bc90e06b4f19dcd999db099210	not-for-merge	tag '1.1.0' of https://github.com/launchdarkly/swift-eventsource
+9e224016ec5dfda7d66e0f825152f97cbe44ccb8	not-for-merge	tag '1.2.0' of https://github.com/launchdarkly/swift-eventsource
+7c40adad054c9737afadffe42a2ce0bbcfa02f48	not-for-merge	tag '1.2.1' of https://github.com/launchdarkly/swift-eventsource
+30cfa4c50201fff3c3cd4459bf5f765e3b655815	not-for-merge	tag '1.3.0' of https://github.com/launchdarkly/swift-eventsource
+3782466b489bba29196adaa6709420ba743fa4ec	not-for-merge	tag '1.3.1' of https://github.com/launchdarkly/swift-eventsource
+e642325895537dfe0d72fdf2df62ae0f9ddc1e35	not-for-merge	tag '2.0.0' of https://github.com/launchdarkly/swift-eventsource
+aa03131eb30bbc35513153609ed65209853603a7	not-for-merge	tag '3.0.0' of https://github.com/launchdarkly/swift-eventsource
+f50e92d27a33e47acb0f9d61adfcd526c63fd7b4	not-for-merge	tag '3.1.0' of https://github.com/launchdarkly/swift-eventsource
+3d45eacab476f9bb2c58662cfb2d35088140b25b	not-for-merge	tag '3.1.1' of https://github.com/launchdarkly/swift-eventsource
+23560cea5092de0fc353233c6b33209bdc4eabc1	not-for-merge	tag '3.2.0' of https://github.com/launchdarkly/swift-eventsource
+57051701c58a93603ffa2051f8e9cf0c8cff7814	not-for-merge	tag '3.3.0' of https://github.com/launchdarkly/swift-eventsource

@@ -1,0 +1,66 @@
+{
+  "" : {
+    "const-values" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/OpenCombineFoundation-primary.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/OpenCombineFoundation-primary.d",
+    "diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/OpenCombineFoundation-primary.dia",
+    "emit-module-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/OpenCombineFoundation-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/OpenCombineFoundation-primary-emit-module.dia",
+    "pch" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/OpenCombineFoundation-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/OpenCombineFoundation-primary.swiftdeps"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/Sources/OpenCombineFoundation/Helpers/Locking.swift" : {
+    "index-unit-output-path" : "/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Locking.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Locking.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Locking.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/Sources/OpenCombineFoundation/Helpers/Portability.swift" : {
+    "index-unit-output-path" : "/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Portability.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Portability.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Portability.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/Sources/OpenCombineFoundation/Helpers/Utils.swift" : {
+    "index-unit-output-path" : "/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Utils.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Utils.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Utils.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/Sources/OpenCombineFoundation/Helpers/Violations.swift" : {
+    "index-unit-output-path" : "/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Violations.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Violations.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Violations.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/Sources/OpenCombineFoundation/JSONEncoder.swift" : {
+    "index-unit-output-path" : "/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/JSONEncoder.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/JSONEncoder.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/JSONEncoder.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/Sources/OpenCombineFoundation/NotificationCenter.swift" : {
+    "index-unit-output-path" : "/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/NotificationCenter.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/NotificationCenter.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/NotificationCenter.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/Sources/OpenCombineFoundation/OperationQueue+Scheduler.swift" : {
+    "index-unit-output-path" : "/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/OperationQueue+Scheduler.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/OperationQueue+Scheduler.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/OperationQueue+Scheduler.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/Sources/OpenCombineFoundation/PropertyListEncoder.swift" : {
+    "index-unit-output-path" : "/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/PropertyListEncoder.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/PropertyListEncoder.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/PropertyListEncoder.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/Sources/OpenCombineFoundation/RunLoop+Scheduler.swift" : {
+    "index-unit-output-path" : "/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/RunLoop+Scheduler.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/RunLoop+Scheduler.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/RunLoop+Scheduler.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/Sources/OpenCombineFoundation/Timer+Publisher.swift" : {
+    "index-unit-output-path" : "/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Timer+Publisher.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Timer+Publisher.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/Timer+Publisher.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/Sources/OpenCombineFoundation/URLSession.swift" : {
+    "index-unit-output-path" : "/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/URLSession.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/URLSession.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/OpenCombine/build/OpenCombine.build/Release-iphoneos/OpenCombineFoundation.build/Objects-normal/arm64/URLSession.o"
+  }
+}

@@ -1,0 +1,289 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild build -project Diver/Diver.xcodeproj -target DiverTests_iOS -destination "platform=iOS Simulator,name=iPhone 17"
+
+Resolve Package Graph
+
+
+Resolved source packages:
+  swift-concurrency-extras: https://github.com/pointfreeco/swift-concurrency-extras @ 1.3.2
+  knowmaps: https://github.com/voxels/Know-Maps @ main (c60782f)
+  swift-log: https://github.com/apple/swift-log.git @ 1.8.0
+  Segment: https://github.com/segmentio/analytics-swift @ 1.6.2
+  Supabase: https://github.com/supabase/supabase-swift @ 2.33.1
+  xctest-dynamic-overlay: https://github.com/pointfreeco/xctest-dynamic-overlay @ 1.8.0
+  RegularExpressions: https://github.com/Peter-Schorn/RegularExpressions.git @ 2.2.0
+  SpotifyAPI: https://github.com/Peter-Schorn/SpotifyAPI @ 4.0.2
+  LDSwiftEventSource: https://github.com/launchdarkly/swift-eventsource @ 3.3.0
+  DiverShared: /Users/voxels/Documents/dev/Superbright/Diver/DiverShared
+  swift-http-types: https://github.com/apple/swift-http-types.git @ 1.5.1
+  Nuke: https://github.com/kean/Nuke @ 12.8.0
+  JSONSafeEncoding: https://github.com/segmentio/jsonsafeencoding-swift.git @ 2.0.0
+  DiverKit: /Users/voxels/Documents/dev/Superbright/Diver/DiverKit
+  swift-crypto: https://github.com/apple/swift-crypto.git @ 1.1.7
+  Sovran: https://github.com/segmentio/sovran-swift.git @ 1.1.2
+  OpenCombine: https://github.com/OpenCombine/OpenCombine.git @ 0.14.0
+  swift-clocks: https://github.com/pointfreeco/swift-clocks @ 1.0.6
+
+--- xcodebuild: WARNING: Ignoring provided run destination because no scheme was passed.
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (60 targets)
+    Target 'DiverTests_iOS' in project 'Diver'
+        ➜ Explicit dependency on target 'Diver_iOS' in project 'Diver'
+    Target 'Diver_iOS' in project 'Diver'
+        ➜ Explicit dependency on target 'ActionExtension' in project 'Diver'
+        ➜ Explicit dependency on target 'DiverWidgetExtension' in project 'Diver'
+        ➜ Explicit dependency on target 'DiverKit' in project 'DiverKit'
+        ➜ Explicit dependency on target 'DiverShared' in project 'DiverShared'
+        ➜ Explicit dependency on target 'knowmaps' in project 'knowmaps'
+    Target 'knowmaps' in project 'knowmaps'
+        ➜ Explicit dependency on target 'knowmaps' in project 'knowmaps'
+        ➜ Explicit dependency on target 'knowmaps_knowmaps' in project 'knowmaps'
+        ➜ Explicit dependency on target 'NukeUI' in project 'Nuke'
+        ➜ Explicit dependency on target 'Segment' in project 'Segment'
+        ➜ Explicit dependency on target 'Supabase' in project 'Supabase'
+    Target 'knowmaps' in project 'knowmaps'
+        ➜ Explicit dependency on target 'knowmaps_knowmaps' in project 'knowmaps'
+        ➜ Explicit dependency on target 'NukeUI' in project 'Nuke'
+        ➜ Explicit dependency on target 'Segment' in project 'Segment'
+        ➜ Explicit dependency on target 'Supabase' in project 'Supabase'
+    Target 'Supabase' in project 'Supabase'
+        ➜ Explicit dependency on target 'Supabase' in project 'Supabase'
+        ➜ Explicit dependency on target 'Functions' in project 'Supabase'
+        ➜ Explicit dependency on target 'PostgREST' in project 'Supabase'
+        ➜ Explicit dependency on target 'Auth' in project 'Supabase'
+        ➜ Explicit dependency on target 'Realtime' in project 'Supabase'
+        ➜ Explicit dependency on target 'Storage' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'Supabase' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'Auth' in project 'Supabase'
+        ➜ Explicit dependency on target 'Functions' in project 'Supabase'
+        ➜ Explicit dependency on target 'PostgREST' in project 'Supabase'
+        ➜ Explicit dependency on target 'Realtime' in project 'Supabase'
+        ➜ Explicit dependency on target 'Storage' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'Storage' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+    Target 'Realtime' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'PostgREST' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+    Target 'Functions' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+    Target 'Auth' in project 'Supabase'
+        ➜ Explicit dependency on target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+    Target 'Helpers' in project 'Supabase'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+    Target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReportingPackageSupport' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'XCTestDynamicOverlay' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReportingPackageSupport' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'Clocks' in project 'swift-clocks'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+    Target 'IssueReporting' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReporting' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReportingPackageSupport' in project 'xctest-dynamic-overlay'
+    Target 'IssueReporting' in project 'xctest-dynamic-overlay'
+        ➜ Explicit dependency on target 'IssueReportingPackageSupport' in project 'xctest-dynamic-overlay'
+    Target 'IssueReportingPackageSupport' in project 'xctest-dynamic-overlay' (no dependencies)
+    Target 'HTTPTypes' in project 'swift-http-types'
+        ➜ Explicit dependency on target 'HTTPTypes' in project 'swift-http-types'
+    Target 'HTTPTypes' in project 'swift-http-types' (no dependencies)
+    Target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+        ➜ Explicit dependency on target 'ConcurrencyExtras' in project 'swift-concurrency-extras'
+    Target 'ConcurrencyExtras' in project 'swift-concurrency-extras' (no dependencies)
+    Target 'Segment' in project 'Segment'
+        ➜ Explicit dependency on target 'Segment' in project 'Segment'
+        ➜ Explicit dependency on target 'Segment_Segment' in project 'Segment'
+        ➜ Explicit dependency on target 'Sovran' in project 'Sovran'
+        ➜ Explicit dependency on target 'JSONSafeEncoding' in project 'JSONSafeEncoding'
+    Target 'Segment' in project 'Segment'
+        ➜ Explicit dependency on target 'Segment_Segment' in project 'Segment'
+        ➜ Explicit dependency on target 'Sovran' in project 'Sovran'
+        ➜ Explicit dependency on target 'JSONSafeEncoding' in project 'JSONSafeEncoding'
+    Target 'JSONSafeEncoding' in project 'JSONSafeEncoding'
+        ➜ Explicit dependency on target 'JSONSafeEncoding' in project 'JSONSafeEncoding'
+    Target 'JSONSafeEncoding' in project 'JSONSafeEncoding' (no dependencies)
+    Target 'Sovran' in project 'Sovran'
+        ➜ Explicit dependency on target 'Sovran' in project 'Sovran'
+    Target 'Sovran' in project 'Sovran' (no dependencies)
+    Target 'Segment_Segment' in project 'Segment' (no dependencies)
+    Target 'NukeUI' in project 'Nuke'
+        ➜ Explicit dependency on target 'NukeUI' in project 'Nuke'
+        ➜ Explicit dependency on target 'Nuke' in project 'Nuke'
+    Target 'NukeUI' in project 'Nuke'
+        ➜ Explicit dependency on target 'Nuke' in project 'Nuke'
+    Target 'Nuke' in project 'Nuke' (no dependencies)
+    Target 'knowmaps_knowmaps' in project 'knowmaps' (no dependencies)
+    Target 'DiverWidgetExtension' in project 'Diver'
+        ➜ Explicit dependency on target 'DiverShared' in project 'DiverShared'
+        ➜ Explicit dependency on target 'DiverKit' in project 'DiverKit'
+    Target 'ActionExtension' in project 'Diver'
+        ➜ Explicit dependency on target 'DiverKit' in project 'DiverKit'
+        ➜ Explicit dependency on target 'DiverShared' in project 'DiverShared'
+    Target 'DiverKit' in project 'DiverKit'
+        ➜ Explicit dependency on target 'DiverKit' in project 'DiverKit'
+        ➜ Explicit dependency on target 'DiverKit_DiverKit' in project 'DiverKit'
+        ➜ Explicit dependency on target 'LDSwiftEventSource' in project 'LDSwiftEventSource'
+        ➜ Explicit dependency on target 'SpotifyAPI' in project 'SpotifyAPI'
+        ➜ Explicit dependency on target 'DiverShared' in project 'DiverShared'
+    Target 'DiverKit' in project 'DiverKit'
+        ➜ Explicit dependency on target 'DiverKit_DiverKit' in project 'DiverKit'
+        ➜ Explicit dependency on target 'LDSwiftEventSource' in project 'LDSwiftEventSource'
+        ➜ Explicit dependency on target 'SpotifyAPI' in project 'SpotifyAPI'
+        ➜ Explicit dependency on target 'DiverShared' in project 'DiverShared'
+    Target 'DiverShared' in project 'DiverShared'
+        ➜ Explicit dependency on target 'DiverShared' in project 'DiverShared'
+    Target 'DiverShared' in project 'DiverShared' (no dependencies)
+    Target 'SpotifyAPI' in project 'SpotifyAPI'
+        ➜ Explicit dependency on target 'SpotifyWebAPI' in project 'SpotifyAPI'
+        ➜ Explicit dependency on target 'RegularExpressions' in project 'RegularExpressions'
+        ➜ Explicit dependency on target 'Logging' in project 'swift-log'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'OpenCombine' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'OpenCombineDispatch' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'OpenCombineFoundation' in project 'OpenCombine'
+    Target 'SpotifyWebAPI' in project 'SpotifyAPI'
+        ➜ Explicit dependency on target 'RegularExpressions' in project 'RegularExpressions'
+        ➜ Explicit dependency on target 'Logging' in project 'swift-log'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'OpenCombine' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'OpenCombineDispatch' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'OpenCombineFoundation' in project 'OpenCombine'
+    Target 'OpenCombineFoundation' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'OpenCombineFoundation' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'COpenCombineHelpers' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'OpenCombine' in project 'OpenCombine'
+    Target 'OpenCombineFoundation' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'COpenCombineHelpers' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'OpenCombine' in project 'OpenCombine'
+    Target 'OpenCombineDispatch' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'OpenCombineDispatch' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'COpenCombineHelpers' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'OpenCombine' in project 'OpenCombine'
+    Target 'OpenCombineDispatch' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'COpenCombineHelpers' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'OpenCombine' in project 'OpenCombine'
+    Target 'OpenCombine' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'OpenCombine' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'COpenCombineHelpers' in project 'OpenCombine'
+    Target 'OpenCombine' in project 'OpenCombine'
+        ➜ Explicit dependency on target 'COpenCombineHelpers' in project 'OpenCombine'
+    Target 'COpenCombineHelpers' in project 'OpenCombine' (no dependencies)
+    Target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'CCryptoBoringSSL' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'CCryptoBoringSSLShims' in project 'swift-crypto'
+    Target 'Crypto' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'CCryptoBoringSSL' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'CCryptoBoringSSLShims' in project 'swift-crypto'
+    Target 'CCryptoBoringSSLShims' in project 'swift-crypto'
+        ➜ Explicit dependency on target 'CCryptoBoringSSL' in project 'swift-crypto'
+    Target 'CCryptoBoringSSL' in project 'swift-crypto' (no dependencies)
+    Target 'Logging' in project 'swift-log'
+        ➜ Explicit dependency on target 'Logging' in project 'swift-log'
+    Target 'Logging' in project 'swift-log' (no dependencies)
+    Target 'RegularExpressions' in project 'RegularExpressions'
+        ➜ Explicit dependency on target 'RegularExpressions' in project 'RegularExpressions'
+    Target 'RegularExpressions' in project 'RegularExpressions' (no dependencies)
+    Target 'LDSwiftEventSource' in project 'LDSwiftEventSource'
+        ➜ Explicit dependency on target 'LDSwiftEventSource' in project 'LDSwiftEventSource'
+    Target 'LDSwiftEventSource' in project 'LDSwiftEventSource' (no dependencies)
+    Target 'DiverKit_DiverKit' in project 'DiverKit' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -x c++ -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /usr/bin/what -q /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/coremlc
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+ReadFileContents /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/share/docc/features.json
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk -x assembler-with-cpp -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/coremlc generate /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/Know-Maps/Know Maps Prod/Model/LocalMapsQueryClassifier.mlmodel /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/build/knowmaps.build/Release-iphoneos/knowmaps.build/DerivedSources/CoreMLGenerated/LocalMapsQueryClassifier --dry-run yes --deployment-target 18.0 --sdkroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk --platform ios --output-partial-info-plist /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/build/knowmaps.build/Release-iphoneos/knowmaps.build/LocalMapsQueryClassifier-CoreMLPartialInfo.plist --container swift-package --language Swift --swift-version 6 --public-access
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/coremlc generate /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/Know-Maps/Know Maps Prod/Model/LocalMapsQueryTagger.mlpackage /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/build/knowmaps.build/Release-iphoneos/knowmaps.build/DerivedSources/CoreMLGenerated/LocalMapsQueryTagger --dry-run yes --deployment-target 18.0 --sdkroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk --platform ios --output-partial-info-plist /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/build/knowmaps.build/Release-iphoneos/knowmaps.build/LocalMapsQueryTagger-CoreMLPartialInfo.plist --container swift-package --language Swift --swift-version 6 --public-access
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/coremlc generate /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/Know-Maps/Know Maps Prod/Model/ML/FoursquareSectionClassifier.mlmodel /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/build/knowmaps.build/Release-iphoneos/knowmaps.build/DerivedSources/CoreMLGenerated/FoursquareSectionClassifier --dry-run yes --deployment-target 18.0 --sdkroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk --platform ios --output-partial-info-plist /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/build/knowmaps.build/Release-iphoneos/knowmaps.build/FoursquareSectionClassifier-CoreMLPartialInfo.plist --container swift-package --language Swift --swift-version 6 --public-access
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/coremlc generate /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/Know-Maps/Know Maps Prod/Model/ML/LocalMapsQueryClassifier.mlproj/Models/LocalMapsQueryClassifier 1.mlmodel /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/build/knowmaps.build/Release-iphoneos/knowmaps.build/DerivedSources/CoreMLGenerated/LocalMapsQueryClassifier 1 --dry-run yes --deployment-target 18.0 --sdkroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk --platform ios --output-partial-info-plist /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/build/knowmaps.build/Release-iphoneos/knowmaps.build/LocalMapsQueryClassifier 1-CoreMLPartialInfo.plist --container swift-package --language Swift --swift-version 6 --public-access
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/coremlc generate /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/Know-Maps/Know Maps Prod/Model/ML/LocalMapsQueryTagger.mlproj/Models/LocalMapsQueryTagger 1.mlmodel /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/build/knowmaps.build/Release-iphoneos/knowmaps.build/DerivedSources/CoreMLGenerated/LocalMapsQueryTagger 1 --dry-run yes --deployment-target 18.0 --sdkroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk --platform ios --output-partial-info-plist /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/build/knowmaps.build/Release-iphoneos/knowmaps.build/LocalMapsQueryTagger 1-CoreMLPartialInfo.plist --container swift-package --language Swift --swift-version 6 --public-access
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/coremlc generate /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/Know-Maps/Know Maps Prod/Model/MiniLM-L12-Embedding.mlpackage /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/build/knowmaps.build/Release-iphoneos/knowmaps.build/DerivedSources/CoreMLGenerated/MiniLM-L12-Embedding --dry-run yes --deployment-target 18.0 --sdkroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.2.sdk --platform ios --output-partial-info-plist /Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Know-Maps/build/knowmaps.build/Release-iphoneos/knowmaps.build/MiniLM-L12-Embedding-CoreMLPartialInfo.plist --container swift-package --language Swift --swift-version 6 --public-access
+
+Build description signature: b2674c9e505498fe6697777f5e9011c3
+Build description path: /Users/voxels/Documents/dev/Superbright/Diver/Diver/build/XCBuildData/b2674c9e505498fe6697777f5e9011c3.xcbuilddata
+/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver.xcodeproj: error: Signing for "DiverTests_iOS" requires a development team. Select a development team in the Signing & Capabilities editor. (in target 'DiverTests_iOS' from project 'Diver')
+** BUILD FAILED **
+

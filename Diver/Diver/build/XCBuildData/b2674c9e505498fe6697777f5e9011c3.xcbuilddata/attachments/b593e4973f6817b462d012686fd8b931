@@ -1,0 +1,36 @@
+{
+  "" : {
+    "const-values" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/NukeUI-primary.swiftconstvalues",
+    "dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/NukeUI-primary.d",
+    "diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/NukeUI-primary.dia",
+    "emit-module-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/NukeUI-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/NukeUI-primary-emit-module.dia",
+    "pch" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/NukeUI-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/NukeUI-primary.swiftdeps"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/Sources/NukeUI/FetchImage.swift" : {
+    "index-unit-output-path" : "/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/FetchImage.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/FetchImage.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/FetchImage.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/Sources/NukeUI/Internal.swift" : {
+    "index-unit-output-path" : "/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/Internal.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/Internal.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/Internal.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/Sources/NukeUI/LazyImage.swift" : {
+    "index-unit-output-path" : "/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/LazyImage.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/LazyImage.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/LazyImage.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/Sources/NukeUI/LazyImageState.swift" : {
+    "index-unit-output-path" : "/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/LazyImageState.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/LazyImageState.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/LazyImageState.o"
+  },
+  "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/Sources/NukeUI/LazyImageView.swift" : {
+    "index-unit-output-path" : "/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/LazyImageView.o",
+    "llvm-bc" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/LazyImageView.bc",
+    "object" : "/Users/voxels/Library/Developer/Xcode/DerivedData/Diver-fkxymducaaydoifhoeeiimpntqeq/SourcePackages/checkouts/Nuke/build/Nuke.build/Release-iphoneos/NukeUI.build/Objects-normal/arm64/LazyImageView.o"
+  }
+}
