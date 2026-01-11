@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:VisualIntelligencePipelineDemo/VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Know-Maps/Know-Maps/Know Maps.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:VisualIntelligencePipelineDemo/Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:VisualIntelligencePipelineDemo/Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:VisualIntelligencePipelineDemo/Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample.xcodeproj">
+   </FileRef>
+</Workspace>

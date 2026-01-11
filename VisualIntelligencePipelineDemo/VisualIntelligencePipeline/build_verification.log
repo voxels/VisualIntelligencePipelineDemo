@@ -1,0 +1,117 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -scheme VisualIntelligencePipeline_iOS -destination "platform=iOS Simulator,name=iPhone 17" build
+
+2026-01-11 05:41:10.257 xcodebuild[16231:7344547] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+Resolve Package Graph
+2026-01-11 05:41:10.423 xcodebuild[16231:7344547] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+
+Fetching from https://github.com/pointfreeco/swift-clocks (cached)
+
+Fetching from https://github.com/OpenCombine/OpenCombine.git (cached)
+
+Fetching from https://github.com/segmentio/jsonsafeencoding-swift.git (cached)
+
+Fetching from https://github.com/apple/swift-http-types.git (cached)
+
+Fetching from https://github.com/Peter-Schorn/SpotifyAPI (cached)
+
+Fetching from https://github.com/apple/swift-crypto.git (cached)
+
+Fetching from https://github.com/supabase/supabase-swift (cached)
+
+Fetching from https://github.com/pointfreeco/swift-concurrency-extras (cached)
+
+Fetching from https://github.com/apple/swift-log.git (cached)
+
+Fetching from https://github.com/segmentio/sovran-swift.git (cached)
+
+Fetching from https://github.com/segmentio/analytics-swift (cached)
+
+Fetching from https://github.com/launchdarkly/swift-eventsource (cached)
+
+Fetching from https://github.com/Peter-Schorn/RegularExpressions.git (cached)
+
+Fetching from https://github.com/kean/Nuke (cached)
+
+Fetching from https://github.com/pointfreeco/xctest-dynamic-overlay (cached)
+
+2026-01-11 05:41:18.406 xcodebuild[16231:7344547] [MT] DVTAssertions: Warning in IDEFrameworks/IDEFoundation/ProjectModel/Containers/IDEWorkspace.m:1785
+Details:  -orderReferencedBlueprintProvidersByContainerGraphOrder: didn't find all referencedBlueprintProviders in the container graph.
+     referencedBlueprintProviders:{(
+    <Xcode3Project:0x9edafd340 path:'/Users/voxels/Documents/dev/Superbright/VisualIntelligencePipelineDemo/VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj'>
+)}
+    found blueprint providers:{(
+)}
+Object:   <IDEWorkspace: 0x1033af350>
+Method:   -containerGraphOrderForBlueprintProviders:
+Thread:   <_NSMainThread: 0x103396400>{number = 1, name = main}
+Please file a bug at https://feedbackassistant.apple.com with this warning message and any useful information you can provide.
+2026-01-11 05:41:18.509 xcodebuild[16231:7344547] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+Creating working copy of package ‘Nuke’
+
+Checking out 12.8.0 of package ‘Nuke’
+
+Creating working copy of package ‘swift-crypto’
+
+Checking out 1.1.7 of package ‘swift-crypto’
+
+Creating working copy of package ‘swift-concurrency-extras’
+
+Checking out 1.1.0 of package ‘swift-concurrency-extras’
+
+Creating working copy of package ‘swift-eventsource’
+
+Checking out 3.3.0 of package ‘swift-eventsource’
+
+Creating working copy of package ‘swift-log’
+
+Checking out 1.8.0 of package ‘swift-log’
+
+Creating working copy of package ‘supabase-swift’
+
+Checking out 2.33.1 of package ‘supabase-swift’
+
+Creating working copy of package ‘sovran-swift’
+
+Checking out 1.1.2 of package ‘sovran-swift’
+
+Creating working copy of package ‘SpotifyAPI’
+
+Checking out 4.0.2 of package ‘SpotifyAPI’
+
+Creating working copy of package ‘swift-clocks’
+
+Checking out 1.0.6 of package ‘swift-clocks’
+
+Creating working copy of package ‘jsonsafeencoding-swift’
+
+Checking out 2.0.0 of package ‘jsonsafeencoding-swift’
+
+Creating working copy of package ‘analytics-swift’
+
+Checking out 1.6.2 of package ‘analytics-swift’
+
+Creating working copy of package ‘swift-http-types’
+
+Checking out 1.5.1 of package ‘swift-http-types’
+
+Creating working copy of package ‘RegularExpressions’
+
+Checking out 2.2.0 of package ‘RegularExpressions’
+
+Creating working copy of package ‘OpenCombine’
+
+Checking out 0.14.0 of package ‘OpenCombine’
+
+Creating working copy of package ‘xctest-dynamic-overlay’
+
+Checking out 1.8.1 of package ‘xctest-dynamic-overlay’
+
+Error Domain=NSCocoaErrorDomain Code=4 "The file “DiverKit” doesn’t exist." UserInfo={NSFilePath=/Users/voxels/Documents/dev/Superbright/VisualIntelligencePipelineDemo/DiverKit, NSURL=file:///Users/voxels/Documents/dev/Superbright/VisualIntelligencePipelineDemo/DiverKit, NSUnderlyingError=0x9eb0d52c0 {Error Domain=NSPOSIXErrorDomain Code=2 "No such file or directory"}}fatalErrorResolve Package Graph
+the package at '/Users/voxels/Documents/dev/Superbright/VisualIntelligencePipelineDemo/DiverKit' cannot be accessed (Error Domain=NSCocoaErrorDomain Code=260 "The folder “DiverKit” doesn’t exist." UserInfo={NSUserStringVariant=(
+    Folder
+), NSFilePath=/Users/voxels/Documents/dev/Superbright/VisualIntelligencePipelineDemo/DiverKit, NSURL=file:///Users/voxels/Documents/dev/Superbright/VisualIntelligencePipelineDemo/DiverKit, NSUnderlyingError=0x9eb0d5020 {Error Domain=NSOSStatusErrorDomain Code=-43 "fnfErr: File not found"}})Invalid Exclude '/Users/voxels/Documents/dev/Know-Maps/Know-Maps/Know-Maps/Know Maps Prod/Know Maps ProdDebug.entitlements': File not found.
+2026-01-11 05:41:27.156 xcodebuild[16231:7344547] Writing error result bundle to /var/folders/2p/tyjrzcsd0cb1b1n6tn978g4h0000gn/T/ResultBundle_2026-11-01_05-41-0027.xcresult
+xcodebuild: error: Could not resolve package dependencies:
+  the package at '/Users/voxels/Documents/dev/Superbright/VisualIntelligencePipelineDemo/DiverKit' cannot be accessed (Error Domain=NSCocoaErrorDomain Code=260 "The folder “DiverKit” doesn’t exist." UserInfo={NSUserStringVariant=(
+

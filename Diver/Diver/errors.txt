@@ -1,1 +1,0 @@
-/Users/voxels/Documents/dev/Superbright/Diver/Diver/Diver/View/VisualIntelligenceView.swift:771:62: error: value of type 'LocationService' has no member 'lastLocation'
