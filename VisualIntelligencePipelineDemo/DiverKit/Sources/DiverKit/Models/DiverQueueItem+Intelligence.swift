@@ -222,7 +222,7 @@ extension DiverQueueItem {
         return items
     }
 
-    public static func from(documentImage: Data, title: String? = nil, tags: [String] = [], text: String? = nil, purpose: String? = nil, purposes: [String] = [], placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil) -> DiverQueueItem {
+    public static func from(documentImage: Data, title: String? = nil, tags: [String] = [], text: String? = nil, purpose: String? = nil, purposes: [String] = [], date: Date? = nil, sessionID: String? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil, attachments: [Data]? = nil) -> DiverQueueItem {
         let id = UUID().uuidString
         let resolvedTitle = title ?? "Scanned Document"
         
@@ -239,6 +239,8 @@ extension DiverQueueItem {
             location: locationName,
             type: .document,
             purpose: purpose,
+            masterCaptureID: id, // Self-master
+            sessionID: sessionID,
             placeID: placeID,
             latitude: latitude,
             longitude: longitude,
@@ -249,7 +251,9 @@ extension DiverQueueItem {
             action: "save",
             descriptor: descriptor,
             source: "visual_intelligence",
-            payload: documentImage
+            createdAt: date ?? Date(),
+            payload: documentImage,
+            attachments: attachments
         )
     }
     

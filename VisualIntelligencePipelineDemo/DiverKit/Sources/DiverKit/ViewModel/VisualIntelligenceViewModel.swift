@@ -62,6 +62,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
     public var currentCaptureCoordinate: CLLocationCoordinate2D?
     public var currentCapturePlaceID: String?
     private var capturedMediaLocation: CLLocation? // Overrides live location if set (e.g. from Video metadata)
+    private var capturedMediaDate: Date? // Overrides creation date if set (from Media metadata)
     
     public var sortedResults: [IntelligenceResult] {
         results.sorted { $0.sortPriority < $1.sortPriority }
@@ -587,6 +588,29 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 if let image = UIImage(data: data) {
                     finalImage = image
                     finalCGImage = image.cgImage
+                    
+                    // Extract Image Creation Date
+                    if let source = CGImageSourceCreateWithData(data as CFData, nil),
+                       let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] {
+                        var dateString: String?
+                        if let exif = props["{Exif}"] as? [String: Any] {
+                            dateString = exif["DateTimeOriginal"] as? String
+                        }
+                        if dateString == nil, let tiff = props["{TIFF}"] as? [String: Any] {
+                            dateString = tiff["DateTime"] as? String
+                        }
+                        
+                        if let ds = dateString {
+                            let formatter = DateFormatter()
+                            formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
+                            if let date = formatter.date(from: ds) {
+                                await MainActor.run {
+                                    self.capturedMediaDate = date
+                                    print("📅 Image Date captured: \(date)")
+                                }
+                            }
+                        }
+                    }
                 }
                 #elseif canImport(AppKit)
                 var finalImage: NSImage?
@@ -599,13 +623,17 @@ public class VisualIntelligenceViewModel: ObservableObject {
                     // If not an image, try as Video
                     if finalCGImage == nil {
                         print("🎥 Processing as Video/Movie...")
-                        if let (cgImage, location) = await processVideoData(data) {
+                        if let (cgImage, location, date) = await processVideoData(data) {
                             finalCGImage = cgImage
-                            if let loc = location {
-                                 await MainActor.run {
+                            await MainActor.run {
+                                if let loc = location {
                                      self.capturedMediaLocation = loc
                                      print("📍 Video Location captured: \(loc)")
-                                 }
+                                }
+                                if let d = date {
+                                    self.capturedMediaDate = d
+                                    print("📅 Video Date captured: \(d)")
+                                }
                             }
                             
                             #if canImport(UIKit)
@@ -1181,8 +1209,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
             let lng = await MainActor.run { self.currentCaptureCoordinate?.longitude }
             let placeID = await MainActor.run { self.currentCapturePlaceID }
             let locationName = await MainActor.run { self.selectedPlace?.title }
+            let date = await MainActor.run { self.capturedMediaDate }
+            let sessionID = await MainActor.run { self.activeSessionID }
 
-            let queueItem = DiverQueueItem.from(documentImage: data, title: title, tags: tags, text: text, purposes: purposes, placeID: placeID, latitude: lat, longitude: lng, locationName: locationName)
+            let queueItem = DiverQueueItem.from(documentImage: data, title: title, tags: tags, text: text, purposes: purposes, date: date, sessionID: sessionID, placeID: placeID, latitude: lat, longitude: lng, locationName: locationName)
             
             do {
                 try queueStore.enqueue(queueItem)
@@ -1682,7 +1712,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
     }
 
     // MARK: - Helpers
-    private func parseISO6709(_ string: String) -> (Double, Double)? {
+    private static func parseISO6709(_ string: String) -> (Double, Double)? {
         // Format: +37.7749-122.4194/
         // Remove trailing slash if present
         let clean = string.replacingOccurrences(of: "/", with: "")
@@ -1703,7 +1733,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         return nil
     }
 
-    nonisolated private func processVideoData(_ data: Data) async -> (CGImage, CLLocation?)? {
+    nonisolated private func processVideoData(_ data: Data) async -> (CGImage, CLLocation?, Date?)? {
         // Safe to run off-main-actor
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mov")
         do {
@@ -1717,8 +1747,21 @@ public class VisualIntelligenceViewModel: ObservableObject {
             if let metadata = try? await asset.load(.metadata),
                let locationItem = metadata.first(where: { $0.commonKey == .commonKeyLocation }),
                let locString = try? await locationItem.load(.stringValue),
-               let (lat, lon) = await parseISO6709Async(locString) {
+               let (lat, lon) = await Self.parseISO6709(locString) {
                 foundLocation = CLLocation(latitude: lat, longitude: lon)
+            }
+            
+            // Extract Creation Date
+            var foundDate: Date?
+            if let metadata = try? await asset.load(.metadata),
+               let dateItem = metadata.first(where: { $0.commonKey == .commonKeyCreationDate }) {
+                // Try dateValue first, then stringValue parsing if needed
+                if let d = try? await dateItem.load(.dateValue) {
+                    foundDate = d
+                } else if let s = try? await dateItem.load(.stringValue) {
+                     // Basic ISO parser if needed, or leave nil
+                     // usually commonKeyCreationDate via load(.dateValue) works for recent iOS
+                }
             }
             
             let generator = AVAssetImageGenerator(asset: asset)
@@ -1766,21 +1809,17 @@ public class VisualIntelligenceViewModel: ObservableObject {
             }
             
             // Fallback
+            // Fallback
             if let frame = bestFrame {
-                return (frame, foundLocation)
+                return (frame, foundLocation, foundDate)
             } else if let startFrame = try? await generator.image(at: .zero).image {
-                return (startFrame, foundLocation)
+                return (startFrame, foundLocation, foundDate)
             }
             
         } catch {
             print("❌ Video processing failed: \(error)")
         }
         return nil
-    }
-
-    // Wrapper for pure function
-    private func parseISO6709Async(_ string: String) async -> (Double, Double)? {
-        parseISO6709(string)
     }
 
 }

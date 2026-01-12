@@ -79,9 +79,25 @@ public final class LocalPipelineService {
             var effectiveLocation: CLLocation? = nil
             var hasUserOverride = false
             
-            if let locationService {
+            // 1. Check EXISTING overrides (manual edits)
+            if let ctx = existing.placeContext, let lat = ctx.latitude, let lon = ctx.longitude {
+                effectiveLocation = CLLocation(latitude: lat, longitude: lon)
+                hasUserOverride = true
+                DiverLogger.pipeline.debug("Using Existing Item Location Override: \(lat), \(lon)")
+            } else if let locStr = existing.location,
+                      let components = Optional(locStr.split(separator: ",")),
+                      components.count == 2,
+                      let lat = Double(components[0].trimmingCharacters(in: .whitespaces)),
+                      let lon = Double(components[1].trimmingCharacters(in: .whitespaces)) {
+                effectiveLocation = CLLocation(latitude: lat, longitude: lon)
+                hasUserOverride = true // Treat coordinate string as override
+            }
+            
+            // 2. Live Location (if no override)
+            if effectiveLocation == nil, let locationService {
                 // Session Context Override for Updates
                 effectiveLocation = await locationService.getCurrentLocation()
+            }
                 
                 // Fallback: Check raw payload for location metadata if unavailable (e.g. reprocessing)
                 // Skip if payload is JSON (likely a descriptor, not an image)
@@ -120,21 +136,39 @@ public final class LocalPipelineService {
                 if let location = effectiveLocation {
                     let coords = location.coordinate
                     
-                    // 1. Foursquare Place Lookup
-                    if let foursquareService, let fsEnrichment = try await foursquareService.enrich(location: coords) {
-                        applyEnrichment(fsEnrichment, to: existing)
-                        accumulatedContext += "\nFoursquare: \(fsEnrichment.title ?? "Unknown") - \(fsEnrichment.categories.joined(separator: ", "))"
+                    // 1. Contextual Place Lookup
+                    if let foursquareService {
+                        var matchedEnrichment: EnrichmentData?
                         
-                        if let venueName = fsEnrichment.title, let duckDuckGoService {
-                            if let ddgEnrichment = try await duckDuckGoService.enrich(query: venueName, location: coords) {
-                                applyEnrichment(ddgEnrichment, to: existing, overwriteTitle: true)
-                                accumulatedContext += "\nDuckDuckGo: \(ddgEnrichment.title ?? "Unknown") - \(ddgEnrichment.descriptionText ?? "")"
+                        // IF User specified a place (Override active), try to match IT specifically
+                        if hasUserOverride, let overrideName = existing.placeContext?.name ?? existing.location {
+                             // Try search by name + location to verify/enrich the specific place
+                             matchedEnrichment = try await foursquareService.enrich(query: overrideName, location: coords)
+                             
+                             if matchedEnrichment == nil {
+                                 // User specified a place, but Foursquare didn't find it.
+                                 // DO NOT overwrite with a random nearby place.
+                                 // Keep the MapKit/Manual data.
+                                 DiverLogger.pipeline.debug("Retaining specific location override '\(overrideName)'; Foursquare verify failed.")
+                             }
+                        } else {
+                             // Standard Auto-Enrichment (Best guess nearby)
+                             matchedEnrichment = try await foursquareService.enrich(location: coords)
+                        }
+                        
+                        if let fsEnrichment = matchedEnrichment {
+                            applyEnrichment(fsEnrichment, to: existing)
+                            accumulatedContext += "\nFoursquare: \(fsEnrichment.title ?? "Unknown") - \(fsEnrichment.categories.joined(separator: ", "))"
+                            
+                            if let venueName = fsEnrichment.title, let duckDuckGoService {
+                                if let ddgEnrichment = try await duckDuckGoService.enrich(query: venueName, location: coords) {
+                                    applyEnrichment(ddgEnrichment, to: existing, overwriteTitle: true)
+                                    accumulatedContext += "\nDuckDuckGo: \(ddgEnrichment.title ?? "Unknown") - \(ddgEnrichment.descriptionText ?? "")"
+                                }
                             }
                         }
                     }
                 }
-            }
-
             if existing.modality == nil || existing.modality?.isEmpty == true {
                 existing.modality = resolvedModality
             }
@@ -236,6 +270,12 @@ public final class LocalPipelineService {
                 }
                 
                 await performLLMAnalysis(for: existing, descriptor: descriptor, accumulatedContext: localAccumulatedContext)
+                
+                // Ensure session is synced with potentially new location data (User Request: "recreate the session if it doesn't already exist")
+                await MainActor.run {
+                    self.syncSession(for: existing)
+                    try? self.modelContext.save()
+                }
             }
             
             // Fix looping/inbox bug: Delete input after processing
@@ -609,7 +649,15 @@ public final class LocalPipelineService {
     private func applyEnrichment(_ enrichment: EnrichmentData, to item: ProcessedItem, overwriteTitle: Bool = false) {
         if let title = enrichment.title {
             let currentTitle = item.title ?? ""
-            if overwriteTitle || currentTitle.isEmpty || currentTitle.contains("://") || currentTitle.contains("www.") || currentTitle == "Untitled" || (item.url != nil && currentTitle == URL(string: item.url!)?.host) {
+            let weakTitles = ["Untitled", "Visual Capture", "Captured Moment", "Scanned Document", "Web Link", "Recognized Link", "QR Code Link"]
+            let isWeak = currentTitle.isEmpty || 
+                         currentTitle.contains("://") || 
+                         currentTitle.contains("www.") || 
+                         weakTitles.contains(currentTitle) ||
+                         currentTitle.hasPrefix("Product:") ||
+                         currentTitle.hasPrefix("Detected Media:")
+            
+            if overwriteTitle || isWeak || (item.url != nil && currentTitle == URL(string: item.url!)?.host) {
                 item.title = title
             }
         }
@@ -1469,6 +1517,51 @@ public final class LocalPipelineService {
         // JSON objects start with '{' or '['
         return firstByte == 0x7B || firstByte == 0x5B
     }
+
+    private func syncSession(for item: ProcessedItem) {
+        // Ensure valid session ID
+        let sessionID = item.sessionID ?? UUID().uuidString
+        if item.sessionID == nil { item.sessionID = sessionID }
+        
+        // Fetch or Create Session
+        let fetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+        let session: DiverSession
+        
+        if let existingSession = try? modelContext.fetch(fetch).first {
+            session = existingSession
+        } else {
+            // Create new if missing
+            session = DiverSession(sessionID: sessionID, createdAt: item.createdAt)
+            modelContext.insert(session)
+            DiverLogger.pipeline.info("Created new/restored DiverSession for item \(item.id)")
+        }
+        
+        // Sync Location Data if Item has it (User Override wins)
+        if let place = item.placeContext {
+            if let lat = place.latitude, let lon = place.longitude {
+                session.latitude = lat
+                session.longitude = lon
+            }
+            if let name = place.name {
+                session.locationName = name
+            } else if let locName = item.location, session.locationName == nil {
+                session.locationName = locName
+            }
+        } else if let locStr = item.location,
+                  let components = Optional(locStr.split(separator: ",")),
+                  components.count == 2,
+                  let lat = Double(components[0].trimmingCharacters(in: .whitespaces)),
+                  let lon = Double(components[1].trimmingCharacters(in: .whitespaces)) {
+            // Fallback to coord string
+            session.latitude = lat
+            session.longitude = lon
+        }
+        
+        // Ensure Session has a title/summary if empty
+        if session.summary == nil {
+            session.summary = item.summary ?? item.title
+        }
+    }
 }
 
 private struct LocalPipelinePayload: Codable {
@@ -1488,6 +1581,7 @@ struct ParallelEnrichmentResult: Sendable {
     var liveEventContext: String?
     var productData: EnrichmentData?
 }
+
 
 private struct LocalInputSnapshot: Codable {
     let id: String

@@ -105,8 +105,8 @@ struct EditLocationView: View {
                 }
                 
                 Section("Current Location") {
-                   VStack(alignment: .leading) {
-                        Text(item.placeContext?.name ?? "Unknown Place")
+                    VStack(alignment: .leading) {
+                        Text(item.placeContext?.name ?? item.location ?? "Unknown Place")
                             .font(.headline)
                         Text(item.location ?? "No Coordinates")
                             .font(.caption)
@@ -115,6 +115,44 @@ struct EditLocationView: View {
                             Text("ID: \(pid)")
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
+                        }
+                    }
+                    .contentShape(Rectangle()) // Make full row tappable
+                    .onTapGesture {
+                        if let loc = itemLocationCoordinate {
+                            withAnimation {
+                                position = .region(MKCoordinateRegion(center: loc, span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)))
+                            }
+                        }
+                    }
+                }
+                
+                if let selected = selectedCandidate {
+                    Section("Selected Location") {
+                        VStack(alignment: .leading) {
+                             Text(selected.title ?? "New Selection")
+                                 .font(.headline)
+                                 .foregroundStyle(.green)
+                             
+                             if !selected.categories.isEmpty {
+                                 Text(selected.categories.joined(separator: ", "))
+                                     .font(.subheadline)
+                                     .foregroundStyle(.secondary)
+                             }
+                             
+                             if let loc = selected.location {
+                                 Text(loc)
+                                     .font(.caption)
+                                     .foregroundStyle(.tertiary)
+                             }
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            if let lat = selected.placeContext?.latitude, let lon = selected.placeContext?.longitude {
+                                withAnimation {
+                                    position = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: lat, longitude: lon), span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)))
+                                }
+                            }
                         }
                     }
                 }
@@ -361,7 +399,17 @@ struct EditLocationView: View {
         
         await MainActor.run {
             // 1. Update Core Metadata
+            let oldName = item.placeContext?.name
             item.placeContext = newContext
+            
+            // Smart Title Update: If title matched old location or is generic, update it
+            if let newName = newContext?.name {
+                let current = item.title ?? ""
+                let candidates = ["Home", "Unknown Place", "Current Location", oldName].compactMap { $0 }
+                if current.isEmpty || candidates.contains(current) {
+                    item.title = newName
+                }
+            }
             if let loc = newLocation {
                 item.location = loc
             }
