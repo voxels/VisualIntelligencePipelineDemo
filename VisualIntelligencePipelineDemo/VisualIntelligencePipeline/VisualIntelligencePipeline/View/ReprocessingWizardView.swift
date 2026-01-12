@@ -20,6 +20,7 @@ struct ReprocessingWizardView: View {
     @State private var currentStep: WizardStep = .config
     @State private var isProcessing = false
     @State private var processingStatusMsg = ""
+    @State private var progress: Double = 0.0
     @State private var reviewItems: [ProcessedItem] = []
     
     // Dependencies (Inject or use shared)
@@ -98,10 +99,17 @@ struct ReprocessingWizardView: View {
     
     var processingView: some View {
         VStack(spacing: 20) {
-            ProgressView()
-                .scaleEffect(1.5)
+            ProgressView(value: progress)
+                .progressViewStyle(.linear)
+                .frame(width: 250)
+            
             Text("Reprocessing Pipeline...")
                 .font(.headline)
+            
+            Text("\(Int(progress * 100))%")
+                .font(.caption)
+                .monospacedDigit()
+            
             Text(processingStatusMsg)
                 .foregroundStyle(.secondary)
                 .font(.caption)
@@ -161,7 +169,10 @@ struct ReprocessingWizardView: View {
                     duckDuckGoService: services.duckDuckGoService,
                     weatherService: services.weatherService,
                     activityService: services.activityService,
-                    indexingService: services.knowledgeGraphService // conformance?
+                    indexingService: services.knowledgeGraphService,
+                    progressHandler: { p in
+                        self.progress = p
+                    }
                 )
                 
                 processingStatusMsg = "Checking for conflicts..."

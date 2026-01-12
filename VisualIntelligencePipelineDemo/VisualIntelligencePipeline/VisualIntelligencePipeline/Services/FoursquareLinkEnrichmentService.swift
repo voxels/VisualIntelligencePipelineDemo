@@ -139,6 +139,48 @@ public final class FoursquareLinkEnrichmentService: LinkEnrichmentService, Conte
         }
     }
     
+    public func fetchDetails(for id: String) async throws -> EnrichmentData? {
+        let request = PlaceDetailsRequest(
+            fsqID: id,
+            core: true,
+            description: true,
+            tel: true,
+            fax: false,
+            email: false,
+            website: true,
+            socialMedia: true,
+            verified: false,
+            hours: true,
+            hoursPopular: true,
+            rating: true,
+            stats: false,
+            popularity: true,
+            price: true,
+            menu: true,
+            tastes: true,
+            features: false
+        )
+        
+        do {
+            let session = await MainActor.run { modelController.placeSearchService.placeSearchSession }
+            
+            // Fetch details, tips, and photos concurrently
+            async let detailsTask = session.details(for: request)
+            async let tipsTask = session.tips(for: id)
+            async let photosTask = session.photos(for: id)
+            
+            let details = try await detailsTask
+            let tips = try? await tipsTask
+            let photos = try? await photosTask
+            
+            return try await convertToEnrichmentData(place: details, tips: tips, photos: photos, withQuestions: true)
+        } catch {
+             print("❌ FoursquareEnrichment: Failed to fetch ID-based details for \(id): \(error)")
+        }
+        
+        return nil
+    }
+    
     public func searchNearby(location: CLLocationCoordinate2D, limit: Int) async throws -> [EnrichmentData] {
         let request = PlaceSearchRequest(
             query: "",

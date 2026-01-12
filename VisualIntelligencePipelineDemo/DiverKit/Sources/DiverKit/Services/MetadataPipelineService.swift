@@ -93,21 +93,27 @@ public final class MetadataPipelineService {
                     do {
                         print("📦 [MetadataPipeline] Starting: \(record.item.id)")
                         try await self.handle(record: record)
+                        
+                        // CRITICAL: Save to DB BEFORE removing from disk queue to prevent data loss on crash/error
+                        try await self.saveWithRetry()
+                        
                         try queueStore.remove(record)
                         successCount += 1
                         print("✅ [MetadataPipeline] Finished: \(record.item.id)")
-                        DiverLogger.queue.debug("Successfully processed queue item: \(record.item.id)")
+                        DiverLogger.queue.debug("Successfully processed and persisted queue item: \(record.item.id)")
                     } catch {
                         errorCount += 1
                         print("❌ [MetadataPipeline] Failed \(record.fileURL.lastPathComponent): \(error)")
                         DiverLogger.queue.logError(error, context: "Error processing record \(record.fileURL.lastPathComponent)")
                         
                         try? await handleFailure(record: record, error: error)
+                        // Even on failure, if handleFailure succeeded in updating DB, we should save and remove
+                        try? await self.saveWithRetry()
                         try? queueStore.remove(record)
                         continue
                     }
                 }
-
+                
                 print("🏁 [MetadataPipeline] Complete. Success: \(successCount), Failed: \(errorCount)")
                 DiverLogger.queue.info("Queue processing complete - success: \(successCount), failed: \(errorCount), total: \(records.count)")
                 WidgetCenter.shared.reloadAllTimelines()
@@ -118,6 +124,28 @@ public final class MetadataPipelineService {
         
         self.currentTask = task
         _ = await task.result
+    }
+
+    /// Helper to save with retry logic for 'database is busy' errors
+    private func saveWithRetry(attempts: Int = 3) async throws {
+        var lastError: Error?
+        for i in 0..<attempts {
+            do {
+                try modelContext.save()
+                return
+            } catch {
+                lastError = error
+                let nsError = error as NSError
+                // Check for SQLite busy or lock errors (Cocoa codes 256, 134080)
+                if nsError.code == 256 || nsError.code == 134080 || nsError.localizedDescription.contains("busy") {
+                    DiverLogger.storage.warning("Database busy, retrying save (\(i+1)/\(attempts))...")
+                    try? await Task.sleep(nanoseconds: UInt64(200_000_000 * (i + 1))) // Exponential backoff
+                    continue
+                }
+                throw error
+            }
+        }
+        if let lastError { throw lastError }
     }
 
     public func processItemImmediately(_ item: ProcessedItem) async throws {
@@ -264,7 +292,6 @@ public final class MetadataPipelineService {
             indexingService: indexingService,
             contextService: contextService
         )
-        try modelContext.save()
 
         DiverLogger.storage.debug("Saved LocalInput to SwiftData - inputId: \(localInput.id.uuidString)")
     }

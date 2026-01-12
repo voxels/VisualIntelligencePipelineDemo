@@ -11,12 +11,14 @@ public struct MessagesLaunchRequest: Codable, Sendable, Equatable {
 }
 
 public enum MessagesLaunchStore {
-    private static let key = "Diver.MessagesLaunchRequest"
+    private static func fileURL(config: AppGroupConfig) -> URL? {
+        guard let baseURL = try? AppGroupContainer.containerURL(config: config) else { return nil }
+        return baseURL.appendingPathComponent("messages_launch_request.json")
+    }
 
     public static func save(
         body: String?,
-        config: AppGroupConfig = .default,
-        defaults: UserDefaults? = nil
+        config: AppGroupConfig = .default
     ) {
         let trimmedBody = body?.trimmingCharacters(in: .whitespacesAndNewlines)
         let boundedBody = trimmedBody.map { String($0.prefix(2000)) }
@@ -29,17 +31,16 @@ public enum MessagesLaunchStore {
             return
         }
 
-        let storage = defaults ?? UserDefaults(suiteName: config.groupIdentifier)
-        storage?.set(data, forKey: key)
+        if let url = fileURL(config: config) {
+            try? data.write(to: url)
+        }
     }
 
     public static func consume(
-        config: AppGroupConfig = .default,
-        defaults: UserDefaults? = nil
+        config: AppGroupConfig = .default
     ) -> MessagesLaunchRequest? {
-        let storage = defaults ?? UserDefaults(suiteName: config.groupIdentifier)
-
-        guard let data = storage?.data(forKey: key) else {
+        guard let url = fileURL(config: config),
+              let data = try? Data(contentsOf: url) else {
             return nil
         }
 
@@ -48,11 +49,12 @@ public enum MessagesLaunchStore {
 
         guard let request = try? decoder.decode(MessagesLaunchRequest.self, from: data) else {
             // Remove corrupted data
-            storage?.removeObject(forKey: key)
+            try? FileManager.default.removeItem(at: url)
             return nil
         }
 
-        storage?.removeObject(forKey: key)
+        // Remove after consuming
+        try? FileManager.default.removeItem(at: url)
         return request
     }
 }

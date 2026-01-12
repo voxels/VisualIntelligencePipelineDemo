@@ -86,4 +86,9 @@ public protocol ContextualEnrichmentService: Sendable {
     ///   - limit: Maximum results
     /// - Returns: List of candidate places
     func search(query: String, location: CLLocationCoordinate2D, limit: Int) async throws -> [EnrichmentData]
+
+    /// Fetch specific details for a place by its unique ID
+    /// - Parameter id: The service-specific place ID
+    /// - Returns: Detailed enrichment data if found
+    func fetchDetails(for id: String) async throws -> EnrichmentData?
 }

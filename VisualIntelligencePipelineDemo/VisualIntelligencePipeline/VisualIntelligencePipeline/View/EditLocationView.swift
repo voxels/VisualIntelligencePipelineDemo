@@ -31,6 +31,12 @@ struct EditLocationView: View {
     }
     
     private var itemLocationCoordinate: CLLocationCoordinate2D? {
+        // Priority 1: Structured Place Context
+        if let ctx = item.placeContext, let lat = ctx.latitude, let lon = ctx.longitude {
+            return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        }
+        
+        // Priority 2: Parsed Location String (e.g. "37.7,-122.4")
         if let locString = item.location {
             let components = locString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
             if components.count == 2,

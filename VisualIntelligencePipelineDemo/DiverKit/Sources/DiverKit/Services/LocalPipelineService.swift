@@ -7,6 +7,7 @@ import ImageIO
 @MainActor
 public final class LocalPipelineService {
     private let modelContext: ModelContext
+    private var cachedHomeLocation: CLLocation?
 
     public init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -83,7 +84,8 @@ public final class LocalPipelineService {
                 effectiveLocation = await locationService.getCurrentLocation()
                 
                 // Fallback: Check raw payload for location metadata if unavailable (e.g. reprocessing)
-                if effectiveLocation == nil, let data = rawPayload {
+                // Skip if payload is JSON (likely a descriptor, not an image)
+                if effectiveLocation == nil, let data = rawPayload, !isJSONData(data) {
                      if let source = CGImageSourceCreateWithData(data as CFData, nil),
                         let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
                         let gps = props["{GPS}"] as? [String: Any],
@@ -512,7 +514,7 @@ public final class LocalPipelineService {
         let totalCount = Double(items.count)
         
         // Batched Processing for Concurrency Control
-        let batchSize = 4
+        let batchSize = 10
         let batches = items.chunked(into: batchSize)
         
         for (batchIndex, batch) in batches.enumerated() {
@@ -590,7 +592,7 @@ public final class LocalPipelineService {
             }
             
             // Save after each batch to persist progress and free memory pressure
-            try? modelContext.save()
+            try await saveWithRetry()
             
             // Update progress
              completedCount += batchSize
@@ -626,8 +628,9 @@ public final class LocalPipelineService {
                  item.categories = Array(currentCats.union(newCats)).sorted()
             }
         }
-        if let location = enrichment.location, item.location == nil || item.location?.isEmpty == true {
-            item.location = location
+        if let location = enrichment.location {
+            // Always update location if enriched, as it might be more specific than the initial generic coordinate string
+             item.location = location
         }
         if let price = enrichment.price, item.price == nil || item.price == 0 {
             item.price = price
@@ -900,7 +903,6 @@ public final class LocalPipelineService {
             item.status = .ready // Finalize status
             item.processingLog.append("\(Date().formatted()): LLM Analysis Complete. Finalized.")
             print("🏁 [LocalPipeline] LLM Analysis complete for \(item.id)")
-            try modelContext.save()
             DiverLogger.pipeline.debug("LLM Analysis Complete for item \(item.id). Updated summary: \(summary != nil), Purpose: \(purpose != nil)")
         } catch {
             print("❌ [LocalPipeline] LLM Analysis Failed for \(item.id): \(error.localizedDescription)")
@@ -914,7 +916,6 @@ public final class LocalPipelineService {
             } else {
                 item.status = .reviewRequired
             }
-            try? modelContext.save()
         }
     }
     
@@ -960,28 +961,79 @@ public final class LocalPipelineService {
                  return nil
             }
 
+            let initialHomeLoc = self.cachedHomeLocation
             // 2. Foursquare + DuckDuckGo Chain
             group.addTask {
                 guard let location = finalLocation else { return nil }
-                if !isUserLocationFixed, let contactService = contactService,
-                   let homeLoc = try? await contactService.getHomeLocation() {
-                     if location.distance(from: homeLoc) < 75 {
-                         let explicitLocationName = descriptor?.location
-                         let isHomeName = explicitLocationName?.lowercased() == "home"
-                         let isGenericOrEmpty = explicitLocationName == nil || explicitLocationName?.isEmpty == true
-                         if isHomeName || isGenericOrEmpty {
-                             let placeCtx = PlaceContext(name: "Home", categories: ["Home", "Personal"], placeID: "home-location", address: nil, rating: nil, isOpen: true)
-                             let homeData = EnrichmentData(title: "Home", descriptionText: "User's Home Location", image: nil, categories: ["Home"], styleTags: ["Personal"], location: "Home", placeContext: placeCtx)
-                             return ParallelEnrichmentResult(foursquare: homeData)
-                         }
-                     }
+                let coords = location.coordinate
+                
+                var fsEnrichment: EnrichmentData?
+                
+                // 1. Prioritize Foursquare lookup
+                if let foursquareService {
+                    if let placeID = descriptor?.placeID, !placeID.isEmpty {
+                        fsEnrichment = try? await self.withTimeout(seconds: 15) {
+                            try await foursquareService.fetchDetails(for: placeID)
+                        }
+                    } else {
+                        fsEnrichment = try? await self.withTimeout(seconds: 15) {
+                            try await foursquareService.enrich(location: coords)
+                        }
+                    }
                 }
                 
-                guard let foursquareService else { return nil }
-                let coords = location.coordinate
-                if let fsEnrichment = try? await self.withTimeout(seconds: 15, operation: {
-                    try await foursquareService.enrich(location: coords)
-                }) {
+                // 2. Fallback: MapKit Reverse Geocoding
+                if fsEnrichment == nil {
+                    let geocoder = CLGeocoder()
+                    if let placemarks = try? await geocoder.reverseGeocodeLocation(location), let first = placemarks.first {
+                        let name = first.name ?? first.thoroughfare ?? "Location"
+                        let address = [first.subThoroughfare, first.thoroughfare, first.locality, first.administrativeArea].compactMap { $0 }.joined(separator: ", ")
+                        let categories = first.areasOfInterest ?? ["Location"]
+                        
+                        fsEnrichment = EnrichmentData(
+                            title: name,
+                            descriptionText: address,
+                            image: nil,
+                            categories: categories,
+                            styleTags: ["MapKit"],
+                            location: address,
+                            placeContext: PlaceContext(
+                                name: name,
+                                categories: categories,
+                                placeID: "mapkit-\(coords.latitude)-\(coords.longitude)",
+                                address: address,
+                                rating: nil,
+                                isOpen: nil
+                            )
+                        )
+                    }
+                }
+
+                // 3. Last Resort Fallback: Home Detection (Only if generic or failed)
+                let isGeneric = fsEnrichment == nil || fsEnrichment?.title == "Location"
+                if isGeneric, !isUserLocationFixed, let contactService = contactService {
+                    var homeLoc: CLLocation? = initialHomeLoc
+                    if homeLoc == nil {
+                        homeLoc = try? await contactService.getHomeLocation()
+                        if let homeLoc {
+                            await MainActor.run { self.cachedHomeLocation = homeLoc }
+                        }
+                    }
+                    
+                    if let homeLoc = homeLoc {
+                         if location.distance(from: homeLoc) < 100 {
+                             let explicitLocationName = descriptor?.location
+                             let isHomeName = explicitLocationName?.lowercased() == "home"
+                             let isGenericOrEmpty = explicitLocationName == nil || explicitLocationName?.isEmpty == true
+                             if isHomeName || isGenericOrEmpty {
+                                 let placeCtx = PlaceContext(name: "Home", categories: ["Home", "Personal"], placeID: "home-location", address: nil, rating: nil, isOpen: true)
+                                 fsEnrichment = EnrichmentData(title: "Home", descriptionText: "User's Home Location", image: nil, categories: ["Home"], styleTags: ["Personal"], location: "Home", placeContext: placeCtx)
+                             }
+                         }
+                    }
+                }
+                
+                if let fsEnrichment {
                     var result = ParallelEnrichmentResult(foursquare: fsEnrichment)
                     if let venueName = fsEnrichment.title {
                         if let ddgService = duckDuckGoService {
@@ -991,7 +1043,7 @@ public final class LocalPipelineService {
                                 result.duckDuckGo = ddgEnrichment
                             }
                             if let eventContext = try? await self.withTimeout(seconds: 10, operation: {
-                                try await self.searchLiveEvents(place: venueName, service: ddgService)
+                                await self.searchLiveEvents(place: venueName, service: ddgService)
                             }) {
                                 result.liveEventContext = eventContext
                             }
@@ -1005,7 +1057,12 @@ public final class LocalPipelineService {
             // 3. Weather
             group.addTask {
                 guard let location = finalLocation, let weatherService else { return nil }
-                if let weather = await weatherService.fetchWeather(for: location) {
+                
+                let weather = try? await self.withTimeout(seconds: 10, operation: {
+                    await weatherService.fetchWeather(for: location)
+                })
+                
+                if let weather = weather {
                     return ParallelEnrichmentResult(weather: weather)
                 }
                 return nil
@@ -1029,7 +1086,7 @@ public final class LocalPipelineService {
                      else if let (data, _) = try? await URLSession.shared.data(from: url) { imageData = data }
                  }
                  if imageData == nil { imageData = rawPayload }
-                 guard let data = imageData else { return nil }
+                 guard let data = imageData, !self.isJSONData(data) else { return nil }
 
                  do {
                      let filename = "\(resolvedId)-cover.jpg"
@@ -1125,9 +1182,6 @@ public final class LocalPipelineService {
     }
     // MARK: - Session Summarization
     private func generateAndSaveSessionSummary(sessionID: String) async {
-        // Temporarily disabled to resolve CoreData migration conflict
-        // TODO: Re-enable after introducing VersionedSchema
-        /*
         let fetchItems = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.sessionID == sessionID })
         let fetchMeta = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
         
@@ -1157,23 +1211,23 @@ public final class LocalPipelineService {
         } catch {
             DiverLogger.pipeline.error("Failed to auto-generate session summary: \(error)")
         }
-        */
     }
     
     // MARK: - Helper Logic
     
     private func finalizeTitle(for item: ProcessedItem) {
         // 1. Check if current title is valid (Prominent Text / Metadata)
+        let idString = item.id
         let currentTitle = item.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let isPlaceholder = currentTitle.isEmpty || currentTitle == "Untitled" || currentTitle == item.id || currentTitle.contains("http") || currentTitle.contains("://")
+        let isPlaceholder = currentTitle.isEmpty || currentTitle == "Untitled" || currentTitle == idString || currentTitle.contains("http") || currentTitle.contains("://")
         
         // If we have a good title, stick with it
         if !isPlaceholder { return }
         
-        // 2. Try LLM Tags / Themes
-        // Combine themes and tags, prioritize themes
-        let candidates = item.themes + item.tags
-        if let bestTag = candidates.first(where: { !$0.isEmpty }) {
+        // 2. Try LLM Tags / Themes / Purposes
+        // Combine themes, tags and purposes, prioritize themes
+        let candidates = item.themes + item.tags + item.purposes.filter { !$0.starts(with: "At: ") }
+        if let bestTag = candidates.first(where: { !$0.isEmpty && $0.count > 3 }) {
             item.title = bestTag.capitalized
             return
         }
@@ -1187,10 +1241,15 @@ public final class LocalPipelineService {
             return
         }
         
-        // 4. UUID Fallback (Default)
-        // If we are here, stick with ID or ensure it is set
-        if item.title == nil {
-            item.title = item.id
+        // 4. Location Fallback
+        if let loc = item.location, !loc.isEmpty {
+            item.title = "At: \(loc)"
+            return
+        }
+
+        // 5. UUID Fallback (Default)
+        if item.title == nil || item.title == idString {
+            item.title = "Visual Capture \(item.createdAt.formatted(date: .abbreviated, time: .shortened))"
         }
     }
     // MARK: - Diagnostics
@@ -1383,6 +1442,32 @@ public final class LocalPipelineService {
             group.cancelAll()
             return result
         }
+    }
+    
+    private func saveWithRetry(attempts: Int = 3) async throws {
+        var lastError: Error?
+        for i in 0..<attempts {
+            do {
+                try modelContext.save()
+                return
+            } catch {
+                lastError = error
+                let nsError = error as NSError
+                if nsError.code == 256 || nsError.code == 134080 || nsError.localizedDescription.contains("busy") {
+                    try? await Task.sleep(nanoseconds: UInt64(200_000_000 * (i + 1)))
+                    continue
+                }
+                throw error
+            }
+        }
+        if let lastError { throw lastError }
+    }
+
+    nonisolated private func isJSONData(_ data: Data) -> Bool {
+        guard !data.isEmpty else { return false }
+        let firstByte = data[0]
+        // JSON objects start with '{' or '['
+        return firstByte == 0x7B || firstByte == 0x5B
     }
 }
 

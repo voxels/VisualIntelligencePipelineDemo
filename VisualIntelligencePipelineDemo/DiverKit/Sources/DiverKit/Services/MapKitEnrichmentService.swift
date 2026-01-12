@@ -47,19 +47,24 @@ public final class MapKitEnrichmentService: ContextualEnrichmentService, @unchec
     }
     
     public func searchNearby(location: CLLocationCoordinate2D, limit: Int) async throws -> [EnrichmentData] {
-        // Use MKLocalPointsOfInterestRequest if available, or MKLocalSearch
-        let request = MKLocalPointsOfInterestRequest(center: location, radius: 500) // 500m radius
+        // 1. Try POI Request (Radius 2000m)
+        let request = MKLocalPointsOfInterestRequest(center: location, radius: 2000)
         
         do {
             let response = try await MKLocalSearch(request: request).start()
+            let items = response.mapItems
             
-            return response.mapItems.prefix(limit).map { item in
-                mapItemToEnrichmentData(item)
+            if !items.isEmpty {
+                return items.prefix(limit).map { mapItemToEnrichmentData($0) }
             }
+            
+            // 2. Fallback to Generic Search if POI empty
+            // Sometimes POI request is strict. Use generic "Point of Interest" query.
+            return try await search(query: "Point of Interest", location: location, limit: limit)
+            
         } catch {
-            // Fallback to generic search if POI request fails or returns nothing useful?
-            // Actually MKLocalPointsOfInterestRequest is fairly robust for "nearby".
-            return []
+            // Fallback to Generic Search on error
+            return try await search(query: "Point of Interest", location: location, limit: limit)
         }
     }
     
@@ -79,6 +84,11 @@ public final class MapKitEnrichmentService: ContextualEnrichmentService, @unchec
         guard let location = location else { return nil }
         let results = try await search(query: query, location: location, limit: 1)
         return results.first
+    }
+    
+    public func fetchDetails(for id: String) async throws -> EnrichmentData? {
+        // MapKit doesn't support persistent ID lookup in a simple way for this flow
+        return nil
     }
     
     // MARK: - Helper

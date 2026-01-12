@@ -410,7 +410,7 @@ public struct VisualIntelligenceView: View {
                             .rotationEffect(angleForOrientation(orientation))
                             
                             // Auxiliary Buttons (Corners)
-                            PhotosPicker(selection: $viewModel.selectedPhotoItem, matching: .images) {
+                            PhotosPicker(selection: $viewModel.selectedPhotoItem, matching: .any(of: [.images, .videos])) {
                                 Image(systemName: "photo.on.rectangle.angled")
                                     .font(.title3)
                                     .foregroundStyle(.white)
@@ -437,7 +437,9 @@ public struct VisualIntelligenceView: View {
                     let newOrientation = UIDevice.current.orientation
                     if newOrientation.isValidInterfaceOrientation {
                         self.orientation = newOrientation
-                        viewModel.currentOrientation = visionOrientation(from: newOrientation)
+                        Task { @MainActor in
+                            viewModel.currentOrientation = visionOrientation(from: newOrientation)
+                        }
                     }
                 }
             }

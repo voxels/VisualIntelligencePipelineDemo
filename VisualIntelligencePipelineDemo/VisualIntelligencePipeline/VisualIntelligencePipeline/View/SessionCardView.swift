@@ -101,12 +101,16 @@ struct SessionCardView: View {
             
             // Tertiary Context / LLM Summary
             if let summary = summary {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(summary)
-                        .font(.caption)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Session Summary")
+                        .font(.caption2.bold())
                         .foregroundStyle(.secondary)
-                        .lineLimit(3)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .textCase(.uppercase)
+                    
+                    Text(summary)
+                        .font(.system(size: 13, weight: .regular, design: .serif))
+                        .foregroundStyle(.primary.opacity(0.8))
+                        .lineSpacing(2)
                 }
                 .padding(.horizontal)
                 .padding(.bottom, isExpanded ? 8 : 12)

@@ -72,7 +72,7 @@ struct ReferenceDetailContent: View {
                     
                     // 0. Purpose Header (Removed - Moved to Intent Section)
 
-                    if item.entityType == DiverItemType.document.rawValue, let data = item.rawPayload, let uiImage = UIImage(data: data) {
+                    if let data = item.rawPayload, let uiImage = UIImage(data: data) {
                         Image(uiImage: uiImage)
                             .resizable()
                             .aspectRatio(contentMode: .fit)

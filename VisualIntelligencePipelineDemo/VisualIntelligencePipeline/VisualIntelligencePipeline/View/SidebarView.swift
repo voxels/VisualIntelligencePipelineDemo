@@ -599,10 +599,35 @@ struct SessionContentView: View {
         
         // 2. Render Detached Items (Documents/Links)
         if !detachedItems.isEmpty {
-            Section {
-                DisclosureGroup("Documents & Links") {
-                    MasterChildGroupingView(items: detachedItems, sharedWithYouManager: sharedWithYouManager, viewModel: viewModel, modelContext: modelContext)
-                        .padding(.leading, 8)
+            let docs = detachedItems.filter { $0.entityType == "document" }
+            let web = detachedItems.filter { $0.entityType == "page" || $0.entityType == "link" }
+            let images = detachedItems.filter { $0.entityType == "image" || $0.entityType == "product" || $0.entityType == "media" }
+            let other = detachedItems.filter { !["document", "page", "link", "image", "product", "media"].contains($0.entityType ?? "") }
+            
+            Section("Documents & Media") {
+                if !docs.isEmpty {
+                    DisclosureGroup("Documents") {
+                        MasterChildGroupingView(items: docs, sharedWithYouManager: sharedWithYouManager, viewModel: viewModel, modelContext: modelContext)
+                            .padding(.leading, 8)
+                    }
+                }
+                if !web.isEmpty {
+                    DisclosureGroup("Web Pages") {
+                        MasterChildGroupingView(items: web, sharedWithYouManager: sharedWithYouManager, viewModel: viewModel, modelContext: modelContext)
+                            .padding(.leading, 8)
+                    }
+                }
+                if !images.isEmpty {
+                    DisclosureGroup("Images") {
+                         MasterChildGroupingView(items: images, sharedWithYouManager: sharedWithYouManager, viewModel: viewModel, modelContext: modelContext)
+                            .padding(.leading, 8)
+                    }
+                }
+                if !other.isEmpty {
+                    DisclosureGroup("Other") {
+                         MasterChildGroupingView(items: other, sharedWithYouManager: sharedWithYouManager, viewModel: viewModel, modelContext: modelContext)
+                            .padding(.leading, 8)
+                    }
                 }
             }
         }
@@ -791,7 +816,7 @@ struct SessionEditView: View {
                 
                 if !logs.isEmpty {
                     Section("Processing Log") {
-                        ForEach(logs, id: \.self) { log in
+                        ForEach(Array(logs.enumerated()), id: \.offset) { index, log in
                             Text(log)
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
@@ -933,6 +958,12 @@ struct EditLocationView: View {
     }
     
     private var itemLocationCoordinate: CLLocationCoordinate2D? {
+        // Priority 1: Structured Place Context (Handles "Home", "Work", etc. that have underlying coords)
+        if let lat = item.placeContext?.latitude, let lon = item.placeContext?.longitude {
+            return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        }
+        
+        // Priority 2: Parsed Coordinate String
         if let locString = item.location {
             let components = locString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
             if components.count == 2,

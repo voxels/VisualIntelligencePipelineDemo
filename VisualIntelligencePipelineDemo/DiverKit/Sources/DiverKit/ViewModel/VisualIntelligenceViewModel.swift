@@ -18,6 +18,8 @@ import Photos
 import DiverShared
 import CoreImage
 import PhotosUI
+import AVFoundation
+import CoreMedia
 
 // A lightweight wrapper to explicitly allow passing non-Sendable types across concurrency domains.
 private struct UnsafeSendable<T>: @unchecked Sendable {
@@ -59,6 +61,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
     // Capture Location & Context
     public var currentCaptureCoordinate: CLLocationCoordinate2D?
     public var currentCapturePlaceID: String?
+    private var capturedMediaLocation: CLLocation? // Overrides live location if set (e.g. from Video metadata)
     
     public var sortedResults: [IntelligenceResult] {
         results.sorted { $0.sortPriority < $1.sortPriority }
@@ -335,6 +338,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
                     self.capturedImage = image
                     if let img = image {
                         self.sessionImages.append(img)
+                        // Save to Photo Library as Backup
+                        self.saveImageToPhotoLibrary(img)
                     }
                     
                     #if canImport(UIKit)
@@ -372,13 +377,16 @@ public class VisualIntelligenceViewModel: ObservableObject {
                                 let work = try? await contactService.getWorkLocation()
                                 
                                 // Check if we have a valid current location to compare distance to
-                                var currentLocation: CLLocation? = nil
-                                if let locService = Services.shared.locationService {
+                                // Check if we have a valid current location to compare distance to
+                                var currentLocation: CLLocation? = self.capturedMediaLocation
+                                
+                                if currentLocation == nil, let locService = Services.shared.locationService {
                                      currentLocation = await locService.getCurrentLocation()
-                                     if let loc = currentLocation {
-                                         await MainActor.run {
-                                             self.currentCaptureCoordinate = loc.coordinate
-                                         }
+                                }
+                                
+                                if let loc = currentLocation {
+                                     await MainActor.run {
+                                         self.currentCaptureCoordinate = loc.coordinate
                                      }
                                 }
 
@@ -572,13 +580,45 @@ public class VisualIntelligenceViewModel: ObservableObject {
             do {
                 guard let data = try await item.loadTransferable(type: Data.self) else { return }
                 
+                var finalCGImage: CGImage?
                 #if canImport(UIKit)
-                guard let image = UIImage(data: data), let cgImage = image.cgImage else { return }
+                var finalImage: UIImage?
+                // Try as Image
+                if let image = UIImage(data: data) {
+                    finalImage = image
+                    finalCGImage = image.cgImage
+                }
                 #elseif canImport(AppKit)
-                guard let image = NSImage(data: data), let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
-                #else
-                return
+                var finalImage: NSImage?
+                if let image = NSImage(data: data) {
+                    finalImage = image
+                    finalCGImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+                }
                 #endif
+
+                    // If not an image, try as Video
+                    if finalCGImage == nil {
+                        print("🎥 Processing as Video/Movie...")
+                        if let (cgImage, location) = await processVideoData(data) {
+                            finalCGImage = cgImage
+                            if let loc = location {
+                                 await MainActor.run {
+                                     self.capturedMediaLocation = loc
+                                     print("📍 Video Location captured: \(loc)")
+                                 }
+                            }
+                            
+                            #if canImport(UIKit)
+                            finalImage = UIImage(cgImage: cgImage)
+                            #elseif canImport(AppKit)
+                            finalImage = NSImage(cgImage: cgImage, size: .zero)
+                            #endif
+                            print("✅ Extracted Best Frame from Video")
+                        }
+                    }
+                
+                guard let cgImage = finalCGImage else { return }
+                let image = finalImage 
                 
                 await MainActor.run { self.isAnalyzing = true }
                     
@@ -792,6 +832,30 @@ public class VisualIntelligenceViewModel: ObservableObject {
     }
     #endif
     
+    
+    // MARK: - Photo Library Saving
+    
+    private func saveImageToPhotoLibrary(_ image: PlatformImage) {
+        #if os(iOS)
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized || status == .limited else {
+                print("⚠️ Photo Library Saving denied or restricted")
+                return
+            }
+            
+            PHPhotoLibrary.shared().performChanges {
+                PHAssetChangeRequest.creationRequestForAsset(from: image)
+            } completionHandler: { success, error in
+                if success {
+                    print("✅ Saved captured image to Photo Library")
+                } else {
+                    print("❌ Failed to save image to Photo Library: \(String(describing: error))")
+                }
+            }
+        }
+        #endif
+    }
+    
     // MARK: - Logic
     
     private func checkForExpressCapture(_ newResults: [IntelligenceResult]) {
@@ -918,7 +982,12 @@ public class VisualIntelligenceViewModel: ObservableObject {
         let validIntent = purposes.first { !$0.starts(with: "At: ") }
         
         // Use the selected intent as the primary title if it exists, otherwise fall back to enriched title
-        _ = self.sessionTitle ?? validIntent ?? self.results.first?.title ?? "Visual Capture"
+        let calculatedTitle = self.sessionTitle ?? validIntent ?? self.results.first?.title ?? "Visual Capture"
+        
+        // Ensure the calculated title is actually used or stored
+        if self.sessionTitle == nil {
+            self.sessionTitle = calculatedTitle
+        }
         
         Task.detached(priority: .userInitiated) {
             #if canImport(UIKit)
@@ -1166,10 +1235,11 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }
     }
     
-    private func regenerateContextSuggestions(for place: EnrichmentData) async {
+    private func regenerateContextSuggestions(for place: EnrichmentData?) async {
         // Capture state on MainActor synchronously
         let (contextData, shouldProceed) = await MainActor.run { () -> (EnrichmentData?, Bool) in
-            guard !self.results.isEmpty else { return (nil, false) }
+            // Remove the results.isEmpty guard to allow context generation from location-only data
+            // guard !self.results.isEmpty else { return (nil, false) }
             
             self.isAnalyzing = true
             // Clear old suggestions immediately
@@ -1226,28 +1296,31 @@ public class VisualIntelligenceViewModel: ObservableObject {
             }
     
             // Merge Place Data with Visual Context
-            var finalTitle = place.title
-            var finalDesc = (place.descriptionText ?? "")
+            // FIX: Prioritize place title if available, otherwise use visual labels
+            let finalTitle = place?.title ?? visualLabels.first?.capitalized
+            var finalDesc = (place?.descriptionText ?? "")
             
-            if !visualLabels.isEmpty {
-                finalTitle = visualLabels.first?.capitalized
-                if let placeName = place.title {
-                    finalDesc = "Location: \(placeName)\n" + finalDesc
+            if place?.title != nil {
+                if !visualLabels.isEmpty {
+                    finalDesc = "Captured Objects: \(visualLabels.joined(separator: ", "))\n" + finalDesc
                 }
+            } else if !visualLabels.isEmpty {
+                 // No place, but have objects
+                 finalDesc = "Visual Context: " + visualLabels.joined(separator: ", ") + "\n" + finalDesc
             }
             
             finalDesc += "\n\nSESSION HISTORY:\n" + combinedHistory
             
-            let explicitLocation = place.title ?? place.location
+            let explicitLocation = place?.title ?? place?.location
             
             let data = EnrichmentData(
                 title: finalTitle,
                 descriptionText: finalDesc.trimmingCharacters(in: .whitespacesAndNewlines),
-                categories: place.categories,
-                styleTags: place.styleTags + visualLabels,
+                categories: place?.categories ?? [],
+                styleTags: (place?.styleTags ?? []) + visualLabels,
                 location: explicitLocation, 
-                price: place.price,
-                rating: place.rating,
+                price: place?.price,
+                rating: place?.rating,
                 questions: []
             )
             return (data, true)
@@ -1274,14 +1347,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         let targetPlace = selectedPlace ?? placeCandidates.first
         
-        if let place = targetPlace {
-            Task {
-                await regenerateContextSuggestions(for: place)
-            }
-            #if os(iOS)
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
-            #endif
+        Task {
+            await regenerateContextSuggestions(for: targetPlace)
         }
+        
+        #if os(iOS)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        #endif
     }
     
     /// Refines the current context by locking in a user selection and requesting deeper details
@@ -1303,17 +1375,18 @@ public class VisualIntelligenceViewModel: ObservableObject {
         cameraManager.isRecording = false
     }
     
+    public func stopCamera() {
+        cameraManager.stopSession()
+    }
+    
     public func updatePeelAmount(_ value: CGFloat) {
         peelAmount = value
     }
     
     public func reset() {
         // Stop any active recording and the session itself
-        // Stop recording but RESTART session for next capture
         stopRecording()
-        Task {
-            cameraManager.startSession()
-        }
+        stopCamera() // Stop camera session to prevent background sifting
         
         // Reset UI state
         results = []
@@ -1330,6 +1403,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         showingSaveError = false
         saveErrorMessage = nil
         isSavingDocument = false
+        capturedMediaLocation = nil
         
         // Reset Selection & Metadata
         selectedPurposes = []
@@ -1517,6 +1591,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             currentStepSummary += "Captured Text: \(visualText.prefix(200))..."
         }
         
+        
         var combinedHistory = ""
         if !accumulatedContext.isEmpty {
              combinedHistory = accumulatedContext.joined(separator: "\n---\n")
@@ -1604,6 +1679,108 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }
 
         return (finalResults, currentStepSummary.isEmpty ? nil : currentStepSummary, allCandidates)
+    }
+
+    // MARK: - Helpers
+    private func parseISO6709(_ string: String) -> (Double, Double)? {
+        // Format: +37.7749-122.4194/
+        // Remove trailing slash if present
+        let clean = string.replacingOccurrences(of: "/", with: "")
+        
+        // Find split index (sign of longitude)
+        // Skip first char (sign of latitude)
+        guard clean.count > 1 else { return nil }
+        
+        // Find index of '+' or '-' after index 0
+        if let range = clean.range(of: "[+-]", options: .regularExpression, range: clean.index(after: clean.startIndex)..<clean.endIndex) {
+            let latStr = String(clean[..<range.lowerBound])
+            let lonStr = String(clean[range.lowerBound...])
+            
+            if let lat = Double(latStr), let lon = Double(lonStr) {
+                return (lat, lon)
+            }
+        }
+        return nil
+    }
+
+    nonisolated private func processVideoData(_ data: Data) async -> (CGImage, CLLocation?)? {
+        // Safe to run off-main-actor
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mov")
+        do {
+            try data.write(to: tempURL)
+            defer { try? FileManager.default.removeItem(at: tempURL) }
+            
+            let asset = AVAsset(url: tempURL)
+            var foundLocation: CLLocation?
+            
+            // Extract Location
+            if let metadata = try? await asset.load(.metadata),
+               let locationItem = metadata.first(where: { $0.commonKey == .commonKeyLocation }),
+               let locString = try? await locationItem.load(.stringValue),
+               let (lat, lon) = await parseISO6709Async(locString) {
+                foundLocation = CLLocation(latitude: lat, longitude: lon)
+            }
+            
+            let generator = AVAssetImageGenerator(asset: asset)
+            generator.appliesPreferredTrackTransform = true
+            
+            // Frame Selection
+            let duration = try await asset.load(.duration).seconds
+            let sampleCount = 15
+            var bestFrame: CGImage?
+            var bestScore: Float = -1.0
+            
+            let step = duration / Double(sampleCount)
+            for i in 0..<sampleCount {
+                 let time = CMTime(seconds: Double(i) * step, preferredTimescale: 600)
+                 if let image = try? await generator.image(at: time).image {
+                     
+                     let aestheticsRequest = VNCalculateImageAestheticsScoresRequest()
+                     let classifyRequest = VNClassifyImageRequest()
+                     
+                     let handler = VNImageRequestHandler(cgImage: image, options: [:])
+                     try? handler.perform([aestheticsRequest, classifyRequest])
+                     
+                     // 1. Check for UI/Screenshot content
+                     var isUI = false
+                     if let classifications = classifyRequest.results {
+                         for classification in classifications.prefix(3) {
+                             let id = classification.identifier.lowercased()
+                             if id.contains("screenshot") || id.contains("web_site") || id.contains("menu") {
+                                 isUI = true
+                                 break
+                             }
+                         }
+                     }
+                     
+                     if isUI { continue }
+                     
+                     // 2. Aesthetic score
+                     if let observation = aestheticsRequest.results?.first, observation.overallScore > bestScore {
+                         bestScore = observation.overallScore
+                         bestFrame = image
+                     } else if bestFrame == nil {
+                         bestFrame = image
+                     }
+                 }
+            }
+            
+            // Fallback
+            if let frame = bestFrame {
+                return (frame, foundLocation)
+            } else if let startFrame = try? await generator.image(at: .zero).image {
+                return (startFrame, foundLocation)
+            }
+            
+        } catch {
+            print("❌ Video processing failed: \(error)")
+        }
+        return nil
+    }
+
+    // Wrapper for pure function
+    private func parseISO6709Async(_ string: String) async -> (Double, Double)? {
+        parseISO6709(string)
     }
 
 }

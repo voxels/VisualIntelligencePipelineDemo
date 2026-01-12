@@ -151,6 +151,28 @@ extension DiverQueueItem {
         
         semanticLabels = semanticLabels.filter { !tagBlocklist.contains($0.lowercased()) }
         
+        // Add Place Child if present
+        if let placeID = placeID, let locationName = locationName {
+            let placeDesc = DiverItemDescriptor(
+                id: "place-\(placeID)-\(UUID().uuidString.prefix(8))",
+                url: "foursquare://places/\(placeID)",
+                title: locationName,
+                descriptionText: "Location context for this capture",
+                styleTags: ["place"],
+                categories: ["place", "child"],
+                location: locationName,
+                type: .place,
+                purpose: purpose,
+                masterCaptureID: masterID,
+                sessionID: sessionID,
+                placeID: placeID,
+                latitude: latitude,
+                longitude: longitude,
+                purposes: purposes
+            )
+            childDescriptors.append(placeDesc)
+        }
+        
         // MASTER ITEM
         let masterTitle = semanticLabels.first?.capitalized ?? "Captured Moment"
         let effectivePayload = siftedImage ?? capturedImage

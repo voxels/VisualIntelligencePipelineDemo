@@ -90,7 +90,7 @@ public final class DuckDuckGoEnrichmentService: ContextualEnrichmentService, Lin
                 isReaderAvailable: true
             )
         }
-
+        
         let contextService = ContextQuestionService()
         let (_, generatedQuestions, _, tags) = try await contextService.processContext(from: initialData)
         
@@ -101,6 +101,11 @@ public final class DuckDuckGoEnrichmentService: ContextualEnrichmentService, Lin
             questions: generatedQuestions,
             webContext: finalWebContext
         )
+    }
+    
+    public func fetchDetails(for id: String) async throws -> EnrichmentData? {
+        // ID-based lookup not supported by DuckDuckGo Instant Answer API
+        return nil
     }
 }
 

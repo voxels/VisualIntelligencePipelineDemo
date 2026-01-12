@@ -28,5 +28,7 @@
 		<string>processing</string>
 		<string>fetch</string>
 	</array>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>We need access to your photo library to save captured visual intelligence images.</string>
 </dict>
 </plist>
