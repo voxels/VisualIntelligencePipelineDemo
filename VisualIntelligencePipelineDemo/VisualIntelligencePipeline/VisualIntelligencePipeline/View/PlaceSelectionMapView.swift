@@ -139,11 +139,18 @@ struct PlaceSelectionMapView: View {
         isLoading = true
         defer { isLoading = false }
         
-        let center = visibleRegion?.center ?? CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+        var center = visibleRegion?.center
+        if center == nil { center = viewModel.currentCaptureCoordinate }
+        if center == nil { center = await Services.shared.locationService?.getCurrentLocation()?.coordinate }
+        
+        guard let searchCenter = center else {
+            print("⚠️ PlaceSelectionMap: Location unknown. Skipping search.")
+            return
+        }
         
         let results = await LocationSearchAggregator.fetchCandidates(
             query: searchText,
-            center: center,
+            center: searchCenter,
             foursquareService: Services.shared.foursquareService,
             mapKitService: Services.shared.mapKitService
         )

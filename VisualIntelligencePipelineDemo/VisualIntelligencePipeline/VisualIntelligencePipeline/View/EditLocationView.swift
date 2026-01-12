@@ -291,13 +291,17 @@ struct EditLocationView: View {
             // regardless of whether visibleRegion has updated yet.
             
             // Re-calculate the center we just decided on
-            let resolvedCenter: CLLocationCoordinate2D
-            if let loc = itemLocationCoordinate { resolvedCenter = loc }
-            else if let sl = sessionLocation { resolvedCenter = sl }
-            else if let current = await Services.shared.locationService?.getCurrentLocation()?.coordinate { resolvedCenter = current }
-            else { resolvedCenter = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194) }
-            
-            await fetchCandidates( explicitCenter: resolvedCenter )
+            if let loc = itemLocationCoordinate { 
+                await fetchCandidates(explicitCenter: loc)
+            } else if let sl = sessionLocation { 
+                await fetchCandidates(explicitCenter: sl)
+            } else if let current = await Services.shared.locationService?.getCurrentLocation()?.coordinate { 
+                await fetchCandidates(explicitCenter: current)
+            } else {
+                // If we defaulted to SF (Hardcoded), do NOT trigger an expensive/irrelevant API search.
+                // Just leave candidates empty.
+                print("⚠️ Location unknown. Skipping automatic place search.")
+            }
         }
     }
     

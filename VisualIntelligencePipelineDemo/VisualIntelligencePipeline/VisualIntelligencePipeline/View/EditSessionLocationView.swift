@@ -201,14 +201,14 @@ struct EditSessionLocationView: View {
                 }
             }
             
-            // 2. Resolve Search Center
-            let resolvedCenter: CLLocationCoordinate2D
-            if let loc = sessionLocationCoordinate { resolvedCenter = loc }
-            else if let current = await Services.shared.locationService?.getCurrentLocation()?.coordinate { resolvedCenter = current }
-            else { resolvedCenter = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194) }
-
             // 3. Trigger nearby search AFTER position is set
-            await fetchCandidates(explicitCenter: resolvedCenter)
+            if let loc = sessionLocationCoordinate { 
+                await fetchCandidates(explicitCenter: loc)
+            } else if let current = await Services.shared.locationService?.getCurrentLocation()?.coordinate { 
+                await fetchCandidates(explicitCenter: current)
+            } else {
+                print("⚠️ Session Location unknown. Skipping automatic place search.")
+            }
         }
     }
     
