@@ -508,6 +508,16 @@ struct ReferenceDetailContent: View {
                                     .padding(.vertical, 6)
                                     .glass(cornerRadius: 16)
                                     .foregroundStyle(.blue)
+                                    .contextMenu {
+                                        Button(role: .destructive) {
+                                            if let index = item.purposes.firstIndex(of: purpose) {
+                                                item.purposes.remove(at: index)
+                                                try? item.modelContext?.save()
+                                            }
+                                        } label: {
+                                            Label("Delete Purpose", systemImage: "trash")
+                                        }
+                                    }
                             }
                         }
                     } else {

@@ -138,6 +138,12 @@ public final class ContextQuestionService: Sendable {
             do {
                 let instructions = """
                 Analyze the following text (which represents user activity logs or multiple session contexts) and provide a high-level, cohesive summary.
+                
+                CRITICAL INSTRUCTIONS:
+                - Do NOT assume the location is "Home" or "At Home" unless explicitly stated in the logs.
+                - If no location is mentioned, do NOT invent one. Focus on the activity (e.g. "Researching cameras", "Browsing web").
+                - Avoid phrases like "at home" or "in their home" unless the text confirms it.
+                
                 Focus on:
                 - Common themes or topics.
                 - The user's progression or intent across the items.
@@ -146,7 +152,15 @@ public final class ContextQuestionService: Sendable {
                 """
                 let session = LanguageModelSession(instructions: instructions)
                 let response = try await session.respond(to: text)
-                return response.content
+                
+                // DATA SANITIZATION: Aggressively remove hallucinated "Home" references
+                var cleanSummary = response.content
+                    .replacingOccurrences(of: "at home", with: "", options: [.caseInsensitive, .regularExpression])
+                    .replacingOccurrences(of: "from home", with: "", options: [.caseInsensitive, .regularExpression])
+                    .replacingOccurrences(of: "in their home", with: "", options: [.caseInsensitive, .regularExpression])
+                    .replacingOccurrences(of: " at . ", with: ". ", options: .regularExpression) // Fix grammar after removal
+                
+                return cleanSummary
             } catch {
                 print("⚠️ Summary generation failed: \(error)")
                 return text.prefix(200) + "..."

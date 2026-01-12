@@ -173,14 +173,34 @@ struct SidebarView: View {
                                     }
                                 }
                             }
+                            .contextMenu {
+                                Button {
+                                    viewModel.refineItem(item)
+                                } label: {
+                                    Label("Refine...", systemImage: "slider.horizontal.3")
+                                }
+                                
+                                Button {
+                                    viewModel.itemToEditLocation = item
+                                } label: {
+                                    Label("Edit Location", systemImage: "mappin.and.ellipse")
+                                }
+                                
+                                Divider()
+                                
+                                Button(role: .destructive) {
+                                    viewModel.deleteItem(item, context: modelContext)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
                                     viewModel.deleteItem(item, context: modelContext)
                                 } label: {
                                     Label("Delete", systemImage: "trash")
                                 }
-
-                                .tint(.blue)
+                                .tint(.red)
                             }
                             .swipeActions(edge: .leading, allowsFullSwipe: false) {
                                 Button {
@@ -189,20 +209,6 @@ struct SidebarView: View {
                                     Label("Re-process", systemImage: "arrow.clockwise")
                                 }
                                 .tint(.blue)
-                                
-                                Button {
-                                    viewModel.refineItem(item)
-                                } label: {
-                                    Label("Refine...", systemImage: "slider.horizontal.3")
-                                }
-                                .tint(.orange)
-                                
-                                Button {
-                                    viewModel.itemToEditLocation = item
-                                } label: {
-                                    Label("Edit Location", systemImage: "mappin.and.ellipse")
-                                }
-                                .tint(.purple)
                             }
                         }
                     }

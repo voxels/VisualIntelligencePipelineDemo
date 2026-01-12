@@ -432,22 +432,55 @@ public final class LocalPipelineService {
 
         
         // Apply contextual Location -> Foursquare -> DuckDuckGo enrichment
-        // Apply contextual Location -> Foursquare -> DuckDuckGo -> Weather -> Activity in PARALLEL
-        // Apply contextual Location -> Foursquare -> DuckDuckGo -> Weather -> Activity -> Link in PARALLEL
-        // Apply contextual Location -> Foursquare -> DuckDuckGo -> Weather -> Activity in PARALLEL
-        // Apply contextual Location -> Foursquare -> DuckDuckGo -> Weather -> Activity -> Link in PARALLEL
-        var currentLocation = await locationService?.getCurrentLocation()
+        var currentLocation: CLLocation? = nil
         
-        // SESSION CONTEXT OVERRIDE
+        // 1. Try Metadata (image/video EXIF) first - explicit truth
+        if let data = rawPayload, !isJSONData(data) {
+             if let source = CGImageSourceCreateWithData(data as CFData, nil),
+                let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
+                let gps = props["{GPS}"] as? [String: Any],
+                let lat = gps["Latitude"] as? Double,
+                let latRef = gps["LatitudeRef"] as? String,
+                let lng = gps["Longitude"] as? Double,
+                let lngRef = gps["LongitudeRef"] as? String {
+                 
+                 let finalLat = latRef == "S" ? -lat : lat
+                 let finalLng = lngRef == "W" ? -lng : lng
+                 currentLocation = CLLocation(latitude: finalLat, longitude: finalLng)
+                 DiverLogger.pipeline.debug("Extracted Location from New Item Metadata: \(finalLat), \(finalLng)")
+             } else if let videoLocation = await extractLocationFromVideo(data: data) {
+                 currentLocation = videoLocation
+                 DiverLogger.pipeline.debug("Extracted Location from New Item Video Metadata: \(videoLocation.coordinate.latitude), \(videoLocation.coordinate.longitude)")
+             }
+        }
+        
+        // 2. Fallback to Live GPS ONLY if item is Recent (Captured now) and no metadata
+        // This prevents library imports from adopting "Home" location incorrectly
+        if currentLocation == nil {
+             let isRecent = abs(input.createdAt.timeIntervalSinceNow) < 300 // 5 minutes
+             if isRecent {
+                 currentLocation = await locationService?.getCurrentLocation()
+                 DiverLogger.pipeline.debug("Using Live Device Location (Recent Capture)")
+             } else {
+                 DiverLogger.pipeline.debug("Skipping Live Device Location for non-recent item (Library Import)")
+             }
+        }
+        
+        // 3. SESSION CONTEXT OVERRIDE (Highest Priority for grouping)
+        // If user explicitly adds to a session, they likely want that session's context
+        // User Report: "current location is overriding the locaiton of the session" -> Fix: Apply this LAST to override.
         var hasUserOverride = false
         if let sessionID = descriptor?.sessionID ?? processed.sessionID {
              let fetchSession = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
              if let session = try? modelContext.fetch(fetchSession).first {
+                 var useSessionLoc = false
                  if let lat = session.latitude, let lng = session.longitude {
-                     // Use session location if explicitly set (e.g. from map selection or edit)
+                     // Use session location if explicitly set
                      currentLocation = CLLocation(latitude: lat, longitude: lng)
                      DiverLogger.pipeline.debug("Using Session Location Override: \(lat), \(lng)")
+                     useSessionLoc = true
                  }
+
                  if let locName = session.locationName, !locName.isEmpty {
                      hasUserOverride = true
                  }
@@ -870,7 +903,38 @@ public final class LocalPipelineService {
             }
         }
         if let doc = enrichment.documentContext { item.documentContext = doc }
-        if let place = enrichment.placeContext, !preservePlaceIdentity { item.placeContext = place }
+        
+        if let newPlace = enrichment.placeContext {
+            if !preservePlaceIdentity {
+                // Full overwrite
+                item.placeContext = newPlace
+            } else if let existingPlace = item.placeContext {
+                // Merge logic: Keep Identity (Name, ID, Address) but enrich with Details (Phone, Website, Photos, Tips)
+                // if they are missing in existing.
+                
+                let mergedPlace = PlaceContext(
+                    name: existingPlace.name, // Keep
+                    categories: existingPlace.categories.isEmpty ? newPlace.categories : existingPlace.categories, // Enrich if empty
+                    placeID: existingPlace.placeID, // Keep
+                    address: existingPlace.address, // Keep
+                    rating: existingPlace.rating ?? newPlace.rating, // Enrich
+                    isOpen: existingPlace.isOpen ?? newPlace.isOpen, // Enrich
+                    latitude: existingPlace.latitude, // Keep coordinates of override
+                    longitude: existingPlace.longitude,
+                    priceLevel: existingPlace.priceLevel ?? newPlace.priceLevel, // Enrich
+                    phoneNumber: existingPlace.phoneNumber ?? newPlace.phoneNumber, // Enrich
+                    website: existingPlace.website ?? newPlace.website, // Enrich
+                    photos: (existingPlace.photos ?? []) + (newPlace.photos ?? []), // Merge lists
+                    tips: (existingPlace.tips ?? []) + (newPlace.tips ?? [])
+                )
+                item.placeContext = mergedPlace
+            } else {
+                 // Should not happen if preservePlaceIdentity is true (implies there IS an identity to preserve), 
+                 // but if placeContext was nil, just take the new one.
+                 item.placeContext = newPlace
+            }
+        }
+        
         if !enrichment.questions.isEmpty { item.questions = enrichment.questions }
         // questions are handled by the ViewModel/UI during the review phase
     }
@@ -998,7 +1062,7 @@ public final class LocalPipelineService {
         return false
     }
 
-    private func extractConcepts(from item: ProcessedItem) async {
+    public func extractConcepts(from item: ProcessedItem) async {
         guard let text = item.webContext?.textContent, !text.isEmpty else { return }
         
         // Include purpose/activity in the analysis input so concepts reflect both content and intent
@@ -1034,7 +1098,7 @@ public final class LocalPipelineService {
         }
     }
 
-    private func autoCreateConcepts(from item: ProcessedItem) async throws {
+    public func autoCreateConcepts(from item: ProcessedItem) async throws {
         // Normalize and separate candidates
         let purposeCandidates = Set(item.purposes.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty })
         
@@ -1151,20 +1215,27 @@ public final class LocalPipelineService {
             }
         }
         
-        // Anti-Bias: If location is "Home", strip it from LLM input so it relies on visual context
-        if let loc = effectiveLocationName, loc.localizedCaseInsensitiveContains("home-location") || loc.localizedCaseInsensitiveContains("home") {
-            effectiveLocationName = nil
-            
-            // Also scrub "Home" from the text context to prevent leakage
-            // We use a simple replacement for common location patterns
-            // This prevents "Foursquare: Home" or "Location: Home" from biasing the prompt
-            var sanitized = fullContext
-            sanitized = sanitized.replacingOccurrences(of: "Home Location", with: "Location", options: .caseInsensitive)
-            sanitized = sanitized.replacingOccurrences(of: "Home", with: "", options: .caseInsensitive) // Aggressive strip for now as per user report "still says at home"
-            
-            // Re-assign strict fullContext
-            fullContext = sanitized
+        // Anti-Bias: Always scrub "Home" location patterns from the text context
+        // This addresses persistent "still talking about home" issues where previous summaries or session context
+        // might reinject "Home" into the prompt.
+        var sanitized = fullContext
+        
+        // Remove "Location: Home", "Place: Home", "At Home", "In Home" (case insensitive)
+        // Use Regex to be robust but avoid "Home Depot" if possible (though "Home" as a location is the primary target)
+        // Pattern: \b(Location|Place|Context|At|In)?\s*[:un]?\s*Home\b
+        if let regex = try? NSRegularExpression(pattern: "(?i)(location|place|context|at|in)\\s*[:\\-]?\\s*\\bhome\\b", options: []) {
+             let range = NSRange(location: 0, length: sanitized.utf16.count)
+             sanitized = regex.stringByReplacingMatches(in: sanitized, options: [], range: range, withTemplate: "$1 Unknown")
         }
+        
+        // Also strip just "Home" if it stands alone or keys off effectiveLocationName logic
+        if let loc = effectiveLocationName, loc.localizedCaseInsensitiveContains("home") {
+             effectiveLocationName = nil
+             // If the explicit location was headered as Home, nuke generic "Home" mentions too
+             sanitized = sanitized.replacingOccurrences(of: "Home", with: "Location", options: .caseInsensitive) 
+        }
+        
+        fullContext = sanitized
 
         let currentData = EnrichmentData(
             title: item.title,
@@ -1502,8 +1573,14 @@ public final class LocalPipelineService {
                 combinedText += "---\n"
             }
             
+            // NUCLEAR OPTION: Scrub "Home" from the input text entirely to prevent LLM bias
+            // We replace "Home" with "Location" or remove it if it looks like "At Home"
+            // Case insensitive replace
+            let scrubbedText = combinedText.replacingOccurrences(of: "Home", with: "Location", options: .caseInsensitive)
+                                         .replacingOccurrences(of: "At Location", with: "At Unknown Location")
+            
             let service = ContextQuestionService()
-            let summary = try await service.summarizeText(combinedText)
+            let summary = try await service.summarizeText(scrubbedText)
             
             if let meta = try modelContext.fetch(fetchMeta).first {
                 meta.summary = summary
