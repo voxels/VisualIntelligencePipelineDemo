@@ -374,6 +374,18 @@ public final class LocalPipelineService {
                 
                 await performLLMAnalysis(for: existing, descriptor: descriptor, accumulatedContext: localAccumulatedContext)
                 
+                // Extract high-level concepts (User Request: "reprocess button should run analyze context")
+                if existing.webContext?.textContent != nil {
+                    await self.extractConcepts(from: existing)
+                }
+                
+                // Auto-create UserConcepts
+                do {
+                    try await self.autoCreateConcepts(from: existing)
+                } catch {
+                    DiverLogger.pipeline.error("Failed to auto-create concepts during reprocessing for \(existing.id): \(error)")
+                }
+                
                 // Ensure session is synced with potentially new location data (User Request: "recreate the session if it doesn't already exist")
                 await MainActor.run {
                     self.syncSession(for: existing)
@@ -1128,7 +1140,7 @@ public final class LocalPipelineService {
         }
         
         // Pass full context; ContextQuestionService now handles chaining/chunking for large inputs
-        let fullContext = (item.summary ?? "") + "\n\n--- Context ---\n" + accumulatedContext + sessionContext
+        var fullContext = (item.summary ?? "") + "\n\n--- Context ---\n" + accumulatedContext + sessionContext
         
         // Override location with Session Metadata if available to ensure LLM respects user edit
         var effectiveLocationName = item.location
@@ -1142,6 +1154,16 @@ public final class LocalPipelineService {
         // Anti-Bias: If location is "Home", strip it from LLM input so it relies on visual context
         if let loc = effectiveLocationName, loc.localizedCaseInsensitiveContains("home-location") || loc.localizedCaseInsensitiveContains("home") {
             effectiveLocationName = nil
+            
+            // Also scrub "Home" from the text context to prevent leakage
+            // We use a simple replacement for common location patterns
+            // This prevents "Foursquare: Home" or "Location: Home" from biasing the prompt
+            var sanitized = fullContext
+            sanitized = sanitized.replacingOccurrences(of: "Home Location", with: "Location", options: .caseInsensitive)
+            sanitized = sanitized.replacingOccurrences(of: "Home", with: "", options: .caseInsensitive) // Aggressive strip for now as per user report "still says at home"
+            
+            // Re-assign strict fullContext
+            fullContext = sanitized
         }
 
         let currentData = EnrichmentData(
