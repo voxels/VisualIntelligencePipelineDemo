@@ -110,6 +110,28 @@ public class ReferenceDetailViewModel: ObservableObject {
         }
     }
     
+    public func refreshLinkMetadata(item: ProcessedItem) {
+        print("🔄 ReferenceDetailViewModel: User requested immediate link refresh for \(item.id)")
+        
+        Task {
+            do {
+                if let pipeline = Services.shared.metadataPipelineService {
+                    try await pipeline.processItemImmediately(item)
+                    print("✅ Immediate refresh triggered via PipelineService")
+                    
+                    // Optimistic UI update
+                    await MainActor.run {
+                        item.status = .processing
+                    }
+                } else {
+                    print("❌ MetadataPipelineService not available")
+                }
+            } catch {
+                print("❌ Failed to trigger immediate refresh: \(error)")
+            }
+        }
+    }
+    
     public func openOriginalURL(item: ProcessedItem) {
         if let urlString = item.url, let url = URL(string: urlString) {
             #if os(iOS)

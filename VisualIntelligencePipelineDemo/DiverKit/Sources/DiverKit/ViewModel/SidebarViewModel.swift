@@ -473,22 +473,24 @@ public class SidebarViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Photo Import
-    public func importExternalImage(data: Data) {
+    // MARK: - Photo/Video Import
+    public func importExternalItem(data: Data, isVideo: Bool = false) {
         Task {
             do {
-                print("📸 Image received, size: \(data.count) bytes")
+                print("📸 Import received, size: \(data.count) bytes, isVideo: \(isVideo)")
                 
                 // Create DiverQueueItem
-                let filename = "import-\(UUID().uuidString).jpg"
+                let ext = isVideo ? "mov" : "jpg"
+                let filename = "import-\(UUID().uuidString).\(ext)"
                 let queueDirectory = AppGroupContainer.queueDirectoryURL()!
                 
                 let descriptor = DiverItemDescriptor(
                     id: UUID().uuidString,
                     url: "", // Fix: url is non-optional String
-                    title: "Imported Photo",
+                    title: isVideo ? "Imported Video" : "Imported Photo",
                     descriptionText: nil,
-                    createdAt: Date(), type: .image,
+                    createdAt: Date(), 
+                    type: isVideo ? .video : .image,
                 )
                 
                 let queueItem = DiverQueueItem(
@@ -501,7 +503,7 @@ public class SidebarViewModel: ObservableObject {
                 
                 let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
                 let path = try queueStore.enqueue(queueItem)
-                print("✅ Enqueued imported photo at \(path)")
+                print("✅ Enqueued imported item at \(path)")
                 
                 await MainActor.run {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {

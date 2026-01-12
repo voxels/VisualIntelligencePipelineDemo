@@ -361,7 +361,7 @@ struct SidebarView: View {
             ToolbarItem(placement: .primaryAction) {
                 HStack {
                     // Use local state
-                    PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .any(of: [.images, .videos, .screenRecordings]), photoLibrary: .shared()) {
                         Image(systemName: "plus")
                             .font(.body)
                     }
@@ -422,9 +422,12 @@ struct SidebarView: View {
         }
         .onChange(of: selectedPhotoItem) { newItem in
             Task {
-                if let item = newItem, let data = try? await item.loadTransferable(type: Data.self) {
-                     viewModel.importExternalImage(data: data)
-                     selectedPhotoItem = nil // Reset picker
+                if let item = newItem {
+                    let isVideo = item.supportedContentTypes.contains { $0.conforms(to: .movie) }
+                    if let data = try? await item.loadTransferable(type: Data.self) {
+                        viewModel.importExternalItem(data: data, isVideo: isVideo)
+                        selectedPhotoItem = nil // Reset picker
+                    }
                 }
             }
         }

@@ -10,6 +10,7 @@ public enum DiverItemType: String, Codable, Equatable, Hashable, Sendable {
     case text
     case document
     case image
+    case video
     case activity
     case qrCode
     case weather

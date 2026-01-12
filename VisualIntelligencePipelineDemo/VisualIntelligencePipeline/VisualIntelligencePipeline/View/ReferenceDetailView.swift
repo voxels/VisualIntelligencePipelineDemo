@@ -201,7 +201,7 @@ struct ReferenceDetailContent: View {
                 }
 
                 // Semantic Tags Section
-                let semanticTags = Array(Set(item.themes + item.tags + item.categories)).sorted()
+                let semanticTags = Array(Set(item.themes + item.tags + item.categories + item.purposes)).sorted()
                 if !semanticTags.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Semantic Tags")
@@ -222,7 +222,7 @@ struct ReferenceDetailContent: View {
                                         }
                                         try? context.save()
                                         
-                                        // Provide feedback (optional, e.g. haptic)
+                                        // Feedback
                                         let generator = UIImpactFeedbackGenerator(style: .medium)
                                         generator.impactOccurred()
                                     }
@@ -233,6 +233,18 @@ struct ReferenceDetailContent: View {
                                         .padding(.vertical, 4)
                                         .glass(cornerRadius: 8)
                                         .foregroundStyle(.blue)
+                                }
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        // Remove from all semantic lists
+                                        if let idx = item.purposes.firstIndex(of: tag) { item.purposes.remove(at: idx) }
+                                        if let idx = item.tags.firstIndex(of: tag) { item.tags.remove(at: idx) }
+                                        if let idx = item.themes.firstIndex(of: tag) { item.themes.remove(at: idx) }
+                                        if let idx = item.categories.firstIndex(of: tag) { item.categories.remove(at: idx) }
+                                        try? item.modelContext?.save()
+                                    } label: {
+                                        Label("Delete Tag", systemImage: "trash")
+                                    }
                                 }
                             }
                         }
@@ -387,6 +399,14 @@ struct ReferenceDetailContent: View {
                                         RoundedRectangle(cornerRadius: 12)
                                             .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
                                     )
+                                
+                                Button {
+                                    viewModel.refreshLinkMetadata(item: item)
+                                } label: {
+                                    Label("Refresh Preview", systemImage: "arrow.clockwise")
+                                        .font(.caption)
+                                }
+                                .buttonStyle(.bordered)
                             }
                             .contextCard()
                         }

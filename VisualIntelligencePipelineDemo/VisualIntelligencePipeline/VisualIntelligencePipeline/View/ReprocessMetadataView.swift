@@ -72,7 +72,7 @@ struct ReprocessMetadataView: View {
                         }
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(item.rawPayload == nil || isLoading)
+                    .disabled(item.rawPayload == nil || isJSON(item.rawPayload) || isLoading)
                     .listRowInsets(EdgeInsets())
                 }
             }
@@ -91,14 +91,20 @@ struct ReprocessMetadataView: View {
     }
     
     private var itemImage: UIImage? {
-        if let data = item.rawPayload {
+        if let data = item.rawPayload, !isJSON(data) {
             return UIImage(data: data)
         }
         return nil
     }
     
+    private func isJSON(_ data: Data?) -> Bool {
+        guard let data = data, !data.isEmpty else { return false }
+        let first = data[0]
+        return first == 0x7B || first == 0x5B // '{' or '['
+    }
+    
     private func startReprocessing() {
-        guard let imageData = item.rawPayload else { return }
+        guard let imageData = item.rawPayload, !isJSON(imageData) else { return }
         
         isLoading = true
         

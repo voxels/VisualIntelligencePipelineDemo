@@ -134,38 +134,38 @@ struct SessionCardView: View {
                 }
                 
                 // Dropdown Chevron Area (Tap to expand)
-                Button {
-                    if isSelectionMode {
-                        onSelect()
-                    } else {
-                        withAnimation {
-                            isExpanded.toggle()
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Text(isExpanded ? "Hide items" : "Show \(items.count) items")
-                            .font(.caption)
-                            .bold()
-                            .foregroundStyle(.blue)
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                            .foregroundStyle(.secondary)
-                            .opacity(isSelectionMode ? 0 : 1) // Hide chevron in edit mode
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 10)
-                    .background(Color(uiColor: .systemBackground))
+                HStack {
+                    Text(isExpanded ? "Hide items" : "Show \(items.count) items")
+                        .font(.caption)
+                        .bold()
+                        .foregroundStyle(.blue)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        .foregroundStyle(.secondary)
+                        .opacity(isSelectionMode ? 0 : 1) // Hide chevron in edit mode
                 }
-                .buttonStyle(.plain)
+                .padding(.horizontal)
+                .padding(.vertical, 10)
+                .background(Color(uiColor: .systemBackground))
+                .contentShape(Rectangle()) // Hit test helper for chevron area
                  
                 // Divider if not expanded, or if expanded content follows in SidebarView
                  if !isExpanded {
                      Divider()
                  }
+            }
+            .contentShape(Rectangle()) // Make entire card area tappable
+            .onTapGesture {
+                if isSelectionMode {
+                    onSelect()
+                } else {
+                    withAnimation {
+                        isExpanded.toggle()
+                    }
+                }
             }
             .background(Color(uiColor: .secondarySystemGroupedBackground))
             .cornerRadius(12)

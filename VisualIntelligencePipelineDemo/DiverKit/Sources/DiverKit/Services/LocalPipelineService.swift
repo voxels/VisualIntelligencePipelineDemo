@@ -42,7 +42,7 @@ public final class LocalPipelineService {
         let resolvedEntityType = descriptor?.type.rawValue ?? input.inputType
         let resolvedModality = descriptor?.type.rawValue ?? input.inputType
         let resolvedTags = descriptor.map { Array(Set($0.styleTags + $0.categories)).sorted() } ?? []
-        let rawPayload = input.rawPayload ?? (try? encodePayload(input: input, descriptor: descriptor))
+        let rawPayload = input.rawPayload
 
         if let existing {
             DiverLogger.pipeline.debug("Updating existing ProcessedItem - id: \(resolvedId)")
@@ -70,9 +70,18 @@ public final class LocalPipelineService {
             
             if let urlString = input.url, let url = URL(string: urlString), let enrichmentService {
                 if url.scheme?.lowercased().hasPrefix("secretatomics") == false {
-                    if let enrichment = try await enrichmentService.enrich(url: url) {
-                        applyEnrichment(enrichment, to: existing)
-                        if let desc = enrichment.descriptionText { accumulatedContext += "\nLink Summary: \(desc)" }
+                    do {
+                        let enrichment = try await withTimeout(seconds: 10) {
+                            try await enrichmentService.enrich(url: url)
+                        }
+                        
+                        if let enrichment {
+                            applyEnrichment(enrichment, to: existing)
+                            if let desc = enrichment.descriptionText { accumulatedContext += "\nLink Summary: \(desc)" }
+                        }
+                    } catch {
+                        DiverLogger.pipeline.warning("⚠️ Link enrichment failed or timed out for \(url): \(error)")
+                        // Proceed without enrichment
                     }
                 }
             }
@@ -871,12 +880,7 @@ public final class LocalPipelineService {
         return "Untitled"
     }
 
-    private func encodePayload(input: LocalInput, descriptor: DiverItemDescriptor?) throws -> Data {
-        let payload = LocalPipelinePayload(input: .init(from: input), descriptor: descriptor)
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        return try encoder.encode(payload)
-    }
+
 
     private func linkToParent(item: ProcessedItem, purpose: String) async throws {
         // Find or create a parent record for this purpose
@@ -1133,6 +1137,11 @@ public final class LocalPipelineService {
             if let session = try? modelContext.fetch(sessionDesc).first, let locName = session.locationName {
                 effectiveLocationName = locName
             }
+        }
+        
+        // Anti-Bias: If location is "Home", strip it from LLM input so it relies on visual context
+        if let loc = effectiveLocationName, loc.localizedCaseInsensitiveContains("home-location") || loc.localizedCaseInsensitiveContains("home") {
+            effectiveLocationName = nil
         }
 
         let currentData = EnrichmentData(
@@ -1787,12 +1796,8 @@ public final class LocalPipelineService {
     }
 }
 
-private struct LocalPipelinePayload: Codable {
-    let input: LocalInputSnapshot
-    let descriptor: DiverItemDescriptor?
-}
 
-struct ParallelEnrichmentResult: Sendable {
+struct ParallelEnrichmentResult {
     var foursquare: EnrichmentData?
     var duckDuckGo: EnrichmentData?
     var weather: WeatherContext?
