@@ -7,6 +7,7 @@ import MapKit
 #if os(iOS)
 import UIKit
 #endif
+import PhotosUI
 
 struct SidebarView: View {
     @Binding var selection: ProcessedItem?
@@ -19,6 +20,7 @@ struct SidebarView: View {
     @State private var processingExpanded = true
     @State private var libraryExpanded = true
     @State private var favoritesExpanded = true
+    @State private var selectedPhotoItem: PhotosPickerItem? // Local state for picker
     #if DEBUG
     @State private var developerExpanded = false
     #endif
@@ -350,17 +352,25 @@ struct SidebarView: View {
         .environment(\.editMode, .constant(viewModel.isSelectionMode ? .active : .inactive))
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                if viewModel.isSelectionMode {
-                    Button("Cancel") {
-                        withAnimation {
-                            viewModel.isSelectionMode = false
-                            viewModel.selectedSessions.removeAll()
-                        }
+                HStack {
+                    // Use local state
+                    PhotosPicker(selection: $selectedPhotoItem, matching: .images, photoLibrary: .shared()) {
+                        Image(systemName: "plus")
+                            .font(.body)
                     }
-                } else {
-                    Button("Edit") {
-                        withAnimation {
-                            viewModel.isSelectionMode = true
+
+                    if viewModel.isSelectionMode {
+                        Button("Cancel") {
+                            withAnimation {
+                                viewModel.isSelectionMode = false
+                                viewModel.selectedSessions.removeAll()
+                            }
+                        }
+                    } else {
+                        Button("Edit") {
+                            withAnimation {
+                                viewModel.isSelectionMode = true
+                            }
                         }
                     }
                 }
@@ -402,6 +412,14 @@ struct SidebarView: View {
         }
         .sheet(isPresented: $viewModel.showingShortcutGallery) {
             ShortcutGalleryView()
+        }
+        .onChange(of: selectedPhotoItem) { newItem in
+            Task {
+                if let item = newItem, let data = try? await item.loadTransferable(type: Data.self) {
+                     viewModel.importExternalImage(data: data)
+                     selectedPhotoItem = nil // Reset picker
+                }
+            }
         }
         .sheet(item: $viewModel.groupSummaryResult) { result in
             NavigationStack {

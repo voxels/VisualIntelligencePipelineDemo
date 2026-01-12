@@ -34,29 +34,47 @@ public struct VisualIntelligenceView: View {
         ZStack {
             // Background Layer
             // Background Layer
-            if viewModel.isReviewing, let capturedImage = viewModel.capturedImage {
-                Image(uiImage: capturedImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .ignoresSafeArea()
-                    .overlay(
-                        ZStack {
-                            // Highlight Subject
-                            if let box = viewModel.siftedBoundingBox, let image = viewModel.siftedImage {
-                                // Use SiftedSubjectView for the overlay
-                                SiftedSubjectView(siftedImage: image, boundingBox: box, peelAmount: $viewModel.peelAmount)
-                            } else if let box = viewModel.siftedBoundingBox {
-                                // Fallback if image not ready but box is
-                                GeometryReader { proxy in
-                                    let rect = viewModel.convertBoundingBox(box, to: proxy.size)
-                                    RoundedRectangle(cornerRadius: 16)
-                                        .stroke(LinearGradient(colors: [.white, .blue.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 3)
-                                        .frame(width: rect.width, height: rect.height)
-                                        .position(x: rect.midX, y: rect.midY)
+            // Background Layer
+            if viewModel.isReviewing {
+                if let capturedImage = viewModel.capturedImage {
+                    Image(uiImage: capturedImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .ignoresSafeArea()
+                        .overlay(
+                            ZStack {
+                                // Highlight Subject
+                                if let box = viewModel.siftedBoundingBox, let image = viewModel.siftedImage {
+                                    // Use SiftedSubjectView for the overlay
+                                    SiftedSubjectView(siftedImage: image, boundingBox: box, peelAmount: $viewModel.peelAmount)
+                                } else if let box = viewModel.siftedBoundingBox {
+                                    // Fallback if image not ready but box is
+                                    GeometryReader { proxy in
+                                        let rect = viewModel.convertBoundingBox(box, to: proxy.size)
+                                        RoundedRectangle(cornerRadius: 16)
+                                            .stroke(LinearGradient(colors: [.white, .blue.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 3)
+                                            .frame(width: rect.width, height: rect.height)
+                                            .position(x: rect.midX, y: rect.midY)
+                                    }
                                 }
                             }
+                        )
+                } else {
+                    // Fallback if image is missing but we are in review mode
+                    Color.black.ignoresSafeArea()
+                    VStack(spacing: 16) {
+                        Image(systemName: "photo.badge.exclamationmark")
+                            .font(.largeTitle)
+                            .foregroundStyle(.white)
+                        Text("Unable to load image for reprocessing")
+                            .foregroundStyle(.white)
+                        Button("Cancel") {
+                            viewModel.isReviewing = false
+                            viewModel.reset()
                         }
-                    )
+                        .buttonStyle(.bordered)
+                    }
+                }
             } else if viewModel.cameraManager.isReady {
                 CameraPreviewView(session: viewModel.cameraManager.session)
                     .ignoresSafeArea()
@@ -816,7 +834,15 @@ struct WebView: UIViewRepresentable {
 extension VisualIntelligenceView {
     @ViewBuilder
     var locationSelectionRow: some View {
-        if !viewModel.placeCandidates.isEmpty {
+        let placesToShow: [EnrichmentData] = {
+            var places = viewModel.placeCandidates
+            if let selected = viewModel.selectedPlace, !places.contains(where: { $0.id == selected.id }) {
+                places.insert(selected, at: 0)
+            }
+            return places
+        }()
+        
+        if !placesToShow.isEmpty {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     // Map Icon / "Other"
@@ -830,14 +856,14 @@ extension VisualIntelligenceView {
                             .glass(cornerRadius: 20)
                     }
                     
-                    ForEach(viewModel.placeCandidates) { place in
+                ForEach(placesToShow) { place in
                         Button {
                             withAnimation {
                                 viewModel.selectedPlace = place
                             }
-#if os(iOS)
+                            #if os(iOS)
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-#endif
+                            #endif
                         } label: {
                             HStack(spacing: 6) {
                                 if place.title == "Home" {
@@ -860,14 +886,34 @@ extension VisualIntelligenceView {
                             .foregroundStyle(.white)
                             .clipShape(Capsule())
                         }
+                        .contextMenu {
+                            Button(action: {
+                                viewModel.startRenaming(place)
+                            }) {
+                                Label("Rename", systemImage: "pencil")
+                            }
+                        }
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
+                .alert("Rename Place", isPresented: Binding(
+                    get: { viewModel.renamingPlace != nil },
+                    set: { if !$0 { viewModel.renamingPlace = nil } }
+                )) {
+                    TextField("New Name", text: $viewModel.newPlaceTitle)
+                    Button("Cancel", role: .cancel) { }
+                    Button("Save") {
+                        if let place = viewModel.renamingPlace {
+                            viewModel.updatePlaceTitle(for: place.id, with: viewModel.newPlaceTitle)
+                        }
+                    }
+                }
             }
         }
     }
 }
+
 
 struct FullScreenImageView: View {
     let image: UIImage

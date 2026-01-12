@@ -91,45 +91,47 @@ struct PlaceSelectionMapView: View {
                     await searchHere()
                 }
             }
+            .onAppear {
+                setupInitialPosition()
+            }
+        }
+    }
+    
+    private func setupInitialPosition() {
+        if let coordinate = viewModel.currentCaptureCoordinate {
+            position = .region(MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+        } else {
+             Task {
+                 if let current = await Services.shared.locationService?.getCurrentLocation() {
+                      await MainActor.run {
+                          withAnimation {
+                              position = .region(MKCoordinateRegion(center: current.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
+                          }
+                      }
+                 } else {
+                     await MainActor.run {
+                         position = .region(MKCoordinateRegion(
+                             center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+                             span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+                         ))
+                     }
+                 }
+             }
         }
     }
     
     private func resolveMapFeature(_ feature: MapFeature) async {
-        let coordinate = feature.coordinate
-        let title = feature.title ?? "Selected Location"
-        
-        // 1. Try Foursquare Lookup
-        if let fsqService = Services.shared.foursquareService {
-            do {
-                let results = try await fsqService.search(query: title, location: coordinate, limit: 1)
-                if let bestMatch = results.first {
-                    await MainActor.run {
-                        viewModel.selectPlace(bestMatch)
-                        dismiss()
-                    }
-                    return
-                }
-            } catch {
-                print("Foursquare lookup failed: \(error)")
+        let simpleFeature = SimpleMapFeature(coordinate: feature.coordinate, title: feature.title)
+
+        if let data = await LocationSearchAggregator.resolveMapFeature(
+            feature: simpleFeature,
+            foursquareService: Services.shared.foursquareService,
+            mapKitService: Services.shared.mapKitService
+        ) {
+             await MainActor.run {
+                viewModel.selectPlace(data)
+                dismiss()
             }
-        }
-        
-        // 2. MapKit Fallback
-        let placeData = EnrichmentData(
-            title: title,
-            descriptionText: "Apple Maps Location",
-            categories: ["Point of Interest"],
-            location: title,
-            placeContext: PlaceContext(
-                name: title,
-                categories: ["POI"],
-                latitude: coordinate.latitude,
-                longitude: coordinate.longitude
-            )
-        )
-        await MainActor.run {
-            viewModel.selectPlace(placeData)
-            dismiss()
         }
     }
     
@@ -139,41 +141,15 @@ struct PlaceSelectionMapView: View {
         
         let center = visibleRegion?.center ?? CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
         
-        // Foursquare
-        if let service = Services.shared.foursquareService {
-            do {
-                let results: [EnrichmentData]
-                if searchText.isEmpty {
-                    results = try await service.searchNearby(location: center, limit: 20)
-                } else {
-                    results = try await service.search(query: searchText, location: center, limit: 20)
-                }
-                
-                await MainActor.run {
-                    viewModel.placeCandidates = results
-                }
-                return
-            } catch {
-                print("Foursquare search failed, trying fallback: \(error)")
-            }
-        }
-    
-        // MapKit Fallback
-        if let service = Services.shared.mapKitService {
-             do {
-                let results: [EnrichmentData]
-                if searchText.isEmpty {
-                     results = try await service.searchNearby(location: center, limit: 20)
-                } else {
-                     results = try await service.search(query: searchText, location: center, limit: 20)
-                }
-                
-                await MainActor.run {
-                    viewModel.placeCandidates = results
-                }
-            } catch {
-                print("MapKit search failed: \(error)")
-            }
+        let results = await LocationSearchAggregator.fetchCandidates(
+            query: searchText,
+            center: center,
+            foursquareService: Services.shared.foursquareService,
+            mapKitService: Services.shared.mapKitService
+        )
+        
+        await MainActor.run {
+            viewModel.placeCandidates = results
         }
     }
 }

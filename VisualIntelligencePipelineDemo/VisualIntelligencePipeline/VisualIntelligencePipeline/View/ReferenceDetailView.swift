@@ -50,6 +50,9 @@ struct ReferenceDetailContent: View {
     @StateObject private var viewModel = ReferenceDetailViewModel()
     @EnvironmentObject private var sharedWithYouManager: SharedWithYouManager
     @State private var showingMap = false
+    @State private var showingEditLocation = false
+    @State private var showingPlaceDetails = false // New State
+    
     @Query private var allItems: [ProcessedItem]
     @Query private var sessions: [DiverSession]
     
@@ -380,6 +383,39 @@ struct ReferenceDetailContent: View {
                     
                     if let place = item.placeContext {
                         PlaceContextView(context: place, baseLocation: item.location)
+                            .overlay(alignment: .topTrailing) {
+                                Button {
+                                    showingEditLocation = true
+                                } label: {
+                                    Image(systemName: "pencil")
+                                        .font(.title3)
+                                        .padding(8)
+                                        .background(Color.white.opacity(0.8))
+                                        .clipShape(Circle())
+                                }
+                                .padding(8)
+                            }
+                            .onTapGesture {
+                                showingPlaceDetails = true
+                            }
+                            .sheet(isPresented: $showingPlaceDetails) {
+                                PlaceDetailSheet(context: place) { tag in
+                                    // Add tag to item
+                                    var updated = false
+                                    if !item.tags.contains(tag) {
+                                        item.tags.append(tag)
+                                        updated = true
+                                    }
+                                    if !item.categories.contains(tag) {
+                                        item.categories.append(tag)
+                                        updated = true
+                                    }
+                                    
+                                    if updated {
+                                        try? item.modelContext?.save()
+                                    }
+                                }
+                            }
                     }
                     
     // Product Search Preview
@@ -491,8 +527,8 @@ struct ReferenceDetailContent: View {
                      if !item.questions.isEmpty {
                          Divider()
                          Text("Reflection Questions")
-                             .font(.subheadline)
-                             .foregroundStyle(.secondary)
+                         .font(.subheadline)
+                         .foregroundStyle(.secondary)
                          
                          ForEach(item.questions, id: \.self) { question in
                              HStack(alignment: .top) {
@@ -524,6 +560,16 @@ struct ReferenceDetailContent: View {
         }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
+                // Edit Location
+                Button {
+                    showingEditLocation = true
+                } label: {
+                    Label("Edit Location", systemImage: "pencil.and.outline")
+                }
+                .sheet(isPresented: $showingEditLocation) {
+                    EditLocationView(item: item)
+                }
+                
                 // Map Button
                 if let location = item.location, !location.isEmpty {
                     Button {
@@ -1643,6 +1689,246 @@ struct StructuredDataView: View {
             return [object]
         }
         return nil
+    }
+}
+
+// MARK: - Place Detail Sheet
+struct PlaceDetailSheet: View {
+    let context: PlaceContext
+    var onAddTag: ((String) -> Void)? = nil // Callback for adding context
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    
+                    // 1. Map Header
+                    if let lat = context.latitude, let lon = context.longitude {
+                        Map(initialPosition: .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: lat, longitude: lon), span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)))) {
+                            Marker(context.name ?? "Location", coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon))
+                        }
+                        .frame(height: 250)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .shadow(radius: 4)
+                        .overlay(alignment: .bottomTrailing) {
+                            Button {
+                                openInMaps(lat: lat, lon: lon, name: context.name)
+                            } label: {
+                                Image(systemName: "location.fill")
+                                    .padding(8)
+                                    .background(.thinMaterial)
+                                    .clipShape(Circle())
+                                    .padding(8)
+                            }
+                        }
+                    }
+                    
+                    // 2. Title & Basic Info
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(context.name ?? "Unknown Place")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                        
+                        // Categories / Taste Chips
+                        if !context.categories.isEmpty {
+                            FlowLayout(spacing: 8) {
+                                ForEach(context.categories, id: \.self) { category in
+                                    Button {
+                                        onAddTag?(category)
+                                        // Optional feedback
+                                        let generator = UIImpactFeedbackGenerator(style: .medium)
+                                        generator.impactOccurred()
+                                    } label: {
+                                        Text(category)
+                                            .font(.subheadline.bold())
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(Color.orange.opacity(0.1))
+                                            .foregroundStyle(.orange)
+                                            .clipShape(Capsule())
+                                            .overlay(
+                                                Capsule()
+                                                    .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                                            )
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if let address = context.address {
+                            Text(address)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    // 3. Status Pills (Rating, Price, Open)
+                    HStack(spacing: 12) {
+                        if let rating = context.rating {
+                            Label(String(format: "%.1f", rating), systemImage: "star.fill")
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.yellow.opacity(0.2))
+                                .foregroundStyle(.yellow)
+                                .clipShape(Capsule())
+                        }
+                        
+                        if let price = context.priceLevel {
+                            Text(price)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.green.opacity(0.2))
+                                .foregroundStyle(.green)
+                                .clipShape(Capsule())
+                        }
+                        
+                        if let isOpen = context.isOpen {
+                            Text(isOpen ? "Open Now" : "Closed")
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(isOpen ? Color.green.opacity(0.2) : Color.red.opacity(0.2))
+                                .foregroundStyle(isOpen ? .green : .red)
+                                .clipShape(Capsule())
+                        }
+                    }
+                    .font(.caption.bold())
+                    .padding(.horizontal)
+                    
+                    Divider().padding(.horizontal)
+                    
+                    // 4. Actions
+                    HStack(spacing: 20) {
+                        if let phone = context.phoneNumber {
+                            ActionButton(icon: "phone.fill", label: "Call") {
+                                if let url = URL(string: "tel://\(phone.replacingOccurrences(of: " ", with: ""))") {
+                                    UIApplication.shared.open(url)
+                                }
+                            }
+                        }
+                        
+                        if let website = context.website, let url = URL(string: website) {
+                            ActionButton(icon: "globe", label: "Website") {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        
+                        ActionButton(icon: "square.and.arrow.up", label: "Share") {
+                            // Simple share action
+                            sharePlace(name: context.name, url: context.website)
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    // 5. Photos
+                    if let photos = context.photos, !photos.isEmpty {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Photos")
+                                .font(.title3.bold())
+                                .padding(.horizontal)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(photos, id: \.self) { photoUrl in
+                                        AsyncImage(url: URL(string: photoUrl)) { image in
+                                            image.resizable()
+                                                 .scaledToFill()
+                                                 .frame(width: 200, height: 150)
+                                                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                                        } placeholder: {
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color.gray.opacity(0.2))
+                                                .frame(width: 200, height: 150)
+                                                .overlay(ProgressView())
+                                        }
+                                    }
+                                }
+                                .padding(.horizontal)
+                            }
+                        }
+                    }
+                    
+                    // 6. Tips & Reviews
+                    if let tips = context.tips, !tips.isEmpty {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Highlights & Tips")
+                                .font(.title3.bold())
+                                .padding(.horizontal)
+                            
+                            ForEach(tips, id: \.self) { tip in
+                                HStack(alignment: .top, spacing: 12) {
+                                    Image(systemName: "quote.opening")
+                                        .foregroundStyle(.secondary)
+                                    Text(tip)
+                                        .font(.body)
+                                        .italic()
+                                        .foregroundStyle(.primary.opacity(0.9))
+                                }
+                                .padding()
+                                .background(Color.secondary.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .padding(.horizontal)
+                            }
+                        }
+                    }
+                    
+                    Spacer(minLength: 50)
+                }
+            }
+            .navigationTitle("Place Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+    
+    private func openInMaps(lat: Double, lon: Double, name: String?) {
+        let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
+        mapItem.name = name
+        mapItem.openInMaps()
+    }
+    
+    private func sharePlace(name: String?, url: String?) {
+        let text = "Check out \(name ?? "this place")!"
+        var items: [Any] = [text]
+        if let u = url, let link = URL(string: u) {
+            items.append(link)
+        }
+        
+        let av = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        
+        // Find top controller to present
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = windowScene.windows.first?.rootViewController {
+            root.present(av, animated: true)
+        }
+    }
+}
+
+struct ActionButton: View {
+    let icon: String
+    let label: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title3)
+                Text(label)
+                    .font(.caption.bold())
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(Color.blue.opacity(0.1))
+            .foregroundStyle(.blue)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
     }
 }
 

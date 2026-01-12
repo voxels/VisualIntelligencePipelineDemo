@@ -13,11 +13,12 @@ Diver is a universal iOS/macOS application for saving and organizing links from 
 ### Building and Testing
 
 ```bash
-# Build all targets (run from Diver/ directory containing Xcode project)
-xcodebuild -scheme Diver -destination 'platform=iOS Simulator,name=iPhone 16' build
+# Build Visual Intelligence Pipeline
+xcodebuild -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj -scheme VisualIntelligencePipeline -destination 'platform=iOS Simulator,name=iPhone 16' build
 
-# Run main app tests
-xcodebuild test -scheme Diver -destination 'platform=iOS Simulator,name=iPhone 16'
+# Build Visual Intelligence Pipeline
+xcodebuild -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj -scheme VisualIntelligencePipeline -destination 'platform=iOS Simulator,name=iPhone 16' build
+
 
 # Run DiverKit tests
 cd DiverKit
@@ -57,11 +58,14 @@ cd DiverShared && swift test && cd ../DiverKit && swift test && cd ../Diver
    - Key components: API clients, `MetadataPipelineService`, `UnifiedDataManager`, `KeychainService`
    - Location: `DiverKit/Sources/DiverKit/`
 
-3. **Diver** (Main Xcode app target)
-   - SwiftUI app, SwiftData persistence, Know Maps integration
-   - Depends on: DiverKit, DiverShared, knowmaps (app-only)
-   - Targets: Diver (app), ActionExtension (share extension), DiverTests, DiverUITests
-   - Location: `Diver/Diver/`
+3. **VisualIntelligencePipeline** (Main App Target)
+   - Standalone app for developing and testing Visual Intelligence features
+   - Includes: Camera, Sifting, Reprocessing, Location Editing
+   - Location: `VisualIntelligencePipeline/`
+4. **VisualIntelligencePipeline** (Demo App / Feature Application)
+   - Standalone app for developing and testing Visual Intelligence features
+   - Includes: Camera, Sifting, Reprocessing, Location Editing
+   - Location: `VisualIntelligencePipeline/`
 
 ### Key Architectural Patterns
 
@@ -91,6 +95,11 @@ Implementation: `DiverShared/Sources/DiverShared/LinkWrapping.swift`
 - Main app processes queue via `DiverQueueProcessingService` on launch or background task
 - Queue directory: `group.com.secretatomics.Diver/Queue/`
 - Files named: `<timestamp>-<uuid>.json`, sorted by timestamp
+
+**Visual Intelligence Services:**
+- **LocalPipelineService**: Orchestrates ingestion, enrichment, and persistence for visual items.
+- **LocationSearchAggregator**: Unified search service (`DiverKit`) that queries Foursquare and MapKit in parallel and merges results.
+- **Reprocessing**: Items can be reprocessed silently. `LocalPipelineService.reprocessPipeline` handles this, ensuring that **existing item IDs are reused** to prevent duplicates in the database.
 
 ## Critical Configuration
 

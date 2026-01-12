@@ -137,7 +137,7 @@ struct EditSessionLocationView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Update") {
                         Task {
                             await updateLocation()
@@ -147,8 +147,11 @@ struct EditSessionLocationView: View {
                 }
             }
             .task(id: searchText) {
-                try? await Task.sleep(nanoseconds: 500_000_000)
-                await fetchCandidates()
+                // Skip initial load to avoid overwriting onAppear data if no search text
+                if !searchText.isEmpty {
+                    try? await Task.sleep(nanoseconds: 500_000_000)
+                    await fetchCandidates()
+                }
             }
             .onAppear {
                 setupInitialPosition()
@@ -174,95 +177,70 @@ struct EditSessionLocationView: View {
     }
     
     private func setupInitialPosition() {
-        if let loc = sessionLocationCoordinate {
-            position = .region(MKCoordinateRegion(center: loc, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
-        } else {
-            position = .region(MKCoordinateRegion(
-                center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-                span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-            ))
+        Task {
+            // 1. Determine Map Position & Center
+            if let loc = sessionLocationCoordinate {
+                await MainActor.run {
+                    position = .region(MKCoordinateRegion(center: loc, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+                }
+            } else {
+                // Attempt to get current location or default to SF
+                if let current = await Services.shared.locationService?.getCurrentLocation() {
+                     await MainActor.run {
+                         withAnimation {
+                             position = .region(MKCoordinateRegion(center: current.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
+                         }
+                     }
+                } else {
+                    await MainActor.run {
+                        position = .region(MKCoordinateRegion(
+                            center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+                            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+                        ))
+                    }
+                }
+            }
+            
+            // 2. Resolve Search Center
+            let resolvedCenter: CLLocationCoordinate2D
+            if let loc = sessionLocationCoordinate { resolvedCenter = loc }
+            else if let current = await Services.shared.locationService?.getCurrentLocation()?.coordinate { resolvedCenter = current }
+            else { resolvedCenter = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194) }
+
+            // 3. Trigger nearby search AFTER position is set
+            await fetchCandidates(explicitCenter: resolvedCenter)
         }
     }
     
     private func resolveMapFeature(_ feature: MapFeature) async {
-        let coordinate = feature.coordinate
-        let title = feature.title ?? "Selected Location"
-        
-        // 1. Try Foursquare Lookup
-        if let fsqService = Services.shared.foursquareService {
-            do {
-                let results = try await fsqService.search(query: title, location: coordinate, limit: 1)
-                if let bestMatch = results.first {
-                    await MainActor.run {
-                        self.selectedCandidate = bestMatch
-                        self.candidates = [bestMatch]
-                    }
-                    return
-                }
-            } catch {
-                print("Foursquare lookup failed: \(error)")
-            }
-        }
-        
-        // 2. MapKit Fallback
-        if let mapService = Services.shared.mapKitService {
-             let placeData = (try? await mapService.enrich(query: title, location: coordinate)) ?? EnrichmentData(
-                title: title,
-                descriptionText: "Apple Maps Location",
-                categories: ["Point of Interest"],
-                location: title,
-                placeContext: PlaceContext(
-                    name: title,
-                    categories: ["POI"],
-                    latitude: coordinate.latitude,
-                    longitude: coordinate.longitude
-                )
-            )
+        let simpleFeature = SimpleMapFeature(coordinate: feature.coordinate, title: feature.title)
+
+        if let data = await LocationSearchAggregator.resolveMapFeature(
+            feature: simpleFeature,
+            foursquareService: Services.shared.foursquareService,
+            mapKitService: Services.shared.mapKitService
+        ) {
              await MainActor.run {
-                self.selectedCandidate = placeData
-                // self.candidates.append(placeData) // Optional
+                self.selectedCandidate = data
+                self.candidates = [data]
             }
         }
     }
     
-    private func fetchCandidates() async {
+    private func fetchCandidates(explicitCenter: CLLocationCoordinate2D? = nil) async {
         isLoading = true
         defer { isLoading = false }
         
-        let searchCenter = visibleRegion?.center ?? sessionLocationCoordinate ?? CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+        let searchCenter = explicitCenter ?? visibleRegion?.center ?? sessionLocationCoordinate ?? CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
         
-        // Foursquare
-        if let service = Services.shared.foursquareService {
-            do {
-                let results: [EnrichmentData]
-                if searchText.isEmpty {
-                     results = try await service.searchNearby(location: searchCenter, limit: 50)
-                } else {
-                     results = try await service.search(query: searchText, location: searchCenter, limit: 50)
-                }
-                
-                await MainActor.run { self.candidates = results }
-                return
-            } catch {
-                print("Foursquare search failed: \(error)")
-            }
-        }
+        let results = await LocationSearchAggregator.fetchCandidates(
+            query: searchText,
+            center: searchCenter,
+            foursquareService: Services.shared.foursquareService,
+            mapKitService: Services.shared.mapKitService
+        )
         
-        // MapKit Fallback
-        if let service = Services.shared.mapKitService {
-             do {
-                let results: [EnrichmentData]
-                if searchText.isEmpty {
-                     results = try await service.searchNearby(location: searchCenter, limit: 50)
-                } else {
-                     results = try await service.search(query: searchText, location: searchCenter, limit: 50)
-                }
-                
-                await MainActor.run { self.candidates = results }
-            } catch {
-                print("MapKit search failed: \(error)")
-            }
-        }
+        await MainActor.run { self.candidates = results }
     }
     
     private func updateLocation() async {

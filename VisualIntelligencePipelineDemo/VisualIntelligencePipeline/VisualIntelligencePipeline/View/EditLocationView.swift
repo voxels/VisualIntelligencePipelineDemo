@@ -211,7 +211,7 @@ struct EditLocationView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Update") {
                         Task {
                             await updateLocation()
@@ -244,14 +244,18 @@ struct EditLocationView: View {
     }
     
     private func setupInitialPosition() {
-        // 1. Map Position
-        if let loc = itemLocationCoordinate {
-            position = .region(MKCoordinateRegion(center: loc, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
-        } else if let sl = sessionLocation {
-            position = .region(MKCoordinateRegion(center: sl, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
-        } else {
-            // Attempt to get current location or default to SF
-            Task {
+        Task {
+            // 1. Determine Map Position
+            if let loc = itemLocationCoordinate {
+                await MainActor.run {
+                    position = .region(MKCoordinateRegion(center: loc, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+                }
+            } else if let sl = sessionLocation {
+                await MainActor.run {
+                    position = .region(MKCoordinateRegion(center: sl, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+                }
+            } else {
+                // Attempt to get current location or default to SF
                 if let current = await Services.shared.locationService?.getCurrentLocation() {
                      await MainActor.run {
                          withAnimation {
@@ -260,141 +264,81 @@ struct EditLocationView: View {
                      }
                 } else {
                     // Default to SF only if location services fail/unavailable
-                    position = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)))
+                    await MainActor.run {
+                        position = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)))
+                    }
                 }
             }
-        }
-        
-        // 2. Initial selection from current item context
-        if let context = item.placeContext {
-            let currentPlace = EnrichmentData(
-                title: context.name,
-                descriptionText: item.summary ?? "Current Location",
-                categories: item.categories,
-                location: item.location,
-                placeContext: context
-            )
-            self.selectedCandidate = currentPlace
-            self.candidates = [currentPlace]
             
-            // Trigger a nearby search to fill the list, but keep current selection
-            Task {
-                await fetchCandidates()
+            // 2. Initial selection from context
+            if let context = item.placeContext {
+                let currentPlace = EnrichmentData(
+                    title: context.name,
+                    descriptionText: item.summary ?? "Current Location",
+                    categories: item.categories,
+                    location: item.location,
+                    placeContext: context
+                )
+                await MainActor.run {
+                    self.selectedCandidate = currentPlace
+                    self.candidates = [currentPlace]
+                }
             }
-        } else {
-            // No context yet, just search nearby
-            Task {
-                await fetchCandidates()
-            }
+            
+            // 3. Trigger nearby search AFTER position is set
+            // Short sleep to allow Map to update its region binding?
+            // Actually, we can pass the explicit center we just calculated to fetchCandidates to be safe
+            // regardless of whether visibleRegion has updated yet.
+            
+            // Re-calculate the center we just decided on
+            let resolvedCenter: CLLocationCoordinate2D
+            if let loc = itemLocationCoordinate { resolvedCenter = loc }
+            else if let sl = sessionLocation { resolvedCenter = sl }
+            else if let current = await Services.shared.locationService?.getCurrentLocation()?.coordinate { resolvedCenter = current }
+            else { resolvedCenter = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194) }
+            
+            await fetchCandidates( explicitCenter: resolvedCenter )
         }
     }
     
     private func resolveMapFeature(_ feature: MapFeature) async {
-        let coordinate = feature.coordinate
-        let title = feature.title ?? "Selected Location"
+        let simpleFeature = SimpleMapFeature(coordinate: feature.coordinate, title: feature.title)
         
-        // 1. Try Foursquare Lookup by Name/Location
-        if let fsqService = Services.shared.foursquareService {
-            do {
-                let results = try await fsqService.search(query: title, location: coordinate, limit: 1)
-                if let bestMatch = results.first {
-                    await MainActor.run {
-                        self.selectedCandidate = bestMatch
-                        self.candidates = [bestMatch] // Focus on this one? Or append?
-                    }
-                    return
-                }
-            } catch {
-                print("Foursquare lookup failed, falling back to MapKit: \(error)")
-            }
-        }
-        
-        // 2. Fallback to MapKit
-        if let mapService = Services.shared.mapKitService {
-             let placeData = (try? await mapService.enrich(query: title, location: coordinate)) ?? EnrichmentData(
-                title: title,
-                descriptionText: "Apple Maps Location",
-                categories: ["Point of Interest"],
-                location: title,
-                placeContext: PlaceContext(
-                    name: title,
-                    categories: ["POI"],
-                    latitude: coordinate.latitude,
-                    longitude: coordinate.longitude
-                )
-            )
+        if let data = await LocationSearchAggregator.resolveMapFeature(
+            feature: simpleFeature,
+            foursquareService: Services.shared.foursquareService,
+            mapKitService: Services.shared.mapKitService
+        ) {
              await MainActor.run {
-                self.selectedCandidate = placeData
-                // self.candidates.append(placeData) // Optional
+                self.selectedCandidate = data
             }
         }
     }
     
-    private func fetchCandidates() async {
+    private func fetchCandidates(explicitCenter: CLLocationCoordinate2D? = nil) async {
         isLoading = true
         defer { isLoading = false }
         
         let currentSelection = selectedCandidate
-        let searchCenter = visibleRegion?.center ?? itemLocationCoordinate ?? sessionLocation ?? CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
-        let query = searchText
+        let searchCenter = explicitCenter ?? visibleRegion?.center ?? itemLocationCoordinate ?? sessionLocation ?? CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
         
-        // 1. Run searches in parallel
-        async let fsqTask: [EnrichmentData] = {
-            if let service = Services.shared.foursquareService {
-                do {
-                    return query.isEmpty ? try await service.searchNearby(location: searchCenter, limit: 30) : try await service.search(query: query, location: searchCenter, limit: 30)
-                } catch {
-                    print("Foursquare search failed: \(error)")
-                }
-            }
-            return []
-        }()
+        let results = await LocationSearchAggregator.fetchCandidates(
+            query: searchText,
+            center: searchCenter,
+            foursquareService: Services.shared.foursquareService,
+            mapKitService: Services.shared.mapKitService
+        )
         
-        async let mapKitTask: [EnrichmentData] = {
-            if let service = Services.shared.mapKitService {
-                do {
-                    return query.isEmpty ? try await service.searchNearby(location: searchCenter, limit: 30) : try await service.search(query: query, location: searchCenter, limit: 30)
-                } catch {
-                    print("MapKit search failed: \(error)")
-                }
-            }
-            return []
-        }()
-        
-        let (fsqResults, mapResults) = await (fsqTask, mapKitTask)
-        
-        // 2. Merge and Deduplicate
-        var merged: [EnrichmentData] = []
-        var seenNames = Set<String>()
-        
-        // Helper to add if not a duplicate
-        func addIfUnique(_ items: [EnrichmentData]) {
-            for item in items {
-                let name = item.title?.lowercased().trimmingCharacters(in: .whitespaces) ?? ""
-                if name.isEmpty { continue }
-                
-                // Very basic deduplication: same name in the same area
-                // In a production app, we'd check coordinates more precisely
-                if seenNames.contains(name) { continue }
-                
-                seenNames.insert(name)
-                merged.append(item)
-            }
-        }
-        
-        // Add current selection first to ensure it's at the top and unique
+        // Ensure current selection is preserved
+        var finalResults = results
         if let selection = currentSelection {
-            addIfUnique([selection])
+            if !finalResults.contains(where: { $0.id == selection.id }) {
+                finalResults.insert(selection, at: 0)
+            }
         }
-        
-        // Add MapKit results (often contains better historical/landmark data)
-        addIfUnique(mapResults)
-        
-        // Add Foursquare results (often contains more retail/food detail)
-        addIfUnique(fsqResults)
         
         await MainActor.run {
-            self.candidates = merged
+            self.candidates = finalResults
         }
     }
     
@@ -427,6 +371,17 @@ struct EditLocationView: View {
             item.categories = newCategories
             
             // 2. Persist
+            // CRITICAL: Update linked Session immediately to "lock in" this location against reprocessing overrides
+            if let sessionID = item.sessionID, let session = sessions.first(where: { $0.sessionID == sessionID }) {
+                print("🔒 Locking in session location override: \(newContext?.name ?? "nil")")
+                session.locationName = newContext?.name
+                session.placeID = newContext?.placeID
+                if let lat = newContext?.latitude, let lon = newContext?.longitude {
+                    session.latitude = lat
+                    session.longitude = lon
+                }
+            }
+            
             do {
                 try modelContext.save()
                 print("✅ Location updated and saved for \(item.id)")

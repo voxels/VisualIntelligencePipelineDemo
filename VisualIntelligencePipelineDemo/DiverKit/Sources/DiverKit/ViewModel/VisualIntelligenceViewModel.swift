@@ -58,6 +58,70 @@ public class VisualIntelligenceViewModel: ObservableObject {
     @Published public var selectedPlace: EnrichmentData?
     @Published public var showingPlaceSelection: Bool = false
     
+    // Renaming
+    @Published public var renamingPlace: EnrichmentData?
+    @Published public var newPlaceTitle: String = ""
+    
+    public func startRenaming(_ place: EnrichmentData) {
+        self.renamingPlace = place
+        self.newPlaceTitle = place.title ?? ""
+    }
+    
+    public func updatePlaceTitle(for placeID: String, with newTitle: String) {
+        // Helper to update a single enrichment instance
+        func updatedEnrichment(_ original: EnrichmentData) -> EnrichmentData {
+            var newContext = original.placeContext
+            // Since PlaceContext properties are also let, we must recreate it if it exists, or create a new one
+            let updatedPlaceContext: PlaceContext
+            if let existing = newContext {
+                updatedPlaceContext = PlaceContext(
+                    name: newTitle,
+                    categories: existing.categories,
+                    placeID: existing.placeID,
+                    address: existing.address,
+                    rating: existing.rating,
+                    isOpen: existing.isOpen,
+                    latitude: existing.latitude,
+                    longitude: existing.longitude,
+                    priceLevel: existing.priceLevel,
+                    phoneNumber: existing.phoneNumber,
+                    website: existing.website,
+                    photos: existing.photos,
+                    tips: existing.tips
+                )
+            } else {
+                updatedPlaceContext = PlaceContext(name: newTitle)
+            }
+            
+            return EnrichmentData(
+                title: newTitle,
+                descriptionText: original.descriptionText,
+                image: original.image,
+                categories: original.categories,
+                styleTags: original.styleTags,
+                location: original.location,
+                price: original.price,
+                rating: original.rating,
+                questions: original.questions,
+                webContext: original.webContext,
+                documentContext: original.documentContext,
+                placeContext: updatedPlaceContext,
+                qrContext: original.qrContext
+            )
+        }
+
+        // Update candidates
+        if let index = placeCandidates.firstIndex(where: { $0.id == placeID }) {
+            placeCandidates[index] = updatedEnrichment(placeCandidates[index])
+        }
+        
+        // Update selection if it matches
+        if selectedPlace?.id == placeID, let current = selectedPlace {
+            selectedPlace = updatedEnrichment(current)
+        }
+    }
+
+    
     // Capture Location & Context
     public var currentCaptureCoordinate: CLLocationCoordinate2D?
     public var currentCapturePlaceID: String?
@@ -132,6 +196,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
         if let image = UIImage(data: context.imageData) {
             self.capturedImage = image
             self.siftedImage = image // Start with full image as sifted
+        } else {
+            print("❌ VI ViewModel: Failed to create UIImage from pending reprocess context data (size: \(context.imageData.count) bytes)")
         }
         #endif
         
@@ -146,12 +212,16 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }
         
         // 3. Pre-fill Place Candidate if we have ID/Name
+        // COMMENTED OUT: User request to CLEAR previous selection on reprocess to allow fresh search/detection
+        /*
         if let pid = context.placeID, let name = context.placeName {
             // Create a dummy enrichment data to represent current place
             let placeContext = PlaceContext(name: name, categories: [], placeID: pid, address: nil, latitude: self.currentCaptureCoordinate?.latitude, longitude: self.currentCaptureCoordinate?.longitude)
             let enrichment = EnrichmentData(title: name, descriptionText: nil, categories: [], styleTags: [], location: context.location, price: nil, rating: nil, questions: [], placeContext: placeContext)
             self.selectedPlace = enrichment
         }
+        */
+        self.selectedPlace = nil // Explicitly clear to ensure fresh search priority
         
         // 4. Enter Review Mode
         self.isReviewing = true
@@ -1299,10 +1369,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
     private func regenerateContextSuggestions(for place: EnrichmentData?) async {
         // Capture state on MainActor synchronously
         let (contextData, shouldProceed) = await MainActor.run { () -> (EnrichmentData?, Bool) in
-            // Remove the results.isEmpty guard to allow context generation from location-only data
-            // guard !self.results.isEmpty else { return (nil, false) }
-            
             self.isAnalyzing = true
+            
             // Clear old suggestions immediately
             self.results.removeAll { if case .purpose = $0 { return true }; return false }
             
@@ -1387,9 +1455,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
             return (data, true)
         }
         
-        guard shouldProceed, let data = contextData else { return }
-        
+        // Define cleanup immediately for the async scope
         defer { Task { @MainActor in self.isAnalyzing = false } }
+        
+        guard shouldProceed, let data = contextData else { return }
         
         let localContextService = ContextQuestionService()
         if let (_, statements, _, _) = try? await localContextService.processContext(from: data) {

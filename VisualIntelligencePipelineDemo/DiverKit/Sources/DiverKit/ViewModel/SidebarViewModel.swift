@@ -459,4 +459,45 @@ public class SidebarViewModel: ObservableObject {
             }
         }
     }
+    
+    // MARK: - Photo Import
+    public func importExternalImage(data: Data) {
+        Task {
+            do {
+                print("📸 Image received, size: \(data.count) bytes")
+                
+                // Create DiverQueueItem
+                let filename = "import-\(UUID().uuidString).jpg"
+                let queueDirectory = AppGroupContainer.queueDirectoryURL()!
+                
+                let descriptor = DiverItemDescriptor(
+                    id: UUID().uuidString,
+                    url: "", // Fix: url is non-optional String
+                    title: "Imported Photo",
+                    descriptionText: nil,
+                    createdAt: Date(), type: .image,
+                )
+                
+                let queueItem = DiverQueueItem(
+                    id: UUID(),
+                    action: "analyze",
+                    descriptor: descriptor,
+                    source: "library_import",
+                    payload: data
+                )
+                
+                let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
+                let path = try queueStore.enqueue(queueItem)
+                print("✅ Enqueued imported photo at \(path)")
+                
+                await MainActor.run {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        Task { await self.refresh() }
+                    }
+                }
+            } catch {
+                print("❌ Failed to process external image: \(error)")
+            }
+        }
+    }
 }

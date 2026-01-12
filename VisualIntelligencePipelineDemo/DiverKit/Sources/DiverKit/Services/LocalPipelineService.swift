@@ -3,6 +3,8 @@ import SwiftData
 import DiverShared
 import CoreLocation
 import ImageIO
+import AVFoundation
+import Vision
 
 @MainActor
 public final class LocalPipelineService {
@@ -81,26 +83,42 @@ public final class LocalPipelineService {
             
             // 1. Check EXISTING overrides (manual edits)
             if let ctx = existing.placeContext, let lat = ctx.latitude, let lon = ctx.longitude {
-                effectiveLocation = CLLocation(latitude: lat, longitude: lon)
-                hasUserOverride = true
-                DiverLogger.pipeline.debug("Using Existing Item Location Override: \(lat), \(lon)")
+                // Downgrade "Home" priority: Treat it as NOT a user override to allow content-based refinement (e.g. from photo metadata)
+                let isHome = ctx.placeID == "home-location"
+                
+                if !isHome {
+                    effectiveLocation = CLLocation(latitude: lat, longitude: lon)
+                    hasUserOverride = true
+                    DiverLogger.pipeline.debug("Using Existing Item Location Override: \(lat), \(lon)")
+                } else {
+                    DiverLogger.pipeline.debug("Existing location is 'Home'. Treating as non-override to allow refinement.")
+                }
             } else if let locStr = existing.location,
                       let components = Optional(locStr.split(separator: ",")),
                       components.count == 2,
                       let lat = Double(components[0].trimmingCharacters(in: .whitespaces)),
                       let lon = Double(components[1].trimmingCharacters(in: .whitespaces)) {
+                
+                // Also check if this raw coordinate matches cached Home, if we had access to it easily.
+                // For now, assume raw string might be a manual override if placeContext is nil.
                 effectiveLocation = CLLocation(latitude: lat, longitude: lon)
-                hasUserOverride = true // Treat coordinate string as override
+                hasUserOverride = true 
             }
             
             // 2. Live Location (if no override)
-            if effectiveLocation == nil, let locationService {
-                // Session Context Override for Updates
+            // CRITICAL: Only use live location if the item is NEW (recent). 
+            // Do NOT update location of old items to current device location during edits/reprocessing.
+            let isRecent = abs(input.createdAt.timeIntervalSinceNow) < 300 // 5 minutes
+            
+            if effectiveLocation == nil, let locationService, isRecent {
                 effectiveLocation = await locationService.getCurrentLocation()
             }
+            // If item is old and locationService is present but effectiveLocation is nil (was Home), we leave it nil 
+            // to see if Metadata/Session can find better. If not, we fall back to existing Home context later?
+            // Actually, if we return effectiveLocation = nil, no enrichment happens, so existing fields aren't touched.
                 
                 // Fallback: Check raw payload for location metadata if unavailable (e.g. reprocessing)
-                // Skip if payload is JSON (likely a descriptor, not an image)
+                // This now runs even if item was "Home" (since we set effectiveLocation = nil for Home above)
                 if effectiveLocation == nil, let data = rawPayload, !isJSONData(data) {
                      if let source = CGImageSourceCreateWithData(data as CFData, nil),
                         let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
@@ -114,10 +132,39 @@ public final class LocalPipelineService {
                          let finalLng = lngRef == "W" ? -lng : lng
                          effectiveLocation = CLLocation(latitude: finalLat, longitude: finalLng)
                          DiverLogger.pipeline.debug("Extracted Location from Image Metadata: \(finalLat), \(finalLng)")
+                     } else {
+                         // Fallback: Try Video Metadata
+                         if let videoLocation = await extractLocationFromVideo(data: data) {
+                             effectiveLocation = videoLocation
+                             DiverLogger.pipeline.debug("Extracted Location from Video Metadata: \(videoLocation.coordinate.latitude), \(videoLocation.coordinate.longitude)")
+                         }
                      }
-                }
-                
-                if let descriptorSessionID = descriptor?.sessionID ?? existing.sessionID {
+                 }
+                 
+                 // 3. QR Code Detection (Fallback if NO URL)
+                 // User Request: "if i photograph a sign and a qr code is found, the title should be the name of the page"
+                 if input.url == nil, let data = rawPayload, !isJSONData(data) {
+                      if let qrURL = detectQRCode(data: data) {
+                          DiverLogger.pipeline.info("Detected QR Code URL: \(qrURL)")
+                          input.url = qrURL
+                          existing.url = qrURL
+                          
+                          // Run enrichment immediately to get the title
+                          if let enrichmentService, let url = URL(string: qrURL) {
+                               if let enrichment = try await enrichmentService.enrich(url: url) {
+                                   // QR Code titles should heavily override "Visual Capture"
+                                   // applyEnrichment will handle weak titles, but if we just found this, 
+                                   // let's be explicit
+                                   applyEnrichment(enrichment, to: existing, overwriteTitle: true)
+                                   accumulatedContext += "\nQR Link: \(enrichment.title ?? url.host ?? "")"
+                               }
+                          }
+                      }
+                 }
+                 
+                 // Session Context Override
+                // CRITICAL: Only apply if NO user override.
+                if !hasUserOverride, let descriptorSessionID = descriptor?.sessionID ?? existing.sessionID {
                      let fetchSession = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == descriptorSessionID })
                      if let session = try? modelContext.fetch(fetchSession).first {
                          if let lat = session.latitude, let lng = session.longitude {
@@ -127,6 +174,8 @@ public final class LocalPipelineService {
                          if let summary = session.summary {
                              accumulatedContext += "\n\nSESSION CONTEXT:\n\(summary)\n"
                          }
+                         // If we are adopting the Session location, do we treat it as an override?
+                         // If the Session has a specific name, yes.
                          if let locName = session.locationName, !locName.isEmpty {
                              hasUserOverride = true
                          }
@@ -145,19 +194,64 @@ public final class LocalPipelineService {
                              // Try search by name + location to verify/enrich the specific place
                              matchedEnrichment = try await foursquareService.enrich(query: overrideName, location: coords)
                              
-                             if matchedEnrichment == nil {
-                                 // User specified a place, but Foursquare didn't find it.
-                                 // DO NOT overwrite with a random nearby place.
-                                 // Keep the MapKit/Manual data.
-                                 DiverLogger.pipeline.debug("Retaining specific location override '\(overrideName)'; Foursquare verify failed.")
-                             }
-                        } else {
-                             // Standard Auto-Enrichment (Best guess nearby)
-                             matchedEnrichment = try await foursquareService.enrich(location: coords)
-                        }
-                        
+                              
+                              if matchedEnrichment == nil {
+                                  // User specified a place, but Foursquare didn't find it.
+                                  // DO NOT overwrite with a random nearby place.
+                                  // Keep the MapKit/Manual data.
+                                  DiverLogger.pipeline.debug("Retaining specific location override '\(overrideName)'; Foursquare verify failed.")
+                                  
+                                  // Fallback to coordinates for metadata only (weather etc), 
+                                  // BUT enforce preservation of identity
+                                  matchedEnrichment = try await foursquareService.enrich(location: coords)
+                              }
+                         } else {
+                              // Standard Auto-Enrichment (Best guess nearby)
+                              
+                              // User Request: "if i take a picture ofthe sign of a business it should show up... and match to the gps coordinate"
+                              // STRATEGY: Run a specific query-based search using the input text (OCR/Caption) first.
+                              // If that finds a match at this location, prefer it over the generic "nearest neighbor".
+                              var textBasedMatch: EnrichmentData? = nil
+                              let queryText = input.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                              
+                              // Heuristic: Only search if text is concise (likely a name/caption) and not a full LLM summary
+                              // "Visual Capture" is the default empty text, ignore it.
+                              if !queryText.isEmpty && queryText.count < 100 && queryText != "Visual Capture" {
+                                   textBasedMatch = try await foursquareService.enrich(query: queryText, location: coords)
+                                   if let match = textBasedMatch {
+                                        DiverLogger.pipeline.debug("Found Verified Text-Based Match: \(match.title ?? "Unknown")")
+                                   }
+                              }
+                              
+                              if let textMatch = textBasedMatch {
+                                  // Found it! Use the specific place from the sign.
+                                  matchedEnrichment = textMatch
+                              } else {
+                                  // Fallback to generic proximity search
+                                  matchedEnrichment = try await foursquareService.enrich(location: coords)
+                              }
+                          }
+                         
                         if let fsEnrichment = matchedEnrichment {
-                            applyEnrichment(fsEnrichment, to: existing)
+                            // Determine if we should preserve existing identity
+                            // If `hasUserOverride` matches `existing.placeContext` AND `fsEnrichment` is different/generic,
+                            // we should probably preserve.
+                            // Simplified: If manual override failed verification (matchedEnrichment was nil above), 
+                            // we fetched coords-based enrichment. We MUST preserve in that case.
+                            // If user didn't override, we overwrite.
+                            
+                            // Check ID types
+                            let currentID = existing.placeContext?.placeID ?? ""
+                            let isMapKitOverride = currentID.starts(with: "mapkit-") || currentID == "home-location"
+                            
+                            // If we have a MapKit override and found a Foursquare result, 
+                            // check if names match loosely? Or just prefer MapKit if user chose it?
+                            // User Request: "Both Foursquare and MapKit information should be saved... reverted to old data"
+                            // If user picked MapKit, keep it.
+                            
+                            let shouldPreserve = isMapKitOverride
+                             
+                            applyEnrichment(fsEnrichment, to: existing, preservePlaceIdentity: shouldPreserve)
                             accumulatedContext += "\nFoursquare: \(fsEnrichment.title ?? "Unknown") - \(fsEnrichment.categories.joined(separator: ", "))"
                             
                             if let venueName = fsEnrichment.title, let duckDuckGoService {
@@ -501,7 +595,8 @@ public final class LocalPipelineService {
         weatherService: WeatherEnrichmentService? = nil,
         activityService: ActivityEnrichmentService? = nil,
         indexingService: KnowledgeGraphIndexingService? = nil,
-        progressHandler: ((Double) -> Void)? = nil
+        progressHandler: ((Double) -> Void)? = nil,
+        logHandler: ((String) -> Void)? = nil
     ) async throws {
         // 1. Clear existing queue items (processing or queued) to avoid duplicates or stalls
         // We delete the ProcessedItem but ensure the LocalInput is preserved for the main loop if within date range,
@@ -516,7 +611,10 @@ public final class LocalPipelineService {
             }
         )
         if let queuedItems: [ProcessedItem] = try? modelContext.fetch(queueFetch) {
-            DiverLogger.pipeline.info("Clearing \(queuedItems.count) items from queue before reprocessing.")
+            let msg = "Clearing \(queuedItems.count) items from queue before reprocessing."
+            DiverLogger.pipeline.info("\(msg)")
+            await MainActor.run { logHandler?(msg) }
+            
             for item in queuedItems {
                 // Ensure LocalInput exists or recreate it
                 if let inputIdStr = item.inputId, let inputID = UUID(uuidString: inputIdStr) {
@@ -548,17 +646,22 @@ public final class LocalPipelineService {
             predicate: #Predicate { $0.createdAt > cutoffDate }
         )
         let items = try modelContext.fetch(fetch)
-        DiverLogger.pipeline.info("Reprocessing \(items.count) items created after \(cutoffDate)")
+        let countMsg = "Reprocessing \(items.count) items created after \(cutoffDate.formatted(date: .abbreviated, time: .shortened))"
+        DiverLogger.pipeline.info("\(countMsg)")
+        await MainActor.run { logHandler?(countMsg) }
         
         var completedCount = 0
         let totalCount = Double(items.count)
         
         // Batched Processing for Concurrency Control
-        let batchSize = 10
+        // Lowered from 10 to 3 to prevent Simulator WebContent process exhaustion/crashes
+        let batchSize = 3
         let batches = items.chunked(into: batchSize)
         
         for (batchIndex, batch) in batches.enumerated() {
-            DiverLogger.pipeline.debug("Processing batch \(batchIndex + 1)/\(batches.count)")
+            let batchMsg = "Processing batch \(batchIndex + 1)/\(batches.count)"
+            DiverLogger.pipeline.debug("\(batchMsg)")
+            await MainActor.run { logHandler?(batchMsg) }
             
             var batchTasks: [Task<Void, Never>] = []
             
@@ -590,11 +693,38 @@ public final class LocalPipelineService {
                     freshItem.status = .queued
                     freshItem.processingLog.append("\(Date().formatted()): Queued for maintenance reprocessing")
                     
+                    // User Request: "if i'm reprocessing my data at home it should not override my content location"
+                    // Strip existing "Home" location to force a fresh lookup (e.g. from Image Metadata or Session)
+                    // We check if the ID is explicitly "home-location"
+                    if freshItem.placeContext?.placeID == "home-location" {
+                         freshItem.placeContext = nil
+                         freshItem.location = nil
+                         freshItem.processingLog.append("\(Date().formatted()): Stripped generic 'Home' location to allow content-based discovery.")
+                    }
+                    
+                    // User Request: "All the items named home shjould have their titles replaced by the document semantic context"
+                    // If title is "Home" or "Untitled", strip it so it can be regenerated by LLM or Enrichment
+                    if freshItem.title == "Home" || freshItem.title == "Untitled" {
+                        freshItem.title = nil
+                        freshItem.processingLog.append("\(Date().formatted()): Stripped generic title to allow semantic generation.")
+                    }
+                    
                     do {
+                        // Create a minimal descriptor with the existing ID to force an update instead of insert.
+                        // This prevents duplicate items from being created during reprocessing.
+                        let maintenanceDescriptor = DiverItemDescriptor(
+                            id: freshItem.id, // CRITICAL: Use existing ID
+                            url: freshItem.url ?? "",
+                            title: freshItem.title ?? "Untitled",
+                            location: freshItem.location
+                        )
+                        
+                        logHandler?("Analyzing: \(freshItem.title ?? "Untitled")")
+                        
                         // Trigger process
                         let processed = try await self.process(
                             input: input,
-                            descriptor: nil,
+                            descriptor: maintenanceDescriptor,
                             enrichmentService: enrichmentService,
                             locationService: nil, // Prevent using current GPS for historical items; rely on Session location
                             foursquareService: foursquareService,
@@ -646,16 +776,17 @@ public final class LocalPipelineService {
         }
     }
 
-    private func applyEnrichment(_ enrichment: EnrichmentData, to item: ProcessedItem, overwriteTitle: Bool = false) {
+    private func applyEnrichment(_ enrichment: EnrichmentData, to item: ProcessedItem, overwriteTitle: Bool = false, preservePlaceIdentity: Bool = false) {
         if let title = enrichment.title {
             let currentTitle = item.title ?? ""
-            let weakTitles = ["Untitled", "Visual Capture", "Captured Moment", "Scanned Document", "Web Link", "Recognized Link", "QR Code Link"]
+            let weakTitles = ["Untitled", "Visual Capture", "Captured Moment", "Scanned Document", "Web Link", "Recognized Link", "QR Code Link", "Home"]
             let isWeak = currentTitle.isEmpty || 
                          currentTitle.contains("://") || 
                          currentTitle.contains("www.") || 
                          weakTitles.contains(currentTitle) ||
-                         currentTitle.hasPrefix("Product:") ||
-                         currentTitle.hasPrefix("Detected Media:")
+                         currentTitle.hasPrefix("Detected Media:") ||
+                         isAddressString(currentTitle) // Check for address-like titles
+
             
             if overwriteTitle || isWeak || (item.url != nil && currentTitle == URL(string: item.url!)?.host) {
                 item.title = title
@@ -676,8 +807,9 @@ public final class LocalPipelineService {
                  item.categories = Array(currentCats.union(newCats)).sorted()
             }
         }
-        if let location = enrichment.location {
-            // Always update location if enriched, as it might be more specific than the initial generic coordinate string
+        if let location = enrichment.location, !preservePlaceIdentity {
+            // Always update location if enriched, as it might be more specific than the initial generic coordinate string,
+            // UNLESS we are preserving identity (e.g. manual MapKit override)
              item.location = location
         }
         if let price = enrichment.price, item.price == nil || item.price == 0 {
@@ -707,7 +839,7 @@ public final class LocalPipelineService {
             }
         }
         if let doc = enrichment.documentContext { item.documentContext = doc }
-        if let place = enrichment.placeContext { item.placeContext = place }
+        if let place = enrichment.placeContext, !preservePlaceIdentity { item.placeContext = place }
         if !enrichment.questions.isEmpty { item.questions = enrichment.questions }
         // questions are handled by the ViewModel/UI during the review phase
     }
@@ -757,6 +889,87 @@ public final class LocalPipelineService {
         
         item.parentItem = parent
         DiverLogger.pipeline.info("Linked item \(item.id) to parent activity '\(purpose)'")
+    }
+
+    private func extractLocationFromVideo(data: Data) async -> CLLocation? {
+        // AVAsset requires a URL. Write data to a temporary file.
+        let tempDir = FileManager.default.temporaryDirectory
+        let tempFile = tempDir.appendingPathComponent(UUID().uuidString).appendingPathExtension("mov")
+        
+        do {
+            try data.write(to: tempFile)
+            defer {
+                try? FileManager.default.removeItem(at: tempFile)
+            }
+            
+            let asset = AVAsset(url: tempFile)
+            
+            // Try Common Key first
+            let commonItems = try? await asset.load(.commonMetadata)
+            if let locationItem = commonItems?.first(where: { $0.commonKey == .commonKeyLocation }),
+               let locationString = try? await locationItem.load(.stringValue) {
+                // Determine format. ISO6709 is standard: +37.7749-122.4194/
+                // Simple parser
+                return parseISO6709(locationString)
+            }
+            
+            // Try QuickTime Metadata
+            let metadata = try? await asset.load(.metadata)
+            if let qtLocation = metadata?.first(where: { $0.identifier?.rawValue == "mdta/com.apple.quicktime.location.ISO6709" }),
+               let locationString = try? await qtLocation.load(.stringValue) {
+                return parseISO6709(locationString)
+            }
+            
+        } catch {
+            DiverLogger.pipeline.error("Failed to extract video location: \(error)")
+        }
+        
+        return nil
+    }
+    
+    private func parseISO6709(_ string: String) -> CLLocation? {
+        // Format: +27.5916+086.5640+8850/
+        // Pattern: ([+-]\d+\.?\d*)([+-]\d+\.?\d*)
+        let pattern = "([+-]\\d+\\.?\\d*)([+-]\\d+\\.?\\d*)"
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return nil }
+        let nsString = string as NSString
+        guard let match = regex.firstMatch(in: string, range: NSRange(location: 0, length: string.count)),
+              match.numberOfRanges >= 3 else { return nil }
+        
+        let latString = nsString.substring(with: match.range(at: 1))
+        let lonString = nsString.substring(with: match.range(at: 2))
+        
+        if let lat = Double(latString), let lon = Double(lonString) {
+            return CLLocation(latitude: lat, longitude: lon)
+        }
+        return nil
+    }
+
+    private func detectQRCode(data: Data) -> String? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return nil }
+        
+        let request = VNDetectBarcodesRequest()
+        request.symbologies = [.qr]
+        
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        try? handler.perform([request])
+        
+        if let result = request.results?.first(where: { $0.payloadStringValue != nil }) {
+            return result.payloadStringValue
+        }
+        return nil
+    }
+
+    private func isAddressString(_ title: String) -> Bool {
+        // Heuristic: Starts with a number, contains a comma?
+        // e.g. "603 W 29th St, New York, NY"
+        let range = NSRange(location: 0, length: title.utf16.count)
+        let regex = try? NSRegularExpression(pattern: "^\\d+.*,")
+        if let match = regex?.firstMatch(in: title, options: [], range: range) {
+            return true
+        }
+        return false
     }
 
     private func extractConcepts(from item: ProcessedItem) async {

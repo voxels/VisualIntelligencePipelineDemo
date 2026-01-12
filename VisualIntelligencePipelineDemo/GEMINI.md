@@ -16,10 +16,25 @@ The project is structured as a multi-repository setup, with the main application
 
 **Architecture:**
 
-1.  **Diver (Main Application):** The main application target, containing the UI and the application's entry point. It uses a share extension to capture links from other apps.
+1.  **VisualIntelligencePipeline (Main Application):** The main application target, containing the UI and the application's entry point.
 2.  **DiverShared (Swift Package):** This package contains the shared data models, such as `DiverQueueItem` and `DiverItemDescriptor`, and the `DiverQueueStore` for persisting shared links to the filesystem.
 3.  **DiverKit (Swift Package):** This package provides authentication, networking, and other shared utilities for communicating with backend services, including what appears to be a "KnowMaps" API.
-4.  **Queue-based Processing:** The app uses a file-based queue to reliably process shared links. The `DiverQueueProcessingService` picks up items from the queue and stores them in the `KnowMapsCacheStore`.
+4.  **VisualIntelligencePipeline (Demo App):** A standalone harness for testing the Visual Intelligence features (Camera, Sifting, Reprocessing) in isolation.
+5.  **Queue-based Processing:** The app uses a file-based queue to reliably process shared links. The `DiverQueueProcessingService` picks up items from the queue and stores them in the `KnowMapsCacheStore`.
+
+## Visual Intelligence Features
+
+The project includes a sophisticated "Visual Intelligence" capability:
+
+*   **Intelligent Sifting:** Uses Vision framework to detect subjects in images and "sift" them out from the background.
+*   **Context Enrichment:** Enriches captured items with:
+    *   **Location:** Foursquare (Venues) and MapKit (Landmarks/Addresses) via `LocationSearchAggregator`.
+    *   **Environmental:** WeatherKit (Current conditions) and CoreMotion (Activity type).
+    *   **Web:** Metadata extraction for related links.
+*   **Pipeline Services:**
+    *   **LocalPipelineService:** The core orchestrator. Handles ingestion, enrichment, and persistence.
+    *   **Reprocessing:** Supports silent background reprocessing of items (`reprocessPipeline`) to update metadata or apply new algorithms. Includes logic to **prevent duplicates** by reusing existing item IDs.
+    *   **Session Sync:** Automatically synchronizes location edits between `ProcessedItem` and its parent `DiverSession`.
 
 ## Building and Running
 
@@ -27,9 +42,9 @@ This is a standard Xcode project. To build and run the application:
 
 1.  **Open the project in Xcode:**
     ```bash
-    open Diver/Diver.xcodeproj
+    open VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj
     ```
-2.  **Select a target:** Choose the "Diver" scheme and a simulator or a connected device.
+2.  **Select a target:** Choose the "VisualIntelligencePipeline" scheme.
 3.  **Run the application:** Click the "Run" button in Xcode or press `Cmd+R`.
 
 ### Testing
@@ -43,12 +58,12 @@ To run the tests:
 Alternatively, you can run the tests from the command line using `xcodebuild`:
 
 ```bash
-xcodebuild test -scheme Diver -destination 'platform=iOS Simulator,name=iPhone 15'
+xcodebuild -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj -scheme VisualIntelligencePipeline -destination 'platform=iOS Simulator,name=iPhone 16'
 ```
 
 ## Development Conventions
 
-*   **SwiftUI:** The UI is built with SwiftUI, and views are organized in the `Diver/Diver/View` directory.
+*   **SwiftUI:** The UI is built with SwiftUI, and views are organized in the `VisualIntelligencePipeline/VisualIntelligencePipeline/View` directory.
 *   **Swift Packages:** Shared code is modularized into Swift Packages (`DiverKit`, `DiverShared`).
 *   **Asynchronous Operations:** The app uses `async/await` for asynchronous operations, especially for network requests and file I/O.
 *   **Dependency Injection:** Services like `KnowMapsServiceContainer` and `DiverQueueProcessingService` are initialized and passed to the relevant components.

@@ -172,6 +172,12 @@ struct ReprocessingWizardView: View {
                     indexingService: services.knowledgeGraphService,
                     progressHandler: { p in
                         self.progress = p
+                    },
+                    logHandler: { message in
+                        // MainActor update is automatic if using @State on View but best to be safe or rely on @MainActor task
+                        Task { @MainActor in
+                            self.processingStatusMsg = message
+                        }
                     }
                 )
                 
