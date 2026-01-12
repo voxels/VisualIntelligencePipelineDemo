@@ -28,7 +28,7 @@ public final class MapKitEnrichmentService: ContextualEnrichmentService, @unchec
                 let placeContext = PlaceContext(
                     name: placemark.name ?? "Unknown Location",
                     categories: [placemark.category].compactMap { $0 }, // Helper extension below? Or just general category
-                    placeID: nil, // MapKit doesn't expose stable Place IDs easily in this flow
+                    placeID: "mk-reverse-\(location.latitude)-\(location.longitude)",
                     address: [placemark.thoroughfare, placemark.locality].compactMap { $0 }.joined(separator: ", "),
                     latitude: location.latitude,
                     longitude: location.longitude
@@ -100,7 +100,7 @@ public final class MapKitEnrichmentService: ContextualEnrichmentService, @unchec
         let placeContext = PlaceContext(
             name: name,
             categories: [category],
-            placeID: nil, // MapKit Items are transient usually
+            placeID: "mk-\(name.hash)-\(item.placemark.coordinate.latitude)-\(item.placemark.coordinate.longitude)", // Deterministic ID for UI stability
             address: item.placemark.formattedTitle,
             latitude: item.placemark.coordinate.latitude,
             longitude: item.placemark.coordinate.longitude,

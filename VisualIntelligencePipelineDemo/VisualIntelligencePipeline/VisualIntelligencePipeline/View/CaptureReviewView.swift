@@ -88,7 +88,7 @@ struct CaptureReviewView: View {
                     HStack(spacing: 12) {
                         ForEach(viewModel.results, id: \.title) { result in
                             // Filter out raw sifting result from this list as it has its own visual
-                            if case .siftedSubject = result { EmptyView() }
+                            if case .siftedSubject(_, _) = result { EmptyView() }
                             else {
                                 HStack(spacing: 8) {
                                     Image(systemName: result.icon)

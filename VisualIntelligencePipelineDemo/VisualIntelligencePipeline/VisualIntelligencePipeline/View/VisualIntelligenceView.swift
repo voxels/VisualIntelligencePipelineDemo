@@ -25,6 +25,7 @@ public struct VisualIntelligenceView: View {
     
     // Custom Context Input
     @State private var isEnteringCustomContext = false
+    @State private var showingFullScreenReview = false
     @State private var customContextText = ""
     
     public init() {}
@@ -89,7 +90,7 @@ public struct VisualIntelligenceView: View {
                         .padding(.top)
                 }
             }
-
+            
             // MARK: - Global Navigation Control
             VStack {
                 HStack {
@@ -122,184 +123,187 @@ public struct VisualIntelligenceView: View {
             .zIndex(100)
             
             
+            
+            // MARK: - HUD Layer
+            VStack {
+                Spacer()
                 
-                // MARK: - HUD Layer
-                VStack {
-                    Spacer()
-                    
-                    if viewModel.isReviewing {
-                        // Review Mode HUD
-                        VStack(spacing: 16) {
-                            
-                            // Processing Toast
-                            if viewModel.isAnalyzing {
-                                HStack(spacing: 10) {
-                                    ProgressView()
-                                        .tint(.black)
-                                        .scaleEffect(0.8)
-                                    Text("Analyzing Scene...")
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
-                                        .foregroundStyle(.black)
-                                }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                                .glass(cornerRadius: 14)
-                                .foregroundStyle(.black)
-                                .transition(.move(edge: .top).combined(with: .opacity))
-                                .zIndex(100)
+                if viewModel.isReviewing {
+                    // Review Mode HUD
+                    VStack(spacing: 16) {
+                        
+                        // Processing Toast
+                        if viewModel.isAnalyzing {
+                            HStack(spacing: 10) {
+                                ProgressView()
+                                    .tint(.black)
+                                    .scaleEffect(0.8)
+                                Text("Analyzing Scene...")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.black)
                             }
-                            
-                            // 2. Media Assets Preview (Live Assets)
-                            if let mediaResult = viewModel.results.first(where: { !$0.assets.isEmpty }) {
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 12) {
-                                        ForEach(mediaResult.assets, id: \.self) { url in
-                                            AsyncImage(url: url) { image in
-                                                image.resizable()
-                                                    .aspectRatio(contentMode: .fill)
-                                            } placeholder: {
-                                                ZStack {
-                                                    Color.white.opacity(0.1)
-                                                    ProgressView().tint(.white)
-                                                }
-                                            }
-                                            .frame(width: 140, height: 210)
-                                            .cornerRadius(12)
-                                            .glass(cornerRadius: 16)
-                                        }
-                                    }
-                                    .padding(.horizontal)
-                                }
-                                .frame(height: 220)
-                                .transition(.move(edge: .trailing).combined(with: .opacity))
-                            }
-                            
-                            // 2.5 Location Selection Row
-                            locationSelectionRow
-                            
-                            // 3. Metadata Overlay
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .glass(cornerRadius: 14)
+                            .foregroundStyle(.black)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .zIndex(100)
+                        }
+                        
+                        // 2. Media Assets Preview (Live Assets)
+                        if let mediaResult = viewModel.results.first(where: { !$0.assets.isEmpty }) {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 12) {
-                                    resultsOverlay
+                                    ForEach(mediaResult.assets, id: \.self) { url in
+                                        AsyncImage(url: url) { image in
+                                            image.resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                        } placeholder: {
+                                            ZStack {
+                                                Color.white.opacity(0.1)
+                                                ProgressView().tint(.white)
+                                            }
+                                        }
+                                        .frame(width: 140, height: 210)
+                                        .cornerRadius(12)
+                                        .glass(cornerRadius: 16)
+                                    }
                                 }
                                 .padding(.horizontal)
                             }
-                            
-                            if let purposeResult = viewModel.results.first(where: { if case .purpose = $0 { return true }; return false }),
-                               case .purpose(let statements) = purposeResult {
-                                VStack(alignment: .leading, spacing: 10) {
-                                    HStack {
-                                        Text("Suggested Context") // Updated title
-                                            .font(.caption)
-                                            .fontWeight(.bold)
-                                            .foregroundStyle(.white.opacity(0.8))
-                                        Spacer()
-                                    }
-                                    .padding(.horizontal)
-                                    
-                                    ScrollView(.horizontal, showsIndicators: false) {
-                                        HStack(spacing: 10) {
-                                            // 1. Custom Context Entry Pill
+                            .frame(height: 220)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
+                        
+                        // 2.5 Location Selection Row
+                        locationSelectionRow
+                        
+                        // 3. Metadata Overlay
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                resultsOverlay
+                            }
+                            .padding(.horizontal)
+                        }
+                        
+                        if let purposeResult = viewModel.results.first(where: { if case .purpose = $0 { return true }; return false }),
+                           case .purpose(let statements) = purposeResult {
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack {
+                                    Text("Suggested Context") // Updated title
+                                        .font(.caption)
+                                        .fontWeight(.bold)
+                                        .foregroundStyle(.white.opacity(0.8))
+                                    Spacer()
+                                }
+                                .padding(.horizontal)
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        // 1. Custom Context Entry Pill
+                                        Button {
+                                            customContextText = ""
+                                            isEnteringCustomContext = true
+                                        } label: {
+                                            HStack(spacing: 6) {
+                                                Image(systemName: "pencil.line")
+                                                Text("Write Context...")
+                                            }
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 10)
+                                            .background(Color.white.opacity(0.1))
+                                            .clipShape(Capsule())
+                                            .foregroundStyle(.white)
+                                            .overlay(
+                                                Capsule()
+                                                    .stroke(Color.white.opacity(0.3), lineWidth: 1) // Dashed? No, solid is fine.
+                                            )
+                                        }
+                                        
+                                        // 2. Selected Items (Persisted)
+                                        ForEach(Array(viewModel.selectedPurposes).sorted(), id: \.self) { selected in
                                             Button {
-                                                customContextText = ""
-                                                isEnteringCustomContext = true
+                                                withAnimation {
+                                                    viewModel.selectedPurposes.remove(selected)
+                                                    if viewModel.sessionTitle == selected { viewModel.sessionTitle = nil }
+                                                }
+#if os(iOS)
+                                                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+#endif
                                             } label: {
-                                                HStack(spacing: 6) {
-                                                    Image(systemName: "pencil.line")
-                                                    Text("Write Context...")
+                                                HStack(spacing: 4) {
+                                                    Text(selected)
+                                                    Image(systemName: "xmark")
+                                                        .font(.caption2.bold())
                                                 }
                                                 .font(.subheadline)
                                                 .fontWeight(.medium)
                                                 .padding(.horizontal, 16)
                                                 .padding(.vertical, 10)
-                                                .background(Color.white.opacity(0.1))
+                                                .background(Color.blue)
                                                 .clipShape(Capsule())
                                                 .foregroundStyle(.white)
                                                 .overlay(
-                                                    Capsule()
-                                                        .stroke(Color.white.opacity(0.3), lineWidth: 1) // Dashed? No, solid is fine.
+                                                    Capsule().stroke(Color.white.opacity(0.5), lineWidth: 0.5)
                                                 )
                                             }
-
-                                            // 2. Selected Items (Persisted)
-                                            ForEach(Array(viewModel.selectedPurposes).sorted(), id: \.self) { selected in
+                                        }
+                                        
+                                        // 3. Suggestions (Refinement Triggers)
+                                        ForEach(statements, id: \.self) { statement in
+                                            if !viewModel.selectedPurposes.contains(statement) {
                                                 Button {
                                                     withAnimation {
-                                                        viewModel.selectedPurposes.remove(selected)
-                                                        if viewModel.sessionTitle == selected { viewModel.sessionTitle = nil }
+                                                        viewModel.selectedPurposes.insert(statement)
+                                                        // Trigger Drill Down / Refinement
+                                                        viewModel.refineContext(with: statement)
                                                     }
-                                                    #if os(iOS)
-                                                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                                                    #endif
+#if os(iOS)
+                                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+#endif
                                                 } label: {
-                                                    HStack(spacing: 4) {
-                                                        Text(selected)
-                                                        Image(systemName: "xmark")
-                                                            .font(.caption2.bold())
-                                                    }
-                                                    .font(.subheadline)
-                                                    .fontWeight(.medium)
-                                                    .padding(.horizontal, 16)
-                                                    .padding(.vertical, 10)
-                                                    .background(Color.blue)
-                                                    .clipShape(Capsule())
-                                                    .foregroundStyle(.white)
-                                                    .overlay(
-                                                        Capsule().stroke(Color.white.opacity(0.5), lineWidth: 0.5)
-                                                    )
-                                                }
-                                            }
-
-                                            // 3. Suggestions (Refinement Triggers)
-                                            ForEach(statements, id: \.self) { statement in
-                                                if !viewModel.selectedPurposes.contains(statement) {
-                                                    Button {
-                                                        withAnimation {
-                                                            viewModel.selectedPurposes.insert(statement)
-                                                            // Trigger Drill Down / Refinement
-                                                            viewModel.refineContext(with: statement)
-                                                        }
-                                                        #if os(iOS)
-                                                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                                                        #endif
-                                                    } label: {
-                                                        Text(statement)
-                                                            .font(.subheadline)
-                                                            .fontWeight(.medium)
-                                                            .padding(.horizontal, 16)
-                                                            .padding(.vertical, 10)
-                                                            .background(Color.white.opacity(0.1))
-                                                            .clipShape(Capsule())
-                                                            .foregroundStyle(.white)
-                                                            .overlay(
-                                                                Capsule().stroke(Color.white.opacity(0.2), lineWidth: 0.5)
-                                                            )
-                                                    }
+                                                    Text(statement)
+                                                        .font(.subheadline)
+                                                        .fontWeight(.medium)
+                                                        .padding(.horizontal, 16)
+                                                        .padding(.vertical, 10)
+                                                        .background(Color.white.opacity(0.1))
+                                                        .clipShape(Capsule())
+                                                        .foregroundStyle(.white)
+                                                        .overlay(
+                                                            Capsule().stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+                                                        )
                                                 }
                                             }
                                         }
-                                        .padding(.horizontal)
                                     }
+                                    .padding(.horizontal)
                                 }
-                                .padding(.top, 4)
                             }
-                            
-                            // Control Cluster
-                            HStack(spacing: 20) {
-                                // Thumbnail (Captured Image)
+                            .padding(.top, 4)
+                        }
+                        
+                        // Control Cluster
+                        HStack(spacing: 20) {
+                            // Thumbnail (Captured Image)
+                            Button {
+                                showingFullScreenReview = true
+                            } label: {
                                 Group {
                                     // Use the cached sifted image from ViewModel if available
                                     if let siftedImage = viewModel.siftedImage {
-                                        #if canImport(UIKit)
+#if canImport(UIKit)
                                         Image(uiImage: siftedImage)
                                             .resizable()
                                             .scaledToFit() // Fit so key subject is visible
-                                        #elseif canImport(AppKit)
+#elseif canImport(AppKit)
                                         Image(nsImage: siftedImage)
                                             .resizable()
                                             .scaledToFit()
-                                        #endif
+#endif
                                     }
                                     else if let image = viewModel.capturedImage {
                                         Image(uiImage: image)
@@ -324,162 +328,176 @@ public struct VisualIntelligenceView: View {
                                             .offset(x: 10, y: -10)
                                     }
                                 }
-                                
-                                // Add Button (Multi-Image)
-                                Button {
-                                    viewModel.cameraManager.capturePhoto()
-                                } label: {
-                                    Image(systemName: "plus")
-                                        .font(.title3.bold()) // Slightly bolder
-                                        .foregroundStyle(.white)
-                                        .frame(width: 44, height: 44)
-                                        .glass(cornerRadius: 22)
-                                }
-                                
-                                // Reprocess / Refresh Button
-                                Button {
-                                    viewModel.reprocessPipeline()
-                                } label: {
-                                    Image(systemName: "sparkles")
-                                        .font(.title3.bold())
-                                        .foregroundStyle(.white)
-                                        .frame(width: 44, height: 44)
-                                        .glass(cornerRadius: 22)
-                                }
-
-                                
-                                Spacer()
-                                
-                                // Re-Capture Button (Refresh)
-                                Button {
-                                    withAnimation { viewModel.reCapture() }
-                                } label: {
-                                    Image(systemName: "arrow.triangle.2.circlepath")
-                                        .font(.title2)
-                                        .foregroundStyle(.white)
-                                        .padding(20)
-                                        .glass(cornerRadius: 35)
-                                }
-                                
-                                // Save Button
-                                Button {
-                                    viewModel.commitReviewSave()
-                                    // Feedback only, do not auto dismiss unless desired
-                                } label: {
-                                    HStack {
-                                        if viewModel.isAnalyzing || viewModel.isSaving {
-                                            ProgressView().tint(.white)
-                                        } else {
-                                            Text("Save")
-                                                .fontWeight(.bold)
-                                        }
-                                    }
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 30)
-                                    .padding(.vertical, 20)
-                                    .background(
-                                        (viewModel.isAnalyzing || viewModel.isSaving ? Color.gray : Color.blue),
-                                        in: RoundedRectangle(cornerRadius: 35)
-                                    )
-                                    .glass(cornerRadius: 35)
-                                }
-                                .disabled(viewModel.isAnalyzing || viewModel.isSaving)
                             }
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 20)
-                        }
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                        
-                    } else {
-                        // Standard HUD (Shutter)
-                        ZStack {
-                            // Simple Capture Button
-                            Button {
-                                viewModel.handleCapture()
-                            } label: {
-                                ZStack {
-                                    Circle()
-                                        .strokeBorder(.white, lineWidth: 4)
-                                        .frame(width: 84, height: 84)
-                                    
-                                    Circle()
-                                        .fill(.white)
-                                        .frame(width: 72, height: 72)
-                                }
-                            }
-                            .rotationEffect(angleForOrientation(orientation))
                             
-                            // Auxiliary Buttons (Corners)
-                            PhotosPicker(selection: $viewModel.selectedPhotoItem, matching: .any(of: [.images, .videos])) {
-                                Image(systemName: "photo.on.rectangle.angled")
-                                    .font(.title3)
+                            // Add Button (Multi-Image)
+                            Button {
+                                viewModel.cameraManager.capturePhoto()
+                            } label: {
+                                Image(systemName: "plus")
+                                    .font(.title3.bold()) // Slightly bolder
                                     .foregroundStyle(.white)
-                                    .padding(12)
-                                    .glass(cornerRadius: 25)
-                                    .rotationEffect(angleForOrientation(orientation))
+                                    .frame(width: 44, height: 44)
+                                    .glass(cornerRadius: 22)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.leading, 30)
+                            
+                            // Reprocess / Refresh Button
+                            Button {
+                                viewModel.reprocessPipeline()
+                            } label: {
+                                Image(systemName: "sparkles")
+                                    .font(.title3.bold())
+                                    .foregroundStyle(.white)
+                                    .frame(width: 44, height: 44)
+                                    .glass(cornerRadius: 22)
+                            }
+                            
+                            
+                            Spacer()
+                            
+                            // Re-Capture Button (Refresh)
+                            Button {
+                                withAnimation { viewModel.reCapture() }
+                            } label: {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                    .font(.title2)
+                                    .foregroundStyle(.white)
+                                    .padding(20)
+                                    .glass(cornerRadius: 35)
+                            }
+                            
+                            // Save Button
+                            Button {
+                                viewModel.commitReviewSave()
+                                // Feedback only, do not auto dismiss unless desired
+                            } label: {
+                                HStack {
+                                    if viewModel.isAnalyzing || viewModel.isSaving {
+                                        ProgressView().tint(.white)
+                                    } else {
+                                        Text("Save")
+                                            .fontWeight(.bold)
+                                    }
+                                }
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 30)
+                                .padding(.vertical, 20)
+                                .background(
+                                    (viewModel.isAnalyzing || viewModel.isSaving ? Color.gray : Color.blue),
+                                    in: RoundedRectangle(cornerRadius: 35)
+                                )
+                                .glass(cornerRadius: 35)
+                            }
+                            .disabled(viewModel.isAnalyzing || viewModel.isSaving)
                         }
-                        .padding(.bottom, 30)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    
+                } else {
+                    // Standard HUD (Shutter)
+                    ZStack {
+                        // Simple Capture Button
+                        Button {
+                            viewModel.handleCapture()
+                        } label: {
+                            ZStack {
+                                Circle()
+                                    .strokeBorder(.white, lineWidth: 4)
+                                    .frame(width: 84, height: 84)
+                                
+                                Circle()
+                                    .fill(.white)
+                                    .frame(width: 72, height: 72)
+                            }
+                        }
+                        .rotationEffect(angleForOrientation(orientation))
+                        
+                        // Auxiliary Buttons (Corners)
+                        PhotosPicker(selection: $viewModel.selectedPhotoItem, matching: .any(of: [.images, .videos])) {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.title3)
+                                .foregroundStyle(.white)
+                                .padding(12)
+                                .glass(cornerRadius: 25)
+                                .rotationEffect(angleForOrientation(orientation))
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.leading, 30)
+                    }
+                    .padding(.bottom, 30)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.isReviewing)
+            .zIndex(20)
+        }
+        .onAppear {
+            // Ensure session is started when view appears
+            viewModel.cameraManager.startSession()
+            viewModel.setupCameraBridge()
+            UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+            NotificationCenter.default.addObserver(forName: UIDevice.orientationDidChangeNotification, object: nil, queue: .main) { _ in
+                let newOrientation = UIDevice.current.orientation
+                if newOrientation.isValidInterfaceOrientation {
+                    self.orientation = newOrientation
+                    Task { @MainActor in
+                        viewModel.currentOrientation = visionOrientation(from: newOrientation)
                     }
                 }
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.isReviewing)
-                .zIndex(20)
             }
-            .onAppear {
-                // Ensure session is started when view appears
-                viewModel.cameraManager.startSession()
-                viewModel.setupCameraBridge()
-                UIDevice.current.beginGeneratingDeviceOrientationNotifications()
-                NotificationCenter.default.addObserver(forName: UIDevice.orientationDidChangeNotification, object: nil, queue: .main) { _ in
-                    let newOrientation = UIDevice.current.orientation
-                    if newOrientation.isValidInterfaceOrientation {
-                        self.orientation = newOrientation
-                        Task { @MainActor in
-                            viewModel.currentOrientation = visionOrientation(from: newOrientation)
-                        }
-                    }
-                }
-            }
-            // Use activeObservation to drive subtle highlight (peel effect)
-            .onChange(of: viewModel.activeObservation) { oldVal, newVal in
-                withAnimation(.linear(duration: 0.2)) {
-                    viewModel.updatePeelAmount(newVal != nil ? 0.3 : 0.0)
-                }
-            }
-            // Removed fullScreenCover
-            .onDisappear {
-                UIDevice.current.endGeneratingDeviceOrientationNotifications()
-                viewModel.reset()
-            }
-            .navigationTitle("Visual Intelligence")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar(.hidden, for: .tabBar)
-            .sheet(isPresented: $viewModel.showingPlaceSelection) {
-                PlaceSelectionMapView(viewModel: viewModel)
-            }
-            .sheet(isPresented: $viewModel.showingDocumentView) {
-                if let doc = viewModel.rectifiedDocument {
-                    DocumentDetailView(viewModel: viewModel, image: doc)
-                }
-            }
-            .alert("Add Context", isPresented: $isEnteringCustomContext) {
-                TextField("E.g. Gift for Mom", text: $customContextText)
-                Button("Cancel", role: .cancel) { }
-                Button("Add") {
-                    viewModel.addUserContext(customContextText)
-                }
-            } message: {
-                Text("Add a custom label or purpose to this capture.")
-            }
-            .alert("Save Failed", isPresented: $viewModel.showingSaveError) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(viewModel.saveErrorMessage ?? "An unknown error occurred.")
+            
+            // Reprocessing Check
+            Task { @MainActor in
+                viewModel.checkPendingReprocess()
             }
         }
+        // Use activeObservation to drive subtle highlight (peel effect)
+        .onChange(of: viewModel.activeObservation) { oldVal, newVal in
+            withAnimation(.linear(duration: 0.2)) {
+                viewModel.updatePeelAmount(newVal != nil ? 0.3 : 0.0)
+            }
+        }
+        // Removed fullScreenCover
+        .onDisappear {
+            UIDevice.current.endGeneratingDeviceOrientationNotifications()
+            viewModel.reset()
+        }
+        .navigationTitle("Visual Intelligence")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
+        .sheet(isPresented: $viewModel.showingPlaceSelection) {
+            PlaceSelectionMapView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $viewModel.showingDocumentView) {
+            if let doc = viewModel.rectifiedDocument {
+                DocumentDetailView(viewModel: viewModel, image: doc)
+            }
+        }
+        .alert("Add Context", isPresented: $isEnteringCustomContext) {
+            TextField("E.g. Gift for Mom", text: $customContextText)
+            Button("Cancel", role: .cancel) { }
+            Button("Add") {
+                viewModel.addUserContext(customContextText)
+            }
+        } message: {
+            Text("Add a custom label or purpose to this capture.")
+        }
+        .alert("Save Failed", isPresented: $viewModel.showingSaveError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(viewModel.saveErrorMessage ?? "An unknown error occurred.")
+        }
+        .fullScreenCover(isPresented: $showingFullScreenReview) {
+            if let image = viewModel.capturedImage {
+                FullScreenImageView(image: image)
+            }
+        }
+    }
+    
+    // ... rest of methods
+    
     
     private func angleForOrientation(_ orientation: UIDeviceOrientation) -> Angle {
         switch orientation {
@@ -495,6 +513,7 @@ public struct VisualIntelligenceView: View {
         case .portrait: return .right
         case .landscapeLeft: return .down
         case .landscapeRight: return .up
+        case .portraitUpsideDown: return .left
         case .portraitUpsideDown: return .left
         default: return .right
         }
@@ -540,6 +559,7 @@ public struct VisualIntelligenceView: View {
                 .stroke(isSelected ? Color.white : Color.clear, lineWidth: 1)
         )
     }
+    
 }
 
 // MARK: - iOS 26 Visual Language
@@ -554,7 +574,7 @@ extension View {
             self.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
         }
     }
-
+    
     /// Applies the system-standard glass effect on iOS 26+ for Capsule shape.
     @ViewBuilder
     func glassCapsule() -> some View {
@@ -621,8 +641,7 @@ extension VisualIntelligenceView {
             }
         } else {
             ForEach(viewModel.sortedResults, id: \.title) { result in
-                if case .siftedSubject = result { EmptyView() }
-                else if case .purpose = result { EmptyView() }
+                if case .purpose = result { EmptyView() }
                 else {
                     VStack(spacing: 8) {
                         resultItem(for: result)
@@ -678,11 +697,27 @@ extension VisualIntelligenceView {
                 pillContent(for: result)
             }
         case .purpose:
-             Button {
-                 // No-op or feedback
-             } label: {
-                 pillContent(for: result)
-             }
+            Button {
+                // No-op or feedback
+            } label: {
+                pillContent(for: result)
+            }
+        case .siftedSubject(let obs):
+            Button {
+                // Toggle Highlight / Peel
+                withAnimation {
+                    if viewModel.activeObservation != nil {
+                        viewModel.activeObservation = nil // Deselect
+                    } else {
+                        viewModel.activeObservation = obs.0 // Highlight
+                    }
+                }
+#if os(iOS)
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+#endif
+            } label: {
+                pillContent(for: result, secondaryIcon: "viewfinder", isSelected: viewModel.activeObservation != nil)
+            }
         default:
             Button {
                 let text = result.title
@@ -695,9 +730,9 @@ extension VisualIntelligenceView {
                         viewModel.sessionTitle = text // Set as explicit title
                     }
                 }
-                #if os(iOS)
+#if os(iOS)
                 UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                #endif
+#endif
             } label: {
                 // Show as "active" if it is the explicit title OR just selected
                 pillContent(for: result, isSelected: viewModel.selectedPurposes.contains(result.title) || viewModel.sessionTitle == result.title)
@@ -711,7 +746,7 @@ struct DocumentDetailView: View {
     let image: UIImage
     @Environment(\.dismiss) private var dismiss
     @State private var hasSaved = false
-
+    
     var body: some View {
         NavigationStack {
             ZStack {
@@ -795,14 +830,14 @@ extension VisualIntelligenceView {
                             .glass(cornerRadius: 20)
                     }
                     
-                    ForEach(Array(viewModel.placeCandidates.enumerated()), id: \.offset) { index, place in
+                    ForEach(viewModel.placeCandidates) { place in
                         Button {
                             withAnimation {
                                 viewModel.selectedPlace = place
                             }
-                            #if os(iOS)
+#if os(iOS)
                             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                            #endif
+#endif
                         } label: {
                             HStack(spacing: 6) {
                                 if place.title == "Home" {
@@ -814,25 +849,58 @@ extension VisualIntelligenceView {
                                 }
                                 
                                 Text(place.title ?? "Unknown")
-                                    .font(.subheadline)
                                     .fontWeight(.medium)
                             }
-                            .padding(.horizontal, 16)
+                            .font(.subheadline)
+                            .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .background(viewModel.selectedPlace?.title == place.title ? Color.blue : Color.white.opacity(0.1))
-                            .clipShape(Capsule())
-                            .foregroundStyle(.white)
-                            .overlay(
-                                Capsule()
-                                    .stroke(viewModel.selectedPlace?.title == place.title ? Color.white.opacity(0.5) : Color.white.opacity(0.2), lineWidth: 0.5)
+                            .background(
+                                viewModel.selectedPlace?.id == place.id ? Color.blue : Color.white.opacity(0.2)
                             )
+                            .foregroundStyle(.white)
+                            .clipShape(Capsule())
                         }
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
             }
-            .padding(.bottom, 8)
-            .transition(.move(edge: .trailing).combined(with: .opacity))
+        }
+    }
+}
+
+struct FullScreenImageView: View {
+    let image: UIImage
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            GeometryReader { proxy in
+                Image(uiImage: image) // Assuming image is safe to unwrap or passed directly
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+            }
+            .ignoresSafeArea()
+            
+            // Interaction overlay
+            VStack {
+                HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.largeTitle)
+                            .foregroundStyle(.white)
+                            .padding()
+                            .shadow(radius: 5)
+                    }
+                    Spacer()
+                }
+                Spacer()
+            }
         }
     }
 }

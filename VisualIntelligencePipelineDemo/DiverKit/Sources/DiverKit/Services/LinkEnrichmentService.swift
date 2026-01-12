@@ -3,7 +3,8 @@ import CoreLocation
 import DiverShared
 
 /// Data structure for enriched link metadata
-public struct EnrichmentData: Sendable, Codable {
+public struct EnrichmentData: Sendable, Codable, Identifiable {
+    public var id: String { placeContext?.placeID ?? UUID().uuidString }
     public var title: String?
     public var descriptionText: String?
     public var image: String?

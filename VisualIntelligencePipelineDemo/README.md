@@ -93,11 +93,11 @@ Diver deeply integrates Apple Intelligence to provide a seamless and privacy-pre
 Diver uses a sophisticated multi-stage intelligence pipeline (`LocalPipelineService`) that combines on-device vision, vector-based knowledge retrieval, and generative AI to enrich captured content.
 
 ### 1. Visual Capture & Sifting (Vision + CoreML)
-The `VisualIntelligenceViewModel` drives the initial capture experience using advanced Computer Vision:
--   **Subject Lifting**: Uses `VNGenerateForegroundInstanceMaskRequest` (Vision Framework) to "sift" the primary subject from the background, creating a high-fidelity sticker-like asset.
+The `VisualIntelligenceViewModel` drives the initial capture experience using advanced Computer Vision in a **two-pass analysis approach**:
+-   **Pass 1: Subject Sifting**: Uses `VNGenerateForegroundInstanceMaskRequest` (Vision Framework) to "sift" the primary subject from the background, creating a high-fidelity sticker-like asset.
+-   **Pass 2: Semantic Targeting**: Uses the bounds of the sifted subject to focus `VNClassifyImageRequest` (CoreML) specifically on the object. This allows Diver to **semantically label** the sticker (e.g., "Coffee Mug" vs "Table").
 -   **Optical Character Recognition (OCR)**: Uses `VNRecognizeTextRequest` (Vision Framework) to extract text from the scene to determine intent.
 -   **Rectification**: Automatically detects and rectifies document edges using `VNDetectRectanglesRequest` and `VNInstanceMaskObservation`.
--   **Object Recognition**: Uses pre-trained CoreML models for broad category classification.
 
 ### 2. The KnowMaps Vector Space
 Diver integrates with **KnowMaps** (1st party Service) to ground visual data in the user's personal knowledge graph.

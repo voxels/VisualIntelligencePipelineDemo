@@ -124,7 +124,7 @@ extension DiverQueueItem {
                 if let label { semanticLabels.append(label) }
                 
             case .purpose: break
-            case .siftedSubject: break
+            case .siftedSubject(_, _): break
             case .qr(let url):
                 findingsSummary += "• Found QR Code\n"
                 let id = DiverLinkWrapper.id(for: url)

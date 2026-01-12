@@ -66,10 +66,10 @@ struct EditLocationView: View {
                         }
                         
                         // Candidates
-                        ForEach(candidates, id: \.placeContext?.placeID) { candidate in
+                        ForEach(candidates) { candidate in
                             if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
                                 let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-                                let isSelected = selectedCandidate?.placeContext?.placeID == candidate.placeContext?.placeID
+                                let isSelected = selectedCandidate?.id == candidate.id
                                 Marker(candidate.title ?? "Unknown", coordinate: coordinate)
                                     .tint(isSelected ? .green : .red)
                             }
@@ -168,7 +168,7 @@ struct EditLocationView: View {
                         Text("No places found nearby.")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(candidates, id: \.placeContext?.placeID) { candidate in
+                        ForEach(candidates) { candidate in
                             Button {
                                 selectedCandidate = candidate
                                 // Move map to candidate
@@ -193,7 +193,7 @@ struct EditLocationView: View {
                                         }
                                     }
                                     Spacer()
-                                    if selectedCandidate?.placeContext?.placeID == candidate.placeContext?.placeID {
+                                    if selectedCandidate?.id == candidate.id {
                                         Image(systemName: "checkmark")
                                             .foregroundStyle(.blue)
                                     }
@@ -250,8 +250,19 @@ struct EditLocationView: View {
         } else if let sl = sessionLocation {
             position = .region(MKCoordinateRegion(center: sl, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
         } else {
-            // Default to SF
-            position = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)))
+            // Attempt to get current location or default to SF
+            Task {
+                if let current = await Services.shared.locationService?.getCurrentLocation() {
+                     await MainActor.run {
+                         withAnimation {
+                             position = .region(MKCoordinateRegion(center: current.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
+                         }
+                     }
+                } else {
+                    // Default to SF only if location services fail/unavailable
+                    position = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)))
+                }
+            }
         }
         
         // 2. Initial selection from current item context

@@ -113,7 +113,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         var bounds: CGRect?
         if let sifted = results.first(where: { if case .siftedSubject = $0 { return true } else { return false } }),
-           case .siftedSubject(let obs) = sifted {
+           case .siftedSubject(let obs, _) = sifted {
              // Calculate bounds OFF-MAIN here
              bounds = localProcessor.calculateBounds(from: obs)
         }
@@ -185,7 +185,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                     
                     // Sifted logic
                     if let sifted = newResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
-                       case .siftedSubject(let observation) = sifted {
+                       case .siftedSubject(let observation, _) = sifted {
                         Task {
                             if let (sImage, sBounds) = await self.extractSiftedImage(
                                 observation: UnsafeSendable(value: observation),
@@ -295,7 +295,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                         // Extract observation if present for state tracking (Live Highlighting)
                         // We DO update this even in review mode, so the background "Live View" still feels alive/highlighted
                         if let sifted = newResults.first(where: { if case .siftedSubject = $0 { return true } else { return false } }),
-                           case .siftedSubject(let obs) = sifted {
+                           case .siftedSubject(let obs, _) = sifted {
                             self.activeObservation = obs
                             self.siftedBoundingBox = newBounds // Use off-main calculated bounds
                         } else {
@@ -661,7 +661,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                         
                         // Extract sifted image if found
                         if let sifted = newResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
-                           case .siftedSubject(let observation) = sifted {
+                           case .siftedSubject(let observation, _) = sifted {
                             Task {
                                 if let (sImage, sBounds) = await self.extractSiftedImage(
                                     observation: UnsafeSendable(value: observation),
@@ -1181,29 +1181,48 @@ public class VisualIntelligenceViewModel: ObservableObject {
     }
     
     public func saveDocument(title: String? = nil, tags: [String] = []) {
-        guard let rectified = rectifiedDocument, let queueStore = linkGenerator?.store else {
+        guard let queueStore = linkGenerator?.store else {
             print("❌ saveDocument: Missing requirements")
             return
         }
         
+        // Capture state on MainActor
+        let rectified = self.rectifiedDocument
+        let captured = self.capturedImage
+        let sifted = self.siftedImage
+        
+        // Prioritize Rectified (Manual Crop) -> Captured (Full Context) -> Sifted
+        // User Request: "Analysis on Entire Image" => Prefer Captured over Sifted if no Rectified Document.
+        guard let primaryImage = rectified ?? captured ?? sifted else {
+            print("❌ saveDocument: No image available to save")
+            return
+        }
+        
         let purposes = Array(self.selectedPurposes)
-        let text = self.rectifiedDocumentText
+        let text = self.rectifiedDocumentText // Likely nil if not rectified
         isSavingDocument = true
         
         Task.detached(priority: .userInitiated) {
+            var mainData: Data?
+            var attachments: [Data] = []
+            
             #if canImport(UIKit)
-            let imageData = rectified.jpegData(compressionQuality: 0.8)
+            mainData = primaryImage.jpegData(compressionQuality: 0.8)
+            // If we are saving the full captured image, attach the sifted crop as context
+            if primaryImage == captured, let s = sifted, let sData = s.jpegData(compressionQuality: 0.8) {
+                attachments.append(sData)
+            }
             #elseif canImport(AppKit)
-            let imageData = rectified.tiffRepresentation // Or similar for macOS
-            #else
-            let imageData: Data? = nil
+            mainData = primaryImage.tiffRepresentation
+            if primaryImage == captured, let s = sifted, let sData = s.tiffRepresentation {
+                attachments.append(sData)
+            }
             #endif
             
-            guard let data = imageData else {
+            guard let data = mainData else {
                 await MainActor.run { self.isSavingDocument = false }
                 return
             }
-            
             
             let lat = await MainActor.run { self.currentCaptureCoordinate?.latitude }
             let lng = await MainActor.run { self.currentCaptureCoordinate?.longitude }
@@ -1212,20 +1231,32 @@ public class VisualIntelligenceViewModel: ObservableObject {
             let date = await MainActor.run { self.capturedMediaDate }
             let sessionID = await MainActor.run { self.activeSessionID }
 
-            let queueItem = DiverQueueItem.from(documentImage: data, title: title, tags: tags, text: text, purposes: purposes, date: date, sessionID: sessionID, placeID: placeID, latitude: lat, longitude: lng, locationName: locationName)
+             // User Request: Save captured image to Photo Library
+            #if canImport(UIKit)
+            if let original = captured as? UIImage {
+                await MainActor.run {
+                    self.saveToPhotoLibrary(image: original)
+                }
+            }
+            #endif
+
+            let queueItem = DiverQueueItem.from(documentImage: data, title: title, tags: tags, text: text, purposes: purposes, date: date, sessionID: sessionID, placeID: placeID, latitude: lat, longitude: lng, locationName: locationName, attachments: attachments)
             
             do {
                 try queueStore.enqueue(queueItem)
                 await MainActor.run {
                     self.isSavingDocument = false
+                    self.rectifiedDocument = nil
+                    // Do NOT clear captured/sifted/results immediately if we want to allow re-save? 
+                    // Usually we dismiss the VI view after save.
                     #if os(iOS)
                     UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
                     #endif
                     NotificationCenter.default.post(name: .diverQueueDidUpdate, object: nil)
-                    print("✅ Document saved to Diver Queue")
+                    print("✅ Document/Capture saved to queue")
                 }
             } catch {
-                print("❌ Failed to save document: \(error)")
+                print("❌ Failed to enqueue item: \(error)")
                 await MainActor.run { self.isSavingDocument = false }
             }
         }

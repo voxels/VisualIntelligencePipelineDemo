@@ -7,7 +7,7 @@ public enum IntelligenceResult {
     case text(String, URL? = nil)
     case semantic(String, confidence: Float)
     case entertainment(title: String, type: EntertainmentType, assets: [URL] = [])
-    case siftedSubject(VNInstanceMaskObservation)
+    case siftedSubject(VNInstanceMaskObservation, label: String?)
     case product(code: String, type: ProductCodeType, mediaAssets: [URL] = [])
     case document(VNRectangleObservation, text: String?, label: String?)
     case purpose(statements: [String])
@@ -21,6 +21,10 @@ public enum IntelligenceResult {
     public enum ProductCodeType: String {
         case upc, ean, unknown
     }
+
+}
+
+extension IntelligenceResult: Hashable {
     public func hash(into hasher: inout Hasher) {
         switch self {
         case .qr(let url):
@@ -38,9 +42,10 @@ public enum IntelligenceResult {
             hasher.combine(3)
             hasher.combine(title)
             hasher.combine(type)
-        case .siftedSubject(let obs):
+        case .siftedSubject(let obs, let label):
             hasher.combine(4)
             hasher.combine(obs)
+            hasher.combine(label)
         case .product(let code, let type, _):
             hasher.combine(5)
             hasher.combine(code)
@@ -56,7 +61,6 @@ public enum IntelligenceResult {
         case .richWeb(let url, let data):
             hasher.combine(8)
             hasher.combine(url)
-            // EnrichmentData might not be hashable, rely on URL + title for uniqueness
             hasher.combine(data.title)
         }
     }
@@ -67,7 +71,7 @@ public enum IntelligenceResult {
         case (.text(let t1, let u1), .text(let t2, let u2)): return t1 == t2 && u1 == u2
         case (.semantic(let l1, let c1), .semantic(let l2, let c2)): return l1 == l2 && c1 == c2
         case (.entertainment(let t1, let ty1, _), .entertainment(let t2, let ty2, _)): return t1 == t2 && ty1 == ty2
-        case (.siftedSubject(let o1), .siftedSubject(let o2)): return o1 === o2
+        case (.siftedSubject(let o1, let l1), .siftedSubject(let o2, let l2)): return o1 === o2 && l1 == l2
         case (.product(let c1, let t1, _), .product(let c2, let t2, _)): return c1 == c2 && t1 == t2
         case (.document(let o1, let t1, let l1), .document(let o2, let t2, let l2)): return o1 === o2 && t1 == t2 && l1 == l2
         case (.purpose(let s1), .purpose(let s2)): return s1 == s2
@@ -76,13 +80,6 @@ public enum IntelligenceResult {
         }
     }
 }
-
-extension IntelligenceResult: Hashable {
-    // Hashable implementation above
-}
-
-extension IntelligenceResult.EntertainmentType: Hashable {}
-extension IntelligenceResult.ProductCodeType: Hashable {}
 
 // MARK: - Metadata Extensions
 extension IntelligenceResult {
@@ -93,7 +90,7 @@ extension IntelligenceResult {
         case .text(let text, _): return text.count > 30 ? String(text.prefix(30)) + "..." : text
         case .semantic(let label, _): return label.capitalized
         case .entertainment(let title, _, _): return title
-        case .siftedSubject: return "Subject Sifted"
+        case .siftedSubject(_, let label): return label?.capitalized ?? "Subject Sifted"
         case .product: return "Product Detected"
         case .document(_, let text, let label): return text ?? label?.capitalized ?? "Document Scanned"
         case .purpose: return "Possible Intent"
@@ -113,7 +110,7 @@ extension IntelligenceResult {
             case .book: return "Book Cover"
             case .podcast: return "Podcast Art"
             }
-        case .siftedSubject: return "Ready to Peel"
+        case .siftedSubject(_, let label): return label != nil ? "Sifted Object" : "Ready to Peel"
         case .product(let code, let type, _): return "\(type.rawValue.uppercased()): \(code)"
         case .document(_, _, let label): return label?.capitalized ?? "Auto-segmented document"
         case .purpose(let statements): return statements.first ?? "Define your goal"
@@ -133,7 +130,14 @@ extension IntelligenceResult {
             case .book: return "book"
             case .podcast: return "podcast.arrow.up.universal"
             }
-        case .siftedSubject: return "hand.raised.fingers.spread"
+        case .siftedSubject(_, let label):
+            if let l = label?.lowercased() {
+                if l.contains("dog") || l.contains("cat") { return "pawprint.fill" }
+                if l.contains("coffee") || l.contains("mug") { return "cup.and.saucer.fill" }
+                if l.contains("laptop") || l.contains("screen") { return "laptopcomputer" }
+                if l.contains("plant") || l.contains("flower") { return "leaf.fill" }
+            }
+            return "hand.raised.fingers.spread"
         case .product: return "barcode.viewfinder"
         case .document: return "doc.text.viewfinder"
         case .purpose: return "sparkles.rectangle.stack"
@@ -237,7 +241,7 @@ public final class IntelligenceProcessor: Sendable {
          
          var subjectBounds: CGRect?
          if let observation = siftingRequest.results?.first {
-             finalResults.append(.siftedSubject(observation))
+             finalResults.append(.siftedSubject(observation, label: nil))
              if mode == .fullAnalysis {
                  subjectBounds = calculateBounds(from: observation)
              }
@@ -269,7 +273,7 @@ public final class IntelligenceProcessor: Sendable {
                  
                  // barcodeRequest.regionOfInterest = paddedRoi // Fix: Allow barcode scanning on full frame
                  textRequest.regionOfInterest = paddedRoi
-                 // classificationRequest.regionOfInterest = paddedRoi // Fix: Allow product classification on full frame
+                 classificationRequest.regionOfInterest = paddedRoi // Focus classification on subject
                  documentRequest.regionOfInterest = paddedRoi
              }
          } else {
@@ -341,6 +345,15 @@ public final class IntelligenceProcessor: Sendable {
              
              for observation in topObservations where observation.confidence > 0.7 {
                  finalResults.append(.semantic(observation.identifier, confidence: observation.confidence))
+              }
+              
+              // Backfill the Sifted Subject Label
+              if let bestLabel = topObservations.first?.identifier,
+                 let index = finalResults.firstIndex(where: { if case .siftedSubject = $0 { return true } else { return false } }),
+                 case .siftedSubject(let obs, _) = finalResults[index] {
+                  // Replace with labeled version
+                  finalResults[index] = .siftedSubject(obs, label: bestLabel)
+                  print("🏷️ Assigned Label '\(bestLabel)' to Sifted Subject")
               }
           }
           
