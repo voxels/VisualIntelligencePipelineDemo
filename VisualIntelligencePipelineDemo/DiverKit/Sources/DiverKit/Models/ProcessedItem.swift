@@ -49,14 +49,7 @@ public final class ProcessedItem: Identifiable {
     public var location: String?
     public var price: Double?
     public var rating: Double?
-    @Attribute(originalName: "purposes")
-    public var storedPurposes: [String] = []
-    
-    @Transient
-    public var purposes: Set<String> {
-        get { Set(storedPurposes) }
-        set { storedPurposes = Array(newValue) }
-    }
+    public var purposes: [String] = [] // Migrated from single purpose
     public var productSearchURL: URL?
     
     // Detailed Context Storage (Data blobs)
@@ -184,7 +177,7 @@ public final class ProcessedItem: Identifiable {
         if let p = purpose, !combined.contains(p) {
             combined.insert(p)
         }
-        self.storedPurposes = Array(combined)
+        self.purposes = Array(combined)
         self.processingLog = processingLog
         self.failureCount = failureCount
     }

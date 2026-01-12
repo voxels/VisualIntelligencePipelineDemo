@@ -39,6 +39,8 @@ struct ReferenceDetailView: View {
              // Toolbar buttons are now inside ReferenceDetailContent or need to be lifted?
              // If inside TabView, they contextually appear.
         }
+        .navigationTitle("Details")
+        .navigationBarTitleDisplayMode(.inline)
         #if os(iOS)
         .background(Color(uiColor: .systemGroupedBackground))
         #endif
@@ -83,14 +85,27 @@ struct ReferenceDetailContent: View {
                             .shadow(radius: 4)
                             .padding(.bottom, 12)
                             .glass(cornerRadius: 12)
-                    } else if let snapshotPath = item.webContext?.snapshotURL, let uiImage = UIImage(contentsOfFile: snapshotPath) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .cornerRadius(12)
-                            .shadow(radius: 4)
-                            .padding(.bottom, 12)
-                            .glass(cornerRadius: 12)
+                    } else if let snapshotPath = item.webContext?.snapshotURL {
+                         // Use AsyncImage for reliable file/url loading
+                         AsyncImage(url: URL(fileURLWithPath: snapshotPath)) { phase in
+                             if let image = phase.image {
+                                 image
+                                     .resizable()
+                                     .aspectRatio(contentMode: .fit)
+                                     .cornerRadius(12)
+                                     .shadow(radius: 4)
+                                     .padding(.bottom, 12)
+                                     .glass(cornerRadius: 12)
+                             } else if phase.error != nil {
+                                 Color.gray.opacity(0.1)
+                                     .frame(height: 200)
+                                     .overlay(Image(systemName: "photo.badge.exclamationmark"))
+                                     .cornerRadius(12)
+                             } else {
+                                 ProgressView()
+                                     .frame(height: 200)
+                             }
+                         }
                     }
                     
                     Text(item.title ?? "Untitled")
@@ -494,7 +509,7 @@ struct ReferenceDetailContent: View {
                                     Button {
                                         withAnimation {
                                             if !item.purposes.contains(suggestion) {
-                                                item.purposes.insert(suggestion)
+                                                item.purposes.append(suggestion)
                                             }
                                             if let idx = viewModel.suggestedPurposes.firstIndex(of: suggestion) {
                                                 viewModel.suggestedPurposes.remove(at: idx)

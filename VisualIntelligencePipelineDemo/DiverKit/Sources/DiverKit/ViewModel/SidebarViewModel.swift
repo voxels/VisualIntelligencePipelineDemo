@@ -116,6 +116,18 @@ public class SidebarViewModel: ObservableObject {
     }
     
     public func reprocessItem(_ item: ProcessedItem) {
+        // Direct background reprocessing
+        Task {
+            // Reset status to provide immediate feedback
+            await MainActor.run {
+                 item.status = .processing
+                 item.processingLog.append("\(Date().formatted()): User requested quick reprocessing.")
+            }
+            try? await pipelineService?.processItemImmediately(item)
+        }
+    }
+    
+    public func refineItem(_ item: ProcessedItem) {
         self.itemToReprocess = item
     }
     
@@ -238,7 +250,8 @@ public class SidebarViewModel: ObservableObject {
                     sessionID: newSessionID,
                     placeID: source.placeContext?.placeID,
                     latitude: source.placeContext?.latitude,
-                    longitude: source.placeContext?.longitude
+                    longitude: source.placeContext?.longitude,
+                    purposes: Set(source.purposes)
                 )
                 
                 Task {

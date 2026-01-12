@@ -307,7 +307,7 @@ public final class LocalPipelineService {
                 // Try to determine if truly empty
                 // ... (LLM logic same as above if needed, or skip for updates to save perf)
             } else if !newPurposes.isEmpty {
-                 existing.purposes = Set(combinedPurposes)
+                 existing.purposes = Array(combinedPurposes)
                  // Link new ones
                  for purpose in newPurposes {
                      if !existingPurposes.contains(purpose) {
@@ -493,7 +493,7 @@ public final class LocalPipelineService {
         }
 
         if !finalPurposes.isEmpty {
-            processed.purposes = Set(finalPurposes)
+            processed.purposes = Array(finalPurposes).sorted()
             for purpose in finalPurposes {
                 try await linkToParent(item: processed, purpose: purpose)
             }
@@ -1160,7 +1160,7 @@ public final class LocalPipelineService {
             // Generate and merge purposes
             if let p = purpose, !p.isEmpty {
                 if !item.purposes.contains(p) {
-                    item.purposes.insert(p)
+                    item.purposes.append(p)
                 }
             }
             
@@ -1490,7 +1490,7 @@ public final class LocalPipelineService {
         // 1. Check if current title is valid (Prominent Text / Metadata)
         let idString = item.id
         let currentTitle = item.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let isPlaceholder = currentTitle.isEmpty || currentTitle == "Untitled" || currentTitle == idString || currentTitle.contains("http") || currentTitle.contains("://")
+        let isPlaceholder = currentTitle.isEmpty || currentTitle == "Untitled" || currentTitle == idString || currentTitle.contains("http") || currentTitle.contains("://") || isAddressString(currentTitle)
         
         // If we have a good title, stick with it
         if !isPlaceholder { return }

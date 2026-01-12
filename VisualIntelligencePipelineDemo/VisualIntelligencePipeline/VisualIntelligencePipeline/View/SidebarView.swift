@@ -191,6 +191,13 @@ struct SidebarView: View {
                                 .tint(.blue)
                                 
                                 Button {
+                                    viewModel.refineItem(item)
+                                } label: {
+                                    Label("Refine...", systemImage: "slider.horizontal.3")
+                                }
+                                .tint(.orange)
+                                
+                                Button {
                                     viewModel.itemToEditLocation = item
                                 } label: {
                                     Label("Edit Location", systemImage: "mappin.and.ellipse")
@@ -534,6 +541,13 @@ struct LibraryItemRow: View {
             } label: {
                 Label("Re-process", systemImage: "arrow.clockwise")
             }
+            .tint(.blue)
+            
+            Button {
+                viewModel.refineItem(item)
+            } label: {
+                Label("Refine...", systemImage: "slider.horizontal.3")
+            }
             .tint(.orange)
             
             Button {
@@ -582,17 +596,20 @@ struct SessionContentView: View {
     var body: some View {
         // Grouping Logic: Session -> Master -> Child
         let sessionGroups = Dictionary(grouping: items) { $0.sessionID ?? "detached" }
-        
-        let allKeys = sessionGroups.keys
-        let sessionKeys = allKeys.filter { $0 != "detached" }
         let detachedItems = sessionGroups["detached"] ?? []
         
-        // 1. Render Sessions
-        let sortedSessions = sessionKeys.sorted { key1, key2 in
-            let date1 = sessionGroups[key1]?.map { $0.updatedAt }.max() ?? Date.distantPast
-            let date2 = sessionGroups[key2]?.map { $0.updatedAt }.max() ?? Date.distantPast
-            return date1 > date2
-        }
+        // 1. Render Sessions (Preserve Sort Order from 'items')
+        let sortedSessions: [String] = {
+            var uniqueSessionKeys = [String]()
+            var seenSessions = Set<String>()
+            for item in items {
+                if let sid = item.sessionID, !seenSessions.contains(sid) {
+                    uniqueSessionKeys.append(sid)
+                    seenSessions.insert(sid)
+                }
+            }
+            return uniqueSessionKeys
+        }()
         
         ForEach(sortedSessions, id: \.self) { sessionKey in
             if let sessionItems = sessionGroups[sessionKey] {
@@ -744,11 +761,21 @@ struct MasterChildGroupingView: View {
         
         let groups = Dictionary(grouping: uniqueItems) { $0.masterCaptureID ?? $0.id }
         
-        let sortedKeys = groups.keys.sorted { key1, key2 in
-            let date1 = groups[key1]?.map { $0.updatedAt }.max() ?? Date.distantPast
-            let date2 = groups[key2]?.map { $0.updatedAt }.max() ?? Date.distantPast
-            return date1 > date2
-        }
+
+        
+        // Preserve sort order from 'items'
+        let sortedKeys: [String] = {
+            var uniqueKeys = [String]()
+            var seenKeys = Set<String>()
+            for item in uniqueItems {
+                let key = item.masterCaptureID ?? item.id
+                if !seenKeys.contains(key) {
+                    uniqueKeys.append(key)
+                    seenKeys.insert(key)
+                }
+            }
+            return uniqueKeys
+        }()
         
         ForEach(sortedKeys, id: \.self) { key in
             let groupItems = groups[key] ?? []

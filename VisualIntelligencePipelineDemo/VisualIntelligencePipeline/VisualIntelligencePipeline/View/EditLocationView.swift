@@ -73,7 +73,7 @@ struct EditLocationView: View {
                         ForEach(candidates) { candidate in
                             if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
                                 let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-                                let isSelected = selectedCandidate?.id == candidate.id
+                                let isSelected = matchesSelection(candidate)
                                 
                                 Annotation(candidate.title ?? "Unknown", coordinate: coordinate) {
                                     Button {
@@ -86,6 +86,26 @@ struct EditLocationView: View {
                                             .clipShape(Circle())
                                             .shadow(radius: 2)
                                     }
+                                }
+                            }
+                        }
+                        
+                        // Explicitly render selected candidate if it's not in the candidate list
+                        if let selected = selectedCandidate, 
+                           let lat = selected.placeContext?.latitude, 
+                           let lon = selected.placeContext?.longitude,
+                           !candidates.contains(where: { matchesSelection($0) }) {
+                            
+                            Annotation(selected.title ?? "Selected", coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)) {
+                                Button {
+                                    // Already selected
+                                } label: {
+                                    Image(systemName: "mappin.circle.fill")
+                                        .font(.title)
+                                        .foregroundStyle(.green)
+                                        .background(.white)
+                                        .clipShape(Circle())
+                                        .shadow(radius: 2)
                                 }
                             }
                         }
@@ -435,6 +455,26 @@ struct EditLocationView: View {
                 ))
             }
         }
+    }
+    
+    private func matchesSelection(_ candidate: EnrichmentData) -> Bool {
+        guard let selected = selectedCandidate else { return false }
+        
+        // 1. Direct ID Match
+        if selected.id == candidate.id { return true }
+        
+        // 2. Loose Match (Title + Location) to handle ID drift between API calls
+        let titlesMatch = (selected.title == candidate.title)
+        
+        var locationsMatch = false
+        if let l1 = selected.placeContext, let l2 = candidate.placeContext,
+           let lat1 = l1.latitude, let lon1 = l1.longitude,
+           let lat2 = l2.latitude, let lon2 = l2.longitude {
+            // Approx 10 meters tolerance (0.0001 deg is ~11m)
+            locationsMatch = abs(lat1 - lat2) < 0.0001 && abs(lon1 - lon2) < 0.0001
+        }
+        
+        return titlesMatch && locationsMatch
     }
 }
 

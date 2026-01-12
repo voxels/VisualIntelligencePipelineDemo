@@ -80,7 +80,7 @@ public class ReferenceDetailViewModel: ObservableObject {
             attributionID: item.attributionID,
             masterCaptureID: item.masterCaptureID,
             sessionID: item.sessionID,
-            purposes: item.purposes
+            purposes: Set(item.purposes)
         )
 
         Task {
