@@ -1,4 +1,0 @@
-module DiverKit {
-header "DiverKit-Swift.h"
-export *
-}

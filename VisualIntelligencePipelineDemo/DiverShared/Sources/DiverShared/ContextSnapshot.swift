@@ -45,8 +45,13 @@ public struct PlaceContext: Codable, Sendable {
     public let isOpen: Bool?
     public let latitude: Double?
     public let longitude: Double?
+    public let priceLevel: String?
+    public let phoneNumber: String?
+    public let website: String?
+    public let photos: [String]?
+    public let tips: [String]?
     
-    public init(name: String? = nil, categories: [String] = [], placeID: String? = nil, address: String? = nil, rating: Double? = nil, isOpen: Bool? = nil, latitude: Double? = nil, longitude: Double? = nil) {
+    public init(name: String? = nil, categories: [String] = [], placeID: String? = nil, address: String? = nil, rating: Double? = nil, isOpen: Bool? = nil, latitude: Double? = nil, longitude: Double? = nil, priceLevel: String? = nil, phoneNumber: String? = nil, website: String? = nil, photos: [String]? = nil, tips: [String]? = nil) {
         self.name = name
         self.categories = categories
         self.placeID = placeID
@@ -55,6 +60,11 @@ public struct PlaceContext: Codable, Sendable {
         self.isOpen = isOpen
         self.latitude = latitude
         self.longitude = longitude
+        self.priceLevel = priceLevel
+        self.phoneNumber = phoneNumber
+        self.website = website
+        self.photos = photos
+        self.tips = tips
     }
 }
 

@@ -33,7 +33,30 @@ public struct VisualIntelligenceView: View {
         ZStack {
             // Background Layer
             // Background Layer
-            if viewModel.cameraManager.isReady {
+            if viewModel.isReviewing, let capturedImage = viewModel.capturedImage {
+                Image(uiImage: capturedImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .ignoresSafeArea()
+                    .overlay(
+                        ZStack {
+                            // Highlight Subject
+                            if let box = viewModel.siftedBoundingBox, let image = viewModel.siftedImage {
+                                // Use SiftedSubjectView for the overlay
+                                SiftedSubjectView(siftedImage: image, boundingBox: box, peelAmount: $viewModel.peelAmount)
+                            } else if let box = viewModel.siftedBoundingBox {
+                                // Fallback if image not ready but box is
+                                GeometryReader { proxy in
+                                    let rect = viewModel.convertBoundingBox(box, to: proxy.size)
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(LinearGradient(colors: [.white, .blue.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 3)
+                                        .frame(width: rect.width, height: rect.height)
+                                        .position(x: rect.midX, y: rect.midY)
+                                }
+                            }
+                        }
+                    )
+            } else if viewModel.cameraManager.isReady {
                 CameraPreviewView(session: viewModel.cameraManager.session)
                     .ignoresSafeArea()
                     .overlay(
@@ -55,35 +78,6 @@ public struct VisualIntelligenceView: View {
                         }
                     )
                 
-                // MARK: - Navigation Control
-                VStack {
-                    HStack {
-                         Button {
-                            viewModel.showingPlaceSelection = true
-                        } label: {
-                            Image(systemName: "map.fill")
-                                .font(.title3.bold())
-                                .foregroundStyle(.white)
-                                .padding(12)
-                                .glass(cornerRadius: 30)
-                        }
-                        
-                        Spacer()
-                        Button {
-                            navigationManager.isScanActive = false
-                        } label: {
-                            Image(systemName: "xmark")
-                                .font(.title3.bold())
-                                .foregroundStyle(.white)
-                                .padding(12)
-                                .glass(cornerRadius: 30)
-                        }
-                    }
-                    .padding(.top, 50)
-                    .padding(.horizontal, 20)
-                    Spacer()
-                }
-                .zIndex(100)
             } else {
                 Color.black.ignoresSafeArea()
                 VStack {
@@ -95,6 +89,37 @@ public struct VisualIntelligenceView: View {
                         .padding(.top)
                 }
             }
+
+            // MARK: - Global Navigation Control
+            VStack {
+                HStack {
+                    Button {
+                        viewModel.showingPlaceSelection = true
+                    } label: {
+                        Image(systemName: "map.fill")
+                            .font(.title3.bold())
+                            .foregroundStyle(.white)
+                            .padding(12)
+                            .glass(cornerRadius: 30)
+                    }
+                    
+                    Spacer()
+                    
+                    Button {
+                        navigationManager.isScanActive = false
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.title3.bold())
+                            .foregroundStyle(.white)
+                            .padding(12)
+                            .glass(cornerRadius: 30)
+                    }
+                }
+                .padding(.top, 50)
+                .padding(.horizontal, 20)
+                Spacer()
+            }
+            .zIndex(100)
             
             
                 
@@ -750,115 +775,6 @@ struct WebView: UIViewRepresentable {
 
 // MARK: - Map Selection
 
-struct PlaceSelectionMapView: View {
-    @ObservedObject var viewModel: VisualIntelligenceViewModel
-    @Environment(\.dismiss) private var dismiss
-    
-    // Wrapper to make EnrichmentData compatible with Map annotations
-    struct PlaceAnnotation: Identifiable {
-        let id = UUID()
-        let data: EnrichmentData
-        let coordinate: CLLocationCoordinate2D
-    }
-    
-    @State private var annotations: [PlaceAnnotation] = []
-    @State private var region: MKCoordinateRegion = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-    )
-    
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                Map(coordinateRegion: $region, annotationItems: annotations) { place in
-                    MapAnnotation(coordinate: place.coordinate) {
-                        Button {
-                            viewModel.selectPlace(place.data)
-                            dismiss()
-                        } label: {
-                            VStack(spacing: 4) {
-                                Image(systemName: "mappin.circle.fill")
-                                    .font(.title)
-                                    .foregroundStyle(.red)
-                                    .background(Circle().fill(.white))
-                                
-                                Text(place.data.title ?? "Unknown")
-                                    .font(.caption)
-                                    .padding(4)
-                                    .background(.thinMaterial)
-                                    .cornerRadius(4)
-                                    .fixedSize()
-                            }
-                        }
-                    }
-                }
-                .ignoresSafeArea()
-                
-                // Instructions Overlay
-                VStack {
-                    Spacer()
-                    Text("Select a location to update context")
-                    .font(.subheadline)
-                    .padding()
-                    .background(.thinMaterial)
-                    .cornerRadius(12)
-                    .padding(.bottom, 20)
-                }
-            }
-            .navigationTitle("Select Location")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-            .onAppear {
-                loadAnnotations()
-            }
-            .onChange(of: viewModel.selectedPlace?.title) { _ in
-                if let data = viewModel.selectedPlace,
-                   let lat = data.placeContext?.latitude,
-                   let lng = data.placeContext?.longitude {
-                    withAnimation {
-                        region = MKCoordinateRegion(
-                            center: CLLocationCoordinate2D(latitude: lat, longitude: lng),
-                            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                        )
-                    }
-                }
-            }
-        }
-    }
-    
-    private func loadAnnotations() {
-        // Convert candidates to annotations
-        let validPlaces = viewModel.placeCandidates.compactMap { data -> PlaceAnnotation? in
-            guard let lat = data.placeContext?.latitude,
-                  let lng = data.placeContext?.longitude else { return nil }
-            return PlaceAnnotation(data: data, coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lng))
-        }
-        
-        self.annotations = validPlaces
-        
-        // Center map on results or current location
-        if let first = validPlaces.first {
-            region = MKCoordinateRegion(
-                center: first.coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-            )
-        } else {
-             Task { @MainActor in
-                 if let loc = await Services.shared.locationService?.getCurrentLocation() {
-                     region = MKCoordinateRegion(
-                        center: loc.coordinate,
-                        span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-                    )
-                 }
-             }
-        }
-    }
-    
-}
 
 extension VisualIntelligenceView {
     @ViewBuilder

@@ -1,2 +1,39 @@
-/VisualIntelligencePipelineDemo/VisualIntelligencePipeline/build
-/VisualIntelligencePipelineDemo/DiverKit/.build
+# Xcode
+build/
+DerivedData/
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.xcscmblueprint
+*.xcuserstate
+*.xcresult
+*.xccheckpoint
+.base.lproj
+
+# Swift Package Manager
+.build/
+.swiftpm/
+.swiftpm-cache/
+Package.resolved
+
+# Operating System
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Trashes
+.Spotlight-V100
+.fseventsd
+
+# Generic logs
+*.log
+*.txt

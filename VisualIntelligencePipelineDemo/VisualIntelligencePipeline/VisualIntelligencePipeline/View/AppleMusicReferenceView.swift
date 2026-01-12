@@ -7,6 +7,7 @@
 
 import SwiftUI
 import DiverShared
+import DiverKit
 
 struct AppleMusicReferenceView: View {
     let item: ProcessedItem

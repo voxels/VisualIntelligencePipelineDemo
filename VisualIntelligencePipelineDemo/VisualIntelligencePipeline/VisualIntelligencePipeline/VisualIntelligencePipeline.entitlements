@@ -26,6 +26,7 @@
 	<key>com.apple.security.application-groups</key>
 	<array>
 		<string>group.com.secretatomics.VisualIntelligence</string>
+		<string>group.com.secretatomics.Diver</string>
 	</array>
 	<key>keychain-access-groups</key>
 	<array>

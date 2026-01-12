@@ -51,9 +51,9 @@ struct ReferenceDetailContent: View {
     @EnvironmentObject private var sharedWithYouManager: SharedWithYouManager
     @State private var showingMap = false
     @Query private var allItems: [ProcessedItem]
-    @Query private var sessions: [SessionMetadata]
+    @Query private var sessions: [DiverSession]
     
-    var session: SessionMetadata? {
+    var session: DiverSession? {
         sessions.first { $0.sessionID == item.sessionID }
     }
     
@@ -194,12 +194,12 @@ struct ReferenceDetailContent: View {
                             ForEach(semanticTags, id: \.self) { tag in
                                 Button {
                                     if let sessionID = item.sessionID, let context = item.modelContext {
-                                        let descriptor = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
+                                        let descriptor = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
                                         if let session = try? context.fetch(descriptor).first {
                                             session.title = tag.capitalized
                                             session.updatedAt = Date()
                                         } else {
-                                            let newSession = SessionMetadata(sessionID: sessionID, title: tag.capitalized)
+                                            let newSession = DiverSession(sessionID: sessionID, title: tag.capitalized)
                                             context.insert(newSession)
                                         }
                                         try? context.save()
@@ -1270,15 +1270,23 @@ struct PlaceContextView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Header: Name and Category
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(baseLocation ?? "Location")
+                    Text(context.name ?? baseLocation ?? "Location")
                         .font(.headline)
+                    
+                    if let category = context.categories.first {
+                        Text(category)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     
                     if let addr = context.address {
                          Text(addr)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
+                            .lineLimit(2)
                     }
                 }
                 Spacer()
@@ -1290,11 +1298,20 @@ struct PlaceContextView: View {
             
             Divider()
             
+            // Details Row: Rating, Price, Status
             HStack(spacing: 12) {
                 if let rating = context.rating {
                     Label(String(format: "%.1f", rating), systemImage: "star.fill")
                         .font(.caption)
                         .foregroundStyle(.orange)
+                        .padding(6)
+                        .glass(cornerRadius: 6)
+                }
+                
+                if let price = context.priceLevel {
+                    Text(price)
+                        .font(.caption)
+                        .foregroundStyle(.green)
                         .padding(6)
                         .glass(cornerRadius: 6)
                 }
@@ -1309,6 +1326,84 @@ struct PlaceContextView: View {
                 }
                 
                 Spacer()
+            }
+            
+            // Actions: Phone & Website
+            if context.phoneNumber != nil || context.website != nil {
+                Divider()
+                HStack(spacing: 16) {
+                    if let phone = context.phoneNumber, let url = URL(string: "tel://\(phone.replacingOccurrences(of: " ", with: ""))") {
+                        Button {
+                            #if os(iOS)
+                            UIApplication.shared.open(url)
+                            #endif
+                        } label: {
+                            Label("Call", systemImage: "phone.fill")
+                                .font(.caption)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    
+                    if let website = context.website, let url = URL(string: website) {
+                         Link(destination: url) {
+                             Label("Website", systemImage: "globe")
+                                 .font(.caption)
+                         }
+                         .buttonStyle(.bordered)
+                    }
+                }
+            }
+            
+            // Tips
+            if let tips = context.tips, !tips.isEmpty {
+                Divider()
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Tips & Highlights")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    
+                    ForEach(tips.prefix(3), id: \.self) { tip in
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "quote.opening")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            Text(tip)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .italic()
+                        }
+                    }
+                }
+            }
+            
+            // Photos
+            if let photos = context.photos, !photos.isEmpty {
+                Divider()
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(photos, id: \.self) { photoUrl in
+                            if let url = URL(string: photoUrl) {
+                                AsyncImage(url: url) { phase in
+                                    if let image = phase.image {
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: 100, height: 100)
+                                            .cornerRadius(8)
+                                    } else if phase.error != nil {
+                                        Color.gray.opacity(0.3)
+                                            .frame(width: 100, height: 100)
+                                            .cornerRadius(8)
+                                            .overlay(Image(systemName: "photo").foregroundStyle(.secondary))
+                                    } else {
+                                        ProgressView()
+                                            .frame(width: 100, height: 100)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         .padding()
@@ -1384,192 +1479,8 @@ struct QRCodeView: View {
 }
 
 
-// MARK: - Concept Weighting
-struct ConceptWeightView: View {
-    @Bindable var concept: UserConcept
-    var onUpdate: () -> Void
-    @State private var isExpanded = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Button(action: { withAnimation { isExpanded.toggle() } }) {
-                HStack {
-                    Text(concept.name)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Text(String(format: "%.1f", concept.weight))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            
-            if isExpanded {
-                Slider(value: $concept.weight, in: 0.1...5.0, step: 0.1, onEditingChanged: { _ in
-                    onUpdate()
-                })
-                .tint(.indigo)
-            }
-        }
-        .padding(8)
-        .background(Color.secondary.opacity(0.1))
-        .cornerRadius(8)
-    }
-}
-
-struct ConceptWeightingSection: View {
-    let item: ProcessedItem
-    @Query private var userConcepts: [UserConcept]
-    @Environment(\.modelContext) private var modelContext
-    @State private var newConceptName: String = ""
-    @State private var isAdding: Bool = false
-
-    init(item: ProcessedItem) {
-        self.item = item
-        // Predicate to find relevant concepts is tricky with simple Arrays in SwiftData predicates currently.
-        // We will filter in memory for this MVP or use a broad query.
-        // Fetching ALL UserConcepts might be heavy if there are thousands, but safe for hundreds.
-    }
-
-    var relevantConcepts: [UserConcept] {
-        let docTags = Set(item.tags)
-        let otherTags = Set(item.categories + item.themes)
-        let allRelevant = docTags.union(otherTags)
-        
-        let filtered = userConcepts.filter { allRelevant.contains($0.name) }
-        
-        return filtered.sorted { c1, c2 in
-            // Priority 1: Document Tags (item.tags)
-            let isDocTag1 = docTags.contains(c1.name)
-            let isDocTag2 = docTags.contains(c2.name)
-            
-            if isDocTag1 != isDocTag2 {
-                return isDocTag1
-            }
-            
-            // Priority 2: Weight (Descending)
-            return c1.weight > c2.weight
-        }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Concept Weights")
-                .font(.headline)
-            
-            if relevantConcepts.isEmpty {
-                Text("No linked concepts found.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(relevantConcepts) { concept in
-                    ConceptWeightView(concept: concept) {
-                        save()
-                    }
-                }
-            }
-            
-            if isAdding {
-                HStack {
-                    TextField("New Concept", text: $newConceptName)
-                        .textFieldStyle(.roundedBorder)
-                    Button("Add") {
-                        addConcept()
-                    }
-                    .disabled(newConceptName.isEmpty)
-                }
-            } else {
-                Button(action: { isAdding.toggle() }) {
-                    Label("Add Concept", systemImage: "plus.circle")
-                        .font(.caption)
-                }
-            }
-        }
-        .padding()
-        .background(Color(uiColor: .secondarySystemBackground))
-        .cornerRadius(12)
-    }
-    
-    private func save() {
-        try? modelContext.save()
-    }
-    
-    private func addConcept() {
-        let name = newConceptName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty else { return }
-        
-        // Check if concept exists
-        let existing = userConcepts.first { $0.name == name }
-        
-        if existing == nil {
-            let concept = UserConcept(name: name, definition: "User added concept", weight: 1.0)
-            modelContext.insert(concept)
-        }
-        
-        if !item.tags.contains(name) {
-             item.tags.append(name) // Link by adding to tags
-        }
-       
-        try? modelContext.save()
-        
-        newConceptName = ""
-        isAdding = false
-    }
-}
 
 // MARK: - Rich Web View Support
-struct RichWebView: UIViewRepresentable {
-    let url: URL
-    var onTitleChange: ((String) -> Void)? = nil
-    
-    func makeUIView(context: Context) -> WKWebView {
-        let config = WKWebViewConfiguration()
-        config.allowsInlineMediaPlayback = true
-        
-        let webView = WKWebView(frame: .zero, configuration: config)
-        webView.navigationDelegate = context.coordinator
-        
-        // Load request
-        let request = URLRequest(url: url)
-        webView.load(request)
-        
-        return webView
-    }
-    
-    func updateUIView(_ uiView: WKWebView, context: Context) {
-        // If needed, handle URL changes or updates here
-    }
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    class Coordinator: NSObject, WKNavigationDelegate {
-        var parent: RichWebView
-        
-        init(_ parent: RichWebView) {
-            self.parent = parent
-        }
-        
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            if let title = webView.title {
-                parent.onTitleChange?(title)
-            }
-        }
-        
-        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-            print("WebView Error: \(error.localizedDescription)")
-        }
-    }
-}
 
 // Helper for Product Logic
 extension ProcessedItem {

@@ -23,6 +23,7 @@ struct ContentView: View {
         }
         .fullScreenCover(isPresented: $navigationManager.isScanActive) {
             VisualIntelligenceView()
+                .environmentObject(navigationManager)
         }
     }
 }

@@ -35,6 +35,7 @@ public final class ProcessedItem: Identifiable {
     public var masterCaptureID: String?
     public var sessionID: String?
     public var processingLog: [String] = [] // Debug/Audit Log
+    public var failureCount: Int = 0
     
     // Media metadata
     public var transcription: String?
@@ -142,7 +143,8 @@ public final class ProcessedItem: Identifiable {
         rating: Double? = nil,
         purpose: String? = nil, // Deprecated argument
         purposes: [String] = [], // New argument
-        processingLog: [String] = []
+        processingLog: [String] = [],
+        failureCount: Int = 0
     ) {
         self.id = id
         self.inputId = inputId
@@ -183,6 +185,7 @@ public final class ProcessedItem: Identifiable {
         }
         self.purposes = combined
         self.processingLog = processingLog
+        self.failureCount = failureCount
     }
 
     

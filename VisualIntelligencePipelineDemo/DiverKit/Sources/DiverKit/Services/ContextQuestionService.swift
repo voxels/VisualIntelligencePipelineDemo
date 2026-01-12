@@ -202,6 +202,15 @@ public final class ContextQuestionService: Sendable {
         var tags: [String]
     }
     #endif
+    #if canImport(FoundationModels)
+    @available(iOS 26.0, macOS 26.0, *)
+    @Generable
+    struct PurposeSuggestions {
+        @Guide(description: "3-5 suggested purposes for the collection of items. Short phrases like 'Planning a Trip'.")
+        var purposes: [String]
+    }
+    #endif
+
     /// Generates potential purposes or intent labels based on session context.
     public func suggestPurposes(from sessionContext: String) async throws -> [String] {
         guard !sessionContext.isEmpty else { return [] }
@@ -212,19 +221,24 @@ public final class ContextQuestionService: Sendable {
                 let instructions = """
                 Analyze the provided session context (a collection of related items/activities) and suggest 3-5 specific, distinct "Purposes" or "Goals" that describe why the user collected these items.
                 Examples: "Planning a Trip", "Researching Camera Gear", "Debugging SwiftUI", "Shopping for Gifts".
-                Return ONLY the raw phrases, separated by newlines. Do not number them.
                 """
                 let session = LanguageModelSession(instructions: instructions)
-                let response = try await session.respond(to: sessionContext)
+                print("🔍 ContextQuestionService: Suggesting purposes for context (\(sessionContext.count) chars)")
                 
-                let lines = response.content.components(separatedBy: .newlines)
+                let response = try await session.respond(
+                    to: sessionContext,
+                    generating: PurposeSuggestions.self,
+                    options: GenerationOptions(sampling: .greedy)
+                )
+                
+                let suggestions = response.content.purposes
                     .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                     .filter { !$0.isEmpty }
-                    .filter { $0.count < 40 } // Sanity check length
                 
-                return Array(lines.prefix(5))
+                print("✅ ContextQuestionService: Generated \(suggestions.count) purposes: \(suggestions.joined(separator: ", "))")
+                return Array(suggestions.prefix(5))
             } catch {
-                print("⚠️ Purpose suggestion failed: \(error)")
+                print("❌ ContextQuestionService: Purpose suggestion failed: \(error)")
                 return []
             }
         }

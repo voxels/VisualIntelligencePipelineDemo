@@ -41,7 +41,16 @@ struct ReprocessMetadataView: View {
                     if let loc = item.location {
                         LabeledContent("Coordinates", value: loc)
                     }
-                    LabeledContent("Session ID", value: item.sessionID ?? "None")
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(item.createdAt.formatted(date: .abbreviated, time: .shortened))
+                            .font(.headline)
+                        
+                        Text(item.sessionID ?? "No Session ID")
+                            .font(.caption2)
+                            .monospaced()
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 2)
                 }
                 
                 Section {
@@ -50,6 +59,10 @@ struct ReprocessMetadataView: View {
                     } label: {
                         if isLoading {
                             ProgressView()
+                        } else if item.rawPayload == nil {
+                            Text("Original Image Missing")
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity)
                         } else {
                             Text("Confirm & Reprocess")
                                 .bold()
@@ -57,6 +70,7 @@ struct ReprocessMetadataView: View {
                         }
                     }
                     .buttonStyle(.borderedProminent)
+                    .disabled(item.rawPayload == nil || isLoading)
                     .listRowInsets(EdgeInsets())
                 }
             }
@@ -78,21 +92,15 @@ struct ReprocessMetadataView: View {
         if let data = item.rawPayload {
             return UIImage(data: data)
         }
-        // Fallback: Try reading from URL if it was a file URL
-        // Simplified for now, relying on payload
         return nil
     }
     
     private func startReprocessing() {
-        guard let imageData = item.rawPayload else {
-            // Need image data to reprocess visually
-            return
-        }
+        guard let imageData = item.rawPayload else { return }
         
         isLoading = true
         
-        // 1. Set Shared Context
-        // Generate NEW session ID as requested ("save a new session with a new session id")
+        // 1. Set Shared Context - New Session
         let newSessionID = UUID().uuidString
         
         let context = ReprocessContext(
@@ -110,7 +118,6 @@ struct ReprocessMetadataView: View {
             dismiss()
             
             // 3. Trigger Visual Intelligence
-            // Wait slightly for dismiss animation?
             try? await Task.sleep(nanoseconds: 300_000_000)
             NotificationCenter.default.post(name: .openVisualIntelligence, object: nil)
         }

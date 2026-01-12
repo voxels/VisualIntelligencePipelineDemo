@@ -1,12 +1,13 @@
 import SwiftUI
 import WebKit
 
+// MARK: - Rich Web View Support
 struct RichWebView: UIViewRepresentable {
     let url: URL
+    var onTitleChange: ((String) -> Void)? = nil
     
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
-        // Enable standard behaviors
         config.allowsInlineMediaPlayback = true
         
         let webView = WKWebView(frame: .zero, configuration: config)
@@ -35,7 +36,9 @@ struct RichWebView: UIViewRepresentable {
         }
         
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            // Finished loading
+            if let title = webView.title {
+                parent.onTitleChange?(title)
+            }
         }
         
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {

@@ -8,40 +8,56 @@
 import Foundation
 import Combine
 import SwiftUI
+import DiverShared
 
 /// A service that tracks the user's daily context and generates a running summary using LLM.
 @MainActor
 public class DailyContextService: ObservableObject {
-    @Published public var dailySummary: String = "No activity yet today."
+    @Published public var dailySummary: String = "No activity yet in the last 24 hours."
     @Published public var isGenerating: Bool = false
     
-    private var todaysContexts: [String] = []
+    struct ContextEntry: Codable {
+        let text: String
+        let date: Date
+    }
+
+    private var contexts: [ContextEntry] = []
     private let contextService = ContextQuestionService()
     
     private let persistenceURL: URL = {
-        let urls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-        return urls[0].appendingPathComponent("daily_context_state.json")
+        do {
+            return try AppGroupContainer.containerURL().appendingPathComponent("daily_context_state_v2.json")
+        } catch {
+            // Fallback for previews/tests
+            let urls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+            return urls[0].appendingPathComponent("daily_context_state_v2.json")
+        }
     }()
     
     struct PersistedState: Codable {
-        let contexts: [String]
+        let entries: [ContextEntry]
         let summary: String
         let date: Date
     }
     
+    private var lastSaveDate: Date?
+
     public init() {
         loadState()
     }
     
-    /// Adds a new context entry (e.g. from a captured session) and updates the daily summary.
-    public func addContext(_ text: String) {
-        guard !text.isEmpty else { return }
+    public var hasContent: Bool {
+        !contexts.isEmpty
+    }
+
+    public func ingest(_ items: [String]) {
+        guard !items.isEmpty else { return }
         
-        // Append with timestamp to keep chronological order meaningful
-        let timestamp = Date().formatted(date: .omitted, time: .shortened)
-        let entry = "[\(timestamp)] \(text)"
-        todaysContexts.append(entry)
+        let now = Date()
+        let newEntries = items.map { ContextEntry(text: $0, date: now) }
+        contexts.append(contentsOf: newEntries)
         
+        cleanOldEntries()
         saveState()
         
         Task {
@@ -49,29 +65,59 @@ public class DailyContextService: ObservableObject {
         }
     }
     
+    /// Adds a new context entry (e.g. from a captured session) and updates the daily summary.
+    public func addContext(_ text: String) {
+        guard !text.isEmpty else { return }
+        
+        let now = Date()
+        contexts.append(ContextEntry(text: text, date: now))
+        
+        cleanOldEntries()
+        saveState()
+        
+        Task {
+            await updateSummary()
+        }
+    }
+    
+    private func cleanOldEntries() {
+        let cutoff = Date().addingTimeInterval(-24 * 3600)
+        contexts.removeAll { $0.date < cutoff }
+    }
+    
     /// Forces a re-generation of the daily summary based on accumulated context.
     public func updateSummary() async {
-        guard !todaysContexts.isEmpty else { 
-            print("⚠️ logic skipped: todaysContexts is empty")
+        cleanOldEntries()
+        
+        guard !contexts.isEmpty else { 
+            self.dailySummary = "No activity in the last 24 hours."
             return 
         }
         
         self.isGenerating = true
         defer { self.isGenerating = false }
         
-        let fullContext = todaysContexts.joined(separator: "\n\n")
+        let sorted = contexts.sorted(by: { $0.date < $1.date })
+        
+        var formattedContext = ""
+        let calendar = Calendar.current
+        
+        for entry in sorted {
+            let prefix = calendar.isDateInToday(entry.date) ? "[Today \(entry.date.formatted(date: .omitted, time: .shortened))]" : "[Yesterday \(entry.date.formatted(date: .omitted, time: .shortened))]"
+            formattedContext += "\(prefix) \(entry.text)\n\n"
+        }
         
         do {
-            // We prepend a specific instruction for "Daily Summary" nature
             let prompt = """
-            Here are chronological logs of the user's activity today:
+            Create a concise, one-sentence summary of the user's focus over the last 24 hours based on these activities. 
+            Prioritize the most recent items (the ones at the end of the list).
+            If no activities are listed, say "No recent activity."
             
-            \(fullContext)
+            Current time: \(Date().formatted())
+            Activities (Last 24 Hours):
+            \(formattedContext)
             
-            Generate a concise, evolving summary of the user's day so far. 
-            Focus on the narrative arc of their activities. 
-            Keep it under 3 sentences. 
-            Write it as if you are a personal assistant briefing them on their day's progress.
+            Summary (ONE SENTENCE):
             """
             
             let summary = try await contextService.summarizeText(prompt)
@@ -82,18 +128,22 @@ public class DailyContextService: ObservableObject {
         }
     }
     
-    /// Clears the daily context (e.g. at start of new day)
+    /// Clears the daily context
     public func clear() {
-        todaysContexts.removeAll()
+        contexts.removeAll()
         dailySummary = "Start of a fresh day."
         saveState()
     }
     
     private func saveState() {
-        let state = PersistedState(contexts: todaysContexts, summary: dailySummary, date: Date())
+        let now = Date()
+        self.lastSaveDate = now
+        let state = PersistedState(entries: contexts, summary: dailySummary, date: now)
         do {
             let data = try JSONEncoder().encode(state)
             try data.write(to: persistenceURL)
+            // Post notification for app to reload widgets
+            NotificationCenter.default.post(name: Notification.Name("com.secretatomics.dailyContextUpdated"), object: nil)
         } catch {
             print("Failed to save daily context: \(error)")
         }
@@ -104,14 +154,11 @@ public class DailyContextService: ObservableObject {
             let data = try Data(contentsOf: persistenceURL)
             let state = try JSONDecoder().decode(PersistedState.self, from: data)
             
-            // Check if it's still "today"
-            let calendar = Calendar.current
-            if calendar.isDateInToday(state.date) {
-                self.todaysContexts = state.contexts
-                self.dailySummary = state.summary
-            } else {
-                clear() // New day, clear file
-            }
+            self.contexts = state.entries
+            self.dailySummary = state.summary
+            self.lastSaveDate = state.date
+            
+            cleanOldEntries()
         } catch {
             // No file or invalid, ignore
         }

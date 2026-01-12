@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct LinkPreviewView: View {
+struct ActionLinkPreviewView: View {
     let url: URL
     @ObservedObject var viewModel: MetadataViewModel
     let suggestedTags: [String]
@@ -76,7 +76,7 @@ struct LinkPreviewView: View {
                                 .fontWeight(.semibold)
                                 .foregroundStyle(.secondary)
 
-                            FlowLayout(spacing: 8) {
+                            ActionFlowLayout(spacing: 8) {
                                 ForEach(Array(selectedTags).sorted(), id: \.self) { tag in
                                     TagChip(tag: tag, isSelected: true) {
                                         selectedTags.remove(tag)
@@ -197,7 +197,7 @@ struct TagGrid: View {
     @Binding var selectedTags: Set<String>
 
     var body: some View {
-        FlowLayout(spacing: 8) {
+        ActionFlowLayout(spacing: 8) {
             ForEach(tags, id: \.self) { tag in
                 TagChip(
                     tag: tag,
@@ -249,7 +249,7 @@ struct TagChip: View {
 
 // MARK: - Flow Layout (Tag Wrapping)
 
-struct FlowLayout: Layout {
+struct ActionFlowLayout: Layout {
     var spacing: CGFloat = 8
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
@@ -304,7 +304,7 @@ struct FlowLayout: Layout {
 // MARK: - Preview
 
 #Preview {
-    LinkPreviewView(
+    ActionLinkPreviewView(
         url: URL(string: "https://developer.apple.com/documentation/swiftui")!,
         viewModel: MetadataViewModel(
             metadata: LinkMetadata(

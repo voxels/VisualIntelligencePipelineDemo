@@ -52,3 +52,25 @@ xcodebuild test -scheme Diver -destination 'platform=iOS Simulator,name=iPhone 1
 *   **Swift Packages:** Shared code is modularized into Swift Packages (`DiverKit`, `DiverShared`).
 *   **Asynchronous Operations:** The app uses `async/await` for asynchronous operations, especially for network requests and file I/O.
 *   **Dependency Injection:** Services like `KnowMapsServiceContainer` and `DiverQueueProcessingService` are initialized and passed to the relevant components.
+
+## Critical Development Rules (Read Carefully)
+
+The following rules have been established based on past incidents and must be followed strictly:
+
+1.  **NEVER Compromise Data Integrity:**
+    *   **Schema Changes:** Do **NOT** rename Core Data entities (e.g., `SessionMetadata`) or perform destructive schema changes without a fully tested migration plan. The user's data is sacred. "Data loss" incidents are unacceptable.
+    *   **Recovery:** If widespread data inaccessibility occurs due to schema issues, prioritize implementing recovery mechanisms (like `regenerateMissingSessions`) over wiping data.
+
+2.  **Build Stability is Paramount:**
+    *   **Check Your Work:** After *any* refactoring (especially renaming types), you **MUST** verify that the project builds. Do not leave the user with a broken build state.
+    *   **Reference Consistency:** When renaming a type (e.g., `SessionMetadata` to `DiverSession`), ensure **ALL** references across the codebase (Views, ViewModels, Services) are updated immediately. A partial rename is a broken build.
+
+3.  **Dependency Management (KnowMaps):**
+    *   **Staleness:** Be aware that local Swift Package dependencies (like `knowmaps`) can resolve to stale commits. If you encounter "inaccessible due to 'internal' protection level" errors for properties that *should* be public, it is likely a stale dependency cache.
+    *   **Workarounds:** While clean fixes are preferred, runtime reflection (using `Mirror`) is an acceptable *temporary* workaround to bypass strict access control/staleness issues to get the feature working immediately, provided it is documented.
+
+## Terminology Updates
+
+*   **DiverSession:** The entity previously known as `SessionMetadata` is now referred to as `DiverSession` in the codebase.
+    *   **Technical Note:** For data compatibility and CloudKit sync reasons, the underlying class is still named `SessionMetadata`, but `DiverSession` is provided as a global typealias. Continue to use `DiverSession` in new code.
+

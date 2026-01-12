@@ -43,6 +43,8 @@ public final class LocalPipelineService {
 
         if let existing {
             DiverLogger.pipeline.debug("Updating existing ProcessedItem - id: \(resolvedId)")
+            existing.status = .processing
+            try? modelContext.save() // Trigger live UI update to show 'Processing'
 
             if existing.inputId == nil {
                 existing.inputId = input.id.uuidString
@@ -73,9 +75,12 @@ public final class LocalPipelineService {
             }
             
             // Apply contextual Location -> Foursquare -> DuckDuckGo enrichment
+            var effectiveLocation: CLLocation? = nil
+            var hasUserOverride = false
+            
             if let locationService {
                 // Session Context Override for Updates
-                var effectiveLocation = await locationService.getCurrentLocation()
+                effectiveLocation = await locationService.getCurrentLocation()
                 
                 // Fallback: Check raw payload for location metadata if unavailable (e.g. reprocessing)
                 if effectiveLocation == nil, let data = rawPayload {
@@ -95,7 +100,7 @@ public final class LocalPipelineService {
                 }
                 
                 if let descriptorSessionID = descriptor?.sessionID ?? existing.sessionID {
-                     let fetchSession = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == descriptorSessionID })
+                     let fetchSession = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == descriptorSessionID })
                      if let session = try? modelContext.fetch(fetchSession).first {
                          if let lat = session.latitude, let lng = session.longitude {
                              effectiveLocation = CLLocation(latitude: lat, longitude: lng)
@@ -103,6 +108,9 @@ public final class LocalPipelineService {
                          }
                          if let summary = session.summary {
                              accumulatedContext += "\n\nSESSION CONTEXT:\n\(summary)\n"
+                         }
+                         if let locName = session.locationName, !locName.isEmpty {
+                             hasUserOverride = true
                          }
                      }
                 }
@@ -147,10 +155,7 @@ public final class LocalPipelineService {
                 existing.sessionID = descriptor?.sessionID
             }
 
-            // Mark as ready if we have basic info
-            if existing.status == .queued || existing.status == .processing {
-                existing.status = .ready
-            }
+            // Mark as ready check removed from here, moving to the very end of the process function
 
             // Update Phase 1 fields
             existing.updatedAt = Date()
@@ -182,8 +187,53 @@ public final class LocalPipelineService {
             }
             
             // Background LLM Re-analysis for Updates (Second Verification Pass)
+            let finalLocation = effectiveLocation
+            let isUserLocationFixed = hasUserOverride
+            let contactService = Services.shared.contactService
+            let inputURLString = input.url
+            let interimAccumulatedContext = accumulatedContext
+            let interimResolvedId = resolvedId
+            
+            // Trigger reprocessing with full enrichment
+            existing.processingLog.append("\(Date().formatted()): Reprocessing existing item: \(existing.title ?? "Untitled").")
+            
+            // Increment failure count if we are coming back from a failed state
+            if existing.status == .failed {
+                existing.failureCount += 1
+                if existing.failureCount > 2 {
+                    DiverLogger.pipeline.warning("Item \(existing.id) failed too many times. Deleting.")
+                    modelContext.delete(existing)
+                    modelContext.delete(input)
+                    try? modelContext.save()
+                    return existing // Returning detached item, but it's deleted
+                }
+            }
+
             Task {
-                await performLLMAnalysis(for: existing, descriptor: descriptor, accumulatedContext: accumulatedContext)
+                var localAccumulatedContext = interimAccumulatedContext
+                let results = await self.performParallelEnrichment(
+                    resolvedId: interimResolvedId,
+                    descriptor: descriptor,
+                    rawPayload: rawPayload,
+                    finalLocation: finalLocation,
+                    isUserLocationFixed: isUserLocationFixed,
+                    inputURLString: inputURLString,
+                    enrichmentService: enrichmentService,
+                    locationService: locationService,
+                    foursquareService: foursquareService,
+                    duckDuckGoService: duckDuckGoService,
+                    weatherService: weatherService,
+                    activityService: activityService,
+                    contactService: contactService
+                )
+                
+                await MainActor.run {
+                    for result in results {
+                        self.processParallelResult(result, to: existing, accumulatedContext: &localAccumulatedContext)
+                    }
+                }
+                
+                await performLLMAnalysis(for: existing, descriptor: descriptor, accumulatedContext: localAccumulatedContext)
             }
             
             // Fix looping/inbox bug: Delete input after processing
@@ -214,7 +264,11 @@ public final class LocalPipelineService {
         )
         
         // Insert immediately for live UI updates
+        processed.status = .processing
+        processed.processingLog.append("\(Date().formatted()): Starting new item pipeline.")
+        print("🚀 [LocalPipeline] Starting pipeline for item: \(processed.id)")
         modelContext.insert(processed)
+        try? modelContext.save()
         
         var accumulatedContext = ""
         
@@ -230,7 +284,7 @@ public final class LocalPipelineService {
         // SESSION CONTEXT OVERRIDE
         var hasUserOverride = false
         if let sessionID = descriptor?.sessionID ?? processed.sessionID {
-             let fetchSession = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
+             let fetchSession = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
              if let session = try? modelContext.fetch(fetchSession).first {
                  if let lat = session.latitude, let lng = session.longitude {
                      // Use session location if explicitly set (e.g. from map selection or edit)
@@ -250,200 +304,32 @@ public final class LocalPipelineService {
         let contactService = Services.shared.contactService
         let inputURLString = input.url
         
-        await withTaskGroup(of: ParallelEnrichmentResult?.self) { group in
-            // 1. Link Enrichment (Web Metadata) - Heavy, starts immediately
-            group.addTask {
-                 // Check if we have a valid URL and service
-                 guard let urlString = inputURLString, let url = URL(string: urlString), let enrichmentService else { return nil }
-                 // Skip internal schemes
-                 if url.scheme?.lowercased().hasPrefix("secretatomics") == true { return nil }
-                 
-                 if let enrichment = try? await enrichmentService.enrich(url: url) {
-                     return ParallelEnrichmentResult(link: enrichment)
-                 }
-                 return nil
-            }
-
-            // 2. Foursquare + DuckDuckGo Chain
-            group.addTask {
-                guard let location = finalLocation else { return nil }
-                
-                // HOME PRIORITY CHECK: If near home, override place context
-                // SKIP if Session has explicit location name (User Override)
-                if !isUserLocationFixed, let contactService = contactService,
-                   let homeLoc = try? await contactService.getHomeLocation() {
-                     if location.distance(from: homeLoc) < 75 {
-                         // User Preference / Manual Override Check
-                         // If descriptor has a specific location name that isn't "Home", assume user selected it manually.
-                         // We should respects this selection and NOT force "Home" context.
-                         let explicitLocationName = descriptor?.location
-                         let isHomeName = explicitLocationName?.lowercased() == "home"
-                         let isGenericOrEmpty = explicitLocationName == nil || explicitLocationName?.isEmpty == true
-                         
-                         // Only override with Home if the current location is generic or explicitly Home
-                         if isHomeName || isGenericOrEmpty {
-                             let placeCtx = PlaceContext(name: "Home", categories: ["Home", "Personal"], placeID: "home-location", address: nil, rating: nil, isOpen: true)
-                             let homeData = EnrichmentData(
-                                 title: "Home",
-                                 descriptionText: "User's Home Location",
-                                 image: nil,
-                                 categories: ["Home"],
-                                 styleTags: ["Personal"],
-                                 location: "Home",
-                                 placeContext: placeCtx
-                             )
-                             return ParallelEnrichmentResult(foursquare: homeData)
-                         }
-                     }
-                }
-                
-                guard let foursquareService else { return nil }
-                let coords = location.coordinate
-                
-                if let fsEnrichment = try? await foursquareService.enrich(location: coords) {
-                    var result = ParallelEnrichmentResult(foursquare: fsEnrichment)
-                    
-                    if let venueName = fsEnrichment.title {
-                        if let ddgService = duckDuckGoService {
-                            // 1. Venue Description
-                            if let ddgEnrichment = try? await ddgService.enrich(query: venueName, location: coords) {
-                                result.duckDuckGo = ddgEnrichment
-                            }
-                            
-                            // 2. Live Event Context
-                            // Only if venue is highly confident or user override
-                            if let eventContext = await self.searchLiveEvents(place: venueName, service: ddgService) {
-                                result.liveEventContext = eventContext
-                            }
-                        }
-                    }
-
-                    return result
-                }
-                return nil
-            }
-            
-            // 3. Weather
-            group.addTask {
-                guard let location = finalLocation, let weatherService else { return nil }
-                if let weather = await weatherService.fetchWeather(for: location) {
-                    return ParallelEnrichmentResult(weather: weather)
-                }
-                return nil
-            }
-            
-            // 4. Activity
-            group.addTask {
-                guard let activityService else { return nil }
-                if let activity = await activityService.fetchCurrentActivity() {
-                    return ParallelEnrichmentResult(activity: activity)
-                }
-                return nil
-            }
-            
-            // 5. Cover Image
-            group.addTask {
-                 let imageURL = descriptor?.coverImageURL
-                 
-                 // Prioritize URL if available, otherwise use raw payload (master image)
-                 var imageData: Data?
-                 if let url = imageURL {
-                     if url.isFileURL {
-                         imageData = try? Data(contentsOf: url)
-                     } else {
-                         // Download if remote
-                         if let (data, _) = try? await URLSession.shared.data(from: url) {
-                             imageData = data
-                         }
-                     }
-                 }
-                 
-                 // Fallback to rawPayload if URL data failed or wasn't present
-                 if imageData == nil {
-                     imageData = rawPayload
-                 }
-                 
-                 guard let data = imageData else { return nil }
-
-                 do {
-                     let filename = "\(resolvedId)-cover.jpg"
-                     let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-                     let dir = docs.appendingPathComponent("thumbnails", isDirectory: true)
-                     try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-                     let fileURL = dir.appendingPathComponent(filename)
-                     try data.write(to: fileURL)
-                     return ParallelEnrichmentResult(coverImagePath: fileURL.path)
-                 } catch {
-                     print("❌ LocalPipeline: Failed to save cover image: \(error)")
-                     return nil
-                 }
-            }
-            
-            // 6. Product Concepts & URL
-            let isProduct = descriptor?.type == .product
-            let productQuery = descriptor?.title
-            let service = duckDuckGoService
-            
-            group.addTask {
-                if isProduct, let query = productQuery, let service = service {
-                    do {
-                         let data = try await service.enrich(query: query, location: nil)
-                         return ParallelEnrichmentResult(duckDuckGo: data)
-                    } catch {
-                        print("Failed to enrich product: \(error)")
-                    }
-                }
-                return nil
-            }
-
-            
-            // Collect results on MainActor
-            for await result in group {
-                guard let result else { continue }
-                
-                if let linkData = result.link {
-                    applyEnrichment(linkData, to: processed)
-                    if let desc = linkData.descriptionText { accumulatedContext += "\nLink Summary: \(desc)" }
-                }
-                if let fs = result.foursquare {
-                    applyEnrichment(fs, to: processed)
-                    // Remove specific place name to avoid bias unless confirmed. Only use categories.
-                    accumulatedContext += "\nNearby Context (Unconfirmed): \(fs.categories.joined(separator: ", "))"
-                }
-                if let ddg = result.duckDuckGo {
-                    applyEnrichment(ddg, to: processed, overwriteTitle: true)
-                    accumulatedContext += "\nDuckDuckGo: \(ddg.title ?? "Unknown") - \(ddg.descriptionText ?? "")"
-                }
-                if let events = result.liveEventContext {
-                    accumulatedContext += "\n\nLIVE EVENTS:\n\(events)"
-                }
-                if let w = result.weather {
-                    accumulatedContext += "\nWeather: \(w.condition), \(Int(w.temperatureCelsius))°C"
-                    processed.weatherContext = w
-                }
-                if let a = result.activity {
-                    accumulatedContext += "\nActivity: \(a.type) (\(a.confidence))"
-                    processed.activityContext = a
-                }
-                
-                if let path = result.coverImagePath {
-                    if processed.webContext == nil {
-                        processed.webContext = WebContext(snapshotURL: path)
-                    } else {
-                        processed.webContext?.snapshotURL = path
-                    }
-                }
-                
-                if let concepts = result.productConcepts {
-                    let currentTags = Set(processed.tags)
-                    let newTags = Set(concepts)
-                    processed.tags = Array(currentTags.union(newTags)).sorted()
-                }
-                
-                // Trigger live UI update
-                try? modelContext.save()
-            }
+        let results = await performParallelEnrichment(
+            resolvedId: resolvedId,
+            descriptor: descriptor,
+            rawPayload: rawPayload,
+            finalLocation: finalLocation,
+            isUserLocationFixed: isUserLocationFixed,
+            inputURLString: inputURLString,
+            enrichmentService: enrichmentService,
+            locationService: locationService,
+            foursquareService: foursquareService,
+            duckDuckGoService: duckDuckGoService,
+            weatherService: weatherService,
+            activityService: activityService,
+            contactService: contactService
+        )
+        
+        for result in results {
+            processParallelResult(result, to: processed, accumulatedContext: &accumulatedContext)
         }
+        processed.processingLog.append("\(Date().formatted()): Parallel enrichment complete.")
+        print("✅ [LocalPipeline] Parallel enrichment complete for \(processed.id)")
+        
+        // Secondary LLM Analysis
+        await performLLMAnalysis(for: processed, descriptor: descriptor, accumulatedContext: accumulatedContext)
+        // Trigger live UI update
+        try? modelContext.save()
         
         // 4. QR Code Handling
         // If the descriptor says it's a QR code, or we detected one (future), save the context
@@ -485,7 +371,7 @@ public final class LocalPipelineService {
         }
 
         if let descriptor {
-            await updateSessionMetadata(from: descriptor)
+            await updateDiverSession(from: descriptor)
         }
 
         // Extract high-level concepts from text content
@@ -524,6 +410,10 @@ public final class LocalPipelineService {
             let currentNarrative = dailyService.dailySummary // Will be previous state until async update finishes, but acceptable
             processed.processingLog.append("\(timestamp): Added to Daily Narrative. Current Narrative Snapshot: \(currentNarrative)")
         }
+
+        // Mark as ready before returning
+        processed.status = .ready
+        try? modelContext.save()
 
         return processed
     }
@@ -904,21 +794,21 @@ public final class LocalPipelineService {
             }
         }
     }
-    private func updateSessionMetadata(from descriptor: DiverItemDescriptor) async {
+    private func updateDiverSession(from descriptor: DiverItemDescriptor) async {
         guard let sessionID = descriptor.sessionID else { return }
         
         // Fetch existing or create new
-        let fetch = FetchDescriptor<SessionMetadata>(
+        let fetch = FetchDescriptor<DiverSession>(
             predicate: #Predicate { $0.sessionID == sessionID }
         )
         
-        let session: SessionMetadata
+        let session: DiverSession
         if let existing = try? modelContext.fetch(fetch).first {
              session = existing
         } else {
-             session = SessionMetadata(sessionID: sessionID)
+             session = DiverSession(sessionID: sessionID)
              modelContext.insert(session)
-             DiverLogger.pipeline.debug("Created new SessionMetadata for session: \(sessionID)")
+             DiverLogger.pipeline.debug("Created new DiverSession for session: \(sessionID)")
         }
         
         // Update fields if present in descriptor
@@ -965,7 +855,7 @@ public final class LocalPipelineService {
         // Override location with Session Metadata if available to ensure LLM respects user edit
         var effectiveLocationName = item.location
         if let sessionID = item.sessionID {
-            let sessionDesc = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
+            let sessionDesc = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
             if let session = try? modelContext.fetch(sessionDesc).first, let locName = session.locationName {
                 effectiveLocationName = locName
             }
@@ -981,8 +871,8 @@ public final class LocalPipelineService {
         )
         
         do {
-            // We ignore 'determined' purpose here to respect user preference for manual verification
-            let (summary, questions, _, _) = try await contextService.processContext(from: currentData)
+            print("🧠 [LocalPipeline] Starting LLM Analysis for item: \(item.id)")
+            let (summary, questions, purpose, tags) = try await contextService.processContext(from: currentData)
             
             // Save generated questions for the UI to present
             item.questions = questions
@@ -991,16 +881,229 @@ public final class LocalPipelineService {
             if let s = summary, !s.isEmpty {
                 item.summary = s
                 item.processingLog.append("\(Date().formatted()): LLM updated summary: \(s.prefix(50))...")
-            } else {
-                 item.processingLog.append("\(Date().formatted()): LLM analysis completed (no summary change)")
             }
             
+            // Generate and merge purposes
+            if let p = purpose, !p.isEmpty {
+                if !item.purposes.contains(p) {
+                    item.purposes.append(p)
+                }
+            }
+            
+            // Merge tags
+            if !tags.isEmpty {
+                let currentTags = Set(item.tags)
+                let newTags = Set(tags)
+                item.tags = Array(currentTags.union(newTags)).sorted()
+            }
+            
+            item.status = .ready // Finalize status
+            item.processingLog.append("\(Date().formatted()): LLM Analysis Complete. Finalized.")
+            print("🏁 [LocalPipeline] LLM Analysis complete for \(item.id)")
             try modelContext.save()
-            DiverLogger.pipeline.debug("LLM Analysis Complete for item \(item.id). Updated summary: \(summary != nil)")
+            DiverLogger.pipeline.debug("LLM Analysis Complete for item \(item.id). Updated summary: \(summary != nil), Purpose: \(purpose != nil)")
         } catch {
+            print("❌ [LocalPipeline] LLM Analysis Failed for \(item.id): \(error.localizedDescription)")
+            item.failureCount += 1
             item.processingLog.append("\(Date().formatted()): LLM Analysis Failed: \(error.localizedDescription)")
             DiverLogger.pipeline.error("LLM Analysis Failed: \(error)")
+            
+            if item.failureCount > 2 {
+                DiverLogger.pipeline.warning("Item \(item.id) suffered persistent LLM failure. Deleting.")
+                modelContext.delete(item)
+            } else {
+                item.status = .reviewRequired
+            }
+            try? modelContext.save()
+        }
     }
+    
+    // MARK: - Parallel Enrichment Helpers
+    
+    private struct ParallelEnrichmentResult: Sendable {
+        var link: EnrichmentData?
+        var foursquare: EnrichmentData?
+        var duckDuckGo: EnrichmentData?
+        var coverImagePath: String?
+        var productConcepts: [String]?
+        var weather: WeatherContext?
+        var activity: ActivityContext?
+        var liveEventContext: String?
+    }
+
+    private func performParallelEnrichment(
+        resolvedId: String,
+        descriptor: DiverItemDescriptor?,
+        rawPayload: Data?,
+        finalLocation: CLLocation?,
+        isUserLocationFixed: Bool,
+        inputURLString: String?,
+        enrichmentService: LinkEnrichmentService?,
+        locationService: LocationProvider?,
+        foursquareService: ContextualEnrichmentService?,
+        duckDuckGoService: ContextualEnrichmentService?,
+        weatherService: WeatherEnrichmentService?,
+        activityService: ActivityEnrichmentService?,
+        contactService: ContactServiceProvider?
+    ) async -> [ParallelEnrichmentResult] {
+        
+        await withTaskGroup(of: ParallelEnrichmentResult?.self) { group in
+            // 1. Link Enrichment (Web Metadata)
+            group.addTask {
+                 guard let urlString = inputURLString, let url = URL(string: urlString), let enrichmentService else { return nil }
+                 if url.scheme?.lowercased().hasPrefix("secretatomics") == true { return nil }
+                 if let enrichment = try? await self.withTimeout(seconds: 30, operation: {
+                     try await enrichmentService.enrich(url: url)
+                 }) {
+                    return ParallelEnrichmentResult(link: enrichment)
+                 }
+                 return nil
+            }
+
+            // 2. Foursquare + DuckDuckGo Chain
+            group.addTask {
+                guard let location = finalLocation else { return nil }
+                if !isUserLocationFixed, let contactService = contactService,
+                   let homeLoc = try? await contactService.getHomeLocation() {
+                     if location.distance(from: homeLoc) < 75 {
+                         let explicitLocationName = descriptor?.location
+                         let isHomeName = explicitLocationName?.lowercased() == "home"
+                         let isGenericOrEmpty = explicitLocationName == nil || explicitLocationName?.isEmpty == true
+                         if isHomeName || isGenericOrEmpty {
+                             let placeCtx = PlaceContext(name: "Home", categories: ["Home", "Personal"], placeID: "home-location", address: nil, rating: nil, isOpen: true)
+                             let homeData = EnrichmentData(title: "Home", descriptionText: "User's Home Location", image: nil, categories: ["Home"], styleTags: ["Personal"], location: "Home", placeContext: placeCtx)
+                             return ParallelEnrichmentResult(foursquare: homeData)
+                         }
+                     }
+                }
+                
+                guard let foursquareService else { return nil }
+                let coords = location.coordinate
+                if let fsEnrichment = try? await self.withTimeout(seconds: 15, operation: {
+                    try await foursquareService.enrich(location: coords)
+                }) {
+                    var result = ParallelEnrichmentResult(foursquare: fsEnrichment)
+                    if let venueName = fsEnrichment.title {
+                        if let ddgService = duckDuckGoService {
+                            if let ddgEnrichment = try? await self.withTimeout(seconds: 10, operation: {
+                                try await ddgService.enrich(query: venueName, location: coords)
+                            }) {
+                                result.duckDuckGo = ddgEnrichment
+                            }
+                            if let eventContext = try? await self.withTimeout(seconds: 10, operation: {
+                                try await self.searchLiveEvents(place: venueName, service: ddgService)
+                            }) {
+                                result.liveEventContext = eventContext
+                            }
+                        }
+                    }
+                    return result
+                }
+                return nil
+            }
+            
+            // 3. Weather
+            group.addTask {
+                guard let location = finalLocation, let weatherService else { return nil }
+                if let weather = await weatherService.fetchWeather(for: location) {
+                    return ParallelEnrichmentResult(weather: weather)
+                }
+                return nil
+            }
+            
+            // 4. Activity
+            group.addTask {
+                guard let activityService else { return nil }
+                if let activity = await activityService.fetchCurrentActivity() {
+                    return ParallelEnrichmentResult(activity: activity)
+                }
+                return nil
+            }
+            
+            // 5. Cover Image
+            group.addTask {
+                 let imageURL = descriptor?.coverImageURL
+                 var imageData: Data?
+                 if let url = imageURL {
+                     if url.isFileURL { imageData = try? Data(contentsOf: url) }
+                     else if let (data, _) = try? await URLSession.shared.data(from: url) { imageData = data }
+                 }
+                 if imageData == nil { imageData = rawPayload }
+                 guard let data = imageData else { return nil }
+
+                 do {
+                     let filename = "\(resolvedId)-cover.jpg"
+                     let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+                     let dir = docs.appendingPathComponent("thumbnails", isDirectory: true)
+                     try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                     let fileURL = dir.appendingPathComponent(filename)
+                     try data.write(to: fileURL)
+                     return ParallelEnrichmentResult(coverImagePath: fileURL.path)
+                 } catch {
+                     print("❌ LocalPipeline: Failed to save cover image: \(error)")
+                     return nil
+                 }
+            }
+            
+            // 6. Product Concepts & URL
+            let isProduct = descriptor?.type == .product
+            let productQuery = descriptor?.title
+            let ddgService = duckDuckGoService
+            group.addTask {
+                if isProduct, let query = productQuery, let service = ddgService {
+                    do {
+                         let data = try await self.withTimeout(seconds: 15, operation: {
+                             try await service.enrich(query: query, location: nil)
+                         })
+                         return ParallelEnrichmentResult(duckDuckGo: data)
+                    } catch {
+                        print("Failed to enrich product: \(error)")
+                    }
+                }
+                return nil
+            }
+
+            var results: [ParallelEnrichmentResult] = []
+            for await result in group {
+                if let r = result { results.append(r) }
+            }
+            return results
+        }
+    }
+
+    private func processParallelResult(_ result: ParallelEnrichmentResult, to item: ProcessedItem, accumulatedContext: inout String) {
+        if let linkData = result.link {
+            applyEnrichment(linkData, to: item)
+            if let desc = linkData.descriptionText { accumulatedContext += "\nLink Summary: \(desc)" }
+        }
+        if let fs = result.foursquare {
+            applyEnrichment(fs, to: item)
+            accumulatedContext += "\nNearby Context: \(fs.title ?? ""), Categories: \(fs.categories.joined(separator: ", "))"
+        }
+        if let ddg = result.duckDuckGo {
+            applyEnrichment(ddg, to: item, overwriteTitle: true)
+            accumulatedContext += "\nDuckDuckGo: \(ddg.title ?? "Unknown") - \(ddg.descriptionText ?? "")"
+        }
+        if let events = result.liveEventContext {
+            accumulatedContext += "\n\nLIVE EVENTS:\n\(events)"
+        }
+        if let w = result.weather {
+            accumulatedContext += "\nWeather: \(w.condition), \(Int(w.temperatureCelsius))°C"
+            item.weatherContext = w
+        }
+        if let a = result.activity {
+            accumulatedContext += "\nActivity: \(a.type) (\(a.confidence))"
+            item.activityContext = a
+        }
+        if let path = result.coverImagePath {
+            if item.webContext == nil { item.webContext = WebContext(snapshotURL: path) }
+            else { item.webContext?.snapshotURL = path }
+        }
+        if let concepts = result.productConcepts {
+            let currentTags = Set(item.tags)
+            let newTags = Set(concepts)
+            item.tags = Array(currentTags.union(newTags)).sorted()
+        }
     }
     
     private func searchLiveEvents(place: String, service: ContextualEnrichmentService) async -> String? {
@@ -1022,8 +1125,11 @@ public final class LocalPipelineService {
     }
     // MARK: - Session Summarization
     private func generateAndSaveSessionSummary(sessionID: String) async {
+        // Temporarily disabled to resolve CoreData migration conflict
+        // TODO: Re-enable after introducing VersionedSchema
+        /*
         let fetchItems = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.sessionID == sessionID })
-        let fetchMeta = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
+        let fetchMeta = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
         
         do {
             let items = try modelContext.fetch(fetchItems)
@@ -1051,6 +1157,7 @@ public final class LocalPipelineService {
         } catch {
             DiverLogger.pipeline.error("Failed to auto-generate session summary: \(error)")
         }
+        */
     }
     
     // MARK: - Helper Logic
@@ -1084,6 +1191,197 @@ public final class LocalPipelineService {
         // If we are here, stick with ID or ensure it is set
         if item.title == nil {
             item.title = item.id
+        }
+    }
+    // MARK: - Diagnostics
+    public func runDataDiagnostics() {
+        DiverLogger.pipeline.info("🔍 STARTING DATA DIAGNOSTICS...")
+        
+        do {
+            // 1. Check ProcessedItems (The "Events")
+            let itemDesc = FetchDescriptor<ProcessedItem>(sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
+            let items = try modelContext.fetch(itemDesc)
+            DiverLogger.pipeline.info("📊 Total ProcessedItems found: \(items.count)")
+            
+            if items.isEmpty {
+                DiverLogger.pipeline.error("⚠️ NO ProcessedItems found! Data might be zeroed out.")
+            } else {
+                for (i, item) in items.prefix(10).enumerated() {
+                    DiverLogger.pipeline.info("   Item [\(i)]: \(item.title ?? "Untitled") (ID: \(item.id), Created: \(item.createdAt.formatted()))")
+                    if !item.processingLog.isEmpty {
+                         DiverLogger.pipeline.info("      Logs: \(item.processingLog.suffix(3))")
+                    }
+                }
+            }
+            
+            // 2. Check DiverSession
+            let sessionDesc = FetchDescriptor<DiverSession>()
+            let sessions = try modelContext.fetch(sessionDesc)
+            DiverLogger.pipeline.info("📊 Total DiverSession found: \(sessions.count)")
+            
+            if sessions.isEmpty && !items.isEmpty {
+                DiverLogger.pipeline.warning("⚠️ No DiverSession found but Items exist. Attempting to REGENERATE Sessions...")
+                try regenerateMissingSessions()
+            } else {
+                 for (i, session) in sessions.prefix(5).enumerated() {
+                     DiverLogger.pipeline.info("   Session [\(i)]: ID \(session.sessionID) - Loc: \(session.locationName ?? "nil")")
+                 }
+            }
+            
+            // 3. Recover Stuck Items
+            try recoverStuckItems()
+            
+            // 4. Consolidate Sessions
+            try consolidateSessions()
+            
+        } catch {
+            DiverLogger.pipeline.error("❌ Diagnostics failed to fetch data: \(error)")
+        }
+        
+        DiverLogger.pipeline.info("🔍 DATA DIAGNOSTICS COMPLETE")
+    }
+
+    private func regenerateMissingSessions() throws {
+        let itemDesc = FetchDescriptor<ProcessedItem>()
+        let items = try modelContext.fetch(itemDesc)
+        
+        let grouped = Dictionary(grouping: items, by: { $0.sessionID })
+        var restoredCount = 0
+        
+        for (sessionID, sessionItems) in grouped {
+            guard let sessionID = sessionID else { continue }
+            
+            // Check if exists
+            let fetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+            if (try? modelContext.fetch(fetch).count) == 0 {
+                // Create new session
+                let session = DiverSession(sessionID: sessionID)
+                
+                // Infer details from items
+                let sorted = sessionItems.sorted(by: { $0.createdAt < $1.createdAt })
+                if let first = sorted.first { session.createdAt = first.createdAt }
+                if let last = sorted.last { session.updatedAt = last.updatedAt }
+                
+                // Try to find a location
+                if let locItem = sorted.first(where: { $0.location != nil }) {
+                    session.locationName = locItem.location
+                    session.placeID = locItem.placeContext?.placeID
+                }
+                
+                modelContext.insert(session)
+                restoredCount += 1
+            }
+        }
+        
+        if restoredCount > 0 {
+            try modelContext.save()
+            DiverLogger.pipeline.info("✅ REGENERATED \(restoredCount) MISSING SESSIONS from items.")
+        } else {
+            DiverLogger.pipeline.info("ℹ️ No sessions needed regeneration.")
+        }
+    }
+
+
+    private func recoverStuckItems() throws {
+        // Fetch items stuck in 'processing' state
+        let fetch = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.statusRaw == "processing" })
+        
+        let stuckItems = try modelContext.fetch(fetch)
+        
+        if !stuckItems.isEmpty {
+            DiverLogger.pipeline.warning("⚠️ Found \(stuckItems.count) STUCK items in processing state. Resetting to QUEUED.")
+            for item in stuckItems {
+                item.status = .queued
+                item.processingLog.append("\(Date().formatted()): System detected stuck state (crash recovery). Resetting to queued.")
+            }
+            try modelContext.save()
+            DiverLogger.pipeline.info("✅ Recovered \(stuckItems.count) stuck items.")
+        } else {
+            DiverLogger.pipeline.info("ℹ️ No stuck items found.")
+        }
+    }
+    
+    private func consolidateSessions() throws {
+        // Fetch all sessions sorted by time
+        let desc = FetchDescriptor<DiverSession>(sortBy: [SortDescriptor(\.createdAt)])
+        let sessions = try modelContext.fetch(desc)
+        
+        guard !sessions.isEmpty else { return }
+        
+        var sessionsToDelete: [DiverSession] = []
+        var mergedCount = 0
+        
+        // O(N) pass - since sorted by createdAt, duplicates should be adjacent
+        var master = sessions[0]
+        
+        for i in 1..<sessions.count {
+            let current = sessions[i]
+            
+            // Check proximity
+            let timeDelta = abs(current.createdAt.timeIntervalSince(master.createdAt))
+            let isTimeClose = timeDelta < 5.0 // 5 second window for "Same Timestamp"
+            
+            // Location check
+            var isLocClose = false
+            if let lat1 = master.latitude, let lon1 = master.longitude,
+               let lat2 = current.latitude, let lon2 = current.longitude {
+                let dist = abs(lat1 - lat2) + abs(lon1 - lon2)
+                isLocClose = dist < 0.0005 // Approx 50m
+            }
+            
+            // Logic: Merge if time AND location match. 
+            // If location is missing for both, but time matches exactly?
+            // "consolidate reprocessed items with the same session timestamp and GPS coordinate" implies GPS is key.
+            
+            if isTimeClose && isLocClose {
+                // Merge current into master
+                let currentID = current.sessionID
+                let masterID = master.sessionID
+                
+                // Re-assign items
+                let itemDesc = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.sessionID == currentID })
+                if let items = try? modelContext.fetch(itemDesc) {
+                    for item in items {
+                        item.sessionID = masterID
+                    }
+                }
+                
+                sessionsToDelete.append(current)
+                mergedCount += 1
+            } else {
+                // Current becomes new master
+                master = current
+            }
+        }
+        
+        if !sessionsToDelete.isEmpty {
+            for session in sessionsToDelete {
+                modelContext.delete(session)
+            }
+            try modelContext.save()
+            DiverLogger.pipeline.info("✅ Consolidated \(mergedCount) fragmented sessions into master sessions.")
+        } else {
+             DiverLogger.pipeline.info("ℹ️ No fragmented sessions found to consolidate.")
+        }
+    }
+
+    /// Helper to wrap an operation with a timeout
+    private func withTimeout<T: Sendable>(seconds: TimeInterval, operation: @escaping @Sendable () async throws -> T) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw URLError(.timedOut)
+            }
+            
+            guard let result = try await group.next() else {
+                throw URLError(.cannotParseResponse)
+            }
+            
+            group.cancelAll()
+            return result
         }
     }
 }

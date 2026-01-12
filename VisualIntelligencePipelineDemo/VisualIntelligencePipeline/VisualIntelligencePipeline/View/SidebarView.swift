@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 import DiverKit
 import DiverShared
+import MapKit
 
 #if os(iOS)
 import UIKit
@@ -45,6 +46,15 @@ struct SidebarView: View {
         let filtered = allItems.filter { $0.status == .queued || $0.status == .processing || $0.status == .failed }
         return viewModel.sortAndFilter(items: filtered)
     }
+    
+    private var uniquePinnedItems: [ProcessedItem] {
+        var seen = Set<String>()
+        return pinnedItems.filter { item in
+            if seen.contains(item.id) { return false }
+            seen.insert(item.id)
+            return true
+        }
+    }
 
     var body: some View {
         List(selection: $selection) {
@@ -78,7 +88,7 @@ struct SidebarView: View {
             if !pinnedItems.isEmpty {
                  Section {
                      DisclosureGroup(isExpanded: $favoritesExpanded) {
-                        ForEach(pinnedItems) { item in
+                        ForEach(uniquePinnedItems) { item in
                             NavigationLink(value: item) {
                                 HStack {
                                     Label(title(for: item), systemImage: "star.fill")
@@ -122,9 +132,14 @@ struct SidebarView: View {
                                                 .font(.caption2)
                                                 .foregroundStyle(.red)
                                         } else if item.status == .processing {
-                                            Text("Processing...")
+                                            Text(item.processingLog.last ?? "Processing...")
                                                 .font(.caption2)
                                                 .foregroundStyle(.blue)
+                                                .lineLimit(1)
+                                        } else if item.status == .reviewRequired {
+                                            Text("Stalled - Review Required")
+                                                .font(.caption2)
+                                                .foregroundStyle(.orange)
                                         } else {
                                             Text("Queued")
                                                 .font(.caption2)
@@ -132,9 +147,27 @@ struct SidebarView: View {
                                         }
                                     }
                                     Spacer()
+                                    
                                     if item.status == .processing {
                                         ProgressView()
                                             .scaleEffect(0.7)
+                                    } else if item.status == .queued || item.status == .failed {
+                                        Button {
+                                            viewModel.processNow(item)
+                                        } label: {
+                                            Image(systemName: "flashlight.on.circle")
+                                                .font(.title3)
+                                                .foregroundStyle(.blue)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    if item.status == .failed {
+                                        viewModel.retryItem(item)
+                                    } else {
+                                        selection = item
                                     }
                                 }
                             }
@@ -178,6 +211,13 @@ struct SidebarView: View {
                                     .padding(.vertical, 2)
                                     .background(Capsule().fill(Color.secondary.opacity(0.15)))
                             }
+                            Button {
+                                Task { try? await pipelineService.processPendingQueue() }
+                            } label: {
+                                Image(systemName: "play.circle")
+                                    .foregroundStyle(.blue)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -397,65 +437,6 @@ struct SidebarView: View {
     }
 }
 
-// MARK: - Concept List View
-struct ConceptListView: View {
-    @Query(sort: \UserConcept.weight, order: .reverse) private var concepts: [UserConcept]
-    @Environment(\.modelContext) private var modelContext
-
-    var body: some View {
-        List {
-            if concepts.isEmpty {
-#if os(iOS)
-                ContentUnavailableView(
-                    "No Concepts",
-                    systemImage: "brain.head.profile",
-                    description: Text("Concepts extracted from your items will appear here.")
-                )
-#else
-                Text("No Concepts")
-#endif
-            } else {
-                ForEach(concepts) { concept in
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(concept.name)
-                                .font(.headline)
-                            Spacer()
-                            Text(String(format: "%.1f", concept.weight))
-                                .font(.caption)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(Color.blue.opacity(0.1))
-                                .cornerRadius(4)
-                        }
-                        
-                        if !concept.definition.isEmpty {
-                            Text(concept.definition)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(2)
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-                .onDelete(perform: deleteConcepts)
-            }
-        }
-        .navigationTitle("Concepts")
-        #if os(macOS)
-        .navigationSubtitle("\(concepts.count) items")
-        #endif
-    }
-
-    private func deleteConcepts(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(concepts[index])
-            }
-            try? modelContext.save()
-        }
-    }
-}
 
 struct LibraryItemRow: View {
     let item: ProcessedItem
@@ -635,7 +616,7 @@ struct SessionCardOrchestrator: View {
     let modelContext: ModelContext
     let sharedWithYouManager: SharedWithYouManager
     
-    @Query private var metadata: [SessionMetadata]
+    @Query private var metadata: [DiverSession]
     @State private var isExpanded = false
     
     init(sessionID: String, items: [ProcessedItem], viewModel: SidebarViewModel, modelContext: ModelContext, sharedWithYouManager: SharedWithYouManager) {
@@ -645,7 +626,7 @@ struct SessionCardOrchestrator: View {
         self.modelContext = modelContext
         self.sharedWithYouManager = sharedWithYouManager
         let id = sessionID
-        self._metadata = Query(filter: #Predicate<SessionMetadata> { $0.sessionID == id })
+        self._metadata = Query(filter: #Predicate<DiverSession> { $0.sessionID == id })
     }
     
     var body: some View {
@@ -710,7 +691,15 @@ struct MasterChildGroupingView: View {
     let modelContext: ModelContext
     
     var body: some View {
-        let groups = Dictionary(grouping: items) { $0.masterCaptureID ?? $0.id }
+        // Enforce uniqueness at the grouping level
+        var seen = Set<String>()
+        let uniqueItems = items.filter { item in
+            if seen.contains(item.id) { return false }
+            seen.insert(item.id)
+            return true
+        }
+        
+        let groups = Dictionary(grouping: uniqueItems) { $0.masterCaptureID ?? $0.id }
         
         let sortedKeys = groups.keys.sorted { key1, key2 in
             let date1 = groups[key1]?.map { $0.updatedAt }.max() ?? Date.distantPast
@@ -751,7 +740,7 @@ struct MasterChildGroupingView: View {
 
 // MARK: - Session Edit View
 struct SessionEditView: View {
-    @Bindable var session: SessionMetadata
+    @Bindable var session: DiverSession
     var logs: [String] = []
     var onSave: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
@@ -865,47 +854,75 @@ struct LibraryItemRowWithActions: View {
     }
 }
 
-import MapKit
+
+
+
+// MARK: - EditLocationView
+
+
+
+
+
+
+
+// MARK: - Daily Context Section
+struct DailyContextSection: View {
+    @ObservedObject var service: DailyContextService
+    
+    var body: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 8) {
+                if service.isGenerating {
+                    HStack {
+                        Text("Summarizing day...")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        ProgressView()
+                            .scaleEffect(0.6)
+                    }
+                } else {
+                    Text(service.dailySummary)
+                        .font(.footnote)
+                        .foregroundStyle(.primary)
+                        .italic()
+                        .padding(.vertical, 4)
+                        .transition(.opacity)
+                }
+            }
+        } header: {
+            HStack {
+                Label("Today's Narrative", systemImage: "clock.arrow.circlepath")
+                Spacer()
+                Button {
+                    Task { await service.updateSummary() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.caption)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - EditLocationView
 
 struct EditLocationView: View {
     @Bindable var item: ProcessedItem
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     
     @State private var candidates: [EnrichmentData] = []
     @State private var isLoading = false
     @State private var selectedCandidate: EnrichmentData?
-    @State private var region: MKCoordinateRegion
+    @State private var position: MapCameraPosition = .automatic
+    @State private var visibleRegion: MKCoordinateRegion?
     @State private var searchText = ""
     @State private var hasZoomedToSession = false
+    @State private var isUpdating = false
+    @State private var selectedMapFeature: MapFeature?
     
-    init(item: ProcessedItem) {
-        self.item = item
-        
-        // Try parsing item location safely
-        var initialRegion = MKCoordinateRegion(
-            center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), // Default to SF (Saner default than 0,0)
-            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
-        )
-        
-        if let locString = item.location {
-            let components = locString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-            if components.count == 2,
-               let lat = Double(components[0]),
-               let lon = Double(components[1]) {
-                initialRegion = MKCoordinateRegion(
-                    center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
-                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-                )
-            }
-        }
-        
-        _region = State(initialValue: initialRegion)
-    }
-    
-
-    
-    // Helper to fetch session location if item location is missing or user prefers session context
-    @Query private var sessions: [SessionMetadata]
+    @Query private var sessions: [DiverSession]
     
     private var sessionLocation: CLLocationCoordinate2D? {
         if let sessionID = item.sessionID, let session = sessions.first(where: { $0.sessionID == sessionID }),
@@ -915,39 +932,72 @@ struct EditLocationView: View {
         return nil
     }
     
-    var allAnnotations: [AnnotationItem] {
-        var items: [AnnotationItem] = []
-        
-        // 1. Session / Original Location
-        if let sl = sessionLocation {
-            items.append(AnnotationItem(coordinate: sl, color: .purple))
-        } else if region.center.latitude != 0 {
-             // Fallback to item location or map center if valid
-            items.append(AnnotationItem(coordinate: region.center, color: .purple))
-        }
-        
-        // 2. Candidates
-        for candidate in candidates {
-            if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
-                 // Highlight selected
-                let isSelected = selectedCandidate?.placeContext?.placeID == candidate.placeContext?.placeID
-                items.append(AnnotationItem(coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon), color: isSelected ? .green : .red))
+    private var itemLocationCoordinate: CLLocationCoordinate2D? {
+        if let locString = item.location {
+            let components = locString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            if components.count == 2,
+               let lat = Double(components[0]),
+               let lon = Double(components[1]) {
+                return CLLocationCoordinate2D(latitude: lat, longitude: lon)
             }
         }
-        
-        return items
+        return nil
     }
-
+    
     var body: some View {
         NavigationStack {
-             // ... (List content identical)
-             List {
+            List {
                 Section {
-                    Map(coordinateRegion: $region, interactionModes: .all, showsUserLocation: false, annotationItems: allAnnotations) { place in
-                        MapMarker(coordinate: place.coordinate, tint: place.color)
+                    Map(position: $position, selection: $selectedMapFeature) {
+                        // Current Item Location
+                        if let loc = itemLocationCoordinate {
+                            Marker("Current", coordinate: loc)
+                                .tint(.purple)
+                        }
+                        
+                        // Session Location (if different)
+                        if let sl = sessionLocation, sl.latitude != itemLocationCoordinate?.latitude {
+                             Marker("Session", coordinate: sl)
+                                .tint(.gray)
+                        }
+                        
+                        // Candidates
+                        ForEach(candidates, id: \.placeContext?.placeID) { candidate in
+                            if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
+                                let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                                let isSelected = selectedCandidate?.placeContext?.placeID == candidate.placeContext?.placeID
+                                Marker(candidate.title ?? "Unknown", coordinate: coordinate)
+                                    .tint(isSelected ? .green : .red)
+                            }
+                        }
                     }
-                    .frame(height: 200)
+                    .frame(height: 300)
                     .listRowInsets(EdgeInsets())
+                    .mapControls {
+                        MapUserLocationButton()
+                        MapCompass()
+                        MapScaleView()
+                    }
+                    .onMapCameraChange { context in
+                        visibleRegion = context.region
+                    }
+                    .onChange(of: selectedMapFeature) { feature in
+                        if let feature {
+                            Task { await resolveMapFeature(feature) }
+                        }
+                    }
+                    .overlay(alignment: .bottomTrailing) {
+                        // "Search Here" button
+                        Button {
+                            Task { await fetchCandidates() }
+                        } label: {
+                            Image(systemName: "arrow.clockwise.circle.fill")
+                                .font(.title)
+                                .background(Color.white.clipShape(Circle()))
+                                .shadow(radius: 2)
+                        }
+                        .padding()
+                    }
                 }
                 
                 Section("Current Location") {
@@ -965,10 +1015,13 @@ struct EditLocationView: View {
                     }
                 }
                 
-                Section("Nearby Places (KnowMaps)") {
+                Section("Nearby Places") {
                     if isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
                     } else if candidates.isEmpty {
                         Text("No places found nearby.")
                             .foregroundStyle(.secondary)
@@ -976,6 +1029,15 @@ struct EditLocationView: View {
                         ForEach(candidates, id: \.placeContext?.placeID) { candidate in
                             Button {
                                 selectedCandidate = candidate
+                                // Move map to candidate
+                                if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
+                                    withAnimation {
+                                        position = .region(MKCoordinateRegion(
+                                            center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+                                            span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+                                        ))
+                                    }
+                                }
                             } label: {
                                 HStack {
                                     VStack(alignment: .leading) {
@@ -1021,217 +1083,228 @@ struct EditLocationView: View {
                 try? await Task.sleep(nanoseconds: 500_000_000)
                 await fetchCandidates()
             }
+            .onAppear {
+                setupInitialPosition()
+            }
         }
         .disabled(isUpdating)
         .overlay {
             if isUpdating {
-                ZStack {
-                    Color.black.opacity(0.3)
-                    ProgressView("Updating Context...")
-                        .padding()
-                        .background(.regularMaterial)
-                        .cornerRadius(10)
-                }
-            }
-        }
-        .onAppear {
-            // Robustly checking precedence: Item > Session > Default
-            if let locString = item.location {
-                 let components = locString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-                 if components.count == 2,
-                    let lat = Double(components[0]),
-                    let lon = Double(components[1]) {
-                     // Only update if not already set by user interaction (checking default span)
-                     if region.span.latitudeDelta > 0.1 || !hasZoomedToSession {
-                         region = MKCoordinateRegion(
-                             center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
-                             span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-                         )
-                         hasZoomedToSession = true
-                     }
-                     return
-                 }
-            }
-            
-            if let sl = sessionLocation {
-                 region = MKCoordinateRegion(
-                    center: sl,
-                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-                )
-                hasZoomedToSession = true
-            }
-        }
-        .onChange(of: sessions) { _ in
-            if !hasZoomedToSession, let sl = sessionLocation {
-                 region = MKCoordinateRegion(
-                    center: sl,
-                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-                )
-                hasZoomedToSession = true
+                Color.black.opacity(0.3).ignoresSafeArea()
+                ProgressView("Updating Context...")
+                    .padding()
+                    .background(.regularMaterial)
+                    .cornerRadius(10)
             }
         }
     }
     
-
-    @State private var isUpdating = false
+    private func setupInitialPosition() {
+        if let loc = itemLocationCoordinate {
+            position = .region(MKCoordinateRegion(center: loc, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+            return
+        }
+        
+        if let sl = sessionLocation {
+            position = .region(MKCoordinateRegion(center: sl, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+            return
+        }
+        
+        // Fallback: Check if there's a cached image with GPS
+        if let data = item.rawPayload,
+           let source = CGImageSourceCreateWithData(data as CFData, nil),
+           let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
+           let gps = props["{GPS}"] as? [String: Any],
+           let lat = gps["Latitude"] as? Double,
+           let latRef = gps["LatitudeRef"] as? String,
+           let lng = gps["Longitude"] as? Double,
+           let lngRef = gps["LongitudeRef"] as? String {
+            
+            let finalLat = latRef == "S" ? -lat : lat
+            let finalLng = lngRef == "W" ? -lng : lng
+            let loc = CLLocationCoordinate2D(latitude: finalLat, longitude: finalLng)
+            position = .region(MKCoordinateRegion(center: loc, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+            return
+        }
+        
+        // Default to SF if nothing implies otherwise
+        position = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)))
+    }
+    
+    private func resolveMapFeature(_ feature: MapFeature) async {
+        let coordinate = feature.coordinate
+        let title = feature.title ?? "Selected Location"
+        
+        // 1. Try Foursquare Lookup by Name/Location
+        if let fsqService = Services.shared.foursquareService {
+            do {
+                let results = try await fsqService.search(query: title, location: coordinate, limit: 1)
+                if let bestMatch = results.first {
+                    await MainActor.run {
+                        self.selectedCandidate = bestMatch
+                        self.candidates = [bestMatch] // Focus on this one? Or append?
+                    }
+                    return
+                }
+            } catch {
+                print("Foursquare lookup failed, falling back to MapKit: \(error)")
+            }
+        }
+        
+        // 2. Fallback to MapKit
+        if let mapService = Services.shared.mapKitService {
+             let placeData = (try? await mapService.enrich(query: title, location: coordinate)) ?? EnrichmentData(
+                title: title,
+                descriptionText: "Apple Maps Location",
+                categories: ["Point of Interest"],
+                location: title,
+                placeContext: PlaceContext(
+                    name: title,
+                    categories: ["POI"],
+                    latitude: coordinate.latitude,
+                    longitude: coordinate.longitude
+                )
+            )
+             await MainActor.run {
+                self.selectedCandidate = placeData
+                // self.candidates.append(placeData) // Optional
+            }
+        }
+    }
     
     private func fetchCandidates() async {
-        guard let service = Services.shared.foursquareService else { return }
-        
         isLoading = true
         defer { isLoading = false }
         
-        // Prioritize session location for search
-        let searchCenter = sessionLocation ?? region.center
-        if searchCenter.latitude == 0 && searchCenter.longitude == 0 { return }
+        // Prioritize map center if visible, otherwise item location
+        let searchCenter = visibleRegion?.center ?? itemLocationCoordinate ?? sessionLocation ?? CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
         
-        do {
-            let results: [EnrichmentData]
-            if searchText.isEmpty {
-                 results = try await service.searchNearby(location: searchCenter, limit: 50)
-            } else {
-                 results = try await service.search(query: searchText, location: searchCenter, limit: 50)
+        // Prioritize Foursquare, fallback to MapKit
+        if let service = Services.shared.foursquareService {
+            do {
+                let results: [EnrichmentData]
+                if searchText.isEmpty {
+                     results = try await service.searchNearby(location: searchCenter, limit: 50)
+                } else {
+                     results = try await service.search(query: searchText, location: searchCenter, limit: 50)
+                }
+                
+                await MainActor.run {
+                    self.candidates = results
+                }
+                return
+            } catch {
+                print("Foursquare search failed: \(error)")
             }
-            
-            await MainActor.run {
-                self.candidates = results
+        }
+        
+        // Fallback
+        if let service = Services.shared.mapKitService {
+             do {
+                let results: [EnrichmentData]
+                if searchText.isEmpty {
+                     results = try await service.searchNearby(location: searchCenter, limit: 50)
+                } else {
+                     results = try await service.search(query: searchText, location: searchCenter, limit: 50)
+                }
+                
+                await MainActor.run {
+                    self.candidates = results
+                }
+            } catch {
+                print("MapKit search failed: \(error)")
             }
-        } catch {
-            print("❌ Failed to fetch candidates: \(error)")
         }
     }
     
     private func updateLocation() async {
         guard let candidate = selectedCandidate else { return }
-        guard let contextService = Services.shared.contextQuestionService else { return }
         
-        isUpdating = true
-        defer { isUpdating = false }
-        
-        do {
-            let (summary, _, purpose, tags) = try await contextService.processContext(from: candidate)
-            
-            await MainActor.run {
-                // Update Session Metadata
-                if let sessionID = item.sessionID,
-                   let session = sessions.first(where: { $0.sessionID == sessionID }) {
-                    session.locationName = candidate.placeContext?.name
-                    session.placeID = candidate.placeContext?.placeID
-                    if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
-                        session.latitude = lat
-                        session.longitude = lon
-                    }
-                    
-                    // Update all siblings in this session
-                    // We need to fetch them
-                    let descriptor = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.sessionID == sessionID })
-                    if let siblings = try? item.modelContext?.fetch(descriptor) {
-                        for sibling in siblings {
-                            sibling.placeContext = candidate.placeContext
-                            if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
-                                sibling.location = "\(lat),\(lon)"
-                            }
-                            sibling.categories = candidate.categories
-                            let newTags = Set(candidate.styleTags + tags + sibling.tags)
-                            sibling.tags = Array(newTags).sorted()
-                            
-                            if let purpose = purpose, !sibling.purposes.contains(purpose) {
-                                sibling.purposes.append(purpose)
-                            }
-                        }
-                    }
-                } else {
-                    // Fallback: If not in a session, just update the single item
-                    item.placeContext = candidate.placeContext
-                    if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
-                        item.location = "\(lat),\(lon)"
-                    }
-                    item.categories = candidate.categories
-                    let newTags = Set(candidate.styleTags + tags)
-                    item.tags = Array(newTags).sorted()
-                    if let purpose = purpose {
-                        item.purposes = [purpose]
-                    }
-                    if let summary = summary {
-                        item.summary = summary
-                    }
-                }
-                
-                try? item.modelContext?.save()
-                dismiss()
+        await MainActor.run {
+            item.placeContext = candidate.placeContext
+            if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
+                item.location = "\(lat),\(lon)"
             }
-        } catch {
-            print("❌ Failed to regenerate context: \(error)")
-            await MainActor.run {
-                // Fallback update on error (just location info)
-                 if let sessionID = item.sessionID,
-                   let session = sessions.first(where: { $0.sessionID == sessionID }) {
-                     session.locationName = candidate.placeContext?.name
-                     session.placeID = candidate.placeContext?.placeID
-                 }
-                 
-                item.placeContext = candidate.placeContext
-                if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
-                    item.location = "\(lat),\(lon)"
-                }
-                try? item.modelContext?.save()
-                dismiss()
+            item.categories = candidate.categories
+            
+            // Mark for reprocessing
+            item.status = .queued
+            item.processingLog.append("\(Date().formatted()): Location updated. Triggering re-enrichment.")
+            
+            try? item.modelContext?.save()
+            dismiss()
+            
+            // Trigger processing immediately
+            Task {
+                try? await Services.shared.metadataPipelineService?.processPendingQueue()
             }
         }
     }
 }
+
 // MARK: - EditSessionLocationView
+
 struct EditSessionLocationView: View {
-    @Bindable var session: SessionMetadata
+    @Bindable var session: DiverSession
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
     @State private var candidates: [EnrichmentData] = []
     @State private var isLoading = false
     @State private var selectedCandidate: EnrichmentData?
-    @State private var region: MKCoordinateRegion
+    @State private var position: MapCameraPosition = .automatic
+    @State private var visibleRegion: MKCoordinateRegion?
     @State private var searchText = ""
     @State private var isUpdating = false
-    
-    init(session: SessionMetadata) {
-        self.session = session
-        
-        if let lat = session.latitude, let lon = session.longitude {
-            _region = State(initialValue: MKCoordinateRegion(
-                center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
-                span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-            ))
-        } else {
-             _region = State(initialValue: MKCoordinateRegion(
-                center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
-                span: MKCoordinateSpan(latitudeDelta: 100, longitudeDelta: 100)
-            ))
-        }
-    }
-    
-    var allAnnotations: [AnnotationItem] {
-        var items: [AnnotationItem] = []
-        if region.center.latitude != 0 {
-            items.append(AnnotationItem(coordinate: region.center, color: .purple))
-        }
-        for candidate in candidates {
-            if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
-                let isSelected = selectedCandidate?.placeContext?.placeID == candidate.placeContext?.placeID
-                items.append(AnnotationItem(coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon), color: isSelected ? .green : .red))
-            }
-        }
-        return items
-    }
+    @State private var selectedMapFeature: MapFeature?
     
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    Map(coordinateRegion: $region, interactionModes: .all, showsUserLocation: false, annotationItems: allAnnotations) { place in
-                        MapMarker(coordinate: place.coordinate, tint: place.color)
+                    Map(position: $position, selection: $selectedMapFeature) {
+                        // Current Session Location
+                        if let loc = sessionLocationCoordinate {
+                            Marker("Current", coordinate: loc)
+                                .tint(.gray)
+                        }
+                        
+                        // Candidates
+                        ForEach(candidates, id: \.placeContext?.placeID) { candidate in
+                            if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
+                                let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                                let isSelected = selectedCandidate?.placeContext?.placeID == candidate.placeContext?.placeID
+                                Marker(candidate.title ?? "Unknown", coordinate: coordinate)
+                                    .tint(isSelected ? .green : .red)
+                            }
+                        }
                     }
-                    .frame(height: 200)
+                    .frame(height: 300)
                     .listRowInsets(EdgeInsets())
+                    .mapControls {
+                        MapUserLocationButton()
+                        MapCompass()
+                        MapScaleView()
+                    }
+                    .onMapCameraChange { context in
+                        visibleRegion = context.region
+                    }
+                    .onChange(of: selectedMapFeature) { feature in
+                        if let feature {
+                            Task { await resolveMapFeature(feature) }
+                        }
+                    }
+                    .overlay(alignment: .bottomTrailing) {
+                        Button {
+                            Task { await fetchCandidates() }
+                        } label: {
+                            Image(systemName: "arrow.clockwise.circle.fill")
+                                .font(.title)
+                                .background(Color.white.clipShape(Circle()))
+                                .shadow(radius: 2)
+                        }
+                        .padding()
+                    }
                 }
                 
                 Section("Current Location") {
@@ -1250,10 +1323,13 @@ struct EditSessionLocationView: View {
                     }
                 }
                 
-                Section("Nearby Places (KnowMaps)") {
+                Section("Nearby Places") {
                     if isLoading {
-                        ProgressView()
-                            .frame(maxWidth: .infinity)
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
                     } else if candidates.isEmpty {
                         Text("No places found nearby.")
                             .foregroundStyle(.secondary)
@@ -1261,6 +1337,14 @@ struct EditSessionLocationView: View {
                         ForEach(candidates, id: \.placeContext?.placeID) { candidate in
                             Button {
                                 selectedCandidate = candidate
+                                if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
+                                    withAnimation {
+                                        position = .region(MKCoordinateRegion(
+                                            center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+                                            span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+                                        ))
+                                    }
+                                }
                             } label: {
                                 HStack {
                                     VStack(alignment: .leading) {
@@ -1294,7 +1378,9 @@ struct EditSessionLocationView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Update") {
-                        Task { await updateLocation() }
+                        Task {
+                            await updateLocation()
+                        }
                     }
                     .disabled(selectedCandidate == nil || isUpdating)
                 }
@@ -1303,28 +1389,151 @@ struct EditSessionLocationView: View {
                 try? await Task.sleep(nanoseconds: 500_000_000)
                 await fetchCandidates()
             }
+            .onAppear {
+                setupInitialPosition()
+            }
         }
         .disabled(isUpdating)
+        .overlay {
+            if isUpdating {
+                Color.black.opacity(0.3).ignoresSafeArea()
+                ProgressView("Updating Session...")
+                    .padding()
+                    .background(.regularMaterial)
+                    .cornerRadius(10)
+            }
+        }
+    }
+    
+    private var sessionLocationCoordinate: CLLocationCoordinate2D? {
+        if let lat = session.latitude, let lon = session.longitude {
+            return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        }
+        return nil
+    }
+    
+    private func setupInitialPosition() {
+        if let loc = sessionLocationCoordinate {
+            position = .region(MKCoordinateRegion(center: loc, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+            return
+        }
+        
+        // Fallback: Check children for location
+        let targetID = session.sessionID
+        let descriptor = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.sessionID == targetID })
+        if let items = try? modelContext.fetch(descriptor) {
+            for item in items {
+                if let locString = item.location {
+                    let components = locString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+                    if components.count == 2, let lat = Double(components[0]), let lon = Double(components[1]) {
+                        position = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: lat, longitude: lon), span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+                        return
+                    }
+                }
+                
+                // Image metadata fallback
+                if let data = item.rawPayload,
+                   let source = CGImageSourceCreateWithData(data as CFData, nil),
+                   let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
+                   let gps = props["{GPS}"] as? [String: Any],
+                   let lat = gps["Latitude"] as? Double,
+                   let latRef = gps["LatitudeRef"] as? String,
+                   let lng = gps["Longitude"] as? Double,
+                   let lngRef = gps["LongitudeRef"] as? String {
+                    
+                    let finalLat = latRef == "S" ? -lat : lat
+                    let finalLng = lngRef == "W" ? -lng : lng
+                    let loc = CLLocationCoordinate2D(latitude: finalLat, longitude: finalLng)
+                    position = .region(MKCoordinateRegion(center: loc, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+                    return
+                }
+            }
+        }
+        
+        position = .region(MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        ))
+    }
+    
+    private func resolveMapFeature(_ feature: MapFeature) async {
+        let coordinate = feature.coordinate
+        let title = feature.title ?? "Selected Location"
+        
+        // 1. Try Foursquare Lookup
+        if let fsqService = Services.shared.foursquareService {
+            do {
+                let results = try await fsqService.search(query: title, location: coordinate, limit: 1)
+                if let bestMatch = results.first {
+                    await MainActor.run {
+                        self.selectedCandidate = bestMatch
+                        self.candidates = [bestMatch]
+                    }
+                    return
+                }
+            } catch {
+                print("Foursquare lookup failed: \(error)")
+            }
+        }
+        
+        // 2. MapKit Fallback
+        if let mapService = Services.shared.mapKitService {
+             let placeData = (try? await mapService.enrich(query: title, location: coordinate)) ?? EnrichmentData(
+                title: title,
+                descriptionText: "Apple Maps Location",
+                categories: ["Point of Interest"],
+                location: title,
+                placeContext: PlaceContext(
+                    name: title,
+                    categories: ["POI"],
+                    latitude: coordinate.latitude,
+                    longitude: coordinate.longitude
+                )
+            )
+             await MainActor.run {
+                self.selectedCandidate = placeData
+                // self.candidates.append(placeData) // Optional
+            }
+        }
     }
     
     private func fetchCandidates() async {
-        guard let service = Services.shared.foursquareService else { return }
         isLoading = true
         defer { isLoading = false }
         
-        let searchCenter = region.center
-        if searchCenter.latitude == 0 && searchCenter.longitude == 0 { return }
+        let searchCenter = visibleRegion?.center ?? sessionLocationCoordinate ?? CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
         
-        do {
-            let results: [EnrichmentData]
-            if searchText.isEmpty {
-                 results = try await service.searchNearby(location: searchCenter, limit: 50)
-            } else {
-                 results = try await service.search(query: searchText, location: searchCenter, limit: 50)
+        // Foursquare
+        if let service = Services.shared.foursquareService {
+            do {
+                let results: [EnrichmentData]
+                if searchText.isEmpty {
+                     results = try await service.searchNearby(location: searchCenter, limit: 50)
+                } else {
+                     results = try await service.search(query: searchText, location: searchCenter, limit: 50)
+                }
+                
+                await MainActor.run { self.candidates = results }
+                return
+            } catch {
+                print("Foursquare search failed: \(error)")
             }
-            await MainActor.run { self.candidates = results }
-        } catch {
-            print("❌ Failed to fetch candidates: \(error)")
+        }
+        
+        // MapKit Fallback
+        if let service = Services.shared.mapKitService {
+             do {
+                let results: [EnrichmentData]
+                if searchText.isEmpty {
+                     results = try await service.searchNearby(location: searchCenter, limit: 50)
+                } else {
+                     results = try await service.search(query: searchText, location: searchCenter, limit: 50)
+                }
+                
+                await MainActor.run { self.candidates = results }
+            } catch {
+                print("MapKit search failed: \(error)")
+            }
         }
     }
     
@@ -1341,7 +1550,7 @@ struct EditSessionLocationView: View {
                 session.longitude = lon
             }
             
-            // Propagate to all children
+            // Update children in session
             let targetID = session.sessionID
             let descriptor = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.sessionID == targetID })
             if let items = try? modelContext.fetch(descriptor) {
@@ -1350,323 +1559,20 @@ struct EditSessionLocationView: View {
                     if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
                         item.location = "\(lat),\(lon)"
                     }
-                    // Simple merge of categories/tags
                     item.categories = candidate.categories
+                    
+                    // Mark for reprocessing
+                    item.status = .queued
+                    item.processingLog.append("\(Date().formatted()): Location updated for session. Triggering re-enrichment.")
                 }
             }
             
             try? modelContext.save()
             dismiss()
-        }
-    }
-}
-
-
-struct AnnotationItem: Identifiable {
-    let id = UUID()
-    let coordinate: CLLocationCoordinate2D
-    let color: Color
-}
-
-struct ReprocessMetadataView: View {
-    let item: ProcessedItem
-    @Environment(\.dismiss) private var dismiss
-    
-    @State private var sessionTitle: String = ""
-    @State private var sessionSummary: String = ""
-    @State private var isLoading = false
-    
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Session Metadata") {
-                    if let image = itemImage {
-                        #if os(iOS)
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(height: 200)
-                            .listRowInsets(EdgeInsets())
-                            .clipped()
-                        #endif
-                    }
-                    
-                    TextField("Session Title", text: $sessionTitle)
-                    
-                    if !sessionSummary.isEmpty {
-                        Text(sessionSummary)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                Section("Location Context") {
-                    if let place = item.placeContext?.name {
-                        LabeledContent("Place", value: place)
-                    }
-                    if let loc = item.location {
-                        LabeledContent("Coordinates", value: loc)
-                    }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(item.createdAt.formatted(date: .abbreviated, time: .shortened))
-                            .font(.headline)
-                        
-                        Text(item.sessionID ?? "No Session ID")
-                            .font(.caption2)
-                            .monospaced()
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.vertical, 2)
-                }
-                
-                Section {
-                    Button {
-                        startReprocessing()
-                    } label: {
-                        if isLoading {
-                            ProgressView()
-                        } else if item.rawPayload == nil {
-                            Text("Original Image Missing")
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity)
-                        } else {
-                            Text("Confirm & Reprocess")
-                                .bold()
-                                .frame(maxWidth: .infinity)
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(item.rawPayload == nil || isLoading)
-                    .listRowInsets(EdgeInsets())
-                }
-            }
-            .navigationTitle("Reprocess Item")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-            .onAppear {
-                sessionTitle = item.title ?? "Untitled Session"
-                sessionSummary = item.summary ?? ""
-            }
-        }
-    }
-    
-    private var itemImage: UIImage? {
-        if let data = item.rawPayload {
-            return UIImage(data: data)
-        }
-        return nil
-    }
-    
-    private func startReprocessing() {
-        guard let imageData = item.rawPayload else { return }
-        
-        isLoading = true
-        
-        // 1. Set Shared Context - New Session
-        let newSessionID = UUID().uuidString
-        
-        let context = ReprocessContext(
-            imageData: imageData,
-            sessionID: newSessionID,
-            location: item.location,
-            placeID: item.placeContext?.placeID,
-            placeName: item.placeContext?.name
-        )
-        
-        Task { @MainActor in
-            Services.shared.pendingReprocessContext = context
             
-            // 2. Dismiss this sheet
-            dismiss()
-            
-            // 3. Trigger Visual Intelligence
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            NotificationCenter.default.post(name: .openVisualIntelligence, object: nil)
-        }
-    }
-}
-
-// MARK: - SessionCardView (Moved from separate file for target inclusion)
-
-struct SessionCardView: View {
-    let sessionID: String
-    let items: [ProcessedItem]
-    let metadata: SessionMetadata?
-    @Binding var isExpanded: Bool
-    
-    // Derived properties
-    private var heroImage: UIImage? {
-        // Find best quality image (e.g. from rawPayload or web snapshot)
-        // Prefer first item in list for consistency
-        for item in items {
-            if let data = item.rawPayload, let image = UIImage(data: data) {
-                return image
-            }
-            if let path = item.webContext?.snapshotURL, let image = UIImage(contentsOfFile: path) {
-                return image
-            }
-        }
-        return nil
-    }
-    
-    private var title: String {
-        metadata?.title ?? items.first?.title ?? "Untitled Session"
-    }
-    
-    private var subtitle: String {
-        // Location + Date or just Date
-        var components: [String] = []
-        if let loc = metadata?.locationName {
-            components.append(loc)
-        }
-        if let date = items.first?.createdAt {
-            let formatter = DateFormatter()
-            formatter.dateStyle = .medium
-            formatter.timeStyle = .short
-            components.append(formatter.string(from: date))
-        }
-        return components.isEmpty ? "Unknown Date" : components.joined(separator: " • ")
-    }
-    
-    private var summary: String? {
-        metadata?.summary
-    }
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Hero Image Area
-            if let image = heroImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 180)
-                    .clipped()
-                    .overlay {
-                        LinearGradient(
-                            colors: [.clear, .black.opacity(0.8)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    }
-                    .overlay(alignment: .bottomLeading) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(title)
-                                .font(.title3)
-                                .bold()
-                                .foregroundStyle(.white)
-                                .lineLimit(1)
-                            
-                            Text(subtitle)
-                                .font(.caption)
-                                .foregroundStyle(.white.opacity(0.8))
-                        }
-                        .padding()
-                    }
-            } else {
-                // Fallback Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(title)
-                            .font(.headline)
-                        Text(subtitle)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                }
-                .padding()
-                .background(Color(uiColor: .secondarySystemBackground))
-            }
-            
-            // Tertiary Context / LLM Summary
-            if let summary = summary {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(summary)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.horizontal)
-                .padding(.bottom, isExpanded ? 8 : 12)
-                .padding(.top, 8)
-            }
-            
-            // Dropdown Chevron Area (Tap to expand)
-            Button {
-                withAnimation {
-                    isExpanded.toggle()
-                }
-            } label: {
-                HStack {
-                    Text(isExpanded ? "Hide items" : "Show \(items.count) items")
-                        .font(.caption)
-                        .bold()
-                        .foregroundStyle(.blue)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                .background(Color(uiColor: .systemBackground))
-            }
-            .buttonStyle(.plain)
-            
-            // Divider if not expanded, or if expanded content follows in SidebarView
-            if !isExpanded {
-                Divider()
-            }
-        }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-        .padding(.horizontal, 4) // Slight inset from list edges
-        .padding(.vertical, 6)
-    }
-}
-
-// MARK: - Daily Context Section
-struct DailyContextSection: View {
-    @ObservedObject var service: DailyContextService
-    
-    var body: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 8) {
-                if service.isGenerating {
-                    HStack {
-                        Text("Summarizing day...")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        ProgressView()
-                            .scaleEffect(0.6)
-                    }
-                } else {
-                    Text(service.dailySummary)
-                        .font(.footnote)
-                        .foregroundStyle(.primary)
-                        .italic()
-                        .padding(.vertical, 4)
-                        .transition(.opacity)
-                }
-            }
-        } header: {
-            HStack {
-                Label("Today's Narrative", systemImage: "clock.arrow.circlepath")
-                Spacer()
-                Button {
-                    Task { await service.updateSummary() }
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.caption)
-                }
+            // Trigger processing immediately
+            Task {
+                try? await Services.shared.metadataPipelineService?.processPendingQueue()
             }
         }
     }

@@ -34,17 +34,25 @@ public class ReferenceDetailViewModel: ObservableObject {
                     let itemContext = [item.title, item.summary, item.tags.joined(separator: ", ")].compactMap { $0 }.joined(separator: "\n")
                     let fullContext = "Focus Item:\n\(itemContext)\n\nSession Context:\n\(siblingContext)"
                     
+                    print("🔍 ReferenceDetailViewModel: Requesting purposes for item '\(item.title ?? "Untitled")'")
                     let suggestions = try await service.suggestPurposes(from: fullContext)
                     
                     await MainActor.run {
-                        self.suggestedPurposes = suggestions
+                        // Filter out purposes already present in the item and ensure uniqueness
+                        let currentPurposes = Set(item.purposes)
+                        var seen = Set<String>()
+                        let uniqueSuggestions = suggestions.filter { seen.insert($0).inserted }
+                        self.suggestedPurposes = uniqueSuggestions.filter { !currentPurposes.contains($0) }
+                        
                         self.isGeneratingPurposes = false
+                        print("✅ ReferenceDetailViewModel: Received \(suggestions.count) suggestions, \(self.suggestedPurposes.count) new")
                     }
                 } else {
+                    print("❌ ReferenceDetailViewModel: ContextQuestionService not found")
                     await MainActor.run { self.isGeneratingPurposes = false }
                 }
             } catch {
-                print("Failed to generate purposes: \(error)")
+                print("❌ ReferenceDetailViewModel: Failed to generate purposes: \(error)")
                 await MainActor.run { self.isGeneratingPurposes = false }
             }
         }

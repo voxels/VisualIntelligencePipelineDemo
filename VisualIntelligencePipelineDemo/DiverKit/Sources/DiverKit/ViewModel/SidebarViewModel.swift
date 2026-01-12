@@ -71,18 +71,31 @@ public class SidebarViewModel: ObservableObject {
         }
         
         // Sort
-        switch sortOrder {
-        case .dateDescending:
-            result.sort { ($0.lastProcessedAt ?? $0.updatedAt) > ($1.lastProcessedAt ?? $1.updatedAt) }
-        case .dateAscending:
-            result.sort { ($0.lastProcessedAt ?? $0.updatedAt) < ($1.lastProcessedAt ?? $1.updatedAt) }
-        case .titleAscending:
-            result.sort { ($0.title ?? $0.url ?? "") < ($1.title ?? $1.url ?? "") }
-        case .titleDescending:
-            result.sort { ($0.title ?? $0.url ?? "") > ($1.title ?? $1.url ?? "") }
+        result.sort { (item1, item2) in
+            // Primary Sort: Status (Processing First)
+            if item1.status == .processing && item2.status != .processing { return true }
+            if item1.status != .processing && item2.status == .processing { return false }
+            
+            // Secondary Sort: User Selection
+            switch sortOrder {
+            case .dateDescending:
+                return (item1.lastProcessedAt ?? item1.updatedAt) > (item2.lastProcessedAt ?? item2.updatedAt)
+            case .dateAscending:
+                return (item1.lastProcessedAt ?? item1.updatedAt) < (item2.lastProcessedAt ?? item2.updatedAt)
+            case .titleAscending:
+                return (item1.title ?? item1.url ?? "") < (item2.title ?? item2.url ?? "")
+            case .titleDescending:
+                return (item1.title ?? item1.url ?? "") > (item2.title ?? item2.url ?? "")
+            }
         }
         
-        return result
+        // Uniquify by ID to prevent SwiftUI warnings if the query returns duplicates
+        var seen = Set<String>()
+        return result.filter { item in
+            if seen.contains(item.id) { return false }
+            seen.insert(item.id)
+            return true
+        }
     }
     
     public func refresh() async {
@@ -104,6 +117,20 @@ public class SidebarViewModel: ObservableObject {
     
     public func reprocessItem(_ item: ProcessedItem) {
         self.itemToReprocess = item
+    }
+    
+    public func retryItem(_ item: ProcessedItem) {
+        item.status = .queued
+        item.processingLog.append("\(Date().formatted()): User requested automatic retry via tap.")
+        Task {
+            try? await pipelineService?.processPendingQueue()
+        }
+    }
+    
+    public func processNow(_ item: ProcessedItem) {
+        Task {
+            try? await pipelineService?.processItemImmediately(item)
+        }
     }
     
     public func reprocessSession(sessionID: String, context: ModelContext) {
@@ -132,10 +159,10 @@ public class SidebarViewModel: ObservableObject {
         let newSessionID = UUID().uuidString
         
         // 1. Fetch and Clone Metadata
-        let metaFetch = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
+        let metaFetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
         do {
             if let sourceMeta = try context.fetch(metaFetch).first {
-                let newMeta = SessionMetadata(
+                let newMeta = DiverSession(
                     sessionID: newSessionID,
                     title: "Copy of \(sourceMeta.title ?? "Untitled")",
                     createdAt: Date()
@@ -253,7 +280,7 @@ public class SidebarViewModel: ObservableObject {
             }
             
             // 3. Delete Source Session Metadata
-            let metaFetch = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sourceID })
+            let metaFetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sourceID })
             if let oldMeta = try context.fetch(metaFetch).first {
                 context.delete(oldMeta)
             }
@@ -336,7 +363,7 @@ public class SidebarViewModel: ObservableObject {
     
     public func generateSessionSummary(sessionID: String, context: ModelContext) {
         let fetchItems = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.sessionID == sessionID })
-        let fetchMeta = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
+        let fetchMeta = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
         
         Task {
             do {
@@ -404,7 +431,7 @@ public class SidebarViewModel: ObservableObject {
                     
                     // If single session, persist this summary as the session context
                     if ids.count == 1, let sessionID = ids.first {
-                        let fetchMeta = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
+                        let fetchMeta = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
                         if let meta = try? context.fetch(fetchMeta).first {
                             meta.summary = summary
                             try? context.save()

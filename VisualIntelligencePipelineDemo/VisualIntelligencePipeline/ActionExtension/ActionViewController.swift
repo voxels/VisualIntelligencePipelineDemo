@@ -45,19 +45,14 @@ final class ActionViewController: UIViewController {
     }
 
     private func setupQueueStore() {
-        let groupIdentifier = "group.com.secretatomics.VisualIntelligence"
-        let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier)
-
-        if containerURL == nil {
-            print("❌ ERROR: Cannot access app group '\(groupIdentifier)'")
+        guard let queueDirectory = AppGroupContainer.queueDirectoryURL() else {
+            print("❌ ERROR: Cannot access AppGroup queue directory.")
             return
         }
 
         do {
-            if let queueDirectory = AppGroupContainer.queueDirectoryURL() {
-                self.queueStore = try DiverQueueStore(directoryURL: queueDirectory)
-                print("✅ Queue store initialized successfully")
-            }
+            self.queueStore = try DiverQueueStore(directoryURL: queueDirectory)
+            print("✅ Queue store initialized successfully")
         } catch {
             print("❌ Error initializing queue store: \(error)")
         }
@@ -187,7 +182,7 @@ final class ActionViewController: UIViewController {
         let suggestedTags = SmartTagGenerator.generateTags(for: url)
 
         // Create SwiftUI view with view model
-        let previewView = LinkPreviewView(
+        let previewView = ActionLinkPreviewView(
             url: url,
             viewModel: viewModel,
             suggestedTags: suggestedTags,

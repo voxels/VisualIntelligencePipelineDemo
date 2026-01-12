@@ -1,4 +1,0 @@
-module RegularExpressions {
-header "RegularExpressions-Swift.h"
-export *
-}

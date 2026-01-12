@@ -1,3 +1,0 @@
-module SpotifyWebAPI {
-    header "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/SpotifyWebAPI.build/include/SpotifyWebAPI-Swift.h"
-}

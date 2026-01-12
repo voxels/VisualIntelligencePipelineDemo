@@ -7,6 +7,6 @@ struct VisualIntelligencePipelineWidgetBundle: WidgetBundle {
         VisualIntelligencePipelineHomeScreenWidget()
         VisualIntelligencePipelineLockScreenWidget()
         VisualIntelligencePipelineInteractiveWidget()
-        DiverScanWidget()
+        VisualIntelligenceScanWidget()
     }
 }

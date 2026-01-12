@@ -14,6 +14,8 @@ public final class Services {
     public var contextQuestionService: ContextQuestionService?
     public var dailyContextService: DailyContextService?
     public var pendingReprocessContext: ReprocessContext?
+    public var mapKitService: MapKitEnrichmentService?
+    public var metadataPipelineService: MetadataPipelineService?
     
     private init() {}
 }

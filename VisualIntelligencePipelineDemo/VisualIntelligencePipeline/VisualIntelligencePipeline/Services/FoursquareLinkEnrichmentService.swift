@@ -48,8 +48,18 @@ public final class FoursquareLinkEnrichmentService: LinkEnrichmentService, Conte
         )
         
         do {
-            let details = try await modelController.placeSearchService.placeSearchSession.details(for: request)
-            return try await convertToEnrichmentData(place: details, withQuestions: true)
+            let session = await MainActor.run { modelController.placeSearchService.placeSearchSession }
+            
+            // Fetch details, tips, and photos concurrently
+            async let detailsTask = session.details(for: request)
+            async let tipsTask = session.tips(for: fsqID)
+            async let photosTask = session.photos(for: fsqID)
+            
+            let details = try await detailsTask
+            let tips = try? await tipsTask
+            let photos = try? await photosTask
+            
+            return try await convertToEnrichmentData(place: details, tips: tips, photos: photos, withQuestions: true)
         } catch {
              print("❌ FoursquareEnrichment: Failed to fetch details for \(fsqID): \(error)")
         }
@@ -77,7 +87,8 @@ public final class FoursquareLinkEnrichmentService: LinkEnrichmentService, Conte
         )
         
         do {
-            let response = try await modelController.placeSearchService.placeSearchSession.query(request: request)
+            let session = await MainActor.run { modelController.placeSearchService.placeSearchSession }
+            let response = try await session.query(request: request)
             guard let place = response.results?.first else { return nil }
             
             // Filter out known mocks or bad data
@@ -86,6 +97,8 @@ public final class FoursquareLinkEnrichmentService: LinkEnrichmentService, Conte
                 return nil
             }
             
+            // For single location enrichment, we could optionally fetch tips/photos too
+            // But to keep latency low on passive enrichment, we stick to core data
             return try await convertToEnrichmentData(place: place, withQuestions: true)
         } catch {
              print("❌ FoursquareEnrichment: Failed to search location: \(error)")
@@ -116,7 +129,8 @@ public final class FoursquareLinkEnrichmentService: LinkEnrichmentService, Conte
         )
         
         do {
-            let response = try await modelController.placeSearchService.placeSearchSession.query(request: request)
+            let session = await MainActor.run { modelController.placeSearchService.placeSearchSession }
+            let response = try await session.query(request: request)
             guard let place = response.results?.first else { return nil }
             return try await convertToEnrichmentData(place: place, withQuestions: true)
         } catch {
@@ -143,7 +157,8 @@ public final class FoursquareLinkEnrichmentService: LinkEnrichmentService, Conte
         )
         
         do {
-            let response = try await modelController.placeSearchService.placeSearchSession.query(request: request)
+            let session = await MainActor.run { modelController.placeSearchService.placeSearchSession }
+            let response = try await session.query(request: request)
             guard let results = response.results else { return [] }
             
             var candidates: [EnrichmentData] = []
@@ -181,7 +196,8 @@ public final class FoursquareLinkEnrichmentService: LinkEnrichmentService, Conte
         )
         
         do {
-            let response = try await modelController.placeSearchService.placeSearchSession.query(request: request)
+            let session = await MainActor.run { modelController.placeSearchService.placeSearchSession }
+            let response = try await session.query(request: request)
             guard let results = response.results else { return [] }
             
             var candidates: [EnrichmentData] = []
@@ -202,23 +218,66 @@ public final class FoursquareLinkEnrichmentService: LinkEnrichmentService, Conte
     
     // MARK: - Helper
     
-    private func convertToEnrichmentData(place: FSQPlace, withQuestions: Bool = true) async throws -> EnrichmentData {
+    private func getMirrorValue<T>(_ object: Any, key: String) -> T? {
+        let mirror = Mirror(reflecting: object)
+        for child in mirror.children {
+            if child.label == key {
+               return child.value as? T
+            }
+        }
+        return nil
+    }
+    
+    private func convertToEnrichmentData(place: FSQPlace, tips: [FSQTip]? = nil, photos: [FSQPhoto]? = nil, withQuestions: Bool = true) async throws -> EnrichmentData {
         let cats = place.categories?.compactMap { $0.name } ?? []
         let placeName = place.name ?? "Unknown Place"
         
-        // Extract coordinates
+        // Extract coordinates using Mirror because FSQGeocodes.main is internal in remote dependency
         var lat: Double?
         var lon: Double?
-        // FIXME: 'main' and 'roof' are internal in remote Know-Maps package
-        /*
-        if let main = place.geocodes?.main {
-            lat = main.latitude
-            lon = main.longitude
-        } else if let roof = place.geocodes?.roof {
-            lat = roof.latitude
-            lon = roof.longitude
+        
+        if let geocodes = place.geocodes {
+            // Attempt to get 'main' then 'roof'
+            if let main: Any = getMirrorValue(geocodes, key: "main"),
+               let unwrappedMain = main as? FSQGeocodePoint {
+                 lat = getMirrorValue(unwrappedMain, key: "latitude")
+                 lon = getMirrorValue(unwrappedMain, key: "longitude")
+            }
+            
+            if (lat == nil || lon == nil) {
+                if let roof: Any = getMirrorValue(geocodes, key: "roof"),
+                   let unwrappedRoof = roof as? FSQGeocodePoint {
+                     lat = getMirrorValue(unwrappedRoof, key: "latitude")
+                     lon = getMirrorValue(unwrappedRoof, key: "longitude")
+                }
+            }
         }
-        */
+
+        // Map Tips
+        var tipStrings: [String] = []
+        if let tips = tips {
+            for tip in tips {
+                if let text: String = getMirrorValue(tip, key: "text") {
+                    tipStrings.append(text)
+                }
+            }
+        }
+        
+        // Map Photos
+        var photoUrls: [String] = []
+        if let photos = photos {
+            for photo in photos {
+                if let prefix: String = getMirrorValue(photo, key: "prefix"),
+                   let suffix: String = getMirrorValue(photo, key: "suffix") {
+                   photoUrls.append(prefix + "original" + suffix)
+                }
+            }
+        }
+        
+        var priceLevel: String?
+        if let p = place.price {
+            priceLevel = String(repeating: "$", count: p)
+        }
         
         let placeContext = PlaceContext(
             name: placeName,
@@ -226,9 +285,14 @@ public final class FoursquareLinkEnrichmentService: LinkEnrichmentService, Conte
             placeID: place.fsq_id,
             address: place.location?.formatted_address,
             rating: place.rating,
-            isOpen: nil, // place.hours?.open_now, // FIXME: open_now is internal
+            isOpen: nil, 
             latitude: lat,
-            longitude: lon
+            longitude: lon,
+            priceLevel: priceLevel,
+            phoneNumber: place.tel,
+            website: place.website,
+            photos: photoUrls,
+            tips: tipStrings
         )
         
         var generatedQuestions: [String] = []

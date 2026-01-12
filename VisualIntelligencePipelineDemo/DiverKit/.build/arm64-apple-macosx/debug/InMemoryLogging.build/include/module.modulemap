@@ -1,3 +1,0 @@
-module InMemoryLogging {
-    header "/Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/.build/arm64-apple-macosx/debug/InMemoryLogging.build/include/InMemoryLogging-Swift.h"
-}

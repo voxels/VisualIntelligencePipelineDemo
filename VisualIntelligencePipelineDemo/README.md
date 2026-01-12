@@ -92,26 +92,30 @@ Diver deeply integrates Apple Intelligence to provide a seamless and privacy-pre
 
 Diver uses a sophisticated multi-stage intelligence pipeline (`LocalPipelineService`) that combines on-device vision, vector-based knowledge retrieval, and generative AI to enrich captured content.
 
-### 1. Visual Capture & Sifting (CoreML + Vision)
+### 1. Visual Capture & Sifting (Vision + CoreML)
 The `VisualIntelligenceViewModel` drives the initial capture experience using advanced Computer Vision:
--   **Subject Lifting**: Uses `VNGenerateForegroundInstanceMaskRequest` to "sift" the primary subject from the background, creating a high-fidelity sticker-like asset.
--   **Optical Character Recognition (OCR)**: Extracts text from the scene to determine intent (e.g., reading a menu vs. looking at a landscape).
--   **Rectification**: Automatically detects and rectifies document edges using `VNInstanceMaskObservation`.
+-   **Subject Lifting**: Uses `VNGenerateForegroundInstanceMaskRequest` (Vision Framework) to "sift" the primary subject from the background, creating a high-fidelity sticker-like asset.
+-   **Optical Character Recognition (OCR)**: Uses `VNRecognizeTextRequest` (Vision Framework) to extract text from the scene to determine intent.
+-   **Rectification**: Automatically detects and rectifies document edges using `VNDetectRectanglesRequest` and `VNInstanceMaskObservation`.
+-   **Object Recognition**: Uses pre-trained CoreML models for broad category classification.
 
 ### 2. The KnowMaps Vector Space
-Diver integrates with **KnowMaps** to ground visual data in the user's personal knowledge graph.
+Diver integrates with **KnowMaps** (1st party Service) to ground visual data in the user's personal knowledge graph.
 -   **Context Retrieval**: The `KnowMapsAdapter` retrieves relevant context (`UserTopic`, `IndustryCategory`) based on a weighted vector search.
 -   **Concept Boosting**: Concepts with a weight `> 1.2` (e.g., "Coffee", "SwiftUI") are prioritized to bias the AI's understanding of the scene.
 -   **Personalized Ranking**: Search results and auto-categorization are influenced by the user's "Taste Profile" stored in the local vector database.
 
 ### 3. Parallel Enrichment Pipeline
 Once an item is captured, it passes through `LocalPipelineService`, which orchestrates multiple concurrent enrichment providers:
-1.  **Link Enrichment**: Fetches OpenGraph metadata and readability-parsed text from URLs.
-2.  **Place Context (Foursquare)**: Identifies the venue based on GPS and visual text matches.
-3.  **Semantic Search (DuckDuckGo)**: Enhances place/product data with web knowledge.
+1.  **Link Enrichment (`LinkEnrichmentService`)**: Uses `MetadataExtractor` (1st party) and `swift-eventsource` (3rd party) to fetch OpenGraph metadata and readability-parsed text.
+2.  **Place Context (`FoursquareService`)**: Uses the **Foursquare Places API** (3rd party SDK) to identify venues based on GPS and visual text matches.
+3.  **Semantic Search (`DuckDuckGoService`)**: Uses the **DuckDuckGo Search API** (3rd party) to enhance place/product data with web knowledge.
 4.  **Environmental Context**:
-    -   **WeatherKit**: Captures ambient conditions (e.g., "Sunny, 24°C").
-    -   **CoreMotion**: Logs user activity state (e.g., "Stationary", "Walking").
+    -   **WeatherKit** (Apple SDK): Captures ambient conditions (e.g., "Sunny, 24°C").
+    -   **CoreMotion** (Apple SDK): Logs user activity state (e.g., "Stationary", "Walking").
+    -   **CarPlay**: Detects automotive state for mobile context.
+5.  **Music Enrichment**: Uses **SpotifyAPI** (3rd party SDK) for identifying and enriching music entities.
+6.  **Legacy Search**: Supports **YahooSearchKit** (3rd party) for secondary entity verification.
 
 ### 4. Generative Synthesis (Apple Intelligence)
 The final stage uses `ContextQuestionService` to synthesize a cohesive narrative using **Apple's SystemLanguageModel** (iOS 26.0+):
@@ -189,3 +193,72 @@ To run the full suite of unit and UI tests for the iOS target, execute the follo
 ```bash
 xcodebuild test -scheme Diver_iOS -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
+
+---
+
+## Appendix: Enrichment Data Models
+
+Diver's intelligence pipeline produces structured metadata using several key data models. These are used to store and pass context across services.
+
+### Core Model: `EnrichmentData`
+Defined in [LinkEnrichmentService.swift](file:///Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/LinkEnrichmentService.swift). This is the carrier for all enriched metadata.
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `title` | `String?` | The primary name or heading of the entity. |
+| `descriptionText`| `String?` | A summary or abstract description. |
+| `image` | `String?` | URL or path to a representative image. |
+| `categories` | `[String]` | Classification tags (e.g., "Restaurant", "Song"). |
+| `location` | `String?` | Formatted address or place name. |
+| `price` | `Double?` | Numeric price if applicable. |
+| `rating` | `Double?` | User rating (usually 0.0 - 5.0). |
+| `webContext` | `WebContext?` | Metadata specific to web pages. |
+| `placeContext` | `PlaceContext?` | Detailed venue information. |
+| `documentContext`| `DocumentContext?`| Metadata for files and documents. |
+| `qrContext` | `QRCodeContext?` | Data extracted from QR codes. |
+
+### Contextual Models
+Defined in [ContextSnapshot.swift](file:///Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverShared/Sources/DiverShared/ContextSnapshot.swift).
+
+#### `WebContext`
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `siteName` | `String?` | The name of the website (e.g., "Wikipedia"). |
+| `faviconURL` | `String?` | URL to the site's icon. |
+| `textContent` | `String?` | Extracted readable text content. |
+| `structuredData` | `String?` | JSON String of structured data (e.g., Schema.org). |
+
+#### `PlaceContext`
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `name` | `String?` | Venue name. |
+| `address` | `String?` | Full mailing address. |
+| `phoneNumber` | `String?` | Contact number. |
+| `website` | `String?` | Official URL. |
+| `rating` | `Double?` | Venue rating. |
+| `photos` | `[String]?` | Array of image URLs. |
+| `tips` | `[String]?` | Short user reviews or hints. |
+
+#### `WeatherContext`
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `condition` | `String` | Description (e.g., "Rainy", "Cloudy"). |
+| `temperatureCelsius`| `Double` | Current temperature. |
+| `symbolName` | `String` | SF Symbol name for the weather. |
+
+#### `ActivityContext`
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `type` | `String` | Motion type (e.g., "walking", "automotive"). |
+| `confidence` | `String` | confidence level ("high", "medium", "low"). |
+
+### Media Metadata: `MediaMetadata`
+Defined in [ProcessedItem.swift](file:///Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Models/ProcessedItem.swift).
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `mediaType` | `String?` | MIME type or category (e.g., "image/jpeg"). |
+| `filename` | `String?` | Original filename. |
+| `fileSize` | `Int?` | Size in bytes. |
+| `transcription` | `String?` | Extracted text or speech-to-text. |
+| `themes` | `[String]` | Visual themes identified by AI. |

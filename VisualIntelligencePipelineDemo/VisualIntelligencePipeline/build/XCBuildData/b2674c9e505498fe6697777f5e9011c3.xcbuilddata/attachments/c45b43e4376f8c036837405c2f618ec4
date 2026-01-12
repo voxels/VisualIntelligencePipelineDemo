@@ -1,4 +1,0 @@
-module OpenCombine {
-header "OpenCombine-Swift.h"
-export *
-}

@@ -15,6 +15,32 @@ public final class FoursquareEnrichmentService: ContextualEnrichmentService, @un
         return candidates.first
     }
     
+    public func fetchDetails(for fsqID: String) async throws -> EnrichmentData? {
+        guard let apiKey = apiKey else { return nil }
+        
+        let urlString = "https://api.foursquare.com/v3/places/\(fsqID)"
+        var components = URLComponents(string: urlString)
+        components?.queryItems = [
+            URLQueryItem(name: "fields", value: "fsq_id,name,categories,location,geocodes,price,rating,tel,website,photos,tips")
+        ]
+        
+        guard let url = components?.url else { return nil }
+        
+        var request = URLRequest(url: url)
+        request.setValue(apiKey, forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "accept")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            return nil
+        }
+        
+        let decoder = JSONDecoder()
+        let place = try decoder.decode(FoursquarePlace.self, from: data)
+        return convertToEnrichmentData(place)
+    }
+
     public func searchNearby(location: CLLocationCoordinate2D, limit: Int = 5) async throws -> [EnrichmentData] {
         guard let apiKey = apiKey else { return [] }
         
@@ -22,7 +48,8 @@ public final class FoursquareEnrichmentService: ContextualEnrichmentService, @un
         components?.queryItems = [
             URLQueryItem(name: "ll", value: "\(location.latitude),\(location.longitude)"),
             URLQueryItem(name: "limit", value: "\(limit)"),
-            URLQueryItem(name: "sort", value: "DISTANCE")
+            URLQueryItem(name: "sort", value: "DISTANCE"),
+            URLQueryItem(name: "fields", value: "fsq_id,name,categories,location,geocodes,price,rating,tel,website,photos,tips")
         ]
         
         guard let url = components?.url else { return [] }
@@ -46,31 +73,9 @@ public final class FoursquareEnrichmentService: ContextualEnrichmentService, @un
         for place in result.results {
             // Filter mocks
             if place.name == "Ruby Falls" { continue }
-            
-            let cats = place.categories.map { $0.name }
-            
-            // Create PlaceContext
-            let placeContext = PlaceContext(
-                name: place.name,
-                categories: cats,
-                placeID: place.fsq_id,
-                address: place.location.address,
-                latitude: place.geocodes?.main?.latitude,
-                longitude: place.geocodes?.main?.longitude
-            )
-            
-            let enriched = EnrichmentData(
-                title: place.name,
-                descriptionText: nil,
-                categories: cats,
-                styleTags: [],
-                location: place.location.address,
-                price: nil,
-                rating: nil,
-                questions: [],
-                placeContext: placeContext
-            )
-            enrichedResults.append(enriched)
+            if let enriched = convertToEnrichmentData(place) {
+                enrichedResults.append(enriched)
+            }
         }
         
         return enrichedResults
@@ -84,7 +89,8 @@ public final class FoursquareEnrichmentService: ContextualEnrichmentService, @un
             URLQueryItem(name: "query", value: query),
             URLQueryItem(name: "ll", value: "\(location.latitude),\(location.longitude)"),
             URLQueryItem(name: "limit", value: "\(limit)"),
-            URLQueryItem(name: "sort", value: "DISTANCE")
+            URLQueryItem(name: "sort", value: "DISTANCE"),
+            URLQueryItem(name: "fields", value: "fsq_id,name,categories,location,geocodes,price,rating,tel,website,photos,tips")
         ]
         
         guard let url = components?.url else { return [] }
@@ -104,26 +110,7 @@ public final class FoursquareEnrichmentService: ContextualEnrichmentService, @un
         // Map results
         return result.results.compactMap { place in
             if place.name == "Ruby Falls" { return nil }
-            let cats = place.categories.map { $0.name }
-            let placeContext = PlaceContext(
-                name: place.name,
-                categories: cats,
-                placeID: place.fsq_id,
-                address: place.location.address,
-                latitude: place.geocodes?.main?.latitude,
-                longitude: place.geocodes?.main?.longitude
-            )
-            return EnrichmentData(
-                title: place.name,
-                descriptionText: nil,
-                categories: cats,
-                styleTags: [],
-                location: place.location.address,
-                price: nil,
-                rating: nil,
-                questions: [],
-                placeContext: placeContext
-            )
+            return convertToEnrichmentData(place)
         }
     }
     
@@ -131,6 +118,50 @@ public final class FoursquareEnrichmentService: ContextualEnrichmentService, @un
         // We could implement Foursquare search by query here as well
         // For now, focusing on location-based venue search
         return nil
+    }
+
+    private func convertToEnrichmentData(_ place: FoursquarePlace) -> EnrichmentData? {
+        let cats = place.categories.map { $0.name }
+        
+        // Photos
+        let photoUrls = place.photos?.compactMap { $0.prefix + "original" + $0.suffix }
+        
+        // Tips
+        let tips = place.tips?.map { $0.text }
+        
+        // Price Level
+        var priceLevel: String?
+        if let p = place.price {
+            priceLevel = String(repeating: "$", count: p)
+        }
+        
+        // Create PlaceContext
+        let placeContext = PlaceContext(
+            name: place.name,
+            categories: cats,
+            placeID: place.fsq_id,
+            address: place.location.address,
+            rating: place.rating,
+            latitude: place.geocodes?.main?.latitude,
+            longitude: place.geocodes?.main?.longitude,
+            priceLevel: priceLevel,
+            phoneNumber: place.tel,
+            website: place.website,
+            photos: photoUrls,
+            tips: tips
+        )
+        
+        return EnrichmentData(
+            title: place.name,
+            descriptionText: nil,
+            categories: cats,
+            styleTags: [],
+            location: place.location.address,
+            price: place.price.map { Double($0) },
+            rating: place.rating,
+            questions: [],
+            placeContext: placeContext
+        )
     }
 }
 
@@ -146,6 +177,12 @@ private struct FoursquarePlace: Codable {
     let categories: [FoursquareCategory]
     let location: FoursquareLocation
     let geocodes: FoursquareGeocodes?
+    let price: Int?
+    let rating: Double?
+    let tel: String?
+    let website: String?
+    let photos: [FoursquarePhoto]?
+    let tips: [FoursquareTip]?
 }
 
 private struct FoursquareGeocodes: Codable {
@@ -158,11 +195,20 @@ private struct FoursquareCoordinates: Codable {
 }
 
 private struct FoursquareCategory: Codable {
-    let id: Int
+    let id: String
     let name: String
 }
 
 private struct FoursquareLocation: Codable {
     let address: String?
     let country: String?
+}
+
+private struct FoursquarePhoto: Codable {
+    let prefix: String
+    let suffix: String
+}
+
+private struct FoursquareTip: Codable {
+    let text: String
 }

@@ -1,4 +1,0 @@
-module Sovran {
-header "Sovran-Swift.h"
-export *
-}

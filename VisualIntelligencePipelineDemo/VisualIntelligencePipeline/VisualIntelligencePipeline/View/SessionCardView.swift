@@ -12,7 +12,7 @@ import DiverKit
 struct SessionCardView: View {
     let sessionID: String
     let items: [ProcessedItem]
-    let metadata: SessionMetadata?
+    let metadata: DiverSession?
     @Binding var isExpanded: Bool
     
     // Derived properties

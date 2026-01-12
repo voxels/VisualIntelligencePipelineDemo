@@ -38,8 +38,6 @@ struct VisualIntelligencePipelineApp: App {
     // Shared with You manager (iOS 16+, macOS 13+)
     @State private var sharedWithYouManager: SharedWithYouManager?
     
-    // Global state for Visual Intelligence
-    @State private var showingVisualIntelligence = false
     
     // Navigation Manager for deep linking
     @StateObject private var navigationManager = NavigationManager()
@@ -56,7 +54,9 @@ struct VisualIntelligencePipelineApp: App {
             LocalInput.self,
             ProcessedItem.self,
             UserConcept.self,
-            SessionMetadata.self
+            UserConcept.self,
+            DiverSession.self
+
         ]
         let knowMapsTypes: [any PersistentModel.Type] = [
             UserCachedRecord.self,
@@ -117,6 +117,7 @@ struct VisualIntelligencePipelineApp: App {
         Services.shared.activityService = activityService
         Services.shared.contextQuestionService = contextService
         Services.shared.dailyContextService = dailyContextService
+        Services.shared.mapKitService = MapKitEnrichmentService()
         
 //        // Initially use only Yahoo URL service
 //        let initialEnrichment = CompositeLinkEnrichmentService(services: [duckDuckGoContextService])
@@ -164,6 +165,7 @@ struct VisualIntelligencePipelineApp: App {
         WindowGroup {
             ContentView(pipelineService: metadataPipelineService)
                 .modelContainer(dataStore.container) // Provide SwiftData container for @Query support
+                .environment(\.metadataPipelineService, metadataPipelineService)
                 .environmentObject(sharedWithYouManager ?? SharedWithYouManager(queueStore: try! DiverQueueStore(directoryURL: AppGroupContainer.queueDirectoryURL()!), pipelineService: metadataPipelineService, isEnabled: false))
                 .environmentObject(navigationManager)
                 .onAppear {
@@ -223,15 +225,15 @@ struct VisualIntelligencePipelineApp: App {
                     handleDeepLink(url)
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .openVisualIntelligence)) { _ in
-                    showingVisualIntelligence = true
+                    navigationManager.isScanActive = true
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .diverQueueDidUpdate)) { _ in
                     Task {
                         try? await metadataPipelineService.processPendingQueue()
                     }
                 }
-                .fullScreenCover(isPresented: $showingVisualIntelligence) {
-                    VisualIntelligenceView()
+                .onReceive(NotificationCenter.default.publisher(for: Notification.Name("com.secretatomics.dailyContextUpdated"))) { _ in
+                    WidgetCenter.shared.reloadAllTimelines()
                 }
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
@@ -247,6 +249,37 @@ struct VisualIntelligencePipelineApp: App {
                 // Process queue when app enters foreground
                 Task {
                     try? await metadataPipelineService.processPendingQueue()
+                    // Run Data Diagnostics to reassure user
+                    await metadataPipelineService.runDataDiagnostics()
+                }
+
+                // Check for Daily Narrative Backfill
+                // If the app was closed and we missed adding items to the daily log, catch up now.
+                Task { @MainActor in
+                    if let service = Services.shared.dailyContextService, !service.hasContent {
+                        print("📝 Daily Context is empty, checking for backfill items...")
+                        let calendar = Calendar.current
+                        let startOfDay = calendar.startOfDay(for: Date())
+                        
+                        let descriptor = FetchDescriptor<ProcessedItem>(
+                            predicate: #Predicate { $0.createdAt >= startOfDay },
+                            sortBy: [SortDescriptor(\.createdAt)]
+                        )
+                        
+                        do {
+                            let items = try dataStore.mainContext.fetch(descriptor)
+                            if !items.isEmpty {
+                                print("📝 Found \(items.count) items to backfill daily context.")
+                                let logs = items.map { item in
+                                    let time = item.createdAt.formatted(date: .omitted, time: .shortened)
+                                    return "[\(time)] Captured: \(item.title ?? "Untitled Item")"
+                                }
+                                service.ingest(logs)
+                            }
+                        } catch {
+                            print("❌ Failed to fetch items for daily context backfill: \(error)")
+                        }
+                    }
                 }
 
                 // Refresh all widgets
@@ -566,7 +599,7 @@ struct VisualIntelligencePipelineApp: App {
     private func handleScanScreen() {
         print("🔍 Deep Link: Handling scan-screen")
         Task { @MainActor in
-            showingVisualIntelligence = true
+            navigationManager.isScanActive = true
         }
     }
 }
