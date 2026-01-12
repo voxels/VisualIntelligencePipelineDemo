@@ -192,22 +192,33 @@ public class VisualIntelligenceViewModel: ObservableObject {
         print("🔄 VI ViewModel: Found pending reprocess context for session \(context.sessionID)")
         
         // 1. Load Image
+        // 1. Load Image
         #if canImport(UIKit)
         if let image = UIImage(data: context.imageData) {
             self.capturedImage = image
             self.siftedImage = image 
         } else {
             // Fallback: Try CIImage or CGImageSource debug
-            print("❌ VI ViewModel: UIImage(data:) failed. Size: \(context.imageData.count) bytes. Trying fallbacks...")
-            if let ciImage = CIImage(data: context.imageData) {
-                let context = CIContext()
-                if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
-                    self.capturedImage = UIImage(cgImage: cgImage)
-                    self.siftedImage = self.capturedImage
-                    print("✅ VI ViewModel: Recovered image via CIImage.")
-                }
+            print("❌ VI ViewModel: UIImage(data:) failed for session \(context.sessionID). Size: \(context.imageData.count) bytes. Trying fallbacks...")
+            
+            // Attempt CGImageSource directly for robustness
+            if let source = CGImageSourceCreateWithData(context.imageData as CFData, nil),
+               let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) {
+                let image = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
+                self.capturedImage = image
+                self.siftedImage = image
+                print("✅ VI ViewModel: Recovered image via CGImageSource.")
+            } else if let ciImage = CIImage(data: context.imageData) {
+                 let context = CIContext()
+                 if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
+                     self.capturedImage = UIImage(cgImage: cgImage)
+                     self.siftedImage = self.capturedImage
+                     print("✅ VI ViewModel: Recovered image via CIImage.")
+                 } else {
+                     print("❌ VI ViewModel: CIImage created but CGImage failed.")
+                 }
             } else {
-                 print("❌ VI ViewModel: CIImage(data:) also failed.")
+                 print("❌ VI ViewModel: All image recovery attempts failed. Data header: \(context.imageData.prefix(20).map { String(format: "%02hhx", $0) }.joined())")
             }
         }
         #endif

@@ -15,6 +15,10 @@ struct SessionCardView: View {
     let metadata: DiverSession?
     @Binding var isExpanded: Bool
     
+    let isSelectionMode: Bool
+    let isSelected: Bool
+    let onSelect: () -> Void
+    
     // Derived properties
     private var heroImage: UIImage? {
         // Find best quality image (e.g. from rawPayload or web snapshot)
@@ -54,102 +58,126 @@ struct SessionCardView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Hero Image Area
-            if let image = heroImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 180)
-                    .clipped()
-                    .overlay {
-                        LinearGradient(
-                            colors: [.clear, .black.opacity(0.8)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    }
-                    .overlay(alignment: .bottomLeading) {
+        HStack(spacing: 12) {
+            if isSelectionMode {
+                Button {
+                    onSelect()
+                } label: {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.title2)
+                        .foregroundStyle(isSelected ? .blue : .secondary)
+                }
+                .padding(.leading, 8)
+            }
+            
+            VStack(alignment: .leading, spacing: 0) {
+                // Hero Image Area
+                if let image = heroImage {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(height: 180)
+                        .clipped()
+                        .overlay {
+                            LinearGradient(
+                                colors: [.clear, .black.opacity(0.8)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        }
+                        .overlay(alignment: .bottomLeading) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(title)
+                                    .font(.title3)
+                                    .bold()
+                                    .foregroundStyle(.white)
+                                    .lineLimit(1)
+                                
+                                Text(subtitle)
+                                    .font(.caption)
+                                    .foregroundStyle(.white.opacity(0.8))
+                            }
+                            .padding()
+                        }
+                } else {
+                    // Fallback Header
+                    HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(title)
-                                .font(.title3)
-                                .bold()
-                                .foregroundStyle(.white)
-                                .lineLimit(1)
-                            
+                                .font(.headline)
                             Text(subtitle)
                                 .font(.caption)
-                                .foregroundStyle(.white.opacity(0.8))
+                                .foregroundStyle(.secondary)
                         }
-                        .padding()
+                        Spacer()
                     }
-            } else {
-                // Fallback Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(title)
-                            .font(.headline)
-                        Text(subtitle)
-                            .font(.caption)
+                    .padding()
+                    .background(Color(uiColor: .secondarySystemBackground))
+                }
+                
+                // Tertiary Context / LLM Summary
+                if let summary = summary {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Session Summary")
+                            .font(.caption2.bold())
                             .foregroundStyle(.secondary)
+                            .textCase(.uppercase)
+                        
+                        Text(summary)
+                            .font(.system(size: 13, weight: .regular, design: .serif))
+                            .foregroundStyle(.primary.opacity(0.8))
+                            .lineSpacing(2)
                     }
-                    Spacer()
+                    .padding(.horizontal)
+                    .padding(.bottom, isExpanded ? 8 : 12)
+                    .padding(.top, 8)
                 }
-                .padding()
-                .background(Color(uiColor: .secondarySystemBackground))
+                
+                // Dropdown Chevron Area (Tap to expand)
+                Button {
+                    if isSelectionMode {
+                        onSelect()
+                    } else {
+                        withAnimation {
+                            isExpanded.toggle()
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Text(isExpanded ? "Hide items" : "Show \(items.count) items")
+                            .font(.caption)
+                            .bold()
+                            .foregroundStyle(.blue)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "chevron.right")
+                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                            .foregroundStyle(.secondary)
+                            .opacity(isSelectionMode ? 0 : 1) // Hide chevron in edit mode
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
+                    .background(Color(uiColor: .systemBackground))
+                }
+                .buttonStyle(.plain)
+                 
+                // Divider if not expanded, or if expanded content follows in SidebarView
+                 if !isExpanded {
+                     Divider()
+                 }
             }
-            
-            // Tertiary Context / LLM Summary
-            if let summary = summary {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Session Summary")
-                        .font(.caption2.bold())
-                        .foregroundStyle(.secondary)
-                        .textCase(.uppercase)
-                    
-                    Text(summary)
-                        .font(.system(size: 13, weight: .regular, design: .serif))
-                        .foregroundStyle(.primary.opacity(0.8))
-                        .lineSpacing(2)
-                }
-                .padding(.horizontal)
-                .padding(.bottom, isExpanded ? 8 : 12)
-                .padding(.top, 8)
-            }
-            
-            // Dropdown Chevron Area (Tap to expand)
-            Button {
-                withAnimation {
-                    isExpanded.toggle()
-                }
-            } label: {
-                HStack {
-                    Text(isExpanded ? "Hide items" : "Show \(items.count) items")
-                        .font(.caption)
-                        .bold()
-                        .foregroundStyle(.blue)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                .background(Color(uiColor: .systemBackground))
-            }
-            .buttonStyle(.plain)
-             
-            // Divider if not expanded, or if expanded content follows in SidebarView
-             if !isExpanded {
-                 Divider()
-             }
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            .padding(.trailing, 4) 
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-        .padding(.horizontal, 4) // Slight inset from list edges
         .padding(.vertical, 6)
+        .contentShape(Rectangle()) // Make full width tappable
+        .onTapGesture {
+            if isSelectionMode {
+                onSelect()
+            }
+        }
     }
 }

@@ -658,7 +658,7 @@ extension VisualIntelligenceView {
                 .opacity(0.5)
             }
         } else {
-            ForEach(viewModel.sortedResults, id: \.title) { result in
+            ForEach(viewModel.sortedResults, id: \.self) { result in
                 if case .purpose = result { EmptyView() }
                 else {
                     VStack(spacing: 8) {

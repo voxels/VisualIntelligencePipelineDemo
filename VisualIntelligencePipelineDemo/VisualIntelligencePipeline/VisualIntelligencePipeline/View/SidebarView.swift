@@ -695,7 +695,16 @@ struct SessionCardOrchestrator: View {
                 sessionID: sessionID,
                 items: items,
                 metadata: metadata.first,
-                isExpanded: $isExpanded
+                isExpanded: $isExpanded,
+                isSelectionMode: viewModel.isSelectionMode,
+                isSelected: viewModel.selectedSessions.contains(sessionID),
+                onSelect: {
+                    if viewModel.selectedSessions.contains(sessionID) {
+                        viewModel.selectedSessions.remove(sessionID)
+                    } else {
+                        viewModel.selectedSessions.insert(sessionID)
+                    }
+                }
             )
             .contextMenu {
                  Button {
