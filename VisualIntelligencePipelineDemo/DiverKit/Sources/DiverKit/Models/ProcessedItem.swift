@@ -49,10 +49,15 @@ public final class ProcessedItem: Identifiable {
     public var location: String?
     public var price: Double?
     public var rating: Double?
-    public var purposes: Set<String> = [] // Migrated from single purpose
-    public var productSearchURL: URL?
+    @Attribute(originalName: "purposes")
+    public var storedPurposes: [String] = []
     
-
+    @Transient
+    public var purposes: Set<String> {
+        get { Set(storedPurposes) }
+        set { storedPurposes = Array(newValue) }
+    }
+    public var productSearchURL: URL?
     
     // Detailed Context Storage (Data blobs)
     public var weatherContextData: Data?
@@ -109,8 +114,6 @@ public final class ProcessedItem: Identifiable {
 
     public var childItems: [ProcessedItem]?
 
-
-
     public init(
         id: String,
         inputId: String? = nil,
@@ -156,9 +159,7 @@ public final class ProcessedItem: Identifiable {
         self.tags = tags
         self.createdAt = createdAt
         self.rawPayload = rawPayload
-        self.rawPayload = rawPayload
         self.statusRaw = status.rawValue
-        self.source = source
         self.source = source
         self.updatedAt = updatedAt
         self.referenceCount = referenceCount
@@ -183,7 +184,7 @@ public final class ProcessedItem: Identifiable {
         if let p = purpose, !combined.contains(p) {
             combined.insert(p)
         }
-        self.purposes = combined
+        self.storedPurposes = Array(combined)
         self.processingLog = processingLog
         self.failureCount = failureCount
     }
