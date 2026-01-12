@@ -294,8 +294,8 @@ public final class LocalPipelineService {
             }
             // Determine purposes
             var finalPurposes = descriptor?.purposes ?? []
-             if finalPurposes.isEmpty, let legacyPurpose = descriptor?.purpose {
-                finalPurposes.append(legacyPurpose)
+            if finalPurposes.isEmpty, let legacyPurpose = descriptor?.purpose {
+                finalPurposes.insert(legacyPurpose)
             }
             // Append existing purposes if we are updating, don't overwrite blindly unless intentional
             // For now, let's union them
@@ -307,7 +307,7 @@ public final class LocalPipelineService {
                 // Try to determine if truly empty
                 // ... (LLM logic same as above if needed, or skip for updates to save perf)
             } else if !newPurposes.isEmpty {
-                 existing.purposes = combinedPurposes
+                 existing.purposes = Set(combinedPurposes)
                  // Link new ones
                  for purpose in newPurposes {
                      if !existingPurposes.contains(purpose) {
@@ -481,7 +481,7 @@ public final class LocalPipelineService {
         var finalPurposes = descriptor?.purposes ?? []
         // Fallback checks
         if finalPurposes.isEmpty, let legacyPurpose = descriptor?.purpose {
-            finalPurposes.append(legacyPurpose)
+            finalPurposes.insert(legacyPurpose)
         }
         
 
@@ -493,7 +493,7 @@ public final class LocalPipelineService {
         }
 
         if !finalPurposes.isEmpty {
-            processed.purposes = finalPurposes
+            processed.purposes = Set(finalPurposes)
             for purpose in finalPurposes {
                 try await linkToParent(item: processed, purpose: purpose)
             }
@@ -788,8 +788,18 @@ public final class LocalPipelineService {
                          isAddressString(currentTitle) // Check for address-like titles
 
             
-            if overwriteTitle || isWeak || (item.url != nil && currentTitle == URL(string: item.url!)?.host) {
-                item.title = title
+            // Quality Gate: Don't overwrite a strong title with an address string
+            let newIsAddress = isAddressString(title)
+            let shouldUpdate = (overwriteTitle || isWeak || (item.url != nil && currentTitle == URL(string: item.url!)?.host))
+            
+            if shouldUpdate {
+                // If the new title is just an address, AND the current title is NOT weak (e.g. "Starbucks"), keep the strong title.
+                // Unless the current title IS weak (e.g. "Untitled"), then an address is better than nothing.
+                if newIsAddress && !isWeak {
+                     DiverLogger.pipeline.info("🛡️ Preventing title downgrade: Kept '\(currentTitle)' instead of address '\(title)'")
+                } else {
+                     item.title = title
+                }
             }
         }
         if let description = enrichment.descriptionText, item.summary == nil || item.summary?.isEmpty == true {
@@ -908,7 +918,7 @@ public final class LocalPipelineService {
             let commonItems = try? await asset.load(.commonMetadata)
             if let locationItem = commonItems?.first(where: { $0.commonKey == .commonKeyLocation }),
                let locationString = try? await locationItem.load(.stringValue) {
-                // Determine format. ISO6709 is standard: +37.7749-122.4194/
+                // Determine format. ISO6709 is standard.
                 // Simple parser
                 return parseISO6709(locationString)
             }
@@ -1150,7 +1160,7 @@ public final class LocalPipelineService {
             // Generate and merge purposes
             if let p = purpose, !p.isEmpty {
                 if !item.purposes.contains(p) {
-                    item.purposes.append(p)
+                    item.purposes.insert(p)
                 }
             }
             

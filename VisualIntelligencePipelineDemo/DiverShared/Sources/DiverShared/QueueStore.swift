@@ -14,7 +14,7 @@ public struct DiverQueueItem: Codable, Hashable, Sendable {
     public let attachments: [Data]?
     
     // Convenience for backward compatibility or easy access
-    public var purposes: [String] { descriptor.purposes }
+    public var purposes: Set<String> { descriptor.purposes }
 
     public init(
         id: UUID = UUID(),

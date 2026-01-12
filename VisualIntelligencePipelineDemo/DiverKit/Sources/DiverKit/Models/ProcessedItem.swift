@@ -49,7 +49,7 @@ public final class ProcessedItem: Identifiable {
     public var location: String?
     public var price: Double?
     public var rating: Double?
-    public var purposes: [String] = [] // Migrated from single purpose
+    public var purposes: Set<String> = [] // Migrated from single purpose
     public var productSearchURL: URL?
     
 
@@ -142,7 +142,7 @@ public final class ProcessedItem: Identifiable {
         price: Double? = nil,
         rating: Double? = nil,
         purpose: String? = nil, // Deprecated argument
-        purposes: [String] = [], // New argument
+        purposes: Set<String> = [], // New argument
         processingLog: [String] = [],
         failureCount: Int = 0
     ) {
@@ -181,7 +181,7 @@ public final class ProcessedItem: Identifiable {
         // Migrate/Merge
         var combined = purposes
         if let p = purpose, !combined.contains(p) {
-            combined.append(p)
+            combined.insert(p)
         }
         self.purposes = combined
         self.processingLog = processingLog

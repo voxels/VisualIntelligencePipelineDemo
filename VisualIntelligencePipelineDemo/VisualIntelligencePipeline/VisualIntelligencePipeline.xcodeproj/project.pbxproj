@@ -74,6 +74,8 @@
 		1E03D0412EFC20E20020DAA5 /* knowmaps in Frameworks */ = {isa = PBXBuildFile; productRef = 1E03D0402EFC20E20020DAA5 /* knowmaps */; };
 		1E03D0442EFC24CB0020DAA5 /* CaptureReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0422EFC24CB0020DAA5 /* CaptureReviewView.swift */; };
 		1E03D0492EFC3B670020DAA5 /* DiverAppAttributionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0472EFC3B670020DAA5 /* DiverAppAttributionView.swift */; };
+		1E6E585D2F156BE700CA4385 /* EditLocationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E6E585A2F156BE700CA4385 /* EditLocationView.swift */; };
+		1E6E585E2F156BE700CA4385 /* EditSessionLocationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E6E585B2F156BE700CA4385 /* EditSessionLocationView.swift */; };
 		1E9ED8382F13DFF60022F6EA /* AppleMusicReferenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9ED8372F13DFF60022F6EA /* AppleMusicReferenceView.swift */; };
 		1E9ED8422F13E00B0022F6EA /* ContactPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9ED83B2F13E00B0022F6EA /* ContactPickerView.swift */; };
 		1E9ED8432F13E00B0022F6EA /* PlaceSelectionMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9ED83D2F13E00B0022F6EA /* PlaceSelectionMapView.swift */; };
@@ -208,6 +210,8 @@
 		1E03D0422EFC24CB0020DAA5 /* CaptureReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureReviewView.swift; sourceTree = "<group>"; };
 		1E03D0472EFC3B670020DAA5 /* DiverAppAttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiverAppAttributionView.swift; sourceTree = "<group>"; };
 		1E160AC535402EF1545DA24A /* DiverUITests_iOS.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiverUITests_iOS.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E6E585A2F156BE700CA4385 /* EditLocationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditLocationView.swift; sourceTree = "<group>"; };
+		1E6E585B2F156BE700CA4385 /* EditSessionLocationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditSessionLocationView.swift; sourceTree = "<group>"; };
 		1E9ED8372F13DFF60022F6EA /* AppleMusicReferenceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleMusicReferenceView.swift; sourceTree = "<group>"; };
 		1E9ED8392F13E00B0022F6EA /* ConceptListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConceptListView.swift; sourceTree = "<group>"; };
 		1E9ED83A2F13E00B0022F6EA /* ConceptWeightingSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConceptWeightingSection.swift; sourceTree = "<group>"; };
@@ -490,6 +494,8 @@
 		D2328F25AE3674D3A25348D5 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				1E6E585A2F156BE700CA4385 /* EditLocationView.swift */,
+				1E6E585B2F156BE700CA4385 /* EditSessionLocationView.swift */,
 				1E9ED8392F13E00B0022F6EA /* ConceptListView.swift */,
 				1E9ED83A2F13E00B0022F6EA /* ConceptWeightingSection.swift */,
 				1E9ED83B2F13E00B0022F6EA /* ContactPickerView.swift */,
@@ -806,6 +812,8 @@
 				1E9ED8452F13E00B0022F6EA /* SessionCardView.swift in Sources */,
 				1E9ED8462F13E00B0022F6EA /* ConceptWeightingSection.swift in Sources */,
 				1E9ED8472F13E00B0022F6EA /* LocationMapView.swift in Sources */,
+				1E6E585D2F156BE700CA4385 /* EditLocationView.swift in Sources */,
+				1E6E585E2F156BE700CA4385 /* EditSessionLocationView.swift in Sources */,
 				1E9ED8482F13E00B0022F6EA /* RichWebView.swift in Sources */,
 				1E9ED8492F13E00B0022F6EA /* ReprocessMetadataView.swift in Sources */,
 				1E9ED84A2F13E00B0022F6EA /* ConceptListView.swift in Sources */,

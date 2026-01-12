@@ -304,8 +304,14 @@ public final class IntelligenceProcessor: Sendable {
              }
              
              for qr in sortedQRs {
-                 if let payload = qr.payloadStringValue, let url = URL(string: payload) {
-                     finalResults.append(.qr(url))
+                 if let payload = qr.payloadStringValue {
+                    if let url = URL(string: payload), payload.contains("://") || payload.lowercased().hasPrefix("http") {
+                        finalResults.append(.qr(url))
+                    } else if !payload.isEmpty {
+                        // Support non-URL QR codes (e.g. WiFi, Text)
+                        // Treat as text but with high confidence since it's a barcode
+                        finalResults.append(.text(payload, nil))
+                    }
                  }
              }
              

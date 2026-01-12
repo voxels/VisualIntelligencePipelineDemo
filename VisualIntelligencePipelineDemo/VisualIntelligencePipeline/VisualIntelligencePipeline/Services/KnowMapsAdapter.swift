@@ -39,7 +39,7 @@ enum KnowMapsAdapter {
             id: descriptor.id,
             title: descriptor.title,
             descriptionText: descriptor.descriptionText,
-            styleTags: descriptor.styleTags + descriptor.purposes, // Map purposes to styleTags so they are persisted
+            styleTags: descriptor.styleTags + Array(descriptor.purposes), // Map purposes to styleTags so they are persisted
             categories: descriptor.categories,
             location: descriptor.location,
             price: descriptor.price

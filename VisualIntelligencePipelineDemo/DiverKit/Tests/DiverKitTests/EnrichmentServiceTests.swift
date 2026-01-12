@@ -8,7 +8,7 @@ final class EnrichmentServiceTests: XCTestCase {
         // Since we don't have a real API key in tests, 
         // we verify that it returns nil when API key is missing.
         let service = FoursquareEnrichmentService(apiKey: nil)
-        let location = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+        let location = CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060)
         
         let enrichment = try await service.enrich(location: location)
         XCTAssertNil(enrichment)
@@ -32,7 +32,7 @@ final class EnrichmentServiceTests: XCTestCase {
         // Ideally this should use mocks, but for now we just verify code paths exist.
         
         let ddgService = DuckDuckGoEnrichmentService()
-        let location = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+        let location = CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060)
         
         let venueName = "Mock Venue"
         

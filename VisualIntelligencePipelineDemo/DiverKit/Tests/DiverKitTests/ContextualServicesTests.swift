@@ -40,7 +40,7 @@ final class ContextualServicesTests: XCTestCase {
     
     func testDuckDuckGoEnrichmentServiceGeneratesQuestions() async throws {
         let service = DuckDuckGoEnrichmentService()
-        let coords = CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+        let coords = CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060) // NYC for test
         
         let enrichment = try await service.enrich(query: "Coffee Shop", location: coords)
         

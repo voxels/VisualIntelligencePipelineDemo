@@ -195,9 +195,20 @@ public class VisualIntelligenceViewModel: ObservableObject {
         #if canImport(UIKit)
         if let image = UIImage(data: context.imageData) {
             self.capturedImage = image
-            self.siftedImage = image // Start with full image as sifted
+            self.siftedImage = image 
         } else {
-            print("❌ VI ViewModel: Failed to create UIImage from pending reprocess context data (size: \(context.imageData.count) bytes)")
+            // Fallback: Try CIImage or CGImageSource debug
+            print("❌ VI ViewModel: UIImage(data:) failed. Size: \(context.imageData.count) bytes. Trying fallbacks...")
+            if let ciImage = CIImage(data: context.imageData) {
+                let context = CIContext()
+                if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
+                    self.capturedImage = UIImage(cgImage: cgImage)
+                    self.siftedImage = self.capturedImage
+                    print("✅ VI ViewModel: Recovered image via CIImage.")
+                }
+            } else {
+                 print("❌ VI ViewModel: CIImage(data:) also failed.")
+            }
         }
         #endif
         
@@ -283,6 +294,19 @@ public class VisualIntelligenceViewModel: ObservableObject {
                                     self.results.append(result)
                                 }
                             }
+                        }
+                    }
+                }
+                
+                // NEW: Automatically trigger "Analyze Context" after reprocessing
+                // Wait for verification loop to finish kicking off results, then trigger context
+                Task {
+                     // Add a small delay to allow UI to settle?
+                     try? await Task.sleep(nanoseconds: 500_000_000)
+                     await MainActor.run {
+                        print("🤖 Reprocessing: Auto-triggering Context Analysis...")
+                        Task {
+                             await self.regenerateContextSuggestions(for: self.selectedPlace)
                         }
                     }
                 }
@@ -1042,7 +1066,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // Let's assume if ANY are selected, we filter. If NONE are selected, we save ALL (default behavior).
         let currentResults: [IntelligenceResult] = self.selectedResults.isEmpty ? self.results : self.results.filter { self.selectedResults.contains($0) }
         
-        let purposes = Array(self.selectedPurposes)
+        let purposes = self.selectedPurposes
         var imageToSave: PlatformImage? = nil
         #if canImport(UIKit)
         imageToSave = capturedImage
@@ -1268,7 +1292,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             return
         }
         
-        let purposes = Array(self.selectedPurposes)
+        let purposes = self.selectedPurposes
         let text = self.rectifiedDocumentText // Likely nil if not rectified
         isSavingDocument = true
         
@@ -1366,7 +1390,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }
     }
     
-    private func regenerateContextSuggestions(for place: EnrichmentData?) async {
+    func regenerateContextSuggestions(for place: EnrichmentData?) async {
         // Capture state on MainActor synchronously
         let (contextData, shouldProceed) = await MainActor.run { () -> (EnrichmentData?, Bool) in
             self.isAnalyzing = true

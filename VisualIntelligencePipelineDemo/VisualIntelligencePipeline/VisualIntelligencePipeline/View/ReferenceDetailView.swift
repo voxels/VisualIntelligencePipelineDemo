@@ -465,7 +465,7 @@ struct ReferenceDetailContent: View {
                     // Active Purposes
                     if !item.purposes.isEmpty {
                         FlowLayout(spacing: 8) {
-                            ForEach(item.purposes, id: \.self) { purpose in
+                            ForEach(item.purposes.sorted(), id: \.self) { purpose in
                                 Text(purpose)
                                     .font(.subheadline)
                                     .fontWeight(.medium)
@@ -494,7 +494,7 @@ struct ReferenceDetailContent: View {
                                     Button {
                                         withAnimation {
                                             if !item.purposes.contains(suggestion) {
-                                                item.purposes.append(suggestion)
+                                                item.purposes.insert(suggestion)
                                             }
                                             if let idx = viewModel.suggestedPurposes.firstIndex(of: suggestion) {
                                                 viewModel.suggestedPurposes.remove(at: idx)

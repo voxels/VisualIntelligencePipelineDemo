@@ -10,7 +10,11 @@ struct EditLocationView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.metadataPipelineService) private var pipelineService
     
-    @State private var candidates: [EnrichmentData] = []
+    @State private var fsqCandidates: [EnrichmentData] = []
+    @State private var mkCandidates: [EnrichmentData] = []
+    // Legacy support: candidates property computed or removed?
+    // We'll keep candidates as a computed property for the specific map logic if needed, but better to just iterate both.
+    var candidates: [EnrichmentData] { fsqCandidates + mkCandidates }
     @State private var isLoading = false
     @State private var selectedCandidate: EnrichmentData?
     @State private var position: MapCameraPosition = .automatic
@@ -70,8 +74,19 @@ struct EditLocationView: View {
                             if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
                                 let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
                                 let isSelected = selectedCandidate?.id == candidate.id
-                                Marker(candidate.title ?? "Unknown", coordinate: coordinate)
-                                    .tint(isSelected ? .green : .red)
+                                
+                                Annotation(candidate.title ?? "Unknown", coordinate: coordinate) {
+                                    Button {
+                                        selectCandidate(candidate)
+                                    } label: {
+                                        Image(systemName: "mappin.circle.fill")
+                                            .font(.title)
+                                            .foregroundStyle(isSelected ? .green : .red)
+                                            .background(.white)
+                                            .clipShape(Circle())
+                                            .shadow(radius: 2)
+                                    }
+                                }
                             }
                         }
                     }
@@ -157,51 +172,31 @@ struct EditLocationView: View {
                     }
                 }
                 
-                Section("Nearby Places") {
-                    if isLoading {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                            Spacer()
-                        }
-                    } else if candidates.isEmpty {
-                        Text("No places found nearby.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(candidates) { candidate in
-                            Button {
-                                selectedCandidate = candidate
-                                // Move map to candidate
-                                if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
-                                    withAnimation {
-                                        position = .region(MKCoordinateRegion(
-                                            center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
-                                            span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-                                        ))
-                                    }
-                                }
-                            } label: {
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text(candidate.title ?? "Unknown")
-                                            .font(.body)
-                                            .foregroundStyle(.primary)
-                                        if !candidate.categories.isEmpty {
-                                            Text(candidate.categories.joined(separator: ", "))
-                                                .font(.caption)
-                                                .foregroundStyle(.secondary)
-                                        }
-                                    }
-                                    Spacer()
-                                    if selectedCandidate?.id == candidate.id {
-                                        Image(systemName: "checkmark")
-                                            .foregroundStyle(.blue)
-                                    }
-                                }
+                if !fsqCandidates.isEmpty {
+                    Section("Foursquare Places") {
+                        ForEach(fsqCandidates) { candidate in
+                            LocationCandidateRow(candidate: candidate, selectedID: selectedCandidate?.id) {
+                                selectCandidate(candidate)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
+                }
+                
+                if !mkCandidates.isEmpty {
+                    Section("Apple Maps") {
+                        ForEach(mkCandidates) { candidate in
+                            LocationCandidateRow(candidate: candidate, selectedID: selectedCandidate?.id) {
+                                selectCandidate(candidate)
+                            }
+                        }
+                    }
+                }
+                
+                if fsqCandidates.isEmpty && mkCandidates.isEmpty && !isLoading {
+                     Section {
+                         Text("No places found nearby.")
+                             .foregroundStyle(.secondary)
+                     }
                 }
             }
             .navigationTitle("Edit Location")
@@ -265,7 +260,9 @@ struct EditLocationView: View {
                 } else {
                     // Default to SF only if location services fail/unavailable
                     await MainActor.run {
-                        position = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194), span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)))
+                        // Default to World View or Invalid, do NOT use SF.
+                        print("⚠️ EditLocationView: Location unknown. Defaulting to world view.")
+                        position = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 0, longitude: 0), span: MKCoordinateSpan(latitudeDelta: 180, longitudeDelta: 180)))
                     }
                 }
             }
@@ -281,7 +278,7 @@ struct EditLocationView: View {
                 )
                 await MainActor.run {
                     self.selectedCandidate = currentPlace
-                    self.candidates = [currentPlace]
+                    self.fsqCandidates = [currentPlace] // Default to FSQ list?
                 }
             }
             
@@ -323,26 +320,47 @@ struct EditLocationView: View {
         isLoading = true
         defer { isLoading = false }
         
-        let currentSelection = selectedCandidate
-        let searchCenter = explicitCenter ?? visibleRegion?.center ?? itemLocationCoordinate ?? sessionLocation ?? CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)
+        // Prioritize map center if visible, otherwise item location
+        let searchCenter = explicitCenter ?? visibleRegion?.center ?? itemLocationCoordinate ?? sessionLocation
         
-        let results = await LocationSearchAggregator.fetchCandidates(
-            query: searchText,
-            center: searchCenter,
-            foursquareService: Services.shared.foursquareService,
-            mapKitService: Services.shared.mapKitService
-        )
+        guard let center = searchCenter else { return }
         
-        // Ensure current selection is preserved
-        var finalResults = results
-        if let selection = currentSelection {
-            if !finalResults.contains(where: { $0.id == selection.id }) {
-                finalResults.insert(selection, at: 0)
-            }
-        }
+        async let fsqResults = searchFoursquare(at: center)
+        async let mkResults = searchMapKit(at: center)
         
+        let (fsq, mk) = await (fsqResults, mkResults)
+
         await MainActor.run {
-            self.candidates = finalResults
+            self.fsqCandidates = fsq
+            self.mkCandidates = mk
+        }
+    }
+    
+    private func searchFoursquare(at center: CLLocationCoordinate2D) async -> [EnrichmentData] {
+        guard let service = Services.shared.foursquareService else { return [] }
+        do {
+            if searchText.isEmpty {
+                return try await service.searchNearby(location: center, limit: 50)
+            } else {
+                return try await service.search(query: searchText, location: center, limit: 50)
+            }
+        } catch {
+            print("FSQ Error: \(error)")
+            return []
+        }
+    }
+    
+    private func searchMapKit(at center: CLLocationCoordinate2D) async -> [EnrichmentData] {
+        guard let service = Services.shared.mapKitService else { return [] }
+        do {
+             if searchText.isEmpty {
+                return try await service.searchNearby(location: center, limit: 50)
+            } else {
+                return try await service.search(query: searchText, location: center, limit: 50)
+            }
+        } catch {
+            print("MK Error: \(error)")
+            return []
         }
     }
     
@@ -374,6 +392,9 @@ struct EditLocationView: View {
             }
             item.categories = newCategories
             
+            // Critical: Reset purposes/intent to force fresh regeneration based on new place
+            item.purposes = []
+            
             // 2. Persist
             // CRITICAL: Update linked Session immediately to "lock in" this location against reprocessing overrides
             if let sessionID = item.sessionID, let session = sessions.first(where: { $0.sessionID == sessionID }) {
@@ -402,5 +423,46 @@ struct EditLocationView: View {
             isUpdating = false
             dismiss()
         }
+    }
+
+    private func selectCandidate(_ candidate: EnrichmentData) {
+        selectedCandidate = candidate
+         if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
+            withAnimation {
+                position = .region(MKCoordinateRegion(
+                    center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+                    span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+                ))
+            }
+        }
+    }
+}
+
+struct LocationCandidateRow: View {
+    let candidate: EnrichmentData
+    let selectedID: String?
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+             HStack {
+                 VStack(alignment: .leading) {
+                     Text(candidate.title ?? "Unknown")
+                         .font(.body)
+                         .foregroundStyle(.primary)
+                     if !candidate.categories.isEmpty {
+                         Text(candidate.categories.joined(separator: ", "))
+                             .font(.caption)
+                             .foregroundStyle(.secondary)
+                     }
+                 }
+                 Spacer()
+                 if selectedID == candidate.id {
+                     Image(systemName: "checkmark")
+                         .foregroundStyle(.blue)
+                 }
+             }
+         }
+         .buttonStyle(.plain)
     }
 }

@@ -37,7 +37,7 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
     public let placeID: String?
     public let latitude: Double?
     public let longitude: Double?
-    public var purposes: [String] = []
+    public var purposes: Set<String> = []
     public var processingLog: [String] = []
     
     public var tags: [String] { styleTags }
@@ -62,7 +62,7 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
         placeID: String? = nil,
         latitude: Double? = nil,
         longitude: Double? = nil,
-        purposes: [String] = [],
+        purposes: Set<String> = [],
         processingLog: [String] = []
     ) {
         self.id = id
@@ -89,7 +89,7 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
         // Migrate legacy purpose if needed
         var combined = purposes
         if let p = purpose, !combined.contains(p) {
-            combined.append(p)
+            combined.insert(p)
         }
         self.purposes = combined
     }

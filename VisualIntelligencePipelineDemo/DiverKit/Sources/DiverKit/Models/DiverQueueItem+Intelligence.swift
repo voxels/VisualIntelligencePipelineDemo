@@ -2,7 +2,8 @@ import Foundation
 import DiverShared
 
 extension DiverQueueItem {
-    public static func items(intelligenceResults: [IntelligenceResult], capturedImage: Data? = nil, siftedImage: Data? = nil, attachments: [Data]? = nil, purpose: String? = nil, purposes: [String] = [], sessionID: String? = nil, contextImageURL: URL? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil) -> [DiverQueueItem] {
+    public static func items(intelligenceResults: [IntelligenceResult], capturedImage: Data? = nil, siftedImage: Data? = nil, attachments: [Data]? = nil, purpose: String? = nil, purposes: Set<String> = [], sessionID: String? = nil, contextImageURL: URL? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil) -> [DiverQueueItem] {
+
         var items: [DiverQueueItem] = []
         
         let masterID = UUID().uuidString
@@ -222,7 +223,7 @@ extension DiverQueueItem {
         return items
     }
 
-    public static func from(documentImage: Data, title: String? = nil, tags: [String] = [], text: String? = nil, purpose: String? = nil, purposes: [String] = [], date: Date? = nil, sessionID: String? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil, attachments: [Data]? = nil) -> DiverQueueItem {
+    public static func from(documentImage: Data, title: String? = nil, tags: [String] = [], text: String? = nil, purpose: String? = nil, purposes: Set<String> = [], date: Date? = nil, sessionID: String? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil, attachments: [Data]? = nil) -> DiverQueueItem {
         let id = UUID().uuidString
         let resolvedTitle = title ?? "Scanned Document"
         

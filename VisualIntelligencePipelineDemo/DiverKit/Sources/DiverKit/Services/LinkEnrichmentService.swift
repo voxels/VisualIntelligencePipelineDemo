@@ -4,7 +4,7 @@ import DiverShared
 
 /// Data structure for enriched link metadata
 public struct EnrichmentData: Sendable, Codable, Identifiable {
-    public var id: String { placeContext?.placeID ?? UUID().uuidString }
+    public let id: String
     public var title: String?
     public var descriptionText: String?
     public var image: String?
@@ -22,6 +22,7 @@ public struct EnrichmentData: Sendable, Codable, Identifiable {
     public let qrContext: QRCodeContext?
 
     public init(
+        id: String? = nil,
         title: String? = nil,
         descriptionText: String? = nil,
         image: String? = nil,
@@ -36,6 +37,8 @@ public struct EnrichmentData: Sendable, Codable, Identifiable {
         placeContext: PlaceContext? = nil,
         qrContext: QRCodeContext? = nil
     ) {
+        self.placeContext = placeContext
+        self.id = id ?? placeContext?.placeID ?? UUID().uuidString
         self.title = title
         self.descriptionText = descriptionText
         self.image = image
@@ -47,7 +50,6 @@ public struct EnrichmentData: Sendable, Codable, Identifiable {
         self.questions = questions
         self.webContext = webContext
         self.documentContext = documentContext
-        self.placeContext = placeContext
         self.qrContext = qrContext
     }
 }

@@ -1,10 +1,12 @@
 import SwiftUI
+import SwiftData
 import DiverKit
 import DiverShared
 
 struct ReprocessMetadataView: View {
     let item: ProcessedItem
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     
     @State private var sessionTitle: String = ""
     @State private var sessionSummary: String = ""
@@ -100,18 +102,24 @@ struct ReprocessMetadataView: View {
         
         isLoading = true
         
-        // 1. Set Shared Context - New Session
-        let newSessionID = UUID().uuidString
+        // 0. Reset Purposes/Intent to force fresh generation
+        item.purposes = []
+        item.questions = []
+        try? modelContext.save()
+        
+        // 1. Set Shared Context - Preserve Session ID if possible to maintain continuity
+        let sessionID = item.sessionID ?? UUID().uuidString
         
         let context = ReprocessContext(
             imageData: imageData,
-            sessionID: newSessionID,
+            sessionID: sessionID,
             location: item.location,
             placeID: item.placeContext?.placeID,
             placeName: item.placeContext?.name
         )
         
         Task { @MainActor in
+            print("🔄 [ReprocessMetadataView] Setting pending context. Image Size: \(context.imageData.count) bytes")
             Services.shared.pendingReprocessContext = context
             
             // 2. Dismiss this sheet
