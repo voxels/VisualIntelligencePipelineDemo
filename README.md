@@ -54,12 +54,12 @@ The app integrates with the KnowMaps knowledge graph for vector-based context re
 1. Clone the repository.
 2. Open `VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj`.
 3. Xcode will automatically resolve the SPM packages (`DiverKit`, `DiverShared`, `swift-eventsource`, `SpotifyAPI`).
-4. Select the **Diver** scheme and your target device.
+4. Select the **VisualIntelligence** scheme and your target device.
 5. Build and Run (`Cmd+R`).
 
 ---
 
-# Testing Diver
+# Testing Visual Intelligence
 
 This guide outlines how to verify the functionality of the application, including Visual Intelligence capture, Session Management, and Link Enrichment.
 
@@ -78,7 +78,7 @@ To enable accurate "Home" context detection for Location features:
 
 ## Apple Intelligence Integration in Visual Intelligence
 
-Visual Intelligence deeply integrates Apple Intelligence to provide a seamless and privacy-preserving user experience. By leveraging on-device models and the latest frameworks, Diver ensures that your data stays secure while offering powerful contextual insights.
+Visual Intelligence deeply integrates Apple Intelligence to provide a seamless and privacy-preserving user experience. By leveraging on-device models and the latest frameworks, Visual Intelligence ensures that your data stays secure while offering powerful contextual insights.
 
 ### Privacy-First Architecture
 - **On-Device Data Processing**: All visual sifting, text recognition, and vector embedding generation happen locally ensuring no personal data leaves the device unnecessarily.
@@ -127,7 +127,7 @@ The final stage uses `ContextQuestionService` to synthesize a cohesive narrative
 
 ### Future CoreML Enhancements
 -   **Fine-tuned Gaze Detection**: To support hands-free "Look to Capture" using strict attention metrics.
--   **Local Embedding Models**: Migrating the vector search from the shared `KnowMaps` container to a dedicated `Diver` embedding model for tighter privacy.
+-   **Local Embedding Models**: Migrating the vector search from the shared `KnowMaps` container to a dedicated `Visual Intelligence` embedding model for tighter privacy.
 
 ## Manual Verification Scenarios
 
@@ -191,7 +191,7 @@ The final stage uses `ContextQuestionService` to synthesize a cohesive narrative
 To run the full suite of unit and UI tests for the iOS target, execute the following command in Terminal:
 
 ```bash
-xcodebuild test -scheme VisualIntelligence_iOS -destination 'platform=iOS Simulator,name=iPhone 17'
+xcodebuild test -scheme VisualIntelligence -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
 ---
