@@ -9,7 +9,6 @@ The workspace is organized into modular components:
 - **Visual Intelligence (App)**: The main application target (iOS/macOS).
 - **DiverKit**: A Swift Package containing the core business logic, services (`LocalPipelineService`, `EnrichmentService`), and ViewModels (`VisualIntelligenceViewModel`).
 - **DiverShared**: A library for shared data models, persistence layers (`SwiftData`, `DiverQueueStore`), and utilities used across the App, Extensions, and Widgets.
-- **LocalPackages/**: Contains local dependencies such as the YahooSearch SDK wrapper.
 
 ## User Experience Walkthrough
 
@@ -27,27 +26,15 @@ New in this version is the **Daily Context Narrative**, located at the top of th
 
 ## Dependencies
 
-This project relies on the following external and open-source libraries. Please refer to their original documentation for detailed usage instructions.
+This project relies on the following open-source libraries. Please refer to their original documentation for detailed usage instructions.
 
-### 1. swift-eventsource
-Used to handle Server-Sent Events (SSE) for real-time data streaming within the intelligence pipeline.
-- **Source**: [https://github.com/launchdarkly/swift-eventsource](https://github.com/launchdarkly/swift-eventsource)
-- **README**: [View README](https://github.com/launchdarkly/swift-eventsource/blob/main/README.md)
-- **License**: Apache 2.0
-
-### 2. SpotifyAPI
-A Swift library for the Spotify Web API, used for enriching identifying and enriching music-related entities.
-- **Source**: [https://github.com/Peter-Schorn/SpotifyAPI](https://github.com/Peter-Schorn/SpotifyAPI)
-- **README**: [View README](https://github.com/Peter-Schorn/SpotifyAPI/blob/master/README.md)
-- **License**: MIT
-
-### 3. KnowMaps (Service)
+### 1. KnowMaps (Service)
 The app integrates with the KnowMaps knowledge graph for vector-based context retrieval. This is handled via the `KnowMapsAdapter` within `Visual IntelligenceKit`.
 
 ## Building the Project
 
 ### Prerequisites
-- **Xcode 15+** (Recommended: Xcode 16 beta for iOS 26.0/macOS 15.0 SDK support).
+- **Xcode 16+** (Recommended: Xcode 16 beta for iOS 26.0/macOS 26.0 SDK support).
 - **Swift 6.0** toolchain.
 
 ### installation
@@ -108,14 +95,12 @@ Visual Intelligence integrates with **KnowMaps** (1st party Service) to ground v
 ### 3. Parallel Enrichment Pipeline
 Once an item is captured, it passes through `LocalPipelineService`, which orchestrates multiple concurrent enrichment providers:
 1.  **Link Enrichment (`LinkEnrichmentService`)**: Uses `MetadataExtractor` (1st party) and `swift-eventsource` (3rd party) to fetch OpenGraph metadata and readability-parsed text.
-2.  **Place Context (`FoursquareService`)**: Uses the **Foursquare Places API** (3rd party SDK) to identify venues based on GPS and visual text matches.
+2.  **Place Context (`FoursquareService` + `MapKitService`)**: Uses the **Foursquare Places API** (3rd party SDK) and MapKit API (1st party SDK) to identify venues based on GPS and visual text matches.
 3.  **Semantic Search (`DuckDuckGoService`)**: Uses the **DuckDuckGo Search API** (3rd party) to enhance place/product data with web knowledge.
 4.  **Environmental Context**:
     -   **WeatherKit** (Apple SDK): Captures ambient conditions (e.g., "Sunny, 24°C").
     -   **CoreMotion** (Apple SDK): Logs user activity state (e.g., "Stationary", "Walking").
-    -   **CarPlay**: Detects automotive state for mobile context.
 5.  **Music Enrichment**: Uses **SpotifyAPI** (3rd party SDK) for identifying and enriching music entities.
-6.  **Legacy Search**: Deprecated. (Formerly YahooSearchKit, now replaced by DuckDuckGo).
 
 ### 4. Generative Synthesis (Apple Intelligence)
 The final stage uses `ContextQuestionService` to synthesize a cohesive narrative using **Apple's SystemLanguageModel** (iOS 26.0+):
@@ -124,10 +109,6 @@ The final stage uses `ContextQuestionService` to synthesize a cohesive narrative
     -   **Definitive Statements**: "Reading a technical paper." (Visual priority).
     -   **Purpose**: "Researching iOS Development" (Inferred intent).
     -   **Tags**: Auto-generated semantic tags.
-
-### Future CoreML Enhancements
--   **Fine-tuned Gaze Detection**: To support hands-free "Look to Capture" using strict attention metrics.
--   **Local Embedding Models**: Migrating the vector search from the shared `KnowMaps` container to a dedicated `Visual Intelligence` embedding model for tighter privacy.
 
 ## Manual Verification Scenarios
 
