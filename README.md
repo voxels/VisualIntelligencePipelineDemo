@@ -1,12 +1,12 @@
-# Diver - Visual Intelligence Pipeline
+Visual Intelligence Pipeline
 
-Diver is a universal application for iOS and macOS designed for capturing, organizing, and enriching visual intelligence. It leverages on-device computer vision, generative AI, and a multi-stage enrichment pipeline to turn captured moments into structured, actionable data.
+Visual Intelligence Pipeline is a universal application for iOS and macOS designed for capturing, organizing, and enriching visual intelligence. It leverages on-device computer vision, generative AI, and a multi-stage enrichment pipeline to turn captured moments into structured, actionable data.
 
 ## Project Structure
 
 The workspace is organized into modular components:
 
-- **Diver (App)**: The main application target (iOS/macOS).
+- **Visual Intelligence (App)**: The main application target (iOS/macOS).
 - **DiverKit**: A Swift Package containing the core business logic, services (`LocalPipelineService`, `EnrichmentService`), and ViewModels (`VisualIntelligenceViewModel`).
 - **DiverShared**: A library for shared data models, persistence layers (`SwiftData`, `DiverQueueStore`), and utilities used across the App, Extensions, and Widgets.
 - **LocalPackages/**: Contains local dependencies such as the YahooSearch SDK wrapper.
@@ -14,10 +14,10 @@ The workspace is organized into modular components:
 ## User Experience Walkthrough
 
 ### 1. Visual Sifting & Context Capture
-Diver's primary interface is the **Visual Intelligence View**, accessible via the "Scan for context" button or the floating Camera action.
+The app's primary interface is the **Visual Intelligence View**, accessible via the "Scan for context" button or the floating Camera action.
 - **Unified Shutter**: The camera interface uses a custom `AVCaptureSession` bridged to SwiftUI. It performs real-time **subject sifting** (isolating objects) while simultaneously scanning for **QR codes** and **Text**.
 - **Photo Library Integration**: Users can tap the photo picker icon to load an image from their library. The app immediately transitions to a "Reviewing" state, running the full `IntelligenceProcessor` on the selected static image just as it would for a live capture.
-- **Context Accumulation**: As you capture multiple items in a session, Diver aggregates the context (visual labels, location, text) from *all* images to build a richer "Session History".
+- **Context Accumulation**: As you capture multiple items in a session, Visual Intelligence aggregates the context (visual labels, location, text) from *all* images to build a richer "Session History".
 
 ### 2. Daily Context Narrative
 New in this version is the **Daily Context Narrative**, located at the top of the Sidebar.
@@ -42,7 +42,7 @@ A Swift library for the Spotify Web API, used for enriching identifying and enri
 - **License**: MIT
 
 ### 3. KnowMaps (Service)
-Diver integrates with the KnowMaps knowledge graph for vector-based context retrieval. This is handled via the `KnowMapsAdapter` within `DiverKit`.
+The app integrates with the KnowMaps knowledge graph for vector-based context retrieval. This is handled via the `KnowMapsAdapter` within `Visual IntelligenceKit`.
 
 ## Building the Project
 
@@ -61,7 +61,7 @@ Diver integrates with the KnowMaps knowledge graph for vector-based context retr
 
 # Testing Diver
 
-This guide outlines how to verify the functionality of the Diver application, including Visual Intelligence capture, Session Management, and Link Enrichment.
+This guide outlines how to verify the functionality of the application, including Visual Intelligence capture, Session Management, and Link Enrichment.
 
 ## Setup Instructions
 
@@ -70,19 +70,19 @@ To enable accurate "Home" context detection for Location features:
 1. Open the iOS Settings app (or Contacts app).
 2. Go to your personal Contact Card (usually at the top).
 3. Ensure you have an address labeled "Home".
-4. In Diver, go to Settings.
+4. In Visual Intelligence Demo, go to Settings.
 5. Tap "Set Home Context".
-6. Select your Contact Card. Diver will now use this address to prioritize Home-related concepts.
+6. Select your Contact Card. Visual Intelligence will now use this address to prioritize Home-related concepts.
 
 ## Intelligence Pipeline Architecture
 
-## Apple Intelligence Integration in Diver
+## Apple Intelligence Integration in Visual Intelligence
 
-Diver deeply integrates Apple Intelligence to provide a seamless and privacy-preserving user experience. By leveraging on-device models and the latest frameworks, Diver ensures that your data stays secure while offering powerful contextual insights.
+Visual Intelligence deeply integrates Apple Intelligence to provide a seamless and privacy-preserving user experience. By leveraging on-device models and the latest frameworks, Diver ensures that your data stays secure while offering powerful contextual insights.
 
 ### Privacy-First Architecture
 - **On-Device Data Processing**: All visual sifting, text recognition, and vector embedding generation happen locally ensuring no personal data leaves the device unnecessarily.
-- **Private Compute Cloud**: When cloud resources are needed for complex reasoning, Diver utilizes the Private Compute Cloud to ensure verifiable privacy without persistent data storage.
+- **Private Compute Cloud**: When cloud resources are needed for complex reasoning, Visual Intelligence utilizes the Private Compute Cloud to ensure verifiable privacy without persistent data storage.
 
 ### Core Features
 - **Smart Summarization**: Automatically generates concise, context-aware summaries of your sessions using the `SystemLanguageModel`, helping you recall content at a glance without scrubbing through details.
@@ -90,7 +90,7 @@ Diver deeply integrates Apple Intelligence to provide a seamless and privacy-pre
 - **Contextual Writing Integration**: enhancing user editable text fields with Writing Tools for proofreading and rewriting content directly within the application.
 
 
-Diver uses a sophisticated multi-stage intelligence pipeline (`LocalPipelineService`) that combines on-device vision, vector-based knowledge retrieval, and generative AI to enrich captured content.
+Visual Intelligence uses a sophisticated multi-stage intelligence pipeline (`LocalPipelineService`) that combines on-device vision, vector-based knowledge retrieval, and generative AI to enrich captured content.
 
 ### 1. Visual Capture & Sifting (Vision + CoreML)
 The `VisualIntelligenceViewModel` drives the initial capture experience using advanced Computer Vision in a **two-pass analysis approach**:
@@ -100,7 +100,7 @@ The `VisualIntelligenceViewModel` drives the initial capture experience using ad
 -   **Rectification**: Automatically detects and rectifies document edges using `VNDetectRectanglesRequest` and `VNInstanceMaskObservation`.
 
 ### 2. The KnowMaps Vector Space
-Diver integrates with **KnowMaps** (1st party Service) to ground visual data in the user's personal knowledge graph.
+Visual Intelligence integrates with **KnowMaps** (1st party Service) to ground visual data in the user's personal knowledge graph.
 -   **Context Retrieval**: The `KnowMapsAdapter` retrieves relevant context (`UserTopic`, `IndustryCategory`) based on a weighted vector search.
 -   **Concept Boosting**: Concepts with a weight `> 1.2` (e.g., "Coffee", "SwiftUI") are prioritized to bias the AI's understanding of the scene.
 -   **Personalized Ranking**: Search results and auto-categorization are influenced by the user's "Taste Profile" stored in the local vector database.
@@ -182,7 +182,7 @@ The final stage uses `ContextQuestionService` to synthesize a cohesive narrative
     -   **Verify**: The Detail View displays a `WKWebView` rendering the target page (not just raw text).
 2.  **Shared with You**:
     -   Send a link to yourself in Messages.
-    -   Open Diver.
+    -   Open Visual Intelligence.
     -   **Verify**: The link appears in the Sidebar, grouped under a Session.
     -   **Verify**: The Detail View shows a rich preview or WebView of the link.
 
@@ -191,14 +191,14 @@ The final stage uses `ContextQuestionService` to synthesize a cohesive narrative
 To run the full suite of unit and UI tests for the iOS target, execute the following command in Terminal:
 
 ```bash
-xcodebuild test -scheme Diver_iOS -destination 'platform=iOS Simulator,name=iPhone 17'
+xcodebuild test -scheme VisualIntelligence_iOS -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
 ---
 
 ## Appendix: Enrichment Data Models
 
-Diver's intelligence pipeline produces structured metadata using several key data models. These are used to store and pass context across services.
+Visual Intelligence's intelligence pipeline produces structured metadata using several key data models. These are used to store and pass context across services.
 
 ### Core Model: `EnrichmentData`
 Defined in [LinkEnrichmentService.swift](file:///Users/voxels/Documents/dev/VisualIntelligence/VisualIntelligencePipelineDemo/DiverKit/Sources/DiverKit/Services/LinkEnrichmentService.swift). This is the carrier for all enriched metadata.
