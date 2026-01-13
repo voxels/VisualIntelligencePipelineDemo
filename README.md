@@ -9,7 +9,6 @@ The workspace is organized into modular components:
 - **Visual Intelligence (App)**: The main application target (iOS/macOS).
 - **DiverKit**: A Swift Package containing the core business logic, services (`LocalPipelineService`, `EnrichmentService`), and ViewModels (`VisualIntelligenceViewModel`).
 - **DiverShared**: A library for shared data models, persistence layers (`SwiftData`, `DiverQueueStore`), and utilities used across the App, Extensions, and Widgets.
-- **LocalPackages/**: Contains local dependencies such as the YahooSearch SDK wrapper.
 
 ## User Experience Walkthrough
 
