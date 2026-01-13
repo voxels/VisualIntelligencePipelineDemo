@@ -115,7 +115,7 @@ Once an item is captured, it passes through `LocalPipelineService`, which orches
     -   **CoreMotion** (Apple SDK): Logs user activity state (e.g., "Stationary", "Walking").
     -   **CarPlay**: Detects automotive state for mobile context.
 5.  **Music Enrichment**: Uses **SpotifyAPI** (3rd party SDK) for identifying and enriching music entities.
-6.  **Legacy Search**: Supports **YahooSearchKit** (3rd party) for secondary entity verification.
+6.  **Legacy Search**: Deprecated. (Formerly YahooSearchKit, now replaced by DuckDuckGo).
 
 ### 4. Generative Synthesis (Apple Intelligence)
 The final stage uses `ContextQuestionService` to synthesize a cohesive narrative using **Apple's SystemLanguageModel** (iOS 26.0+):
