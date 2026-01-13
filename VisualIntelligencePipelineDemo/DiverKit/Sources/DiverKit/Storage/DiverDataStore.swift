@@ -14,7 +14,8 @@ public final class DiverDataStore {
     public static let coreTypes: [any PersistentModel.Type] = [
         LocalInput.self,
         ProcessedItem.self,
-        UserConcept.self
+        UserConcept.self,
+        DiverSession.self
     ]
 
     public init(schema: Schema, configurations: [ModelConfiguration]) {

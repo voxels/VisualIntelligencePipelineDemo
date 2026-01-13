@@ -11,6 +11,7 @@ public struct DiverQueueItem: Codable, Hashable, Sendable {
     public let source: String?
     public let createdAt: Date
     public let payload: Data?
+    public let payloadURL: URL?
     public let attachments: [Data]?
     
     // Convenience for backward compatibility or easy access
@@ -23,6 +24,7 @@ public struct DiverQueueItem: Codable, Hashable, Sendable {
         source: String? = nil,
         createdAt: Date = Date(),
         payload: Data? = nil,
+        payloadURL: URL? = nil,
         attachments: [Data]? = nil
     ) {
         self.id = id
@@ -31,6 +33,7 @@ public struct DiverQueueItem: Codable, Hashable, Sendable {
         self.source = source
         self.createdAt = createdAt
         self.payload = payload
+        self.payloadURL = payloadURL
         self.attachments = attachments
     }
     

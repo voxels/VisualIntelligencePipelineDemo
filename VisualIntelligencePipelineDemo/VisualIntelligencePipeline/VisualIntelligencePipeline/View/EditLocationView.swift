@@ -396,13 +396,51 @@ struct EditLocationView: View {
         
         await MainActor.run {
             // 1. Update Core Metadata
-            let oldName = item.placeContext?.name
-            item.placeContext = newContext
+            // Improve "Old Name" detection: Look at placeContext first, but fall back to item.title if it's specific
+            let currentTitle = item.title
+            let isGenericTitle = ["Home", "Unknown Place", "Current Location", item.location, ""].contains(currentTitle ?? "")
+            let oldName = item.placeContext?.name ?? (isGenericTitle ? nil : currentTitle)
+
+            var finalContext = newContext
             
-            // Smart Title Update: If title matched old location or is generic, update it
-            if let newName = newContext?.name {
+            // Smart Merge: If new name looks like an address (starts with number) AND old name was valid, preserve old name
+            if let newName = newContext?.name, let old = oldName, !old.isEmpty, old != "Unknown Place" {
+                // Heuristic: If new name looks like an address...
+                // Regex: Starts with 1+ digits, followed by space, then letters.
+                let isAddressLike = newName.range(of: "^\\d+\\s+[A-Za-z]+", options: .regularExpression) != nil
+                // And old name does NOT look like an address (to prevent preserving "123 Main St" over "125 Main St")
+                let oldIsAddressLike = old.range(of: "^\\d+\\s+[A-Za-z]+", options: .regularExpression) != nil
+                
+                if isAddressLike && !oldIsAddressLike {
+                     print("ℹ️ Preserving old name '\(old)' because new name '\(newName)' looks like an address.")
+                     
+                     // Create new context with old name but everything else from newContext
+                     if let nc = newContext {
+                         finalContext = PlaceContext(
+                             name: old,
+                             categories: nc.categories,
+                             placeID: nc.placeID,
+                             address: nc.address,
+                             rating: nc.rating,
+                             isOpen: nc.isOpen,
+                             latitude: nc.latitude,
+                             longitude: nc.longitude,
+                             priceLevel: nc.priceLevel,
+                             phoneNumber: nc.phoneNumber,
+                             website: nc.website,
+                             photos: nc.photos,
+                             tips: nc.tips
+                         )
+                     }
+                }
+            }
+            
+            item.placeContext = finalContext
+            
+            // Smart Title Update: Only if we didn't preserve the old name effectively
+            if let newName = finalContext?.name {
                 let current = item.title ?? ""
-                let candidates = ["Home", "Unknown Place", "Current Location", oldName].compactMap { $0 }
+                let candidates = ["Home", "Unknown Place", "Current Location", oldName, item.location].compactMap { $0 }
                 if current.isEmpty || candidates.contains(current) {
                     item.title = newName
                 }

@@ -376,8 +376,9 @@ public final class IntelligenceProcessor: Sendable {
               // No document detected, check for loose text
               for line in ocrTextLines {
                   let url = extractURL(from: line)
-                  // Only show loose text if it's a URL or we have nothing else
-                  if url != nil || (line.count > 5 && finalResults.isEmpty) {
+                  // Only show loose text if it's a URL or substantial text
+                  // We removed the "finalResults.isEmpty" check to ensure LLM gets context even if a subject is found.
+                  if url != nil || line.count > 10 {
                       finalResults.append(.text(line, url))
                   }
               }

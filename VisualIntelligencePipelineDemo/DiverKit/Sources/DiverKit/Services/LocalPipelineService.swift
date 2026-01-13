@@ -152,7 +152,12 @@ public final class LocalPipelineService {
                  
                  // 3. QR Code Detection (Fallback if NO URL)
                  // User Request: "if i photograph a sign and a qr code is found, the title should be the name of the page"
-                 if input.url == nil, let data = rawPayload, !isJSONData(data) {
+                 // 3. QR Code Detection (Fallback if NO URL or if URL is just a placeholder/local file)
+                 // User Request: "if i photograph a sign and a qr code is found, the title should be the name of the page"
+                 // Check if existing URL is nil OR starts with file scheme
+                 let hasValidWebURL = existing.url != nil && !existing.url!.lowercased().hasPrefix("file://")
+                 
+                 if !hasValidWebURL, let data = rawPayload, !isJSONData(data) {
                       if let qrURL = detectQRCode(data: data) {
                           DiverLogger.pipeline.info("Detected QR Code URL: \(qrURL)")
                           input.url = qrURL
@@ -251,7 +256,7 @@ public final class LocalPipelineService {
                             
                             // Check ID types
                             let currentID = existing.placeContext?.placeID ?? ""
-                            let isMapKitOverride = currentID.starts(with: "mapkit-") || currentID == "home-location"
+                            let isMapKitOverride = currentID.hasPrefix("mapkit-") || currentID.hasPrefix("mk-") || currentID == "home-location"
                             
                             // If we have a MapKit override and found a Foursquare result, 
                             // check if names match loosely? Or just prefer MapKit if user chose it?
@@ -1186,11 +1191,21 @@ public final class LocalPipelineService {
         var sessionContext = ""
         if let sessionID = item.sessionID {
             let currentID = item.id
-            let sessionDesc = FetchDescriptor<ProcessedItem>(
-                predicate: #Predicate { $0.sessionID == sessionID && $0.id != currentID },
-                sortBy: [SortDescriptor(\.createdAt)]
-            )
-            if let siblings = try? modelContext.fetch(sessionDesc) {
+                let oneHour: TimeInterval = 3600
+                let minDate = item.createdAt.addingTimeInterval(-oneHour)
+                let maxDate = item.createdAt.addingTimeInterval(oneHour)
+                
+                let sessionDesc = FetchDescriptor<ProcessedItem>(
+                    predicate: #Predicate { 
+                        $0.sessionID == sessionID && 
+                        $0.id != currentID &&
+                        $0.createdAt >= minDate && 
+                        $0.createdAt <= maxDate
+                    },
+                    sortBy: [SortDescriptor(\.createdAt)]
+                )
+                
+                if let siblings = try? modelContext.fetch(sessionDesc) {
                 let text = siblings.compactMap { sibling in
                     let t = sibling.title ?? "Untitled"
                     let s = sibling.summary ?? ""
@@ -1205,6 +1220,9 @@ public final class LocalPipelineService {
         
         // Pass full context; ContextQuestionService now handles chaining/chunking for large inputs
         var fullContext = (item.summary ?? "") + "\n\n--- Context ---\n" + accumulatedContext + sessionContext
+        
+        DiverLogger.pipeline.debug("🧠 [LocalPipeline] LLM Input Context ({count: \(fullContext.count)}):\n\(fullContext.prefix(200))...")
+
         
         // Override location with Session Metadata if available to ensure LLM respects user edit
         var effectiveLocationName = item.location
@@ -1368,7 +1386,7 @@ public final class LocalPipelineService {
                             descriptionText: address,
                             image: nil,
                             categories: categories,
-                            styleTags: ["MapKit"],
+                            styleTags: [],
                             location: address,
                             placeContext: PlaceContext(
                                 name: name,

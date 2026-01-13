@@ -50,14 +50,7 @@ struct VisualIntelligencePipelineApp: App {
 
     init() {
         // Define schemas
-        let diverTypes: [any PersistentModel.Type] = [
-            LocalInput.self,
-            ProcessedItem.self,
-            UserConcept.self,
-            UserConcept.self,
-            DiverSession.self
-
-        ]
+        let diverTypes: [any PersistentModel.Type] = DiverDataStore.coreTypes
         let knowMapsTypes: [any PersistentModel.Type] = [
             UserCachedRecord.self,
             RecommendationData.self

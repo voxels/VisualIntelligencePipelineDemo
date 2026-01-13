@@ -147,10 +147,7 @@ struct LinkEntityQuery: EntityQuery {
 
         logger.debug("🏗️ Creating new ModelContainer for extension")
         
-        let diverTypes: [any PersistentModel.Type] = [
-            LocalInput.self,
-            ProcessedItem.self,
-            UserConcept.self,
+        let diverTypes: [any PersistentModel.Type] = DiverDataStore.coreTypes + [
             UserCachedRecord.self,
             RecommendationData.self
         ]

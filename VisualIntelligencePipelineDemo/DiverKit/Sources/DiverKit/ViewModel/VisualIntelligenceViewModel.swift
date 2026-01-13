@@ -684,71 +684,91 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         Task {
             do {
-                guard let data = try await item.loadTransferable(type: Data.self) else { return }
-                
                 var finalCGImage: CGImage?
-                #if canImport(UIKit)
-                var finalImage: UIImage?
-                // Try as Image
-                if let image = UIImage(data: data) {
-                    finalImage = image
-                    finalCGImage = image.cgImage
-                    
-                    // Extract Image Creation Date
-                    if let source = CGImageSourceCreateWithData(data as CFData, nil),
-                       let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] {
-                        var dateString: String?
-                        if let exif = props["{Exif}"] as? [String: Any] {
-                            dateString = exif["DateTimeOriginal"] as? String
-                        }
-                        if dateString == nil, let tiff = props["{TIFF}"] as? [String: Any] {
-                            dateString = tiff["DateTime"] as? String
+                var finalImage: PlatformImage?
+                
+                // 1. Try Video first (Safe URL loading)
+                if let movie = try? await item.loadTransferable(type: Movie.self) {
+                    print("🎥 Processing as Video/Movie (URL-based)...")
+                    if let (cgImage, location, date) = await processVideoData(movie.url) {
+                        finalCGImage = cgImage
+                        await MainActor.run {
+                            if let loc = location {
+                                 self.capturedMediaLocation = loc
+                                 print("📍 Video Location captured: \(loc)")
+                            }
+                            if let d = date {
+                                self.capturedMediaDate = d
+                                print("📅 Video Date captured: \(d)")
+                            }
                         }
                         
-                        if let ds = dateString {
-                            let formatter = DateFormatter()
-                            formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
-                            if let date = formatter.date(from: ds) {
-                                await MainActor.run {
-                                    self.capturedMediaDate = date
-                                    print("📅 Image Date captured: \(date)")
-                                }
-                            }
-                        }
+                        #if canImport(UIKit)
+                        finalImage = UIImage(cgImage: cgImage)
+                        #elseif canImport(AppKit)
+                        finalImage = NSImage(cgImage: cgImage, size: .zero)
+                        #endif
+                        print("✅ Extracted Best Frame from Video URL")
                     }
                 }
-                #elseif canImport(AppKit)
-                var finalImage: NSImage?
-                if let image = NSImage(data: data) {
-                    finalImage = image
-                    finalCGImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+                
+                // 2. Fallback to Data (for Images) if Video failed or wasn't a video
+                if finalCGImage == nil {
+                     // CAUTION: large videos might still crash here if they failed the .movie check but succeed as .data
+                     // But typically PhotosPicker filters items.
+                     guard let data = try await item.loadTransferable(type: Data.self) else { return }
+                     
+                     #if canImport(UIKit)
+                     // Try as Image
+                     if let image = UIImage(data: data) {
+                         finalImage = image
+                         finalCGImage = image.cgImage
+                         
+                         // Extract Image Creation Date
+                         if let source = CGImageSourceCreateWithData(data as CFData, nil),
+                            let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] {
+                             var dateString: String?
+                             if let exif = props["{Exif}"] as? [String: Any] {
+                                 dateString = exif["DateTimeOriginal"] as? String
+                             }
+                             if dateString == nil, let tiff = props["{TIFF}"] as? [String: Any] {
+                                 dateString = tiff["DateTime"] as? String
+                             }
+                             
+                             if let ds = dateString {
+                                 let formatter = DateFormatter()
+                                 formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
+                                 if let date = formatter.date(from: ds) {
+                                     await MainActor.run {
+                                         self.capturedMediaDate = date
+                                         print("📅 Image Date captured: \(date)")
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                     #elseif canImport(AppKit)
+                     if let image = NSImage(data: data) {
+                         finalImage = image
+                         finalCGImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+                     }
+                     #endif
+                     
+                     // 3. Last Resort Video (Data-based) - only small videos might survive this
+                     if finalCGImage == nil {
+                         print("⚠️ Video URL load failed. Attempting Data fallback (risky)...")
+                         if let (cgImage, location, date) = await processVideoData(data) {
+                             finalCGImage = cgImage
+                             await MainActor.run {
+                                 if let loc = location { self.capturedMediaLocation = loc }
+                                 if let d = date { self.capturedMediaDate = d }
+                             }
+                             #if canImport(UIKit)
+                             finalImage = UIImage(cgImage: cgImage)
+                             #endif
+                         }
+                     }
                 }
-                #endif
-
-                    // If not an image, try as Video
-                    if finalCGImage == nil {
-                        print("🎥 Processing as Video/Movie...")
-                        if let (cgImage, location, date) = await processVideoData(data) {
-                            finalCGImage = cgImage
-                            await MainActor.run {
-                                if let loc = location {
-                                     self.capturedMediaLocation = loc
-                                     print("📍 Video Location captured: \(loc)")
-                                }
-                                if let d = date {
-                                    self.capturedMediaDate = d
-                                    print("📅 Video Date captured: \(d)")
-                                }
-                            }
-                            
-                            #if canImport(UIKit)
-                            finalImage = UIImage(cgImage: cgImage)
-                            #elseif canImport(AppKit)
-                            finalImage = NSImage(cgImage: cgImage, size: .zero)
-                            #endif
-                            print("✅ Extracted Best Frame from Video")
-                        }
-                    }
                 
                 guard let cgImage = finalCGImage else { return }
                 let image = finalImage 
@@ -1868,15 +1888,30 @@ public class VisualIntelligenceViewModel: ObservableObject {
         return nil
     }
 
-    nonisolated private func processVideoData(_ data: Data) async -> (CGImage, CLLocation?, Date?)? {
-        // Safe to run off-main-actor
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mov")
-        do {
-            try data.write(to: tempURL)
-            defer { try? FileManager.default.removeItem(at: tempURL) }
+    // Transferable definition for Video URL
+    private struct Movie: Transferable {
+        let url: URL
+        static var transferRepresentation: some TransferRepresentation {
+            FileRepresentation(contentType: .movie) { movie in
+                SentTransferredFile(movie.url)
+            } importing: { received in
+                // Copy to a temp location so we have a persistent URL for the scope of processing
+                let tempDir = FileManager.default.temporaryDirectory
+                let tempFile = tempDir.appendingPathComponent(UUID().uuidString).appendingPathExtension("mov")
+                try FileManager.default.copyItem(at: received.file, to: tempFile)
+                return Movie(url: tempFile)
+            }
+        }
+    }
+
+    nonisolated private func processVideoData(_ url: URL) async -> (CGImage, CLLocation?, Date?)? {
+         let asset = AVAsset(url: url)
+         
+         // Cleanup: If the URL is our temporary usage one, we should ideally delete it after function exit? 
+         // But Transferable 'importing' block owns the file creation. Caller should manage?
+         // We will assume caller handles cleanup or OS handles temp folder.
             
-            let asset = AVAsset(url: tempURL)
-            var foundLocation: CLLocation?
+         var foundLocation: CLLocation?
             
             // Extract Location
             if let metadata = try? await asset.load(.metadata),
@@ -1903,7 +1938,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             generator.appliesPreferredTrackTransform = true
             
             // Frame Selection
-            let duration = try await asset.load(.duration).seconds
+            guard let duration = try? await asset.load(.duration).seconds else { return nil }
             let sampleCount = 15
             var bestFrame: CGImage?
             var bestScore: Float = -1.0
@@ -1930,31 +1965,41 @@ public class VisualIntelligenceViewModel: ObservableObject {
                              }
                          }
                      }
-                     
-                     if isUI { continue }
-                     
                      // 2. Aesthetic score
-                     if let observation = aestheticsRequest.results?.first, observation.overallScore > bestScore {
-                         bestScore = observation.overallScore
-                         bestFrame = image
+                     // Since I removed the complex logic in previous edit, let's just restore simple best score logic
+                     if let aestheticResults = aestheticsRequest.results?.first {
+                         let score = aestheticResults.overallScore
+                         if score > bestScore {
+                             bestScore = score
+                             bestFrame = image
+                         }
                      } else if bestFrame == nil {
                          bestFrame = image
                      }
                  }
             }
             
-            // Fallback
-            // Fallback
-            if let frame = bestFrame {
-                return (frame, foundLocation, foundDate)
+            // If no "good" frame found, fallback to first frame
+            if let final = bestFrame {
+                return (final, foundLocation, foundDate)
             } else if let startFrame = try? await generator.image(at: .zero).image {
                 return (startFrame, foundLocation, foundDate)
             }
             
+            return nil
+    }
+
+    nonisolated private func processVideoData(_ data: Data) async -> (CGImage, CLLocation?, Date?)? {
+        // Safe to run off-main-actor
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mov")
+        do {
+            try data.write(to: tempURL)
+            defer { try? FileManager.default.removeItem(at: tempURL) }
+            return await processVideoData(tempURL)
         } catch {
-            print("❌ Video processing failed: \(error)")
+             print("❌ processVideoData(Data) failed: \(error)")
+             return nil
         }
-        return nil
     }
 
 }
