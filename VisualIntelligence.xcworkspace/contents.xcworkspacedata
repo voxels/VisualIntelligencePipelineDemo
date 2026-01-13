@@ -7,13 +7,4 @@
    <FileRef
       location = "group:Know-Maps/Know-Maps/Know Maps.xcodeproj">
    </FileRef>
-   <FileRef
-      location = "group:VisualIntelligencePipelineDemo/Documentation/AcceleratingAppInteractionsWithAppIntents/AppIntentsSampleApp.xcodeproj">
-   </FileRef>
-   <FileRef
-      location = "group:VisualIntelligencePipelineDemo/Documentation/AdoptingAppIntentsToSupportSystemExperiences/AppIntentsTravelTracking/AppIntentsTravelTracking.xcodeproj">
-   </FileRef>
-   <FileRef
-      location = "group:VisualIntelligencePipelineDemo/Documentation/MakingYourAppsFunctionalityAvailableToSiri/AssistantSchemasExample.xcodeproj">
-   </FileRef>
 </Workspace>
