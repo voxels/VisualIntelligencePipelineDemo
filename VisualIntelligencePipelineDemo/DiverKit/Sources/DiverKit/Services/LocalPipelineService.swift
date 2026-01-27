@@ -565,9 +565,23 @@ public final class LocalPipelineService {
             try await indexingService.indexItem(descriptor)
         }
 
-        if let descriptor {
-            await updateDiverSession(from: descriptor)
+        // INTELLIGENT SESSION GROUPING
+        // Re-assign Session ID based on Location to ensure all items at the same place are grouped (User Request).
+        // Try to find an existing Session that matches this item's Place ID.
+        if let placeID = processed.placeContext?.placeID, !placeID.isEmpty {
+             let desc = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.placeID == placeID })
+             if let existingSession = try? modelContext.fetch(desc).first {
+                 // Check if we are currently using a random/new session ID that differs from the persistent one
+                 if existingSession.sessionID != processed.sessionID {
+                     DiverLogger.pipeline.info("MERGING: Moving item \(processed.id) from session \(processed.sessionID ?? "nil") into existing Location Session \(existingSession.sessionID) (\(existingSession.locationName ?? "Unknown"))")
+                     processed.sessionID = existingSession.sessionID
+                 }
+             }
         }
+
+        // Sync Session Data (Ensures Session exists and is updated with latest Item location)
+        // Uses properties from 'processed' which may have been enriched or regrouped above.
+        syncSession(for: processed)
 
         // Extract high-level concepts from text content
         if processed.webContext?.textContent != nil {
@@ -1360,43 +1374,60 @@ public final class LocalPipelineService {
                 
                 var fsEnrichment: EnrichmentData?
                 
-                // 1. Prioritize Foursquare lookup
-                if let foursquareService {
-                    if let placeID = descriptor?.placeID, !placeID.isEmpty {
-                        fsEnrichment = try? await self.withTimeout(seconds: 15) {
-                            try await foursquareService.fetchDetails(for: placeID)
-                        }
-                    } else {
-                        fsEnrichment = try? await self.withTimeout(seconds: 15) {
-                            try await foursquareService.enrich(location: coords)
-                        }
-                    }
+                // 1. Prioritize MapKit (Native Apple Data)
+                // User Request: "Default to using the mapkit enrichment reverse geocoding to find place locations rather than defaulting to the foursquare place"
+                let geocoder = CLGeocoder()
+                if let placemarks = try? await geocoder.reverseGeocodeLocation(location), let first = placemarks.first {
+                    
+                    let name = first.name ?? first.thoroughfare ?? "Location"
+                    let address = [first.subThoroughfare, first.thoroughfare, first.locality, first.administrativeArea].compactMap { $0 }.joined(separator: ", ")
+                    let categories = first.areasOfInterest ?? ["Location"]
+                    
+                    fsEnrichment = EnrichmentData(
+                        title: name,
+                        descriptionText: address,
+                        image: nil,
+                        categories: categories,
+                        styleTags: [],
+                        location: address,
+                        placeContext: PlaceContext(
+                            name: name,
+                            categories: categories,
+                            placeID: "mapkit-\(coords.latitude)-\(coords.longitude)",
+                            address: address,
+                            rating: nil,
+                            isOpen: nil
+                        )
+                    )
                 }
                 
-                // 2. Fallback: MapKit Reverse Geocoding
-                if fsEnrichment == nil {
-                    let geocoder = CLGeocoder()
-                    if let placemarks = try? await geocoder.reverseGeocodeLocation(location), let first = placemarks.first {
-                        let name = first.name ?? first.thoroughfare ?? "Location"
-                        let address = [first.subThoroughfare, first.thoroughfare, first.locality, first.administrativeArea].compactMap { $0 }.joined(separator: ", ")
-                        let categories = first.areasOfInterest ?? ["Location"]
+                // 2. Foursquare Cross-Reference (Augmentation)
+                // User Request: "I want the foursquare place to be identified by cross searching for the correct foursquare id for a mapkit identified place location"
+                if let foursquareService {
+                    if let placeID = descriptor?.placeID, !placeID.isEmpty {
+                        // A. Explicit ID Override (Metadata Pipeline)
+                        let detailed = try? await self.withTimeout(seconds: 15) {
+                            try await foursquareService.fetchDetails(for: placeID)
+                        }
+                        if let d = detailed { fsEnrichment = d }
                         
-                        fsEnrichment = EnrichmentData(
-                            title: name,
-                            descriptionText: address,
-                            image: nil,
-                            categories: categories,
-                            styleTags: [],
-                            location: address,
-                            placeContext: PlaceContext(
-                                name: name,
-                                categories: categories,
-                                placeID: "mapkit-\(coords.latitude)-\(coords.longitude)",
-                                address: address,
-                                rating: nil,
-                                isOpen: nil
-                            )
-                        )
+                    } else if let mapKitName = fsEnrichment?.title, mapKitName != "Location" {
+                        // B. Cross-Search using MapKit Name
+                        // If we have a specific name from MapKit, find the Foursquare equivalent to get the ID/Details
+                        let match = try? await self.withTimeout(seconds: 15) {
+                             try await foursquareService.enrich(query: mapKitName, location: coords)
+                        }
+                        if let m = match {
+                            // Merge Foursquare data (ID, Photos, etc) but ideally preserve the MapKit Identity if we trust it more?
+                            // User request implies finding the "Correct Foursquare ID", suggests we want the Foursquare Identity once verified.
+                            fsEnrichment = m
+                        }
+                        
+                    } else if fsEnrichment == nil {
+                        // C. Fallback: If MapKit failed completely (e.g. wilderness), try generic Foursquare nearby
+                         fsEnrichment = try? await self.withTimeout(seconds: 15) {
+                            try await foursquareService.enrich(location: coords)
+                        }
                     }
                 }
 

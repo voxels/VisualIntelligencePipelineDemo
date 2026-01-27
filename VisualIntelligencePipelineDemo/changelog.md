@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-01-27
+
+### User Experience & Location
+- **Intelligent Session Grouping**: Implemented persistent session grouping based on location. Captures taken at the same `Place ID` are now automatically merged into a single session history.
+- **Location Persistence**: Introduced `SessionLocationBar` with pinning support. Users can now "Pin" a location to ensure subsequent captures remain associated with that specific place.
+- **MapKit Priority**: Refactored `LocalPipelineService` to prioritize Apple MapKit results for location naming, ensuring consistency with the iOS ecosystem. Foursquare data is now used as a cross-referenced enhancement layer rather than the primary source.
+
+### UI Refinements
+- **Contextual Clarity**: Added `ContextChipBar` to surface intelligent suggestions and custom context entry more prominently.
+- **Clutter Reduction**: Removed legacy floating context buttons and simplified the main preview overlay.
+- **Unified Summary**: Session-level LLM summaries now aggregate context from all items in a location group, providing a holistic view of the visit.
+
 ## 2026-01-12
 
 ### Visual Intelligence Pipeline

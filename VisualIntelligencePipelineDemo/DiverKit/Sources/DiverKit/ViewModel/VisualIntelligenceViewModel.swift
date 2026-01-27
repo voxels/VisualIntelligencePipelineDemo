@@ -56,11 +56,24 @@ public class VisualIntelligenceViewModel: ObservableObject {
     // Map Selection
     @Published public var placeCandidates: [EnrichmentData] = []
     @Published public var selectedPlace: EnrichmentData?
+    @Published public var isLocationPinned: Bool = false // Feature: Persistent Location
     @Published public var showingPlaceSelection: Bool = false
     
     // Renaming
     @Published public var renamingPlace: EnrichmentData?
     @Published public var newPlaceTitle: String = ""
+    
+    // Pipeline Visualization State
+    public enum PipelineStatus: String, CaseIterable, Equatable {
+        case idle = "Ready"
+        case capturing = "Capturing..."
+        case sifting = "Isolating Subject..."
+        case reading = "Reading Text..."
+        case enriching = "Finding Location..."
+        case reasoning = "Understanding Context..."
+        case complete = "Complete"
+    }
+    @Published public var pipelineStatus: PipelineStatus = .idle
     
     public func startRenaming(_ place: EnrichmentData) {
         self.renamingPlace = place
@@ -265,6 +278,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         #endif
         
         self.isAnalyzing = true
+        self.pipelineStatus = .sifting
         
         Task(priority: .utility) {
             do {
@@ -274,6 +288,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 await MainActor.run {
                     self.results = newResults
                     // self.capturedImage is already set
+                    
+                    self.pipelineStatus = .reading
                     
                     // Sifted logic
                     if let sifted = newResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
@@ -317,7 +333,9 @@ public class VisualIntelligenceViewModel: ObservableObject {
                      await MainActor.run {
                         print("🤖 Reprocessing: Auto-triggering Context Analysis...")
                         Task {
+                             await MainActor.run { self.pipelineStatus = .reasoning }
                              await self.regenerateContextSuggestions(for: self.selectedPlace)
+                             await MainActor.run { self.pipelineStatus = .complete }
                         }
                     }
                 }
@@ -442,6 +460,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
                     
                     print("📸 Camera: Photo captured, analyzing full frame using subject priority...")
                     self.capturedImage = image
+                    
+                    await MainActor.run {
+                        self.pipelineStatus = .sifting
+                    }
                     if let img = image {
                         self.sessionImages.append(img)
                         // Save to Photo Library as Backup
@@ -468,6 +490,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
                         // NEW: Concurrent Enrichment Pipeline
                         if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
                             print("🚀 Enrichment Pipeline: Starting Concurrent Enrichment...")
+                            
+                            await MainActor.run { self.pipelineStatus = .enriching }
                             
                             // Capture history on MainActor before awaiting
                             let currentHistory = self.accumulatedContexts
@@ -625,6 +649,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
                         
                         print("✅ Analysis Complete: Found \(fullResults.count) results")
                         
+                        await MainActor.run { self.pipelineStatus = .complete }
+                        
                         if shouldAutoSave {
                             print("🚀 Express Capture: Auto-saving...")
                             self.commitReviewSave()
@@ -773,7 +799,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 guard let cgImage = finalCGImage else { return }
                 let image = finalImage 
                 
-                await MainActor.run { self.isAnalyzing = true }
+                await MainActor.run { 
+                    self.isAnalyzing = true 
+                    self.pipelineStatus = .sifting
+                }
                     
                     // Analyze for interactive results
                     // For photo library, we usually assume .up logic unless meta says otherwise
@@ -1595,7 +1624,12 @@ public class VisualIntelligenceViewModel: ObservableObject {
         selectedResults = []
         sessionTitle = nil
         placeCandidates = []
-        selectedPlace = nil
+        
+        // Conditional Reset for Pinned Location
+        if !isLocationPinned {
+            selectedPlace = nil
+        }
+        
         showingPlaceSelection = false
         rectifiedDocument = nil
         rectifiedDocumentText = nil
@@ -1604,8 +1638,22 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // Reset internal state
         isAnalyzing = false
         isReviewing = false
+        pipelineStatus = .idle
         
         print("🔄 Visual Intelligence VM: State Reset")
+    }
+    
+    public func reCapture() {
+        // Soft reset for taking another photo in the SAME session
+        self.results = []
+        self.capturedImage = nil
+        self.siftedImage = nil 
+        self.siftedBoundingBox = nil
+        self.activeObservation = nil
+        self.isReviewing = false
+        self.pipelineStatus = .idle
+        
+        // Do NOT reset session ID, pinned location, or place
     }
     
     // MARK: - UI Helpers
