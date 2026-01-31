@@ -142,6 +142,12 @@ class SharedWithYouManager: NSObject, ObservableObject {
 
         logger.info("Shared with You \(enabled ? "enabled" : "disabled")")
     }
+    
+    /// Clear all pending items in the queue store (used for database reset)
+    func clearQueueStore() throws {
+        try queueStore.removeAll()
+        logger.info("Queue store cleared")
+    }
 
     /// Find a highlight by its identifier string
     func findHighlight(id: String) -> SWHighlight? {

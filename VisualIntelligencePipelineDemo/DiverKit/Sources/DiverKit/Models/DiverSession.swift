@@ -15,7 +15,13 @@ public final class SessionMetadata: Identifiable {
     public var locationName: String? = nil
     public var summary: String? = nil
     
-    public init(sessionID: String, title: String? = nil, summary: String? = nil, createdAt: Date = Date(), updatedAt: Date = Date(), latitude: Double? = nil, longitude: Double? = nil, placeID: String? = nil, locationName: String? = nil) {
+    /// Reference to parent collection (if part of an imported album)
+    public var collectionID: String? = nil
+    
+    /// Array of file paths to aesthetic-scored thumbnail images
+    public var thumbnailPaths: [String] = []
+    
+    public init(sessionID: String, title: String? = nil, summary: String? = nil, createdAt: Date = Date(), updatedAt: Date = Date(), latitude: Double? = nil, longitude: Double? = nil, placeID: String? = nil, locationName: String? = nil, collectionID: String? = nil, thumbnailPaths: [String] = []) {
         self.sessionID = sessionID
         self.title = title
         self.summary = summary
@@ -25,5 +31,7 @@ public final class SessionMetadata: Identifiable {
         self.longitude = longitude
         self.placeID = placeID
         self.locationName = locationName
+        self.collectionID = collectionID
+        self.thumbnailPaths = thumbnailPaths
     }
 }

@@ -24,7 +24,6 @@ public final class LocalPipelineService {
         foursquareService: ContextualEnrichmentService? = nil,
         duckDuckGoService: ContextualEnrichmentService? = nil,
         weatherService: WeatherEnrichmentService? = nil,
-        activityService: ActivityEnrichmentService? = nil,
         indexingService: KnowledgeGraphIndexingService? = nil,
         contextService: ContextQuestionService? = nil
     ) async throws -> ProcessedItem {
@@ -176,6 +175,11 @@ public final class LocalPipelineService {
                       }
                  }
                  
+                 // 4. Visual Intelligence Analysis (OCR, Classification, etc.) for photo imports
+                 if input.source == "photoLibraryImport", let data = rawPayload, !isJSONData(data) {
+                     await runVisualIntelligenceAnalysis(data: data, item: existing, accumulatedContext: &accumulatedContext)
+                 }
+                 
                  // Session Context Override
                 // CRITICAL: Only apply if NO user override.
                 if !hasUserOverride, let descriptorSessionID = descriptor?.sessionID ?? existing.sessionID {
@@ -185,7 +189,10 @@ public final class LocalPipelineService {
                              effectiveLocation = CLLocation(latitude: lat, longitude: lng)
                              DiverLogger.pipeline.debug("Using Session Location Override for Update: \(lat), \(lng)")
                          }
-                         if let summary = session.summary {
+                         // CRITICAL: Only add session context if item is NEW (no existing summary)
+                         // This prevents feedback loops where session summary -> item summary -> session summary
+                         if existing.summary == nil || existing.summary?.isEmpty == true,
+                            let summary = session.summary, !summary.isEmpty {
                              accumulatedContext += "\n\nSESSION CONTEXT:\n\(summary)\n"
                          }
                          // If we are adopting the Session location, do we treat it as an override?
@@ -353,50 +360,45 @@ public final class LocalPipelineService {
                 }
             }
 
-            Task {
-                var localAccumulatedContext = interimAccumulatedContext
-                let results = await self.performParallelEnrichment(
-                    resolvedId: interimResolvedId,
-                    descriptor: descriptor,
-                    rawPayload: rawPayload,
-                    finalLocation: finalLocation,
-                    isUserLocationFixed: isUserLocationFixed,
-                    inputURLString: inputURLString,
-                    enrichmentService: enrichmentService,
-                    locationService: locationService,
-                    foursquareService: foursquareService,
-                    duckDuckGoService: duckDuckGoService,
-                    weatherService: weatherService,
-                    activityService: activityService,
-                    contactService: contactService
-                )
-                
-                await MainActor.run {
-                    for result in results {
-                        self.processParallelResult(result, to: existing, accumulatedContext: &localAccumulatedContext)
-                    }
-                }
-                
-                await performLLMAnalysis(for: existing, descriptor: descriptor, accumulatedContext: localAccumulatedContext)
-                
-                // Extract high-level concepts (User Request: "reprocess button should run analyze context")
-                if existing.webContext?.textContent != nil {
-                    await self.extractConcepts(from: existing)
-                }
-                
-                // Auto-create UserConcepts
-                do {
-                    try await self.autoCreateConcepts(from: existing)
-                } catch {
-                    DiverLogger.pipeline.error("Failed to auto-create concepts during reprocessing for \(existing.id): \(error)")
-                }
-                
-                // Ensure session is synced with potentially new location data (User Request: "recreate the session if it doesn't already exist")
-                await MainActor.run {
-                    self.syncSession(for: existing)
-                    try? self.modelContext.save()
-                }
+            // Perform enrichment and LLM analysis (awaited for proper progress tracking)
+            var localAccumulatedContext = interimAccumulatedContext
+            let results = await self.performParallelEnrichment(
+                resolvedId: interimResolvedId,
+                descriptor: descriptor,
+                rawPayload: rawPayload,
+                finalLocation: finalLocation,
+                isUserLocationFixed: isUserLocationFixed,
+                inputURLString: inputURLString,
+                enrichmentService: enrichmentService,
+                locationService: locationService,
+                foursquareService: foursquareService,
+                duckDuckGoService: duckDuckGoService,
+                weatherService: weatherService,
+                contactService: contactService,
+                itemSource: existing.source
+            )
+            
+            for result in results {
+                self.processParallelResult(result, to: existing, accumulatedContext: &localAccumulatedContext)
             }
+            
+            await performLLMAnalysis(for: existing, descriptor: descriptor, accumulatedContext: localAccumulatedContext)
+            
+            // Extract high-level concepts (User Request: "reprocess button should run analyze context")
+            if existing.webContext?.textContent != nil {
+                await self.extractConcepts(from: existing)
+            }
+            
+            // Auto-create UserConcepts
+            do {
+                try await self.autoCreateConcepts(from: existing)
+            } catch {
+                DiverLogger.pipeline.error("Failed to auto-create concepts during reprocessing for \(existing.id): \(error)")
+            }
+            
+            // Ensure session is synced with potentially new location data
+            self.syncSession(for: existing)
+            try? self.modelContext.save()
             
             // Fix looping/inbox bug: Delete input after processing
             modelContext.delete(input)
@@ -511,8 +513,8 @@ public final class LocalPipelineService {
             foursquareService: foursquareService,
             duckDuckGoService: duckDuckGoService,
             weatherService: weatherService,
-            activityService: activityService,
-            contactService: contactService
+            contactService: contactService,
+            itemSource: input.source
         )
         
         for result in results {
@@ -634,7 +636,6 @@ public final class LocalPipelineService {
         foursquareService: ContextualEnrichmentService? = nil,
         duckDuckGoService: ContextualEnrichmentService? = nil,
         weatherService: WeatherEnrichmentService? = nil,
-        activityService: ActivityEnrichmentService? = nil,
         indexingService: KnowledgeGraphIndexingService? = nil
     ) async throws {
         let inputs = try modelContext.fetch(FetchDescriptor<LocalInput>())
@@ -648,7 +649,6 @@ public final class LocalPipelineService {
                 foursquareService: foursquareService,
                 duckDuckGoService: duckDuckGoService,
                 weatherService: weatherService,
-                activityService: activityService,
                 indexingService: indexingService
             )
         }
@@ -666,7 +666,6 @@ public final class LocalPipelineService {
         foursquareService: ContextualEnrichmentService? = nil,
         duckDuckGoService: ContextualEnrichmentService? = nil,
         weatherService: WeatherEnrichmentService? = nil,
-        activityService: ActivityEnrichmentService? = nil,
         indexingService: KnowledgeGraphIndexingService? = nil,
         progressHandler: ((Double) -> Void)? = nil,
         logHandler: ((String) -> Void)? = nil
@@ -803,7 +802,6 @@ public final class LocalPipelineService {
                             foursquareService: foursquareService,
                             duckDuckGoService: duckDuckGoService,
                             weatherService: weatherService,
-                            activityService: activityService,
                             indexingService: indexingService
                         )
                         
@@ -1069,6 +1067,107 @@ public final class LocalPipelineService {
         }
         return nil
     }
+    
+    /// Run visual intelligence analysis (OCR, classification, etc.) on image data
+    private func runVisualIntelligenceAnalysis(data: Data, item: ProcessedItem, accumulatedContext: inout String) async {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
+            DiverLogger.pipeline.debug("Could not create CGImage for visual analysis")
+            return
+        }
+        
+        let processor = IntelligenceProcessor()
+        
+        do {
+            let results = try await processor.process(image: cgImage, mode: .fullAnalysis)
+            print("📸 [LocalPipeline] Visual analysis found \(results.count) results")
+            
+            var ocrText: [String] = []
+            var semanticLabels: [String] = []
+            
+            for result in results {
+                switch result {
+                case .text(let text, let url):
+                    ocrText.append(text)
+                    // If OCR found a URL, enrich it
+                    if let url = url {
+                        accumulatedContext += "\nOCR URL: \(url.absoluteString)"
+                    }
+                    
+                case .semantic(let label, let confidence):
+                    if confidence > 0.5 {
+                        semanticLabels.append(label)
+                    }
+                    
+                case .qr(let url):
+                    // Update item URL if we found a QR
+                    if item.url == nil || item.url?.isEmpty == true {
+                        item.url = url.absoluteString
+                        accumulatedContext += "\nQR Code: \(url.absoluteString)"
+                    }
+                    
+                case .product(let code, let type, _):
+                    accumulatedContext += "\nProduct \(type.rawValue.uppercased()): \(code)"
+                    if item.tags.isEmpty {
+                        item.tags = ["product", type.rawValue]
+                    }
+                    
+                case .document(_, let text, let label):
+                    if let text = text {
+                        ocrText.append(text)
+                    }
+                    if let label = label {
+                        semanticLabels.append(label)
+                    }
+                    
+                case .entertainment(let title, let type, _):
+                    accumulatedContext += "\nEntertainment: \(title) (\(type))"
+                    // Potentially improve title
+                    if item.title == nil || item.title == "Photo Import" {
+                        item.title = title
+                    }
+                    
+                default:
+                    break
+                }
+            }
+            
+            // Add OCR text to context for LLM processing AND store in transcription for title generation
+            if !ocrText.isEmpty {
+                let combinedText = ocrText.joined(separator: "\n")
+                accumulatedContext += "\n\nOCR TEXT:\n\(combinedText)"
+                // Store in transcription so finalizeTitle can use it
+                if item.transcription == nil || item.transcription?.isEmpty == true {
+                    item.transcription = combinedText
+                }
+                DiverLogger.pipeline.debug("OCR extracted \(ocrText.count) text blocks")
+            }
+            
+            // Add semantic labels as tags and potentially improve title
+            if !semanticLabels.isEmpty {
+                let existingTags = Set(item.tags)
+                let newTags = semanticLabels.filter { !existingTags.contains($0.lowercased()) }
+                if !newTags.isEmpty {
+                    item.tags.append(contentsOf: newTags.map { $0.lowercased() })
+                }
+                accumulatedContext += "\nVisual Classification: \(semanticLabels.joined(separator: ", "))"
+                
+                // If title is still a placeholder, use best semantic label
+                let currentTitle = item.title ?? ""
+                if currentTitle.isEmpty || currentTitle == "Photo Import" || currentTitle == "Untitled" {
+                    // Pick the most descriptive label (prefer multi-word, longer labels)
+                    let bestLabel = semanticLabels.sorted { $0.count > $1.count }.first
+                    if let label = bestLabel, label.count > 3 {
+                        item.title = label.capitalized
+                        DiverLogger.pipeline.debug("Set title from semantic label: \(label)")
+                    }
+                }
+            }
+            
+        } catch {
+            DiverLogger.pipeline.error("Visual intelligence analysis failed: \(error)")
+        }
+    }
 
     private func isAddressString(_ title: String) -> Bool {
         // Heuristic: Starts with a number, contains a comma?
@@ -1082,10 +1181,30 @@ public final class LocalPipelineService {
     }
 
     public func extractConcepts(from item: ProcessedItem) async {
-        guard let text = item.webContext?.textContent, !text.isEmpty else { return }
+        // Build comprehensive input from multiple sources
+        var combinedText = ""
+        
+        // Primary: Web content
+        if let text = item.webContext?.textContent, !text.isEmpty {
+            combinedText += text
+        }
+        
+        // Include structured data from web context (e.g., JSON-LD, OpenGraph)
+        if let structured = item.webContext?.structuredData, !structured.isEmpty {
+            combinedText += "\n\nStructured Data: \(structured)"
+        }
+        
+        // Include transcription/OCR text from photos
+        if let transcription = item.transcription, !transcription.isEmpty {
+            combinedText += "\n\nOCR/Transcription: \(transcription)"
+        }
+        
+        // Include place tips for local context
+        if let tips = item.placeContext?.tips, !tips.isEmpty {
+            combinedText += "\n\nPlace Tips: \(tips.prefix(3).joined(separator: "; "))"
+        }
         
         // Include purpose/activity in the analysis input so concepts reflect both content and intent
-        var combinedText = text
         if !item.purposes.isEmpty {
             combinedText += "\n\nUser Context/Purpose: \(item.purposes.joined(separator: ", "))"
         }
@@ -1093,10 +1212,12 @@ public final class LocalPipelineService {
             combinedText += "\n\nPhysical Activity: \(activity.type)"
         }
         
+        guard !combinedText.isEmpty else { return }
+        
         let contextService = ContextQuestionService()
-        let dummyData = EnrichmentData(title: item.title, descriptionText: combinedText)
+        let enrichmentData = EnrichmentData(title: item.title, descriptionText: combinedText)
 
-        if let (summary, statements, _, tags) = try? await contextService.processContext(from: dummyData) {
+        if let (summary, statements, _, tags) = try? await contextService.processContext(from: enrichmentData) {
             // Merge generated tags into item tags
             let existing = Set(item.tags)
             let newTags = Set(tags)
@@ -1128,11 +1249,29 @@ public final class LocalPipelineService {
         }
         
         // Other candidates (tags, themes, and generic categories if not a product)
-        let otherCandidates = Set(
+        var otherCandidates = Set(
             (item.tags + item.categories + item.themes)
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .filter { !$0.isEmpty }
         )
+        
+        // Environmental context candidates (optional - only if available)
+        // Weather condition (e.g., "Sunny", "Rainy")
+        if let weather = item.weatherContext?.condition, !weather.isEmpty {
+            otherCandidates.insert(weather)
+        }
+        
+        // Activity type (e.g., "Walking", "Driving")
+        if let activity = item.activityContext?.type, !activity.isEmpty {
+            otherCandidates.insert(activity)
+        }
+        
+        // Place categories (e.g., "Coffee Shop", "Museum")
+        if let placeCategories = item.placeContext?.categories {
+            for cat in placeCategories where !cat.isEmpty {
+                otherCandidates.insert(cat)
+            }
+        }
         
         let allCandidates = purposeCandidates.union(productCandidates).union(otherCandidates)
         
@@ -1201,25 +1340,55 @@ public final class LocalPipelineService {
     private func performLLMAnalysis(for item: ProcessedItem, descriptor: DiverItemDescriptor?, accumulatedContext: String) async {
         let contextService = ContextQuestionService()
         
+        // Parse accumulatedContext into logical buckets for optimal ordering
+        // The accumulatedContext contains various enrichment results concatenated together
+        var visualContext = ""
+        var webContext = ""
+        var locationContext = ""
+        var environmentContext = ""
+        
+        // Parse the accumulated context into buckets
+        for line in accumulatedContext.components(separatedBy: "\n") {
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.isEmpty { continue }
+            
+            if trimmed.hasPrefix("OCR TEXT:") || trimmed.hasPrefix("OCR URL:") || 
+               trimmed.hasPrefix("QR Code:") || trimmed.hasPrefix("Product ") ||
+               trimmed.hasPrefix("Visual Classification:") || trimmed.hasPrefix("Entertainment:") {
+                visualContext += trimmed + "\n"
+            } else if trimmed.hasPrefix("Link Summary:") || trimmed.hasPrefix("DuckDuckGo:") ||
+                      trimmed.hasPrefix("QR Link:") {
+                webContext += trimmed + "\n"
+            } else if trimmed.hasPrefix("Foursquare:") || trimmed.hasPrefix("Nearby Context:") {
+                locationContext += trimmed + "\n"
+            } else if trimmed.hasPrefix("Weather:") || trimmed.hasPrefix("Activity:") ||
+                      trimmed.hasPrefix("LIVE EVENTS:") || trimmed.hasPrefix("SESSION CONTEXT:") {
+                environmentContext += trimmed + "\n"
+            } else {
+                // Unclassified goes to environment (supporting)
+                environmentContext += trimmed + "\n"
+            }
+        }
+        
         // Fetch Session Context to inform intelligence
         var sessionContext = ""
         if let sessionID = item.sessionID {
             let currentID = item.id
-                let oneHour: TimeInterval = 3600
-                let minDate = item.createdAt.addingTimeInterval(-oneHour)
-                let maxDate = item.createdAt.addingTimeInterval(oneHour)
-                
-                let sessionDesc = FetchDescriptor<ProcessedItem>(
-                    predicate: #Predicate { 
-                        $0.sessionID == sessionID && 
-                        $0.id != currentID &&
-                        $0.createdAt >= minDate && 
-                        $0.createdAt <= maxDate
-                    },
-                    sortBy: [SortDescriptor(\.createdAt)]
-                )
-                
-                if let siblings = try? modelContext.fetch(sessionDesc) {
+            let oneHour: TimeInterval = 3600
+            let minDate = item.createdAt.addingTimeInterval(-oneHour)
+            let maxDate = item.createdAt.addingTimeInterval(oneHour)
+            
+            let sessionDesc = FetchDescriptor<ProcessedItem>(
+                predicate: #Predicate { 
+                    $0.sessionID == sessionID && 
+                    $0.id != currentID &&
+                    $0.createdAt >= minDate && 
+                    $0.createdAt <= maxDate
+                },
+                sortBy: [SortDescriptor(\.createdAt)]
+            )
+            
+            if let siblings = try? modelContext.fetch(sessionDesc) {
                 let text = siblings.compactMap { sibling in
                     let t = sibling.title ?? "Untitled"
                     let s = sibling.summary ?? ""
@@ -1227,15 +1396,69 @@ public final class LocalPipelineService {
                 }.joined(separator: "\n")
                 
                 if !text.isEmpty {
-                    sessionContext = "\n\n=== Session Context ===\nDuring this session, the user also captured:\n" + text
+                    sessionContext = text
                 }
             }
         }
         
-        // Pass full context; ContextQuestionService now handles chaining/chunking for large inputs
-        var fullContext = (item.summary ?? "") + "\n\n--- Context ---\n" + accumulatedContext + sessionContext
+        // Build context in OPTIMAL ORDER for LLM understanding:
+        // 1. Item Identity (what is this?)
+        // 2. Visual/OCR Content (primary extracted content)  
+        // 3. Web Enrichment (if URL-based, what does it describe?)
+        // 4. Location Context (where was this captured?)
+        // 5. Session Context (what else was captured nearby?)
+        // 6. Environmental Context (weather, activity - supporting)
         
-        DiverLogger.pipeline.debug("🧠 [LocalPipeline] LLM Input Context ({count: \(fullContext.count)}):\n\(fullContext.prefix(200))...")
+        var fullContext = ""
+        
+        // 1. ITEM IDENTITY (highest priority)
+        fullContext += "=== ITEM IDENTITY ===\n"
+        fullContext += "Title: \(item.title ?? "Unknown")\n"
+        fullContext += "Type: \(item.entityType ?? "document")\n"
+        if let url = item.url, !url.isEmpty {
+            fullContext += "URL: \(url)\n"
+        }
+        
+        // 2. VISUAL/OCR CONTENT (primary extracted content)
+        if !visualContext.isEmpty {
+            fullContext += "\n=== EXTRACTED CONTENT ===\n"
+            fullContext += visualContext
+        }
+        
+        // 3. WEB ENRICHMENT (what does the link describe?)
+        if !webContext.isEmpty {
+            fullContext += "\n=== WEB CONTEXT ===\n"
+            fullContext += webContext
+        }
+        
+        // 4. LOCATION CONTEXT (where was this captured?)
+        if !locationContext.isEmpty || item.location != nil {
+            fullContext += "\n=== LOCATION ===\n"
+            if let loc = item.location {
+                fullContext += "Place: \(loc)\n"
+            }
+            fullContext += locationContext
+        }
+        
+        // 5. SESSION CONTEXT (what else was captured nearby?)
+        if !sessionContext.isEmpty {
+            fullContext += "\n=== SESSION (Other Captures) ===\n"
+            fullContext += sessionContext + "\n"
+        }
+        
+        // 6. ENVIRONMENTAL CONTEXT (supporting metadata)
+        if !environmentContext.isEmpty {
+            fullContext += "\n=== ENVIRONMENT ===\n"
+            fullContext += environmentContext
+        }
+        
+        // 7. Existing summary LAST (to avoid biasing toward stale content)
+        if let existingSummary = item.summary, !existingSummary.isEmpty {
+            fullContext += "\n=== PREVIOUS SUMMARY (may be outdated) ===\n"
+            fullContext += existingSummary + "\n"
+        }
+        
+        DiverLogger.pipeline.debug("🧠 [LocalPipeline] LLM Input Context ({count: \(fullContext.count)}):\n\(fullContext.prefix(300))...")
 
         
         // Override location with Session Metadata if available to ensure LLM respects user edit
@@ -1349,8 +1572,8 @@ public final class LocalPipelineService {
         foursquareService: ContextualEnrichmentService?,
         duckDuckGoService: ContextualEnrichmentService?,
         weatherService: WeatherEnrichmentService?,
-        activityService: ActivityEnrichmentService?,
-        contactService: ContactServiceProvider?
+        contactService: ContactServiceProvider?,
+        itemSource: String? = nil  // Set to "photoLibraryImport" to skip weather API
     ) async -> [ParallelEnrichmentResult] {
         
         await withTaskGroup(of: ParallelEnrichmentResult?.self) { group in
@@ -1476,8 +1699,15 @@ public final class LocalPipelineService {
                 return nil
             }
             
-            // 3. Weather
+            // 3. Weather (Skip for historical photo library imports)
+            let sourceForWeather = itemSource
             group.addTask {
+                // Skip WeatherKit API calls for historical imports - weather data isn't available for past dates
+                if sourceForWeather == "photoLibraryImport" {
+                    print("⏭️ Skipping WeatherKit for historical photo library import")
+                    return nil
+                }
+                
                 guard let location = finalLocation, let weatherService else { return nil }
                 
                 let weather = try? await self.withTimeout(seconds: 10, operation: {
@@ -1490,14 +1720,6 @@ public final class LocalPipelineService {
                 return nil
             }
             
-            // 4. Activity
-            group.addTask {
-                guard let activityService else { return nil }
-                if let activity = await activityService.fetchCurrentActivity() {
-                    return ParallelEnrichmentResult(activity: activity)
-                }
-                return nil
-            }
             
             // 5. Cover Image
             group.addTask {
@@ -1647,7 +1869,7 @@ public final class LocalPipelineService {
         // 1. Check if current title is valid (Prominent Text / Metadata)
         let idString = item.id
         let currentTitle = item.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let isPlaceholder = currentTitle.isEmpty || currentTitle == "Untitled" || currentTitle == idString || currentTitle.contains("http") || currentTitle.contains("://") || isAddressString(currentTitle)
+        let isPlaceholder = currentTitle.isEmpty || currentTitle == "Untitled" || currentTitle == "Photo Import" || currentTitle == idString || currentTitle.contains("http") || currentTitle.contains("://") || isAddressString(currentTitle)
         
         // If we have a good title, stick with it
         if !isPlaceholder { return }

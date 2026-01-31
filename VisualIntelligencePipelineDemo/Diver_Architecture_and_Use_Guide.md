@@ -44,7 +44,8 @@ The pipeline describes the journey of an item from capture to storage. It is "Pu
 ### Step 2: Enrichment (Parallelized)
 Once ingested, the `LocalPipelineService` triggers parallel enrichment tasks:
 *   **Location**: MapKit identifies the native venue/address (Primary); Foursquare is cross-referenced for rich context (Secondary).
-*   **Environment**: WeatherKit provides current conditions; CoreMotion provides activity (e.g., "Walking").
+*   **Environment**: WeatherKit provides current conditions.
+*   **Aesthetics**: Images and video frames are scored for visual quality.
 *   **Web**: If a URL is detected (via QR or OCR), it is scraped for metadata.
 
 ### Step 3: Synthesis (Generative AI)

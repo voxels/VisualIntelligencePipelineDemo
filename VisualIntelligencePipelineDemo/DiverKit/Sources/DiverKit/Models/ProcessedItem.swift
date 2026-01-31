@@ -43,6 +43,8 @@ public final class ProcessedItem: Identifiable {
     public var mediaType: String?
     public var fileSize: Int?
     public var filename: String?
+    /// Photos library asset identifier for on-demand loading (used for photoLibraryImport items)
+    public var photosAssetIdentifier: String?
     
     // Enrichment metadata
     public var categories: [String] = []
@@ -51,6 +53,8 @@ public final class ProcessedItem: Identifiable {
     public var rating: Double?
     public var purposes: [String] = [] // Migrated from single purpose
     public var productSearchURL: URL?
+    /// Aesthetic score for images/videos (0.0-1.0) - used for thumbnail selection and context weighting
+    public var aestheticsScore: Double?
     
     // Detailed Context Storage (Data blobs)
     public var weatherContextData: Data?
@@ -133,6 +137,7 @@ public final class ProcessedItem: Identifiable {
         mediaType: String? = nil,
         fileSize: Int? = nil,
         filename: String? = nil,
+        photosAssetIdentifier: String? = nil,
         categories: [String] = [],
         location: String? = nil,
         price: Double? = nil,
@@ -167,6 +172,7 @@ public final class ProcessedItem: Identifiable {
         self.mediaType = mediaType
         self.fileSize = fileSize
         self.filename = filename
+        self.photosAssetIdentifier = photosAssetIdentifier
         self.categories = categories
         self.location = location
         self.price = price

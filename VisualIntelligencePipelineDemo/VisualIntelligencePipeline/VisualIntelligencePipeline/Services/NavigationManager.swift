@@ -10,6 +10,7 @@ import DiverShared
 import DiverKit
 
 class NavigationManager: ObservableObject {
+    @Published var selectedSession: DiverSession?
     @Published var selection: ProcessedItem?
     @Published var isScanActive: Bool = false
     @Published var searchQuery: String = ""

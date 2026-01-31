@@ -6,26 +6,23 @@ import DiverShared
 @available(iOS 16.0, macOS 13.0, *)
 public actor ContextEnrichmentCoordinator {
     private let weatherService: WeatherEnrichmentService
-    private let activityService: ActivityEnrichmentService
     
     // Foursquare/Place service would be injected here in a real implementation
     // For now, we assume it's handled separately or passed in
     
     public init() {
         self.weatherService = WeatherEnrichmentService()
-        self.activityService = ActivityEnrichmentService()
     }
     
     public func enrich(location: CLLocation?) async -> ContextSnapshot {
-        async let weather = fetchWeather(for: location)
-        async let activity = activityService.fetchCurrentActivity()
+        let weather = await fetchWeather(for: location)
         
         // In a real scenario, we might also await Foursquare/Place data here
         // For now, we return what we found
         
-        return await ContextSnapshot(
+        return ContextSnapshot(
             weather: weather,
-            activity: activity,
+            activity: nil, // Activity tracking removed
             place: nil, // Placeholder for Foursquare integration
             timestamp: Date()
         )

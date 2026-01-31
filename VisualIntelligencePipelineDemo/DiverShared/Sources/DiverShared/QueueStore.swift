@@ -14,6 +14,9 @@ public struct DiverQueueItem: Codable, Hashable, Sendable {
     public let payloadURL: URL?
     public let attachments: [Data]?
     
+    /// PHAsset identifier for photo library imports - allows deferred data loading
+    public let photosAssetIdentifier: String?
+    
     // Convenience for backward compatibility or easy access
     public var purposes: Set<String> { descriptor.purposes }
 
@@ -25,7 +28,8 @@ public struct DiverQueueItem: Codable, Hashable, Sendable {
         createdAt: Date = Date(),
         payload: Data? = nil,
         payloadURL: URL? = nil,
-        attachments: [Data]? = nil
+        attachments: [Data]? = nil,
+        photosAssetIdentifier: String? = nil
     ) {
         self.id = id
         self.action = action
@@ -35,6 +39,7 @@ public struct DiverQueueItem: Codable, Hashable, Sendable {
         self.payload = payload
         self.payloadURL = payloadURL
         self.attachments = attachments
+        self.photosAssetIdentifier = photosAssetIdentifier
     }
     
 
@@ -79,6 +84,12 @@ open class DiverQueueStore {
     }
 
     open func pendingEntries() throws -> [DiverQueueRecord] {
+        // Ensure directory exists before listing
+        if !fileManager.fileExists(atPath: directoryURL.path) {
+            try ensureDirectory()
+            return [] // Directory was just created, no entries yet
+        }
+        
         let contents = try fileManager.contentsOfDirectory(
             at: directoryURL,
             includingPropertiesForKeys: nil,

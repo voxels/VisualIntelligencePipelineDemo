@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-01-30
+
+### Pipeline Enhancements
+- **Semantic Search Integration**: Wired `performSemanticSearch` to the sidebar UI with 300ms debounce. Falls back to vector-based semantic search when keyword results are limited.
+- **Aesthetics Scoring**: Photos and videos now receive visual quality scores during import via `AestheticsScoringService`. Videos use `extractBestFrames()` for optimal frame selection.
+- **Context Utilization**: Expanded LLM prompts to include weather context, place tips, OCR/transcription text, and structured web data for richer AI-generated summaries.
+
+### Code Cleanup
+- **ActivityEnrichmentService Removal**: Removed CoreMotion activity tracking code due to stability concerns. This removes the `activityContext` field from enrichment.
+- **Dead Code Removal**: Cleaned up 79 lines of legacy thumbnail code that was never invoked.
+
+### Documentation
+- Updated all project documentation to reflect current architecture (iOS 26.0+, no activity tracking, aesthetics scoring).
+
 ## 2026-01-27
 
 ### User Experience & Location

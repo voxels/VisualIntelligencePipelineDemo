@@ -42,11 +42,47 @@ public final class ContextQuestionService: Sendable {
             return entry.text
         }
         
-        let contextParts = [
+        // Build comprehensive context from all available sources
+        var contextParts: [String?] = [
+            // Core identification
             data.title != nil ? "Title: \(data.title!)" : nil,
-            !data.categories.isEmpty ? "Categories: \(data.categories.joined(separator: ", "))" : nil,
-            data.location != nil ? "Location: \(data.location!)" : nil,
             data.descriptionText != nil ? "Description: \(data.descriptionText!)" : nil,
+            
+            // Categories and tags
+            !data.categories.isEmpty ? "Categories: \(data.categories.joined(separator: ", "))" : nil,
+            !data.styleTags.isEmpty ? "Style/Themes: \(data.styleTags.joined(separator: ", "))" : nil,
+            
+            // Web context (extracted page content)
+            data.webContext?.siteName != nil ? "Website: \(data.webContext!.siteName!)" : nil,
+            data.webContext?.textContent != nil ? "Page Content: \(String(data.webContext!.textContent!.prefix(500)))" : nil,
+            data.webContext?.structuredData != nil ? "Structured Data: \(data.webContext!.structuredData!)" : nil,
+            
+            // Place context (venue details)
+            data.placeContext?.name != nil ? "Place: \(data.placeContext!.name!)" : nil,
+            data.placeContext?.address != nil ? "Address: \(data.placeContext!.address!)" : nil,
+            !((data.placeContext?.categories ?? []).isEmpty) ? "Venue Type: \((data.placeContext?.categories ?? []).joined(separator: ", "))" : nil,
+            data.placeContext?.rating != nil ? "Rating: \(data.placeContext!.rating!)/10" : nil,
+            data.placeContext?.priceLevel != nil ? "Price Level: \(data.placeContext!.priceLevel!)" : nil,
+            !((data.placeContext?.tips ?? []).isEmpty) ? "Tips: \((data.placeContext?.tips ?? []).prefix(3).joined(separator: "; "))" : nil,
+            
+            // Environmental context (weather and activity - optional)
+            data.weatherContext != nil ? "Weather: \(data.weatherContext!.condition), \(Int(data.weatherContext!.temperatureCelsius))°C" : nil,
+            data.activityContext != nil ? "Activity: \(data.activityContext!.type) (\(data.activityContext!.confidence) confidence)" : nil,
+            
+            // Pricing and ratings (standalone)
+            data.price != nil ? "Price: $\(String(format: "%.2f", data.price!))" : nil,
+            data.rating != nil ? "Rating: \(data.rating!)" : nil,
+            
+            // Location (for grounding)
+            data.location != nil ? "Location: \(data.location!)" : nil,
+            
+            // Document context
+            data.documentContext != nil ? "Document: \(data.documentContext!.fileType)\(data.documentContext!.pageCount != nil ? ", \(data.documentContext!.pageCount!) pages" : "")" : nil,
+            
+            // QR context
+            data.qrContext != nil ? "QR Code: \(data.qrContext!.payload)" : nil,
+            
+            // User history/knowledge graph
             !contextStrings.isEmpty ? "User Context/History: \(contextStrings.joined(separator: "\n"))" : nil
         ]
         
@@ -65,14 +101,10 @@ public final class ContextQuestionService: Sendable {
                  let chunks = chunkText(contextString, size: 3000, overlap: 200)
                  var summaries: [String] = []
                  
-                 await withTaskGroup(of: String?.self) { group in
-                     for chunk in chunks {
-                         group.addTask {
-                             try? await self.summarizeChunk(chunk)
-                         }
-                     }
-                     for await result in group {
-                         if let s = result { summaries.append(s) }
+                 // Process chunks serially on MainActor to avoid threading issues
+                 for chunk in chunks {
+                     if let summary = try? await runChunkSummary(sanitizeForLLM(chunk)) {
+                         summaries.append(summary)
                      }
                  }
                  
@@ -80,39 +112,8 @@ public final class ContextQuestionService: Sendable {
             }
 
             do {
-                let instructions = """
-                Analyze the provided context to determine the user's specific activity.
-                
-                PRIORITY ORDER FOR CONTEXT:
-                1. **VISUALS** (Captured Text, Objects, Products) - THIS IS THE SOURCE OF TRUTH.
-                2. **LOCATION** (Place Name) - Use only to ground the visual activity.
-                
-                CRITICAL INSTRUCTIONS:
-                - If "Captured Text" or "Captured Objects" are present, your statements MUST contain them.
-                - Do NOT generate generic location statements like "Visiting [Place]" if you have visual details.
-                - Example: If text says "Latte" and location is "Starbucks", say "Drinking a Latte at Starbucks", NOT "Visiting Starbucks".
-                - Example: If text shows code/debug logs, say "Debugging Code", even if location is "Home".
-                
-                Provide a structured analysis:
-                1. A concise summary.
-                2. 2 rich statements derived PRIMARILY from VISUAL details (What are they looking at?).
-                3. 2 rich statements linking VISUALS to LOCATION (Where are they doing it?).
-                4. A concise user intent.
-                5. Two detailed tags.
-                """
-                
-                let session = LanguageModelSession(instructions: instructions)
-                
-                let response = try await session.respond(
-                    to: finalInput,
-                    generating: ContextAnalysis.self,
-                    options: GenerationOptions(sampling: .greedy)
-                )
-                
-                let analysis = response.content
-                // Merge distinct statements into a single prioritized list
-                let combinedStatements = analysis.visualStatements + analysis.locationStatements
-                return (analysis.summary, combinedStatements, analysis.purpose, analysis.tags)
+                let result = try await runContextAnalysis(input: sanitizeForLLM(finalInput))
+                return result
                 
             } catch LanguageModelSession.GenerationError.exceededContextWindowSize(let errorContext) {
                 print("⚠️ Context window exceeded even after chaining: \(errorContext)")
@@ -136,47 +137,115 @@ public final class ContextQuestionService: Sendable {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, macOS 19.0, *) {
             do {
-                let instructions = """
-                Analyze the following text (which represents user activity logs or multiple session contexts) and provide a high-level, cohesive summary.
-                
-                CRITICAL INSTRUCTIONS:
-                - Do NOT assume the location is "Home" or "At Home" unless explicitly stated in the logs.
-                - If no location is mentioned, do NOT invent one. Focus on the activity (e.g. "Researching cameras", "Browsing web").
-                - Avoid phrases like "at home" or "in their home" unless the text confirms it.
-                
-                Focus on:
-                - Common themes or topics.
-                - The user's progression or intent across the items.
-                - Specific entities or projects mentioned.
-                Keep it concise (2-3 sentences).
-                """
-                let session = LanguageModelSession(instructions: instructions)
-                let response = try await session.respond(to: text)
-                
-                // DATA SANITIZATION: Aggressively remove hallucinated "Home" references
-                var cleanSummary = response.content
-                    .replacingOccurrences(of: "at home", with: "", options: [.caseInsensitive, .regularExpression])
-                    .replacingOccurrences(of: "from home", with: "", options: [.caseInsensitive, .regularExpression])
-                    .replacingOccurrences(of: "in their home", with: "", options: [.caseInsensitive, .regularExpression])
-                    .replacingOccurrences(of: " at . ", with: ". ", options: .regularExpression) // Fix grammar after removal
-                
-                return cleanSummary
+                let result = try await runTextSummary(text: sanitizeForLLM(text))
+                return result
             } catch {
                 print("⚠️ Summary generation failed: \(error)")
-                return text.prefix(200) + "..."
+                return String(text.prefix(200)) + "..."
             }
         }
         #endif
-        return text.prefix(200) + "..."
+        return String(text.prefix(200)) + "..."
     }
+    
+    // MARK: - MainActor LLM Helpers
+    // These must run on MainActor to satisfy FoundationModels threading requirements
     
     #if canImport(FoundationModels)
     @available(iOS 26.0, macOS 26.0, *)
-    private func summarizeChunk(_ text: String) async throws -> String {
+    @MainActor
+    private func runContextAnalysis(input: String) async throws -> (summary: String?, statements: [String], purpose: String?, tags: [String]) {
+        let instructions = """
+        Analyze the provided context to determine the user's specific activity and intent.
+        
+        PRIORITY ORDER FOR CONTEXT (use all available, prioritized):
+        1. **VISUALS** (Captured Text, Objects, Products) - Primary source of truth
+        2. **WEB CONTENT** (Page Content, Structured Data) - Secondary source
+        3. **PLACE DETAILS** (Venue name, tips, categories) - Contextual grounding
+        4. **ENVIRONMENT** (Weather, Activity type if present)
+        5. **LOCATION** (Address, coordinates) - Only for grounding
+        
+        CRITICAL INSTRUCTIONS:
+        - Derive statements from the MOST SPECIFIC data available.
+        - If web content or captured text exists, statements MUST reference it.
+        - Do NOT generate vague statements like "Browsing the web" or "Visiting a place".
+        - Be specific: "Reading an article about camera lenses" not "Reading online".
+        - Be specific: "Ordering a latte at a coffee shop" not "At a coffee shop".
+        
+        Provide a structured analysis:
+        1. A concise 2-sentence summary of what the user is doing.
+        2. 2 statements derived from the PRIMARY evidence (visuals, web content, or captured text).
+        3. 2 statements that add environmental/location context.
+        4. A concise user intent or goal.
+        5. Two specific, descriptive tags.
+        """
+        
+        let session = LanguageModelSession(instructions: instructions)
+        let response = try await session.respond(
+            to: input,
+            generating: ContextAnalysis.self,
+            options: GenerationOptions(sampling: .greedy)
+        )
+        
+        let analysis = response.content
+        let combinedStatements = analysis.visualStatements + analysis.locationStatements
+        return (analysis.summary, combinedStatements, analysis.purpose, analysis.tags)
+    }
+    
+    @available(iOS 26.0, macOS 26.0, *)
+    @MainActor
+    private func runTextSummary(text: String) async throws -> String {
+        let instructions = """
+        Analyze the following text (which represents user activity logs or multiple session contexts) and provide a high-level, cohesive summary.
+        
+        CRITICAL INSTRUCTIONS:
+        - If no location is mentioned, do NOT invent one. Focus on the activity (e.g. "Researching cameras", "Browsing web").
+        
+        Focus on:
+        - Common themes or topics.
+        - The user's progression or intent across the items.
+        - Specific entities or projects mentioned.
+        Keep it concise (2-3 sentences).
+        """
+        let session = LanguageModelSession(instructions: instructions)
+        let response = try await session.respond(to: text)
+        
+        // DATA SANITIZATION: Aggressively remove hallucinated "Home" references
+        let cleanSummary = response.content
+            .replacingOccurrences(of: "at home", with: "", options: [String.CompareOptions.caseInsensitive, String.CompareOptions.regularExpression])
+            .replacingOccurrences(of: "from home", with: "", options: [String.CompareOptions.caseInsensitive, String.CompareOptions.regularExpression])
+            .replacingOccurrences(of: "in their home", with: "", options: [String.CompareOptions.caseInsensitive, String.CompareOptions.regularExpression])
+            .replacingOccurrences(of: " at . ", with: ". ", options: String.CompareOptions.regularExpression)
+        
+        return cleanSummary
+    }
+    
+    @available(iOS 26.0, macOS 26.0, *)
+    @MainActor
+    private func runChunkSummary(_ text: String) async throws -> String {
         let instructions = "Summarize the following text segment, retaining key details about activities, objects, and specific content."
         let session = LanguageModelSession(instructions: instructions)
         let response = try await session.respond(to: text)
         return response.content
+    }
+    
+    @available(iOS 26.0, macOS 26.0, *)
+    @MainActor
+    private func runPurposeSuggestion(context: String) async throws -> [String] {
+        let instructions = """
+        Analyze the provided session context (a collection of related items/activities) and suggest 3-5 specific, distinct "Purposes" or "Goals" that describe why the user collected these items.
+        Examples: "Planning a Trip", "Researching Camera Gear", "Debugging SwiftUI", "Shopping for Gifts".
+        """
+        let session = LanguageModelSession(instructions: instructions)
+        let response = try await session.respond(
+            to: context,
+            generating: PurposeSuggestions.self,
+            options: GenerationOptions(sampling: .greedy)
+        )
+        
+        return response.content.purposes
+            .map { $0.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
     }
     #endif
 
@@ -196,23 +265,38 @@ public final class ContextQuestionService: Sendable {
         return chunks
     }
     
+    /// Sanitizes input text for the on-device LLM to prevent `unsupportedLanguageOrLocale` errors.
+    /// Strips non-ASCII characters and normalizes to US English compatible text.
+    private func sanitizeForLLM(_ text: String) -> String {
+        // Transliterate accented characters to ASCII equivalents (é -> e, ñ -> n, etc.)
+        let mutableString = NSMutableString(string: text)
+        CFStringTransform(mutableString, nil, kCFStringTransformToLatin, false)
+        CFStringTransform(mutableString, nil, kCFStringTransformStripCombiningMarks, false)
+        
+        // Keep only printable ASCII characters (space through tilde), newlines, and tabs
+        let sanitized = (mutableString as String).unicodeScalars.filter { scalar in
+            (scalar.value >= 32 && scalar.value <= 126) || scalar == "\n" || scalar == "\t"
+        }
+        return String(String.UnicodeScalarView(sanitized))
+    }
+    
     #if canImport(FoundationModels)
     @available(iOS 26.0, macOS 26.0, *)
     @Generable
     struct ContextAnalysis {
-        @Guide(description: "A concise summary of the place context in 2 sentences.")
+        @Guide(description: "A concise 2-sentence summary of the captured context and user activity.")
         var summary: String
         
-        @Guide(description: "2 definitive statements based ONLY on visual evidence (e.g. 'Reading a menu').")
+        @Guide(description: "2 definitive statements based on PRIMARY evidence (captured text, web content, or visuals).")
         var visualStatements: [String]
         
-        @Guide(description: "2 definitive statements based ONLY on location evidence (e.g. 'Dining out').")
+        @Guide(description: "2 definitive statements adding environmental or location context.")
         var locationStatements: [String]
         
-        @Guide(description: "The likely user intent or purpose (e.g., 'Researching Coffee Shop') for the place.")
+        @Guide(description: "The likely user intent or goal (e.g., 'Researching camera gear', 'Planning a trip').")
         var purpose: String
         
-        @Guide(description: "Two tags that describe the main topics of the place context.")
+        @Guide(description: "Two specific, descriptive tags for the captured context.")
         var tags: [String]
     }
     #endif
@@ -232,23 +316,8 @@ public final class ContextQuestionService: Sendable {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, macOS 19.0, *) {
             do {
-                let instructions = """
-                Analyze the provided session context (a collection of related items/activities) and suggest 3-5 specific, distinct "Purposes" or "Goals" that describe why the user collected these items.
-                Examples: "Planning a Trip", "Researching Camera Gear", "Debugging SwiftUI", "Shopping for Gifts".
-                """
-                let session = LanguageModelSession(instructions: instructions)
                 print("🔍 ContextQuestionService: Suggesting purposes for context (\(sessionContext.count) chars)")
-                
-                let response = try await session.respond(
-                    to: sessionContext,
-                    generating: PurposeSuggestions.self,
-                    options: GenerationOptions(sampling: .greedy)
-                )
-                
-                let suggestions = response.content.purposes
-                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                    .filter { !$0.isEmpty }
-                
+                let suggestions = try await runPurposeSuggestion(context: sanitizeForLLM(sessionContext))
                 print("✅ ContextQuestionService: Generated \(suggestions.count) purposes: \(suggestions.joined(separator: ", "))")
                 return Array(suggestions.prefix(5))
             } catch {

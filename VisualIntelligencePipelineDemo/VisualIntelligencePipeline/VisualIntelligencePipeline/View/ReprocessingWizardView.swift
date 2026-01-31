@@ -168,7 +168,6 @@ struct ReprocessingWizardView: View {
                     foursquareService: services.foursquareService,
                     duckDuckGoService: services.duckDuckGoService,
                     weatherService: services.weatherService,
-                    activityService: services.activityService,
                     indexingService: services.knowledgeGraphService,
                     progressHandler: { p in
                         self.progress = p

@@ -30,5 +30,7 @@
 	</array>
     <key>NSPhotoLibraryAddUsageDescription</key>
     <string>We need access to your photo library to save captured visual intelligence images.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>We need access to your photo library to import photos and videos, display thumbnails, and extract metadata like dates and locations.</string>
 </dict>
 </plist>

@@ -6,44 +6,21 @@ import MapKit
 import SwiftData
 import LinkPresentation
 import WebKit
+import AVKit
 
 struct ReferenceDetailView: View {
     let item: ProcessedItem
-    @EnvironmentObject var navigationManager: NavigationManager
-    @Query private var allItems: [ProcessedItem]
-    
-    // We bind selection to a local state initialized with the passed item, 
-    // but we also want to keep it in sync if possible, or just let the carousel work independently.
-    @State private var selectedItemID: PersistentIdentifier?
-    
-    var siblings: [ProcessedItem] {
-        guard let sessionID = item.sessionID else { return [item] }
-        return allItems.filter { $0.sessionID == sessionID }
-            .sorted { ($0.createdAt ?? .distantPast) < ($1.createdAt ?? .distantPast) }
-    }
     
     var body: some View {
-        TabView(selection: $selectedItemID) {
-            ForEach(siblings) { sibling in
-                ReferenceDetailContent(item: sibling)
-                    .tag(Optional(sibling.id))
-            }
-        }
-        .tabViewStyle(.page(indexDisplayMode: .never))
-        .onAppear {
-            if selectedItemID == nil {
-                selectedItemID = item.id
-            }
-        }
-        .toolbar {
-             // Toolbar buttons are now inside ReferenceDetailContent or need to be lifted?
-             // If inside TabView, they contextually appear.
-        }
-        .navigationTitle("Details")
-        .navigationBarTitleDisplayMode(.inline)
-        #if os(iOS)
-        .background(Color(uiColor: .systemGroupedBackground))
-        #endif
+        // Simplified: Just show the passed item directly.
+        // The TabView carousel was broken - selection didn't update properly.
+        // Can be re-added later with a working implementation.
+        ReferenceDetailContent(item: item)
+            .navigationTitle("Details")
+            .navigationBarTitleDisplayMode(.inline)
+            #if os(iOS)
+            .background(Color(uiColor: .systemGroupedBackground))
+            #endif
     }
 }
 
@@ -77,7 +54,14 @@ struct ReferenceDetailContent: View {
                     
                     // 0. Purpose Header (Removed - Moved to Intent Section)
 
-                    if let data = item.rawPayload, let uiImage = UIImage(data: data) {
+                    // Video Player for video media type
+                    if item.mediaType == "video", let assetID = item.photosAssetIdentifier {
+                        PhotosVideoPlayerView(assetIdentifier: assetID)
+                            .frame(height: 300)
+                            .cornerRadius(12)
+                            .shadow(radius: 4)
+                            .padding(.bottom, 12)
+                    } else if let data = item.rawPayload, let uiImage = UIImage(data: data) {
                         Image(uiImage: uiImage)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
@@ -1977,3 +1961,92 @@ struct ActionButton: View {
     }
 }
 
+// MARK: - Photos Video Player View
+/// A video player view that loads video from Photos library using PHAsset
+import Photos
+
+struct PhotosVideoPlayerView: View {
+    let assetIdentifier: String
+    
+    @State private var player: AVPlayer?
+    @State private var isLoading = true
+    @State private var loadError: String?
+    
+    var body: some View {
+        Group {
+            if let player = player {
+                VideoPlayer(player: player)
+                    .onAppear {
+                        player.play()
+                    }
+                    .onDisappear {
+                        player.pause()
+                    }
+            } else if isLoading {
+                ZStack {
+                    Color.black.opacity(0.1)
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("Loading video...")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            } else if let error = loadError {
+                ZStack {
+                    Color.gray.opacity(0.1)
+                    VStack(spacing: 8) {
+                        Image(systemName: "video.slash")
+                            .font(.largeTitle)
+                            .foregroundStyle(.secondary)
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding()
+                }
+            } else {
+                ZStack {
+                    Color.gray.opacity(0.1)
+                    Image(systemName: "video.slash")
+                        .font(.largeTitle)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .onAppear {
+            loadVideo()
+        }
+    }
+    
+    private func loadVideo() {
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetIdentifier], options: nil)
+        
+        guard let asset = fetchResult.firstObject else {
+            isLoading = false
+            loadError = "Video not found in Photos library"
+            return
+        }
+        
+        let options = PHVideoRequestOptions()
+        options.version = .current
+        options.deliveryMode = .automatic
+        options.isNetworkAccessAllowed = true
+        
+        PHImageManager.default().requestAVAsset(forVideo: asset, options: options) { avAsset, _, info in
+            DispatchQueue.main.async {
+                isLoading = false
+                
+                if let urlAsset = avAsset as? AVURLAsset {
+                    player = AVPlayer(url: urlAsset.url)
+                } else if let avAsset = avAsset {
+                    let playerItem = AVPlayerItem(asset: avAsset)
+                    player = AVPlayer(playerItem: playerItem)
+                } else {
+                    loadError = "Could not load video"
+                }
+            }
+        }
+    }
+}

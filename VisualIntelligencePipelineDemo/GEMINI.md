@@ -29,8 +29,9 @@ The project includes a sophisticated "Visual Intelligence" capability:
 *   **Intelligent Sifting:** Uses Vision framework to detect subjects in images and "sift" them out from the background.
 *   **Context Enrichment:** Enriches captured items with:
     *   **Location:** Foursquare (Venues) and MapKit (Landmarks/Addresses) via `LocationSearchAggregator`.
-    *   **Environmental:** WeatherKit (Current conditions) and CoreMotion (Activity type).
+    *   **Environmental:** WeatherKit (Current conditions).
     *   **Web:** Metadata extraction for related links.
+    *   **Aesthetics:** Quality scoring for images and video frames.
 *   **Pipeline Services:**
     *   **LocalPipelineService:** The core orchestrator. Handles ingestion, enrichment, and persistence.
     *   **Reprocessing:** Supports silent background reprocessing of items (`reprocessPipeline`) to update metadata or apply new algorithms. Includes logic to **prevent duplicates** by reusing existing item IDs.
@@ -58,7 +59,7 @@ To run the tests:
 Alternatively, you can run the tests from the command line using `xcodebuild`:
 
 ```bash
-xcodebuild -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj -scheme VisualIntelligencePipeline -destination 'platform=iOS Simulator,name=iPhone 16'
+xcodebuild -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj -scheme VisualIntelligencePipeline -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
 ## Development Conventions

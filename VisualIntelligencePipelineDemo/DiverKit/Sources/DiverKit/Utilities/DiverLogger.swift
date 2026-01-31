@@ -20,6 +20,9 @@ public enum DiverLogger {
 
     /// Logger for authentication and security operations
     public static let auth = Logger(subsystem: subsystem, category: "auth")
+    
+    /// Logger for search operations (keyword, semantic)
+    public static let search = Logger(subsystem: subsystem, category: "search")
 }
 
 // MARK: - Convenience Extensions

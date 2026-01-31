@@ -30,9 +30,54 @@ public class ReferenceDetailViewModel: ObservableObject {
         Task {
             do {
                 if let service = Services.shared.contextQuestionService {
-                    // Combine item context with sibling context
-                    let itemContext = [item.title, item.summary, item.tags.joined(separator: ", ")].compactMap { $0 }.joined(separator: "\n")
-                    let fullContext = "Focus Item:\n\(itemContext)\n\nSession Context:\n\(siblingContext)"
+                    // Build structured context in priority order (VISUAL → WEB → PLACE → ENVIRONMENT)
+                    var contextParts: [String] = []
+                    
+                    // === ITEM IDENTITY (PRIMARY) ===
+                    contextParts.append("=== FOCUS ITEM ===")
+                    if let title = item.title { contextParts.append("Title: \(title)") }
+                    if let summary = item.summary { contextParts.append("Summary: \(summary)") }
+                    
+                    // === VISUAL/OCR CONTENT ===
+                    if let transcription = item.transcription, !transcription.isEmpty {
+                        contextParts.append("OCR/Captured Text: \(String(transcription.prefix(300)))")
+                    }
+                    
+                    // === WEB CONTENT ===
+                    if let webContent = item.webContext?.textContent, !webContent.isEmpty {
+                        contextParts.append("Web Content: \(String(webContent.prefix(300)))")
+                    }
+                    if let structured = item.webContext?.structuredData {
+                        contextParts.append("Structured Data: \(structured)")
+                    }
+                    
+                    // === PLACE DETAILS ===
+                    if let placeName = item.placeContext?.name {
+                        contextParts.append("Place: \(placeName)")
+                    }
+                    if let tips = item.placeContext?.tips, !tips.isEmpty {
+                        contextParts.append("Place Tips: \(tips.prefix(2).joined(separator: "; "))")
+                    }
+                    
+                    // === ENVIRONMENT ===
+                    if let weather = item.weatherContext {
+                        contextParts.append("Weather: \(weather.condition), \(Int(weather.temperatureCelsius))°C")
+                    }
+                    if let activity = item.activityContext {
+                        contextParts.append("Activity: \(activity.type)")
+                    }
+                    
+                    // === EXISTING TAGS ===
+                    if !item.tags.isEmpty {
+                        contextParts.append("Tags: \(item.tags.joined(separator: ", "))")
+                    }
+                    
+                    // === SESSION CONTEXT ===
+                    if !siblingContext.isEmpty {
+                        contextParts.append("\n=== SESSION CONTEXT ===\n\(siblingContext)")
+                    }
+                    
+                    let fullContext = contextParts.joined(separator: "\n")
                     
                     print("🔍 ReferenceDetailViewModel: Requesting purposes for item '\(item.title ?? "Untitled")'")
                     let suggestions = try await service.suggestPurposes(from: fullContext)
@@ -85,20 +130,33 @@ public class ReferenceDetailViewModel: ObservableObject {
 
         Task {
             do {
-                // Pass rawPayload (original image/data) to queue item to ensure deep reprocessing
+                // Determine payload - load from Photos library if needed
+                var payload = item.rawPayload
+                
+                // If no rawPayload but has photosAssetIdentifier, load on-demand
+                if payload == nil, let assetId = item.photosAssetIdentifier {
+                    print("📸 Loading image data from Photos library for reprocessing: \(assetId)")
+                    payload = await PhotosAssetLoader.shared.loadImageData(identifier: assetId)
+                    if payload != nil {
+                        print("✅ Loaded \(payload!.count) bytes from Photos library")
+                    } else {
+                        print("⚠️ Failed to load data from Photos library - asset may have been deleted")
+                    }
+                }
+                
                 let queueItem = DiverQueueItem(
                     id: UUID(), // New queue entry
                     action: "save",
                     descriptor: descriptor,
                     source: "retry",
                     createdAt: Date(), // Fresh timestamp
-                    payload: item.rawPayload
+                    payload: payload
                 )
                 
                 let queueDirectory = AppGroupContainer.queueDirectoryURL()!
                 let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
                 _ = try queueStore.enqueue(queueItem)
-                print("✅ Re-enqueued item for deep processing: \(urlString) (Payload: \(item.rawPayload?.count ?? 0) bytes)")
+                print("✅ Re-enqueued item for deep processing: \(urlString) (Payload: \(payload?.count ?? 0) bytes)")
                 
                 // Update UI state
                 await MainActor.run {

@@ -5,7 +5,7 @@ Diver is an advanced iOS/macOS application for capturing, organizing, and enrich
 ## Core Features
 
 *   **Visual Intelligence Sifting**: Automatically detects and isolates subjects in images (e.g., products, people, signs) using Vision.
-*   **Contextual Enrichment**: Enriches captures with location data (MapKit, Foursquare), weather, and activity context.
+*   **Contextual Enrichment**: Enriches captures with location data (MapKit, Foursquare), weather, and aesthetics scoring.
 *   **Semantic Understanding**: Uses LLMs to generate summaries, identify purposes, and suggest relevant context tags.
 *   **Session Management**: Groups captures by location and time into cohesive sessions with AI-generated summaries.
 *   **Universal Link Organization**: Central repository for shared links and content from across the system.
@@ -28,7 +28,7 @@ The project is modularized using Swift Package Manager:
 
 1.  Open `VisualIntelligencePipeline.xcodeproj` in Xcode.
 2.  Select the `VisualIntelligencePipeline` scheme.
-3.  Run on an iOS Simulator or Device (iOS 17.0+ recommended).
+3.  Run on an iOS Simulator or Device (iOS 26.0+ required for Apple Intelligence).
 
 ## Documentation
 

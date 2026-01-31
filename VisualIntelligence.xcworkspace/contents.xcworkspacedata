@@ -7,7 +7,4 @@
    <FileRef
       location = "group:Know-Maps/Know-Maps/Know Maps.xcodeproj">
    </FileRef>
-   <FileRef
-      location = "group:DiverPlayground.playground">
-   </FileRef>
 </Workspace>

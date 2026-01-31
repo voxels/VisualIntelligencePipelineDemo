@@ -84,7 +84,6 @@ struct VisualIntelligencePipelineApp: App {
         let locationService = LocationService()
         let contactService = ContactService()
         let weatherService = WeatherEnrichmentService()
-        let activityService = ActivityEnrichmentService()
         
         // Use placeholders for API keys for now
         let foursquareContextService = FoursquareEnrichmentService(apiKey: "FOURSQUARE_API_KEY")
@@ -107,7 +106,6 @@ struct VisualIntelligencePipelineApp: App {
         Services.shared.duckDuckGoService = duckDuckGoContextService
         Services.shared.contactService = contactService
         Services.shared.weatherService = weatherService
-        Services.shared.activityService = activityService
         Services.shared.contextQuestionService = contextService
         Services.shared.dailyContextService = dailyContextService
         Services.shared.mapKitService = MapKitEnrichmentService()
@@ -123,7 +121,6 @@ struct VisualIntelligencePipelineApp: App {
             foursquareService: foursquareContextService,
             duckDuckGoService: duckDuckGoContextService,
             weatherService: weatherService,
-            activityService: activityService,
             contextService: contextService
         )
 
@@ -178,6 +175,7 @@ struct VisualIntelligencePipelineApp: App {
                         metadataPipelineService.locationService = services.locationProvider
                         Services.shared.locationService = services.locationProvider
                         Services.shared.foursquareService = services.foursquareEnrichmentService
+                        Services.shared.cloudCacheService = services.cacheService
                         
                         // Initialize Knowledge Graph Adapter
                         let unifiedAdapter = KnowMapsUnifiedAdapter(container: services)
@@ -196,17 +194,6 @@ struct VisualIntelligencePipelineApp: App {
                 }
                 .onAppear {
                     handlePendingMessagesLaunch()
-
-                    Task {
-                        do {
-                            // Seed data if empty
-                            try await MainActor.run {
-                                try DataSeeder.seed(context: dataStore.mainContext)
-                            }
-                        } catch {
-                            print("Data seeding failed: \(error)")
-                        }
-                    }
                 }
                 .onAppear {
                     // Process queue when app launches

@@ -9,13 +9,15 @@ public final class Services {
     public var duckDuckGoService: ContextualEnrichmentService?
     public var contactService: ContactServiceProvider?
     public var weatherService: WeatherEnrichmentService?
-    public var activityService: ActivityEnrichmentService?
     public var knowledgeGraphService: (any KnowledgeGraphRetrievalService & KnowledgeGraphIndexingService)?
     public var contextQuestionService: ContextQuestionService?
     public var dailyContextService: DailyContextService?
     public var pendingReprocessContext: ReprocessContext?
     public var mapKitService: MapKitEnrichmentService?
     public var metadataPipelineService: MetadataPipelineService?
+    
+    /// KnowMaps CloudCacheService for iCloud cache management
+    public var cloudCacheService: Any?
     
     private init() {}
 }

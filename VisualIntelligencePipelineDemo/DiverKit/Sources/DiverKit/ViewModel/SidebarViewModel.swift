@@ -28,6 +28,12 @@ public class SidebarViewModel: ObservableObject {
     @Published public var groupSummaryResult: SummaryResult? = nil
     @Published public var itemToEditLocation: ProcessedItem?
     @Published public var itemToReprocess: ProcessedItem?
+    @Published public var showingDeleteConfirmation = false
+    @Published public var showingCombineCollectionSheet = false
+    @Published public var combineCollectionName = ""
+    
+    // Semantic search results (IDs of items matching via knowledge graph)
+    @Published public var semanticMatchIDs: Set<String> = []
     
     public struct SummaryResult: Identifiable {
         public let id = UUID()
@@ -57,16 +63,20 @@ public class SidebarViewModel: ObservableObject {
         
         // Filter by search text
         if !searchText.isEmpty {
+            let text = searchText
             result = result.filter { item in
-                let text = searchText
                 let titleMatch = item.title?.localizedCaseInsensitiveContains(text) ?? false
                 let urlMatch = item.url?.localizedCaseInsensitiveContains(text) ?? false
+                // Check summary for semantic search
+                let summaryMatch = item.summary?.localizedCaseInsensitiveContains(text) ?? false
                 // Check tags/categories/purposes (Concepts)
                 let tagMatch = item.tags.contains { $0.localizedCaseInsensitiveContains(text) }
                 let categoryMatch = item.categories.contains { $0.localizedCaseInsensitiveContains(text) }
                 let purposeMatch = item.purposes.contains { $0.localizedCaseInsensitiveContains(text) }
+                // Semantic match from knowledge graph
+                let semanticMatch = semanticMatchIDs.contains(item.id)
                 
-                return titleMatch || urlMatch || tagMatch || categoryMatch || purposeMatch
+                return titleMatch || urlMatch || summaryMatch || tagMatch || categoryMatch || purposeMatch || semanticMatch
             }
         }
         
@@ -98,6 +108,37 @@ public class SidebarViewModel: ObservableObject {
         }
     }
     
+    /// Filter collections by search text - searches name and LLM summary
+    public func filterCollections(_ collections: [DiverCollection]) -> [DiverCollection] {
+        guard !searchText.isEmpty else { return collections }
+        
+        let text = searchText.lowercased()
+        return collections.filter { collection in
+            let nameMatch = collection.name.lowercased().contains(text)
+            let llmMatch = collection.llmSummary?.lowercased().contains(text) ?? false
+            let userMatch = collection.userSummary?.lowercased().contains(text) ?? false
+            return nameMatch || llmMatch || userMatch
+        }
+    }
+    
+    /// Filter sessions by search text - searches title, location, and summary
+    public func filterSessions(_ sessions: [DiverSession]) -> [DiverSession] {
+        guard !searchText.isEmpty else { return sessions }
+        
+        let text = searchText.lowercased()
+        return sessions.filter { session in
+            let titleMatch = session.title?.lowercased().contains(text) ?? false
+            let locationMatch = session.locationName?.lowercased().contains(text) ?? false
+            let summaryMatch = session.summary?.lowercased().contains(text) ?? false
+            return titleMatch || locationMatch || summaryMatch
+        }
+    }
+    
+    /// Check if there are any search results in collections
+    public var hasSearchResults: Bool {
+        !searchText.isEmpty
+    }
+    
     public func refresh() async {
         guard let service = pipelineService else { return }
         do {
@@ -105,6 +146,45 @@ public class SidebarViewModel: ObservableObject {
             try await service.refreshProcessedItems()
         } catch {
             print("❌ Refresh failed: \(error)")
+        }
+    }
+    
+    /// Perform semantic search using KnowledgeGraph when keyword search yields limited results
+    /// - Parameters:
+    ///   - query: The search query
+    ///   - keywordResultCount: Number of results from keyword search
+    /// - Note: Call this after keyword filtering to populate semanticMatchIDs
+    public func performSemanticSearch(query: String, keywordResultCount: Int) async {
+        // Only trigger semantic search if keyword search returned few results
+        guard keywordResultCount < 5, !query.isEmpty else {
+            semanticMatchIDs = []
+            return
+        }
+        
+        guard let kgService = Services.shared.knowledgeGraphService else {
+            return
+        }
+        
+        do {
+            let results = try await kgService.retrieveRelevantContext(for: query)
+            
+            // Extract item IDs from context entries that have high relevance
+            // The results are (text, weight) tuples - we look for embedded item IDs
+            var matchedIDs = Set<String>()
+            for (text, weight) in results where weight > 0.5 {
+                // Check for UUID pattern (item IDs are UUIDs)
+                let pattern = "[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}"
+                if let regex = try? NSRegularExpression(pattern: pattern),
+                   let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
+                   let range = Range(match.range, in: text) {
+                    matchedIDs.insert(String(text[range]))
+                }
+            }
+            
+            self.semanticMatchIDs = matchedIDs
+            DiverLogger.search.debug("Semantic search for '\(query)' found \(matchedIDs.count) additional matches")
+        } catch {
+            DiverLogger.search.error("Semantic search failed: \(error)")
         }
     }
     
@@ -165,6 +245,112 @@ public class SidebarViewModel: ObservableObject {
         } catch {
             print("❌ Failed to fetch session items for reprocessing: \(error)")
         }
+    }
+    
+    public func reprocessSession(sessionID: String, context: ModelContext, pipeline: MetadataPipelineService) {
+        let fetch = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.sessionID == sessionID }
+        )
+        
+        do {
+            let items = try context.fetch(fetch)
+            if items.isEmpty { return }
+            
+            print("🔄 Reprocessing \(items.count) items for session \(sessionID) via pipeline")
+            
+            for item in items {
+                item.status = .queued
+                item.processingLog.append("\(Date().formatted()): Queued for reprocessing by user")
+            }
+            try context.save()
+            
+            Task {
+                try? await pipeline.processPendingQueue()
+            }
+        } catch {
+            print("❌ Failed to fetch session items for reprocessing: \(error)")
+        }
+    }
+    
+    /// Get all unique session IDs from a list of items
+    public func getAllSessionIDs(items: [ProcessedItem]) -> [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+        for item in items {
+            if let sessionID = item.sessionID, !seen.contains(sessionID) {
+                seen.insert(sessionID)
+                result.append(sessionID)
+            }
+        }
+        return result
+    }
+    
+    /// Delete all items for selected sessions
+    public func deleteSelectedSessions(context: ModelContext) {
+        guard !selectedSessions.isEmpty else { return }
+        
+        for sessionID in selectedSessions {
+            let itemFetch = FetchDescriptor<ProcessedItem>(
+                predicate: #Predicate { $0.sessionID == sessionID }
+            )
+            let sessionFetch = FetchDescriptor<DiverSession>(
+                predicate: #Predicate { $0.sessionID == sessionID }
+            )
+            
+            do {
+                let items = try context.fetch(itemFetch)
+                for item in items {
+                    context.delete(item)
+                }
+                
+                let sessions = try context.fetch(sessionFetch)
+                for session in sessions {
+                    context.delete(session)
+                }
+            } catch {
+                print("❌ Failed to delete session \(sessionID): \(error)")
+            }
+        }
+        
+        do {
+            try context.save()
+            print("🗑️ Deleted \(selectedSessions.count) sessions")
+        } catch {
+            print("❌ Failed to save after deletion: \(error)")
+        }
+        
+        // Clear selection
+        selectedSessions.removeAll()
+        isSelectionMode = false
+    }
+    
+    /// Combine selected sessions into a new DiverCollection
+    public func combineSelectedSessions(context: ModelContext) {
+        guard !selectedSessions.isEmpty, !combineCollectionName.isEmpty else { return }
+        
+        let name = combineCollectionName.trimmingCharacters(in: .whitespaces)
+        let sessionIDs = Array(selectedSessions)
+        
+        // Create new collection
+        let collection = DiverCollection(
+            name: name,
+            sessionIDs: sessionIDs
+        )
+        
+        context.insert(collection)
+        
+        do {
+            try context.save()
+            print("📚 Created collection '\(name)' with \(sessionIDs.count) sessions")
+        } catch {
+            print("❌ Failed to save collection: \(error)")
+        }
+        
+        // Clear state
+        showingCombineCollectionSheet = false
+        combineCollectionName = ""
+        selectedSessions.removeAll()
+        isSelectionMode = false
     }
     
     public func duplicateSession(sessionID: String, context: ModelContext) {
@@ -383,13 +569,37 @@ public class SidebarViewModel: ObservableObject {
                 let items = try context.fetch(fetchItems)
                 if items.isEmpty { return }
                 
-                // Aggregate Content
+                // Aggregate comprehensive context from all items
                 var combinedText = ""
+                
+                // Extract dominant environmental context from first item
+                if let firstItem = items.first {
+                    if let weather = firstItem.weatherContext {
+                        combinedText += "Environment: \(weather.condition), \(Int(weather.temperatureCelsius))°C\n"
+                    }
+                    if let activity = firstItem.activityContext {
+                        combinedText += "Activity Type: \(activity.type)\n"
+                    }
+                    if let place = firstItem.placeContext?.name {
+                        combinedText += "Primary Location: \(place)\n"
+                    }
+                }
+                combinedText += "---\n"
+                
+                // Aggregate content from each item
                 for item in items {
                     combinedText += "Item: \(item.title ?? "Unknown")\n"
                     if let summary = item.summary { combinedText += "Summary: \(summary)\n" }
                     if !item.purposes.isEmpty { combinedText += "Intents: \(item.purposes.joined(separator: ", "))\n" }
                     if !item.tags.isEmpty { combinedText += "Tags: \(item.tags.joined(separator: ", "))\n" }
+                    // Include transcription/OCR if available
+                    if let transcription = item.transcription, !transcription.isEmpty {
+                        combinedText += "OCR/Transcription: \(String(transcription.prefix(200)))\n"
+                    }
+                    // Include place tips if available
+                    if let tips = item.placeContext?.tips, !tips.isEmpty {
+                        combinedText += "Place Tips: \(tips.prefix(2).joined(separator: "; "))\n"
+                    }
                     combinedText += "---\n"
                 }
                 

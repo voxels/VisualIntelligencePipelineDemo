@@ -15,7 +15,8 @@ public final class DiverDataStore {
         LocalInput.self,
         ProcessedItem.self,
         UserConcept.self,
-        DiverSession.self
+        DiverSession.self,
+        DiverCollection.self
     ]
 
     public init(schema: Schema, configurations: [ModelConfiguration]) {
