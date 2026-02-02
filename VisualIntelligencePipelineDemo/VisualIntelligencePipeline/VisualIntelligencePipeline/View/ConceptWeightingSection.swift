@@ -46,9 +46,6 @@ struct ConceptWeightingSection: View {
 
     init(item: ProcessedItem) {
         self.item = item
-        // Predicate to find relevant concepts is tricky with simple Arrays in SwiftData predicates currently.
-        // We will filter in memory for this MVP or use a broad query.
-        // Fetching ALL UserConcepts might be heavy if there are thousands, but safe for hundreds.
     }
 
     var relevantConcepts: [UserConcept] {
@@ -136,20 +133,33 @@ struct ConceptWeightingSection: View {
     }
     
     private func regenerateConcepts() {
-        // Clear existing derived concepts
+        // Clear existing derived concepts first
         item.tags = []
         item.categories = []
         item.themes = []
-        item.purposes = [] // Also clear purposes as requested ("clean all attached concepts")
+        item.purposes = []
+        
+        // Clear context data so enrichment runs fresh  
+        // item.placeContextData = nil // Keep place context if it was manually selected
+        // item.webContextData = nil // Keep web context
+        
+        // Clear the potentially styled summary so we regenerate from raw sources (OCR, Web)
+        item.summary = nil
         
         Task {
-            // Re-run extraction and concept creation
             let pipeline = LocalPipelineService(modelContext: modelContext)
+            
+            // 1. Regenerate summary from raw evidence (skips old stale summary)
+            await pipeline.regenerateSummary(for: item)
+            
+            // 2. Extract concepts from the NEW clean summary
             await pipeline.extractConcepts(from: item)
+            
+            // 3. Create user concepts
             try? await pipeline.autoCreateConcepts(from: item)
             
-            // Save changes
             try? modelContext.save()
+            print("✅ Clean & Regenerate complete for item: \(item.id)")
         }
     }
 }

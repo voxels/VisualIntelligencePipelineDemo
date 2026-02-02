@@ -57,4 +57,14 @@ public final class DiverDataStore {
             fatalError("DiverDataStore: Failed to create ModelContainer: \(error)")
         }
     }
+    
+    // MARK: - Helper Queries
+    
+    public func fetchLastSession() -> DiverSession? {
+        var descriptor = FetchDescriptor<DiverSession>(
+            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        return try? mainContext.fetch(descriptor).first
+    }
 }

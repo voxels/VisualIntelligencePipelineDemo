@@ -53,6 +53,7 @@ public final class ProcessedItem: Identifiable {
     public var rating: Double?
     public var purposes: [String] = [] // Migrated from single purpose
     public var productSearchURL: URL?
+    public var productMetadata: String? // Added for persistent context consistency
     /// Aesthetic score for images/videos (0.0-1.0) - used for thumbnail selection and context weighting
     public var aestheticsScore: Double?
     
@@ -144,6 +145,7 @@ public final class ProcessedItem: Identifiable {
         rating: Double? = nil,
         purpose: String? = nil, // Deprecated argument
         purposes: Set<String> = [], // New argument
+        productMetadata: String? = nil,
         processingLog: [String] = [],
         failureCount: Int = 0
     ) {
@@ -177,6 +179,7 @@ public final class ProcessedItem: Identifiable {
         self.location = location
         self.price = price
         self.rating = rating
+        self.productMetadata = productMetadata
         
         // Migrate/Merge
         var combined = purposes

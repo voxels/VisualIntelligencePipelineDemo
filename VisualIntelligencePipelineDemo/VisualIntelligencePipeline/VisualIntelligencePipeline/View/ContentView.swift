@@ -76,9 +76,8 @@ struct SessionItemsView: View {
     
     var body: some View {
         Group {
-            if let session = session {
+            if let _ = session {
                 itemList
-                    .navigationTitle(sessionTitle(for: session))
             } else {
                 ContentUnavailableView(
                     "Select a Session",
@@ -93,16 +92,74 @@ struct SessionItemsView: View {
     }
     
     private var itemList: some View {
-        List {
-            ForEach(sessionItems) { item in
-                ItemRowButton(
-                    item: item,
-                    isSelected: selection?.id == item.id,
-                    onSelect: { selection = item },
-                    onDelete: { deleteItem(item) },
-                    onReprocess: { viewModel.itemToReprocess = item }
-                )
+        List(selection: $selection) {
+            Section {
+                ForEach(sessionItems) { item in
+                    NavigationLink(value: item) {
+                        ItemRow(item: item)
+                    }
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) { deleteItem(item) } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                        Button { viewModel.itemToReprocess = item } label: {
+                            Label("Reprocess", systemImage: "arrow.clockwise")
+                        }
+                        .tint(.orange)
+                    }
+                    .contextMenu {
+                        Button {
+                            item.isFavorite.toggle()
+                        } label: {
+                            Label(
+                                item.isFavorite ? "Unfavorite" : "Favorite",
+                                systemImage: item.isFavorite ? "star.slash" : "star.fill"
+                            )
+                        }
+                        
+                        Button { viewModel.itemToReprocess = item } label: {
+                            Label("Reprocess", systemImage: "arrow.clockwise")
+                        }
+                        
+                        Divider()
+                        
+                        Button(role: .destructive) { deleteItem(item) } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
+                }
+            } header: {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(sessionTitle(for: session!))
+                        .font(.largeTitle)
+                        .bold()
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    if let summary = session?.summary, !summary.isEmpty {
+                        Text(summary)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else if let session = session {
+                         // Placeholder if summary is regenerating
+                         Text("Analyzing session...")
+                             .font(.caption)
+                             .foregroundStyle(.secondary)
+                             .italic()
+                    }
+                }
+                .padding(.top, 8)
+                .padding(.bottom, 16)
+                .textCase(nil) // Prevent automatic uppercase for headers
             }
+        }
+        .navigationTitle("") // Hide default title to avoid truncation/duplication
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: ProcessedItem.self) { item in
+            ReferenceDetailView(item: item)
         }
     }
     

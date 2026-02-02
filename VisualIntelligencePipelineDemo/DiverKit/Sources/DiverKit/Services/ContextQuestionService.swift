@@ -16,9 +16,11 @@ public final class ContextQuestionService: Sendable {
     public init() {}
 
     /// Generates precise definitive statements about the possible activity and an automated purpose based on enrichment data.
-    /// - Parameter data: The enrichment data to process.
+    /// - Parameters:
+    ///   - data: The enrichment data to process.
+    ///   - sessionID: Optional session ID to scope context retrieval. When provided, only uses context from the current session.
     /// - Returns: A tuple containing a concise summary, a list of potential activity statements, a determined purpose, and tags.
-    public func processContext(from data: EnrichmentData) async throws -> (summary: String?, statements: [String], purpose: String?, tags: [String]) {
+    public func processContext(from data: EnrichmentData, sessionID: String? = nil) async throws -> (summary: String?, statements: [String], purpose: String?, tags: [String]) {
         // Retrieve weighted context from Knowledge Graph if available
         var knowledgeContext: [(text: String, weight: Double)] = []
         if let kgService = await Services.shared.knowledgeGraphService {
@@ -26,7 +28,7 @@ public final class ContextQuestionService: Sendable {
              let query = [data.title, data.descriptionText].compactMap { $0 }.joined(separator: "\n")
              if !query.isEmpty {
                  do {
-                    knowledgeContext = try await kgService.retrieveRelevantContext(for: query)
+                    knowledgeContext = try await kgService.retrieveRelevantContext(for: query, sessionID: sessionID)
                  } catch {
                     // Ignore errors, continue without context
                  }
@@ -46,6 +48,9 @@ public final class ContextQuestionService: Sendable {
         var contextParts: [String?] = [
             // Core identification
             data.title != nil ? "Title: \(data.title!)" : nil,
+            data.sourceURL != nil ? "Source URL: \(data.sourceURL!)" : nil,
+            data.productContext != nil ? "Product Info: \(data.productContext!)" : nil,
+            data.visualContext != nil ? "Visual Analysis: \(data.visualContext!)" : nil,
             data.descriptionText != nil ? "Description: \(data.descriptionText!)" : nil,
             
             // Categories and tags
@@ -81,6 +86,9 @@ public final class ContextQuestionService: Sendable {
             
             // QR context
             data.qrContext != nil ? "QR Code: \(data.qrContext!.payload)" : nil,
+            
+            // Session Context (sibling items)
+            data.sessionContext != nil ? "Session Context (Nearby Captures): \(data.sessionContext!)" : nil,
             
             // User history/knowledge graph
             !contextStrings.isEmpty ? "User Context/History: \(contextStrings.joined(separator: "\n"))" : nil

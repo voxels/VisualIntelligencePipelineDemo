@@ -13,13 +13,22 @@ public final class WebViewLinkEnrichmentService: NSObject, LinkEnrichmentService
     // Configurable timeout
     public var timeout: TimeInterval = 10.0
     
+    // Shared process pool to reduce WebContent process launch latency (Cold Start)
+    // This keeps the underlying process warm even if WebViews are destroyed.
+    private static let sharedProcessPool = WKProcessPool()
+    
     public override init() {
         super.init()
     }
     
     public func enrich(url: URL) async throws -> EnrichmentData? {
         return try await withCheckedThrowingContinuation { continuation in
-            let requestWebView = WKWebView(frame: .zero)
+            let config = WKWebViewConfiguration()
+            config.processPool = Self.sharedProcessPool
+            // Optimize for data extraction, not rendering?
+            // config.suppressesIncrementalRendering = true // Maybe?
+            
+            let requestWebView = WKWebView(frame: .zero, configuration: config)
             
             let loader = WebSocketMetadataLoader(
                 webView: requestWebView, 

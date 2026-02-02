@@ -166,7 +166,7 @@ public class SidebarViewModel: ObservableObject {
         }
         
         do {
-            let results = try await kgService.retrieveRelevantContext(for: query)
+            let results = try await kgService.retrieveRelevantContext(for: query, sessionID: nil)
             
             // Extract item IDs from context entries that have high relevance
             // The results are (text, weight) tuples - we look for embedded item IDs
@@ -684,13 +684,28 @@ public class SidebarViewModel: ObservableObject {
     }
     
     // MARK: - Photo/Video Import
-    public func importExternalItem(data: Data, isVideo: Bool = false) {
+    public func importExternalItem(data: Data, filename: String? = nil, isVideo: Bool = false) {
         Task {
             do {
                 print("📸 Import received, size: \(data.count) bytes, isVideo: \(isVideo)")
                 
-                // Create DiverQueueItem
-                let ext = isVideo ? "mov" : "jpg"
+                // Detect appropriate extension
+                let ext: String
+                
+                // 1. Prefer explicit filename extension
+                if let filename = filename, !filename.isEmpty,
+                   let fileExt = (filename as NSString).pathExtension.lowercased() as String?,
+                   !fileExt.isEmpty {
+                    ext = fileExt
+                } 
+                // 2. Sniff Data for Magic Bytes (Don't guess)
+                else if let detected = self.detectExtension(from: data) {
+                    ext = detected
+                } 
+                // 3. Last Resort Fallback (Generic)
+                else {
+                    ext = isVideo ? "mov" : "jpg" // Fallback for unknown streams
+                }
                 let filename = "import-\(UUID().uuidString).\(ext)"
                 let queueDirectory = AppGroupContainer.queueDirectoryURL()!
                 
@@ -724,5 +739,30 @@ public class SidebarViewModel: ObservableObject {
                 print("❌ Failed to process external image: \(error)")
             }
         }
+    }
+    
+    private func detectExtension(from data: Data) -> String? {
+        var values = [UInt8](repeating: 0, count: 12)
+        data.copyBytes(to: &values, count: min(data.count, 12))
+        
+        // JPEG: FF D8 FF
+        if values[0] == 0xFF && values[1] == 0xD8 && values[2] == 0xFF { return "jpg" }
+        
+        // PNG: 89 50 4E 47
+        if values[0] == 0x89 && values[1] == 0x50 && values[2] == 0x4E && values[3] == 0x47 { return "png" }
+        
+        // GIF: 47 49 46
+        if values[0] == 0x47 && values[1] == 0x49 && values[2] == 0x46 { return "gif" }
+        
+        // HEIC/MP4: ....ftyp (offset 4)
+        // Check for 'ftyp' at bytes 4-7
+        if values[4] == 0x66 && values[5] == 0x74 && values[6] == 0x79 && values[7] == 0x70 {
+            // Check major brand
+            let majorBrand = String(bytes: values[8...11], encoding: .ascii)
+            if majorBrand == "heic" { return "heic" }
+            if ["mp41", "mp42", "isom", "qt  "].contains(majorBrand) { return "mov" }
+        }
+        
+        return nil
     }
 }

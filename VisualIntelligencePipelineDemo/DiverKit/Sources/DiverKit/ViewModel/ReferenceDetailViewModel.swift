@@ -103,6 +103,98 @@ public class ReferenceDetailViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Purpose Management
+    
+    public func addPurpose(_ purpose: String, to item: ProcessedItem) {
+        Task { @MainActor in
+            guard !item.purposes.contains(purpose) else { return }
+            
+            withAnimation {
+                item.purposes.append(purpose)
+            }
+            try? item.modelContext?.save()
+            
+            // Remove from suggestions if present
+            if let idx = self.suggestedPurposes.firstIndex(of: purpose) {
+                withAnimation {
+                    self.suggestedPurposes.remove(at: idx)
+                }
+            }
+            
+            // Auto-regenerate summary to reflect new purpose
+            if let service = Services.shared.localPipelineService {
+                print("🔄 Regenerating summary for purpose update...")
+                await service.regenerateSummary(for: item)
+            }
+        }
+    }
+    
+    public func removePurpose(_ purpose: String, from item: ProcessedItem) {
+        Task { @MainActor in
+            if let index = item.purposes.firstIndex(of: purpose) {
+                withAnimation {
+                    item.purposes.remove(at: index)
+                }
+                try? item.modelContext?.save()
+                
+                // Auto-regenerate summary
+                if let service = Services.shared.localPipelineService {
+                    print("🔄 Regenerating summary after purpose removal...")
+                    await service.regenerateSummary(for: item)
+                }
+            }
+        }
+    }
+    
+    public func removeSemanticTag(_ tag: String, from item: ProcessedItem) {
+        Task { @MainActor in
+            var changed = false
+            
+            if let idx = item.purposes.firstIndex(of: tag) {
+                item.purposes.remove(at: idx)
+                changed = true
+            }
+            if let idx = item.tags.firstIndex(of: tag) {
+                item.tags.remove(at: idx)
+                changed = true
+            }
+            if let idx = item.themes.firstIndex(of: tag) {
+                item.themes.remove(at: idx)
+                changed = true
+            }
+            if let idx = item.categories.firstIndex(of: tag) {
+                item.categories.remove(at: idx)
+                changed = true
+            }
+            
+            if changed {
+                try? item.modelContext?.save()
+                
+                // Auto-regenerate summary if tags changed
+                if let service = Services.shared.localPipelineService {
+                    print("🔄 Regenerating summary after semantic tag removal...")
+                    await service.regenerateSummary(for: item)
+                }
+            }
+        }
+    }
+    
+    public func updateTitle(_ title: String, for item: ProcessedItem) {
+        Task { @MainActor in
+            // Basic validation
+             guard title.count > 2, !title.contains("http"), title != item.title else { return }
+            
+             item.title = title
+             try? item.modelContext?.save()
+             
+             // Regenerate summary to reflect new title
+             if let service = Services.shared.localPipelineService {
+                 print("🔄 Regenerating summary after title update...")
+                 await service.regenerateSummary(for: item)
+             }
+        }
+    }
+    
     public func retryProcessing(item: ProcessedItem) {
         // Use ID from item if available, or generate from URL
         let itemId = UUID(uuidString: item.id) ?? UUID()

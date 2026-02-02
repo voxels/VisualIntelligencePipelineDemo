@@ -33,6 +33,7 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
     public let purpose: String?
     public let wrappedLink: String?
     public let masterCaptureID: String?
+    public let photosAssetIdentifier: String?
     public let sessionID: String?
     public let coverImageURL: URL?
     public let placeID: String?
@@ -58,6 +59,7 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
         purpose: String? = nil,
         wrappedLink: String? = nil,
         masterCaptureID: String? = nil,
+        photosAssetIdentifier: String? = nil,
         sessionID: String? = nil,
         coverImageURL: URL? = nil,
         placeID: String? = nil,
@@ -80,6 +82,7 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
         self.purpose = purpose
         self.wrappedLink = wrappedLink
         self.masterCaptureID = masterCaptureID
+        self.photosAssetIdentifier = photosAssetIdentifier
         self.sessionID = sessionID
         self.coverImageURL = coverImageURL
         self.placeID = placeID

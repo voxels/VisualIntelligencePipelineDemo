@@ -36,20 +36,17 @@ struct ResultsOverlayView: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 16) {
-                // Group 1: Visuals (Blue)
+                // Group 1: Actions (Green) - Show first for quick access
+                if !actionResults.isEmpty {
+                    ResultGroup(title: "Actions", color: .green, results: actionResults, onSelect: onSelect)
+                }
+                
+                // Group 2: Visuals (Blue)
                 if !visualResults.isEmpty {
                     ResultGroup(title: "Visuals", color: .blue, results: visualResults, onSelect: onSelect)
                 }
                 
-                // Group 2: Context (Purple)
-                if !contextResults.isEmpty {
-                    ResultGroup(title: "Context", color: .purple, results: contextResults, onSelect: onSelect)
-                }
-                
-                // Group 3: Actions (Green)
-                if !actionResults.isEmpty {
-                    ResultGroup(title: "Actions", color: .green, results: actionResults, onSelect: onSelect)
-                }
+                // Note: Context results are now shown in ContextChipBar
             }
             .padding(.horizontal)
         }

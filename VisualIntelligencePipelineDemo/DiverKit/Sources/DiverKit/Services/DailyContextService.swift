@@ -9,6 +9,7 @@ import Foundation
 import Combine
 import SwiftUI
 import DiverShared
+import SwiftData
 
 /// A service that tracks the user's daily context and generates a running summary using LLM.
 @MainActor
@@ -46,67 +47,81 @@ public class DailyContextService: ObservableObject {
         loadState()
     }
     
+
+    
+    // Derived property, true if we have a summary or if there are items in the DB
     public var hasContent: Bool {
-        !contexts.isEmpty
+        return !dailySummary.contains("No activity") || checkRecentActivityExists()
     }
 
+    // Deprecated: No longer stores text. Just triggers update.
     public func ingest(_ items: [String]) {
-        guard !items.isEmpty else { return }
-        
-        let now = Date()
-        let newEntries = items.map { ContextEntry(text: $0, date: now) }
-        contexts.append(contentsOf: newEntries)
-        
-        cleanOldEntries()
-        saveState()
-        
         Task {
+            // Wait a moment for DB persistence
+            try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
             await updateSummary()
         }
     }
     
-    /// Adds a new context entry (e.g. from a captured session) and updates the daily summary.
+    // Deprecated: No longer stores text. Just triggers update.
     public func addContext(_ text: String) {
-        guard !text.isEmpty else { return }
-        
-        let now = Date()
-        contexts.append(ContextEntry(text: text, date: now))
-        
-        cleanOldEntries()
-        saveState()
-        
         Task {
+            // Wait a moment for DB persistence
+            try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
             await updateSummary()
         }
     }
     
-    private func cleanOldEntries() {
+    private func checkRecentActivityExists() -> Bool {
+        // Quick check without full fetch
+        guard let context = Services.shared.modelContext else { return false }
         let cutoff = Date().addingTimeInterval(-24 * 3600)
-        contexts.removeAll { $0.date < cutoff }
+        let descriptor = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.createdAt > cutoff })
+        let count = (try? context.fetchCount(descriptor)) ?? 0
+        return count > 0
     }
     
-    /// Forces a re-generation of the daily summary based on accumulated context.
+    /// Forces a re-generation of the daily summary based on Live SwiftData.
     public func updateSummary() async {
-        cleanOldEntries()
-        
-        guard !contexts.isEmpty else { 
-            self.dailySummary = "No activity in the last 24 hours."
-            return 
+        guard let context = Services.shared.modelContext else {
+            print("⚠️ DailyContextService: No ModelContext available.")
+            return
         }
         
         self.isGenerating = true
         defer { self.isGenerating = false }
         
-        let sorted = contexts.sorted(by: { $0.date < $1.date })
+        // 1. Fetch Recent Items (Live Data)
+        let cutoff = Date().addingTimeInterval(-24 * 3600)
+        let descriptor = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.createdAt > cutoff },
+            sortBy: [SortDescriptor(\.createdAt, order: .forward)]
+        )
         
+        guard let items = try? context.fetch(descriptor), !items.isEmpty else {
+            self.dailySummary = "No activity in the last 24 hours."
+            saveState()
+            return
+        }
+        
+        // 2. Format Context from Live Items
         var formattedContext = ""
         let calendar = Calendar.current
         
-        for entry in sorted {
-            let prefix = calendar.isDateInToday(entry.date) ? "[Today \(entry.date.formatted(date: .omitted, time: .shortened))]" : "[Yesterday \(entry.date.formatted(date: .omitted, time: .shortened))]"
-            formattedContext += "\(prefix) \(entry.text)\n\n"
+        for item in items {
+            let date = item.createdAt
+            let prefix = calendar.isDateInToday(date) ? "[Today \(date.formatted(date: .omitted, time: .shortened))]" : "[Yesterday \(date.formatted(date: .omitted, time: .shortened))]"
+            
+            // Richer Context Construction
+            var details = "Item: \(item.title ?? "Untitled")"
+            if let loc = item.location { details += " @ \(loc)" }
+            if let sum = item.summary { details += " - \(sum)" }
+            if !item.tags.isEmpty { details += " [\(item.tags.joined(separator: ", "))]" }
+            
+            formattedContext += "\(prefix) \(details)\n\n"
         }
         
+        // 3. Generate Summary via LLM
         do {
             let prompt = """
             Create a concise, one-sentence summary of the user's focus over the last 24 hours based on these activities. 
@@ -121,16 +136,19 @@ public class DailyContextService: ObservableObject {
             """
             
             let summary = try await contextService.summarizeText(prompt)
-            self.dailySummary = summary
-            self.saveState()
+            
+            await MainActor.run {
+                self.dailySummary = summary
+                self.saveState()
+            }
+            
         } catch {
             print("❌ Daily Summary Generation Failed: \(error)")
         }
     }
     
-    /// Clears the daily context
+    /// Clears the daily context summary (Does not delete actual items)
     public func clear() {
-        contexts.removeAll()
         dailySummary = "Start of a fresh day."
         saveState()
     }
@@ -138,11 +156,11 @@ public class DailyContextService: ObservableObject {
     private func saveState() {
         let now = Date()
         self.lastSaveDate = now
-        let state = PersistedState(entries: contexts, summary: dailySummary, date: now)
+        // We now only persist the SUMMARY, not the source entries (which live in DB)
+        let state = PersistedState(entries: [], summary: dailySummary, date: now)
         do {
             let data = try JSONEncoder().encode(state)
             try data.write(to: persistenceURL)
-            // Post notification for app to reload widgets
             NotificationCenter.default.post(name: Notification.Name("com.secretatomics.dailyContextUpdated"), object: nil)
         } catch {
             print("Failed to save daily context: \(error)")
@@ -153,12 +171,8 @@ public class DailyContextService: ObservableObject {
         do {
             let data = try Data(contentsOf: persistenceURL)
             let state = try JSONDecoder().decode(PersistedState.self, from: data)
-            
-            self.contexts = state.entries
             self.dailySummary = state.summary
             self.lastSaveDate = state.date
-            
-            cleanOldEntries()
         } catch {
             // No file or invalid, ignore
         }

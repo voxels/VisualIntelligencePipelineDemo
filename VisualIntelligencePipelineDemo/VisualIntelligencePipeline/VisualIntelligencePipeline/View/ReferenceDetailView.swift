@@ -97,14 +97,6 @@ struct ReferenceDetailContent: View {
                         .fontWeight(.bold)
                         .fixedSize(horizontal: false, vertical: true)
                     
-                    // Session Context Summary
-                    if let sessionSummary = session?.summary {
-                        Text(sessionSummary)
-                            .font(.headline)
-                            .foregroundStyle(.secondary)
-                            .padding(.bottom, 4)
-                    }
-                    
                     if let url = item.resolvedWebURL {
                         Link(url.absoluteString, destination: url)
                             .foregroundStyle(.blue)
@@ -220,12 +212,7 @@ struct ReferenceDetailContent: View {
                                 }
                                 .contextMenu {
                                     Button(role: .destructive) {
-                                        // Remove from all semantic lists
-                                        if let idx = item.purposes.firstIndex(of: tag) { item.purposes.remove(at: idx) }
-                                        if let idx = item.tags.firstIndex(of: tag) { item.tags.remove(at: idx) }
-                                        if let idx = item.themes.firstIndex(of: tag) { item.themes.remove(at: idx) }
-                                        if let idx = item.categories.firstIndex(of: tag) { item.categories.remove(at: idx) }
-                                        try? item.modelContext?.save()
+                                        viewModel.removeSemanticTag(tag, from: item)
                                     } label: {
                                         Label("Delete Tag", systemImage: "trash")
                                     }
@@ -249,6 +236,8 @@ struct ReferenceDetailContent: View {
                             Button {
                                 #if os(iOS)
                                 UIPasteboard.general.string = text
+                                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                                print("📋 Copied text to clipboard: \(text.prefix(50))...")
                                 #else
                                 //NOTE: NSPasteboard logic for macOS
                                 let pasteboard = NSPasteboard.general
@@ -259,22 +248,23 @@ struct ReferenceDetailContent: View {
                                 Label("Copy", systemImage: "doc.on.doc")
                                     .font(.caption)
                             }
-                            .buttonStyle(.bordered)
+                            .buttonStyle(.borderedProminent)
+                            .tint(.blue)
                             
-                            if item.url != nil || item.rawPayload != nil {
+                            if let urlString = item.url, let url = URL(string: urlString) {
                                 Button {
-                                   if let urlString = item.url, let url = URL(string: urlString) {
-                                       #if os(iOS)
-                                       UIApplication.shared.open(url)
-                                       #elseif os(macOS)
-                                       NSWorkspace.shared.open(url)
-                                       #endif
-                                   }
+                                    #if os(iOS)
+                                    print("🔗 Opening URL: \(url)")
+                                    UIApplication.shared.open(url)
+                                    #elseif os(macOS)
+                                    NSWorkspace.shared.open(url)
+                                    #endif
                                 } label: {
                                     Label("Open", systemImage: "arrow.up.right.square")
                                         .font(.caption)
                                 }
-                                .buttonStyle(.bordered)
+                                .buttonStyle(.borderedProminent)
+                                .tint(.green)
                             }
                         }
                         
@@ -368,13 +358,7 @@ struct ReferenceDetailContent: View {
                                 RichWebView(url: url) { title in
                                     // Update title if valid and different
                                     if !title.isEmpty && title != item.title {
-                                        Task { @MainActor in
-                                            // Only update if it looks like a real page title (basic heuristic)
-                                            if title.count > 2 && !title.contains("http") { 
-                                                 item.title = title
-                                                 try? item.modelContext?.save()
-                                            }
-                                        }
+                                        viewModel.updateTitle(title, for: item)
                                     }
                                 }
                                     .frame(height: 300)
@@ -402,18 +386,6 @@ struct ReferenceDetailContent: View {
                     
                     if let place = item.placeContext {
                         PlaceContextView(context: place, baseLocation: item.location)
-                            .overlay(alignment: .topTrailing) {
-                                Button {
-                                    showingEditLocation = true
-                                } label: {
-                                    Image(systemName: "pencil")
-                                        .font(.title3)
-                                        .padding(8)
-                                        .background(Color.white.opacity(0.8))
-                                        .clipShape(Circle())
-                                }
-                                .padding(8)
-                            }
                             .onTapGesture {
                                 showingPlaceDetails = true
                             }
@@ -494,10 +466,7 @@ struct ReferenceDetailContent: View {
                                     .foregroundStyle(.blue)
                                     .contextMenu {
                                         Button(role: .destructive) {
-                                            if let index = item.purposes.firstIndex(of: purpose) {
-                                                item.purposes.remove(at: index)
-                                                try? item.modelContext?.save()
-                                            }
+                                            viewModel.removePurpose(purpose, from: item)
                                         } label: {
                                             Label("Delete Purpose", systemImage: "trash")
                                         }
@@ -521,14 +490,7 @@ struct ReferenceDetailContent: View {
                             FlowLayout(spacing: 8) {
                                 ForEach(viewModel.suggestedPurposes, id: \.self) { suggestion in
                                     Button {
-                                        withAnimation {
-                                            if !item.purposes.contains(suggestion) {
-                                                item.purposes.append(suggestion)
-                                            }
-                                            if let idx = viewModel.suggestedPurposes.firstIndex(of: suggestion) {
-                                                viewModel.suggestedPurposes.remove(at: idx)
-                                            }
-                                        }
+                                        viewModel.addPurpose(suggestion, to: item)
                                     } label: {
                                         HStack(spacing: 4) {
                                             Image(systemName: "plus")
@@ -559,7 +521,7 @@ struct ReferenceDetailContent: View {
                          .font(.subheadline)
                          .foregroundStyle(.secondary)
                          
-                         ForEach(item.questions, id: \.self) { question in
+                         ForEach(Array(Set(item.questions)).sorted(), id: \.self) { question in
                              HStack(alignment: .top) {
                                  Image(systemName: "lightbulb.fill")
                                      .foregroundStyle(.yellow)
@@ -599,18 +561,6 @@ struct ReferenceDetailContent: View {
                     EditLocationView(item: item)
                 }
                 
-                // Map Button
-                if let location = item.location, !location.isEmpty {
-                    Button {
-                        showingMap = true
-                    } label: {
-                        Label("View Map", systemImage: "map")
-                    }
-                    .sheet(isPresented: $showingMap) {
-                        GeocodingLocationViewWrapper(locationName: location)
-                    }
-                }
-                
                 // Retry button for failed items
                 if item.status == .failed {
                     Button {
@@ -618,6 +568,13 @@ struct ReferenceDetailContent: View {
                     } label: {
                         Label("Retry", systemImage: "arrow.clockwise")
                     }
+                }
+                
+                // Process Now button - always visible
+                Button {
+                    viewModel.refreshLinkMetadata(item: item)
+                } label: {
+                    Label("Process Now", systemImage: "bolt.fill")
                 }
 
                 // Open original URL
@@ -1579,6 +1536,7 @@ struct CaptureSiblingsView: View {
     // We must filter in the initializer or body if the dataset is small, or use a custom fetch.
     // Given the constraints and likely small library size for this MVP, we will query all and filter.
     @Query private var allItems: [ProcessedItem]
+    @State private var selectedSibling: ProcessedItem?
     
     var siblings: [ProcessedItem] {
         allItems.filter { $0.masterCaptureID == masterID && $0.id != currentID }
@@ -1599,11 +1557,19 @@ struct CaptureSiblingsView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(siblings) { sibling in
-                            NavigationLink(value: sibling) {
+                            Button {
+                                selectedSibling = sibling
+                            } label: {
                                 SiblingThumbnailView(item: sibling)
                             }
+                            .buttonStyle(.plain)
                         }
                     }
+                }
+            }
+            .sheet(item: $selectedSibling) { sibling in
+                NavigationStack {
+                    ReferenceDetailView(item: sibling)
                 }
             }
         }
@@ -1614,26 +1580,11 @@ struct SiblingThumbnailView: View {
     let item: ProcessedItem
     
     var body: some View {
-        if let data = item.rawPayload, let uiImage = UIImage(data: data) {
-            Image(uiImage: uiImage)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 80, height: 80)
-                .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
-                )
-        } else {
-            Rectangle()
-                .fill(Color.secondary.opacity(0.1))
-                .frame(width: 80, height: 80)
-                .cornerRadius(8)
-                .overlay(
-                    Image(systemName: "photo")
-                        .foregroundStyle(.secondary)
-                )
-        }
+        ThumbnailView(item: item, size: 80, cornerRadius: 8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+            )
     }
 }
 

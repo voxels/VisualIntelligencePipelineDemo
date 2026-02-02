@@ -41,7 +41,6 @@ public class FoundationModelsIntentClassifier {
         tagger.string = trimmed
         
         var foundVerb: String?
-        var foundNoun: String?
         var isQuestion = false
         
         tagger.enumerateTags(in: trimmed.startIndex..<trimmed.endIndex, unit: .word, scheme: .lexicalClass, options: [.omitPunctuation, .omitWhitespace]) { tag, range in
@@ -51,7 +50,7 @@ public class FoundationModelsIntentClassifier {
                 if tag == .verb {
                     foundVerb = word
                 } else if tag == .noun {
-                    foundNoun = word
+                    // foundNoun was unused
                 } else if tag == .pronoun || tag == .adverb {
                     if ["who", "what", "where", "when", "how", "why"].contains(word) {
                         isQuestion = true

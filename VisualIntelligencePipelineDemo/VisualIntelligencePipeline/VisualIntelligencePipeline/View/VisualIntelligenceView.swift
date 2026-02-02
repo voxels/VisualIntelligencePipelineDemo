@@ -31,66 +31,101 @@ public struct VisualIntelligenceView: View {
     public init() {}
     
     public var body: some View {
-        ZStack {
-            backgroundLayer
-            navigationLayer
-            hudLayer
-        }
-        .onAppear {
-            viewModel.cameraManager.startSession()
-            viewModel.setupCameraBridge()
-            UIDevice.current.beginGeneratingDeviceOrientationNotifications()
-            NotificationCenter.default.addObserver(forName: UIDevice.orientationDidChangeNotification, object: nil, queue: .main) { _ in
-                let newOrientation = UIDevice.current.orientation
-                if newOrientation.isValidInterfaceOrientation {
-                    self.orientation = newOrientation
-                    Task { @MainActor in
-                        viewModel.currentOrientation = visionOrientation(from: newOrientation)
+        NavigationStack {
+            ZStack {
+                backgroundLayer
+                navigationLayer
+                hudLayer
+            }
+            .onAppear {
+                if let scanID = navigationManager.scanSessionID {
+                    viewModel.activeSessionID = scanID
+                    print("🔄 Visual Intelligence: Resuming session \(scanID)")
+                } else {
+                    // If nil, defaults to new UUID in ViewModel init, or we can explicit reset
+                    // But ViewModel usually persists? If we want fresh every time, we should reset if nil
+                    // However, view model is StateObject, so it persists. We should probably reset if no ID passed.
+                    // For now, let's respect the ID if passed.
+                }
+                
+                viewModel.cameraManager.startSession()
+                viewModel.setupCameraBridge()
+                UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+                NotificationCenter.default.addObserver(forName: UIDevice.orientationDidChangeNotification, object: nil, queue: .main) { _ in
+                    let newOrientation = UIDevice.current.orientation
+                    if newOrientation.isValidInterfaceOrientation {
+                        self.orientation = newOrientation
+                        Task { @MainActor in
+                            viewModel.currentOrientation = visionOrientation(from: newOrientation)
+                        }
+                    }
+                }
+                
+                Task { @MainActor in
+                    viewModel.checkPendingReprocess()
+                    // FEATURE: Resume Context if "Add to Context" was used
+                    if let scanID = navigationManager.scanSessionID {
+                        viewModel.locateContextOnLoad(subservientTo: scanID)
+                        await viewModel.resumeSessionContext(scanID)
+                    } else {
+                        viewModel.locateContextOnLoad(subservientTo: nil)
                     }
                 }
             }
-            
-            Task { @MainActor in
-                viewModel.checkPendingReprocess()
+            .onChange(of: viewModel.activeObservation) { oldVal, newVal in
+                withAnimation(.linear(duration: 0.2)) {
+                    viewModel.updatePeelAmount(newVal != nil ? 0.3 : 0.0)
+                }
             }
-        }
-        .onChange(of: viewModel.activeObservation) { oldVal, newVal in
-            withAnimation(.linear(duration: 0.2)) {
-                viewModel.updatePeelAmount(newVal != nil ? 0.3 : 0.0)
+            .onDisappear {
+                UIDevice.current.endGeneratingDeviceOrientationNotifications()
+                viewModel.reset()
             }
-        }
-        .onDisappear {
-            UIDevice.current.endGeneratingDeviceOrientationNotifications()
-            viewModel.reset()
-        }
-        .navigationTitle("Visual Intelligence")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar(.hidden, for: .tabBar)
-        .sheet(isPresented: $viewModel.showingPlaceSelection) {
-            PlaceSelectionMapView(viewModel: viewModel)
-        }
-        .sheet(isPresented: $viewModel.showingDocumentView) {
-            if let doc = viewModel.rectifiedDocument {
-                DocumentDetailView(viewModel: viewModel, image: doc)
+            .navigationTitle("Visual Intelligence")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Dismiss") {
+                        withAnimation {
+                            navigationManager.isScanActive = false
+                        }
+                    }
+                }
             }
-        }
-        .alert("Add Context", isPresented: $isEnteringCustomContext) {
-            TextField("E.g. Gift for Mom", text: $customContextText)
-            Button("Cancel", role: .cancel) { }
-            Button("Add") {
-                viewModel.addUserContext(customContextText)
+            .toolbar(.hidden, for: .tabBar)
+            .sheet(isPresented: $viewModel.showingPlaceSelection) {
+                PlaceSelectionMapView(viewModel: viewModel)
             }
-        } message: {
-            Text("Add a custom label or purpose to this capture.")
-        }
-        .alert("Save Failed", isPresented: $viewModel.showingSaveError) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(viewModel.saveErrorMessage ?? "An unknown error occurred.")
-        }
-        .fullScreenCover(isPresented: $showingFullScreenReview) {
-            if let image = viewModel.capturedImage {
-                FullScreenImageView(image: image)
+            .sheet(isPresented: $viewModel.showingDocumentView) {
+                if let doc = viewModel.rectifiedDocument {
+                    DocumentDetailView(viewModel: viewModel, image: doc)
+                }
+            }
+            .alert("Add Context", isPresented: $isEnteringCustomContext) {
+                TextField("E.g. Gift for Mom", text: $customContextText)
+                Button("Cancel", role: .cancel) { }
+                Button("Add") {
+                    viewModel.addUserContext(customContextText)
+                }
+            } message: {
+                Text("Add a custom label or purpose to this capture.")
+            }
+            .alert("Save Failed", isPresented: $viewModel.showingSaveError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(viewModel.saveErrorMessage ?? "An unknown error occurred.")
+            }
+            .fullScreenCover(isPresented: $showingFullScreenReview) {
+                if let image = viewModel.capturedImage {
+                    FullScreenImageView(image: image)
+                }
+            }
+            .onChange(of: viewModel.shouldDismiss) {_, newValue in
+                if newValue {
+                    withAnimation {
+                        navigationManager.isScanActive = false
+                    }
+                }
             }
         }
     }
@@ -116,23 +151,16 @@ public struct VisualIntelligenceView: View {
     private var navigationLayer: some View {
         AnyView(
             VStack(spacing: 0) {
-                HStack {
-                     Button {
-                        navigationManager.isScanActive = false
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.title3.bold())
-                            .foregroundStyle(.white)
-                            .padding(12)
-                            .glass(cornerRadius: 30)
-                    }
-                    Spacer()
-                }
-                .padding(.top, 50)
-                .padding(.horizontal, 20)
+                // Top Stack: Location + Context
                 
                 SessionLocationBar(viewModel: viewModel)
                     .padding(.top, 8)
+                
+                if viewModel.isReviewing {
+                    ContextChipBar(viewModel: viewModel, isEnteringCustomContext: $isEnteringCustomContext)
+                        .padding(.vertical, 8)
+                        .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
+                }
                 
                 Spacer()
             }
@@ -171,7 +199,6 @@ public struct VisualIntelligenceView: View {
         case .landscapeLeft: return .down
         case .landscapeRight: return .up
         case .portraitUpsideDown: return .left
-        case .portraitUpsideDown: return .left
         default: return .right
         }
     }
@@ -208,7 +235,8 @@ struct VisualIntelligenceReviewLayer: View {
                              SiftedSubjectView(siftedImage: siftedImage, boundingBox: box, peelAmount: $viewModel.peelAmount)
                         } else if let box = viewModel.siftedBoundingBox {
                             GeometryReader { proxy in
-                                let rect = viewModel.convertBoundingBox(box, to: proxy.size)
+                                let ratio = capturedImage.size.width / capturedImage.size.height
+                                let rect = viewModel.convertBoundingBox(box, to: proxy.size, imageAspectRatio: ratio)
                                 RoundedRectangle(cornerRadius: 16)
                                     .stroke(LinearGradient(colors: [.white, .blue.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 3)
                                     .frame(width: rect.width, height: rect.height)
@@ -220,16 +248,10 @@ struct VisualIntelligenceReviewLayer: View {
         } else {
             Color.black.ignoresSafeArea()
             VStack(spacing: 16) {
-                Image(systemName: "photo.badge.exclamationmark")
-                    .font(.largeTitle)
-                    .foregroundStyle(.white)
-                Text("Unable to load image for reprocessing")
-                    .foregroundStyle(.white)
-                Button("Cancel") {
-                    viewModel.isReviewing = false
-                    viewModel.reset()
-                }
-                .buttonStyle(.bordered)
+                ProgressView()
+                    .tint(.white)
+                Text("Loading image...")
+                    .foregroundStyle(.white.opacity(0.7))
             }
         }
     }
@@ -247,7 +269,15 @@ struct VisualIntelligenceCameraLayer: View {
                         SiftedSubjectView(siftedImage: image, boundingBox: box, peelAmount: $viewModel.peelAmount)
                     } else if let box = viewModel.siftedBoundingBox {
                         GeometryReader { proxy in
-                            let rect = viewModel.convertBoundingBox(box, to: proxy.size)
+                             // Calculate aspect ratio based on orientation
+                            let ratio: CGFloat = {
+                                switch viewModel.currentOrientation {
+                                case .left, .right, .leftMirrored, .rightMirrored: return 0.75 // 3:4
+                                default: return 1.333 // 4:3
+                                }
+                            }()
+                            
+                            let rect = viewModel.convertBoundingBox(box, to: proxy.size, imageAspectRatio: ratio)
                             RoundedRectangle(cornerRadius: 16)
                                 .stroke(LinearGradient(colors: [.white, .blue.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 3)
                                 .frame(width: rect.width, height: rect.height)
@@ -315,8 +345,7 @@ struct VisualIntelligenceHUD: View {
                 }
             }
             
-            ContextChipBar(viewModel: viewModel, isEnteringCustomContext: $isEnteringCustomContext)
-                .padding(.vertical, 8)
+            // ContextChipBar Removed (Moved to Top)
             
             // Control Cluster
             HStack(spacing: 20) {
@@ -450,12 +479,12 @@ extension VisualIntelligenceView {
             if let url = result.primaryURL {
                 UIApplication.shared.open(url)
             }
-        case .siftedSubject(let obs):
+        case .siftedSubject(let observation, _):
             withAnimation {
                 if viewModel.activeObservation != nil {
                     viewModel.activeObservation = nil
                 } else {
-                    viewModel.activeObservation = obs.0
+                    viewModel.activeObservation = observation
                 }
             }
         default:
@@ -654,20 +683,17 @@ struct ResultsOverlayView: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 16) {
-                // Group 1: Visuals (Blue)
+                // Group 1: Actions (Green) - Show first for quick access
+                if !actionResults.isEmpty {
+                    ResultGroup(title: "Actions", color: .green, results: actionResults, onSelect: onSelect)
+                }
+                
+                // Group 2: Visuals (Blue)
                 if !visualResults.isEmpty {
                     ResultGroup(title: "Visuals", color: .blue, results: visualResults, onSelect: onSelect)
                 }
                 
-                // Group 2: Context (Purple)
-                if !contextResults.isEmpty {
-                    ResultGroup(title: "Context", color: .purple, results: contextResults, onSelect: onSelect)
-                }
-                
-                // Group 3: Actions (Green)
-                if !actionResults.isEmpty {
-                    ResultGroup(title: "Actions", color: .green, results: actionResults, onSelect: onSelect)
-                }
+                // Note: Context results are now shown in ContextChipBar below
             }
             .padding(.horizontal)
         }
@@ -733,12 +759,22 @@ struct ContextChipBar: View {
     @ObservedObject var viewModel: VisualIntelligenceViewModel
     @Binding var isEnteringCustomContext: Bool
     
+    // Context results from intelligence pipeline (semantic, purpose, entertainment)
+    private var contextResults: [IntelligenceResult] {
+        viewModel.results.filter {
+            if case .semantic = $0 { return true }
+            if case .purpose = $0 { return true }
+            if case .entertainment = $0 { return true }
+            return false
+        }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             
             // Header
             HStack {
-                Text("Describe Context")
+                Text("Context")
                 .font(.caption)
                 .fontWeight(.bold)
                 .textCase(.uppercase)
@@ -812,9 +848,39 @@ struct ContextChipBar: View {
                             }
                         }
                     }
+                    
+                    // 4. Context Results (semantic, entertainment) - Purple accent
+                    ForEach(contextResults, id: \.self) { result in
+                        ContextResultPill(result: result)
+                            .onTapGesture {
+                                toggleContext(result.title)
+                            }
+                    }
                 }
                 .padding(.horizontal)
             }
+        }
+    }
+    
+    private struct ContextResultPill: View {
+        let result: IntelligenceResult
+        
+        var body: some View {
+            HStack(spacing: 6) {
+                Image(systemName: result.icon)
+                    .font(.caption)
+                Text(result.title)
+                    .fontWeight(.medium)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(Color.purple.opacity(0.3))
+            .clipShape(Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(Color.purple.opacity(0.5), lineWidth: 1)
+            )
+            .foregroundStyle(.white)
         }
     }
     
@@ -979,3 +1045,4 @@ struct FullScreenImageView: View {
         }
     }
 }
+

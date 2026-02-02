@@ -50,8 +50,9 @@ public struct PlaceContext: Codable, Sendable {
     public let website: String?
     public let photos: [String]?
     public let tips: [String]?
+    public let contactIdentifier: String?  // Associated contact ID (if location came from a contact's address)
     
-    public init(name: String? = nil, categories: [String] = [], placeID: String? = nil, address: String? = nil, rating: Double? = nil, isOpen: Bool? = nil, latitude: Double? = nil, longitude: Double? = nil, priceLevel: String? = nil, phoneNumber: String? = nil, website: String? = nil, photos: [String]? = nil, tips: [String]? = nil) {
+    public init(name: String? = nil, categories: [String] = [], placeID: String? = nil, address: String? = nil, rating: Double? = nil, isOpen: Bool? = nil, latitude: Double? = nil, longitude: Double? = nil, priceLevel: String? = nil, phoneNumber: String? = nil, website: String? = nil, photos: [String]? = nil, tips: [String]? = nil, contactIdentifier: String? = nil) {
         self.name = name
         self.categories = categories
         self.placeID = placeID
@@ -65,6 +66,7 @@ public struct PlaceContext: Codable, Sendable {
         self.website = website
         self.photos = photos
         self.tips = tips
+        self.contactIdentifier = contactIdentifier
     }
 }
 

@@ -1,5 +1,7 @@
 import Foundation
 import Photos
+import AVFoundation
+import Vision
 
 #if canImport(UIKit)
 import UIKit
@@ -128,7 +130,7 @@ public final class PhotosAssetLoader {
         return fetchResult.count > 0
     }
     
-    private func requestAuthorization() async -> PHAuthorizationStatus {
+    public func requestAuthorization() async -> PHAuthorizationStatus {
         let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
         
         if status == .notDetermined {
@@ -140,5 +142,78 @@ public final class PhotosAssetLoader {
         }
         
         return status
+    }
+    
+    // MARK: - Smart Frame Extraction
+    
+    /// Load the best representative frame for an asset (Video or Image)
+    /// For videos: Extracts the most aesthetically pleasing frame using `AestheticsScoringService`
+    /// For images: Returns the high-quality image data
+    /// - Parameter identifier: The PHAsset localIdentifier
+    /// - Returns: Data object representing the best image/frame
+    public func loadBestFrame(identifier: String) async -> Data? {
+        // Request authorization if needed
+        let status = await requestAuthorization()
+        guard status == .authorized || status == .limited else {
+            print("⚠️ PhotosAssetLoader: Not authorized to access Photos library")
+            return nil
+        }
+        
+        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
+        guard let asset = fetchResult.firstObject else {
+            print("⚠️ PhotosAssetLoader: Asset not found for identifier: \(identifier)")
+            return nil
+        }
+        
+        if asset.mediaType == .video {
+            return await loadBestVideoFrame(asset: asset)
+        } else {
+            return await loadImageData(identifier: identifier)
+        }
+    }
+    
+    private func loadBestVideoFrame(asset: PHAsset) async -> Data? {
+        // 1. Get AVAsset URL
+        let videoOptions = PHVideoRequestOptions()
+        videoOptions.isNetworkAccessAllowed = true
+        videoOptions.deliveryMode = .highQualityFormat
+        
+        // Use URL (Sendable) instead of AVAsset to avoid data race warning
+        let videoURL: URL? = await withCheckedContinuation { continuation in
+            PHImageManager.default().requestAVAsset(forVideo: asset, options: videoOptions) { avAsset, _, _ in
+                if let urlAsset = avAsset as? AVURLAsset {
+                    continuation.resume(returning: urlAsset.url)
+                } else {
+                    continuation.resume(returning: nil)
+                }
+            }
+        }
+        
+        guard let url = videoURL else {
+            print("⚠️ PhotosAssetLoader: Could not get AVURLAsset URL for video, falling back to poster frame")
+            return await loadImageData(identifier: asset.localIdentifier)
+        }
+        
+        // 2. Extract best frame
+        if #available(iOS 17.0, macOS 14.0, *) {
+            do {
+                let aestheticsService = AestheticsScoringService()
+                let bestFrames = try await aestheticsService.extractBestFrames(from: url, count: 1)
+                
+                if let bestFrame = bestFrames.first?.image {
+                    #if canImport(UIKit)
+                    let uiImage = UIImage(cgImage: bestFrame)
+                    return uiImage.jpegData(compressionQuality: 0.8)
+                    #else
+                    return nil // macOS handling if needed, but this app is primarily iOS
+                    #endif
+                }
+            } catch {
+                print("❌ PhotosAssetLoader: Failed to extract video frame: \(error)")
+            }
+        }
+        
+        // Fallback to standard image load (poster frame)
+        return await loadImageData(identifier: asset.localIdentifier)
     }
 }

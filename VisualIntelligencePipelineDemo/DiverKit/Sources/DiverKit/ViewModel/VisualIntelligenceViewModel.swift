@@ -18,8 +18,10 @@ import Photos
 import DiverShared
 import CoreImage
 import PhotosUI
+import CoreLocation
 import AVFoundation
 import CoreMedia
+import SwiftData
 
 // A lightweight wrapper to explicitly allow passing non-Sendable types across concurrency domains.
 private struct UnsafeSendable<T>: @unchecked Sendable {
@@ -52,6 +54,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
     @Published public var selectedPurposes: Set<String> = []
     @Published public var selectedResults: Set<IntelligenceResult> = []
     @Published public var sessionTitle: String? // Explicit user-selected title
+    @Published public var shouldDismiss: Bool = false
     
     // Map Selection
     @Published public var placeCandidates: [EnrichmentData] = []
@@ -135,6 +138,58 @@ public class VisualIntelligenceViewModel: ObservableObject {
     }
 
     
+    // MARK: - Context Restoration
+    
+    /// Reconstructs the accumulated context from an existing session's history.
+    /// This should ONLY be called when explicitily "Adding to Context" (resuming a session).
+    public func resumeSessionContext(_ sessionID: String) async {
+        guard let context = Services.shared.modelContext else { return }
+        
+        print("🔄 VI ViewModel: Resuming context for session \(sessionID)")
+        
+        // 1. Fetch Session Metadata (to restore title/location)
+        let sessionDescriptor = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+        if let session = try? context.fetch(sessionDescriptor).first {
+             await MainActor.run {
+                 self.sessionTitle = session.title
+                 if let name = session.locationName {
+                     // We don't overwrite selectedPlace if it's already set by locateContextOnLoad, 
+                     // but we can hint it.
+                     print("📍 Resumed Session Location: \(name)")
+                 }
+             }
+        }
+        
+        // 2. Fetch Processed Items (History)
+        // We want the most recent items first? Or chronological? 
+        // Accumulated context is usually "Past Captures", so chronological order might make sense to tell a story,
+        // but often we just append. Let's fetch chronological.
+        let itemDescriptor = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.sessionID == sessionID },
+            sortBy: [SortDescriptor(\.createdAt, order: .forward)]
+        )
+        
+        if let items = try? context.fetch(itemDescriptor) {
+            let histories = items.compactMap { item -> String? in
+                guard let title = item.title else { return nil }
+                // Reconstruct a summary line similar to how it's built in capture
+                var access = "Capture: \(title)"
+                if let summ = item.summary {
+                    access += " - \(summ)"
+                }
+                if let purpose = item.purposes.first {
+                    access += " [\(purpose)]"
+                }
+                return access
+            }
+            
+            await MainActor.run {
+                self.accumulatedContexts = histories
+                print("✅ VI ViewModel: Reconstructed \(histories.count) context items.")
+            }
+        }
+    }
+
     // Capture Location & Context
     public var currentCaptureCoordinate: CLLocationCoordinate2D?
     public var currentCapturePlaceID: String?
@@ -177,6 +232,11 @@ public class VisualIntelligenceViewModel: ObservableObject {
             self.linkGenerator = linkGenerator
         } else {
             setupDiverLinkGenerator()
+        }
+        
+        // Eagerly request Photo Library access to ensure PHAsset lookups work
+        Task {
+            _ = await PhotosAssetLoader.shared.requestAuthorization()
         }
     }
     
@@ -256,7 +316,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
             self.selectedPlace = enrichment
         }
         */
-        self.selectedPlace = nil // Explicitly clear to ensure fresh search priority
+        // Only clear if not pinned
+        if !isLocationPinned {
+            self.selectedPlace = nil
+        }
         
         // 4. Enter Review Mode
         self.isReviewing = true
@@ -270,6 +333,187 @@ public class VisualIntelligenceViewModel: ObservableObject {
         Services.shared.pendingReprocessContext = nil
     }
     
+    // MARK: - Location Initialization
+    public func locateContextOnLoad(subservientTo sessionID: String? = nil) {
+        Task {
+            // First Principles: Only restore location if we are explicitly entering an existing context.
+            // If starting a new session, we want fresh location data.
+            
+            guard let context = Services.shared.modelContext else { return }
+            
+            if let targetSessionID = sessionID {
+                // RESTORE: Fetch specific session to ensure continuity
+                let descriptor = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == targetSessionID })
+                if let session = try? context.fetch(descriptor).first,
+                   let lat = session.latitude, let lon = session.longitude {
+                    let placeName = session.locationName ?? "Resumed Location"
+                    
+                    let restoredPlace = EnrichmentData(
+                        title: placeName,
+                        descriptionText: "Restored from session context",
+                        categories: ["Resumed"],
+                        location: placeName,
+                        placeContext: PlaceContext(name: placeName, categories: [], latitude: lat, longitude: lon)
+                    )
+                    
+                    await MainActor.run {
+                        self.selectedPlace = restoredPlace
+                        self.currentCapturePlaceID = session.placeID
+                        print("📍 VI ViewModel: Restored location for session \(targetSessionID): \(placeName)")
+                    }
+                }
+            } else {
+                // 2. New Context Flow (Fallback)
+                print("📍 Context: Initializing fresh location lookup (No previous session context found)...")
+                
+                await MainActor.run {
+                    if !isLocationPinned {
+                        self.selectedPlace = nil
+                        self.currentCapturePlaceID = nil
+                    }
+                }
+                
+                guard let locService = Services.shared.locationService else { return }
+                
+                // A. Get Coordinate
+                guard let currentLoc = await locService.getCurrentLocation() else {
+                    print("⚠️ Context: Could not determine current device location.")
+                    return
+                }
+                
+                await MainActor.run { self.currentCaptureCoordinate = currentLoc.coordinate }
+                
+                // B. Check Contacts (Home/Work)
+                if let contactService = Services.shared.contactService {
+                    if let home = try? await contactService.getHomeLocation(), home.distance(from: currentLoc) < 150 {
+                        let homePlace = EnrichmentData(
+                            title: "Home",
+                            descriptionText: "Your Personal Context",
+                            categories: ["Personal", "Home"],
+                            location: "Home",
+                            placeContext: PlaceContext(name: "Home", categories: ["Personal"], latitude: home.coordinate.latitude, longitude: home.coordinate.longitude)
+                        )
+                        await MainActor.run { self.selectPlace(homePlace); self.isLocationPinned = true }
+                        return
+                    }
+                    
+                    if let work = try? await contactService.getWorkLocation(), work.distance(from: currentLoc) < 150 {
+                        let workPlace = EnrichmentData(
+                            title: "Work",
+                            descriptionText: "Your Workplace",
+                            categories: ["Personal", "Work"],
+                            location: "Work",
+                            placeContext: PlaceContext(name: "Work", categories: ["Personal"], latitude: work.coordinate.latitude, longitude: work.coordinate.longitude)
+                        )
+                        await MainActor.run { self.selectPlace(workPlace); self.isLocationPinned = true }
+                        return
+                    }
+                }
+                
+                // C. MapKit Reverse Geocode
+                let geocoder = CLGeocoder()
+                do {
+                    let placemarks = try await geocoder.reverseGeocodeLocation(currentLoc)
+                    if let best = placemarks.first {
+                        let name = best.name ?? best.thoroughfare ?? "Unknown Location"
+                        let address = [best.thoroughfare, best.locality].compactMap { $0 }.joined(separator: ", ")
+                        
+                        print("📍 Context: MapKit found '\(name)'")
+                        
+                        var finalPlace = EnrichmentData(
+                            title: name,
+                            image: nil,
+                            categories: ["Location"],
+                            location: address,
+                            placeContext: PlaceContext(name: name, categories: [], placeID: "mk-\(name)", address: address, latitude: currentLoc.coordinate.latitude, longitude: currentLoc.coordinate.longitude)
+                        )
+                        
+                        // D. Enrich with Foursquare
+                        if let fsq = Services.shared.foursquareService {
+                            if let enriched = try? await fsq.enrich(query: name, location: currentLoc.coordinate) {
+                                print("📍 Foursquare enriched MapKit place.")
+                                finalPlace = enriched
+                            }
+                        }
+                        
+                        await MainActor.run {
+                            if self.selectedPlace == nil {
+                                self.selectPlace(finalPlace)
+                            }
+                        }
+                    }
+                } catch {
+                    print("⚠️ Context: Reverse geocoding failed: \(error)")
+                }
+            }
+        }
+    }
+    
+    // Helper to fetch session location and hydrate context
+    private func fetchSessionLocation(_ id: String) async -> EnrichmentData? {
+        guard let modelContext = Services.shared.modelContext else {
+            print("❌ ViewModel: Missing ModelContext in Services")
+            return nil
+        }
+        
+        let sessionID = id
+        let descriptor = FetchDescriptor<DiverSession>(
+            predicate: #Predicate { $0.sessionID == sessionID }
+        )
+        
+        do {
+            let results = try modelContext.fetch(descriptor)
+            guard let session = results.first else {
+                print("❌ ViewModel: Session \(sessionID) not found in DB. Count: \(results.count)")
+                return nil 
+            }
+            
+            // Hydrate Context History
+            // Fetch items for this session to rebuild accumulated context
+            let itemDescriptor = FetchDescriptor<ProcessedItem>(
+                predicate: #Predicate { $0.sessionID == sessionID },
+                sortBy: [SortDescriptor(\.createdAt)]
+            )
+            if let items = try? modelContext.fetch(itemDescriptor) {
+                let histories = items.compactMap { item -> String? in
+                    guard let title = item.title else { return nil }
+                    return "Capture: \(title)"
+                }
+                await MainActor.run {
+                    self.accumulatedContexts = histories
+                }
+            }
+            
+            // Hydrate Location
+            if let lat = session.latitude, let lon = session.longitude {
+                let name = session.locationName ?? session.title ?? "Session Location"
+                let placeID = session.placeID ?? "session-\(id)"
+                
+                // Construct PlaceContext
+                let placeContext = PlaceContext(
+                    name: name,
+                    categories: [],
+                    placeID: placeID,
+                    address: nil, // Could fetch if we had it
+                    latitude: lat,
+                    longitude: lon
+                )
+                
+                return EnrichmentData(
+                    title: name,
+                    descriptionText: "Resumed Session Location",
+                    categories: ["Location"],
+                    location: name,
+                    placeContext: placeContext
+                )
+            }
+        } catch {
+            print("⚠️ ViewModel: Failed to fetch session: \(error)")
+        }
+        
+        return nil 
+    }
+
     public func analyzeReprocessImage(_ image: PlatformImage) {
         #if canImport(UIKit)
         guard let cgImage = image.cgImage else { return }
@@ -472,17 +716,25 @@ public class VisualIntelligenceViewModel: ObservableObject {
                     
                     #if canImport(UIKit)
                     let cgImage = image?.cgImage
+                    // Use the actual image orientation, not the device's current orientation
+                    let visionOrientation = image?.imageOrientation.cgImagePropertyOrientation ?? self.currentOrientation
                     #elseif canImport(AppKit)
                     let cgImage = image?.cgImage(forProposedRect: nil, context: nil, hints: nil)
+                    let visionOrientation: CGImagePropertyOrientation = .up // NSImage typically normalizes or we assume up
                     #else
                     let cgImage: CGImage? = nil
+                    let visionOrientation: CGImagePropertyOrientation = .up
                     #endif
                     
                     if let cgImage = cgImage {
                          // Capture Mode: Full Analysis (mode: .fullAnalysis)
                          // We run Barcode + Text + Classification AND Check for Sifted ROI
+                         
                     do {
-                        let fullResults = try await self.processor.process(image: cgImage, orientation: self.currentOrientation, mode: .fullAnalysis)
+                        print("📸 Vision Orientation: \(visionOrientation.rawValue) (Raw: \(image?.imageOrientation.rawValue ?? -1))")
+                        
+                        let fullResults = try await self.processor.process(image: cgImage, orientation: visionOrientation, mode: .fullAnalysis)
+                        print("✅ Raw Analysis Results: \(fullResults.map { $0.title })")
                         
                         // Override the results with the HIGH FIDELITY capture results
                         var resultsWithPurpose = fullResults
@@ -496,29 +748,34 @@ public class VisualIntelligenceViewModel: ObservableObject {
                             // Capture history on MainActor before awaiting
                             let currentHistory = self.accumulatedContexts
                             
-                            // Call detached enrichment
-                            // Call detached enrichment
-                            let (enriched, stepSummary, candidates) = await self.enrichContext(from: fullResults, accumulatedContext: currentHistory)
+                            // 1. Determine Location Truthing Strategy (Early)
+                            // Priority: Imported Metadata > Live GPS
+                            var currentLocation: CLLocation? = self.capturedMediaLocation
+                            
+                            if currentLocation == nil, let locService = Services.shared.locationService {
+                                 // Only fetch live location if we don't have explicit media metadata
+                                 currentLocation = await locService.getCurrentLocation()
+                            }
+                            
+                            // Update State immediately so UI reflects the "truth"
+                            if let loc = currentLocation {
+                                 await MainActor.run {
+                                     self.currentCaptureCoordinate = loc.coordinate
+                                 }
+                            }
+                            
+                            // 2. Call Enrichment with Authoritative Location
+                            let (enriched, stepSummary, candidates) = await self.enrichContext(
+                                from: fullResults, 
+                                accumulatedContext: currentHistory,
+                                locationOverride: currentLocation
+                            )
                             
                             // Home/Work Enrichment
                             var finalCandidates = candidates
                             if let contactService = Services.shared.contactService {
                                 let home = try? await contactService.getHomeLocation()
                                 let work = try? await contactService.getWorkLocation()
-                                
-                                // Check if we have a valid current location to compare distance to
-                                // Check if we have a valid current location to compare distance to
-                                var currentLocation: CLLocation? = self.capturedMediaLocation
-                                
-                                if currentLocation == nil, let locService = Services.shared.locationService {
-                                     currentLocation = await locService.getCurrentLocation()
-                                }
-                                
-                                if let loc = currentLocation {
-                                     await MainActor.run {
-                                         self.currentCaptureCoordinate = loc.coordinate
-                                     }
-                                }
 
                                 if let current = currentLocation {
                                     var personalPlaces: [EnrichmentData] = []
@@ -594,32 +851,33 @@ public class VisualIntelligenceViewModel: ObservableObject {
                                      // Priority: Visual Match -> First Candidate (Home/Proximity)
                                      self.selectedPlace = bestMatch ?? candidatesToUpdate.first
                                 }
-                            }
-                            
-                            // Update MainActor state with new summary
-                            if let summary = stepSummary {
-                                self.accumulatedContexts.append("Capture \(self.accumulatedContexts.count + 1): " + summary)
-                            }
-                            
-                            // Merge enriched items (replacing base items if needed)
-                            // We replace .qr/.text with .richWeb if found
-                            // Merge enriched items (replacing base items if needed)
-                            // We replace .qr/.text with .richWeb if found
-                            var finalResults: [IntelligenceResult] = []
-                            
-                            // Check if enrichment produced a rich web result
-                            let hasRichWeb = enriched.contains { if case .richWeb = $0 { return true }; return false }
-                            
-                            // First, add all non-obsolete results
-                            for result in resultsWithPurpose {
-                                if case .qr = result, hasRichWeb {
-                                    continue // Skip QR if we have rich web
+                                
+                                // FIX: Dialog Hang (First Principles)
+                                // We MUST transition out of .enriching here.
+                                // If we found a place, great. If not, we still stop "Locating..."
+                                print("📍 Enrichment Complete. Selected: \(self.selectedPlace?.title ?? "None"). Status -> Reasoning")
+                                self.pipelineStatus = .reasoning
+                                
+                                // Update MainActor state with new summary
+                                if let summary = stepSummary {
+                                    self.accumulatedContexts.append("Capture \(self.accumulatedContexts.count + 1): " + summary)
                                 }
-                                if case .text = result, hasRichWeb {
-                                     continue // Skip Text if we have rich web (assumption: text was the URL source)
-                                }
-                                finalResults.append(result)
                             }
+                                
+                            // Verify State Consistency: Ensure we didn't regress to .enriching due to a race
+                            // (No-op here, rely on MainActor serialization)
+                                // We replace .qr/.text with .richWeb if found
+                                var finalResults: [IntelligenceResult] = []
+                                
+                                // Check if enrichment produced a rich web result
+                                let hasRichWeb = enriched.contains { if case .richWeb = $0 { return true }; return false }
+                                
+                                // First, add all non-obsolete results
+                                for result in resultsWithPurpose {
+                                    // FIX: Do not suppress QR/Text even if Rich Web is present.
+                                    // User wants to see the raw QR code as a fallback/confirmation.
+                                    finalResults.append(result)
+                                }
                             
                             // Append new enriched results
                             finalResults.append(contentsOf: enriched)
@@ -709,40 +967,65 @@ public class VisualIntelligenceViewModel: ObservableObject {
         self.activeObservation = nil
         
         Task {
+            print("📸 Starting Import Task...")
+            
+            // Define cleanup in case of failure
+            // We use a local var to track success to avoid premature reset
+            var loadingSuccess = false
+            
+            defer {
+                if !loadingSuccess {
+                   Task { @MainActor in
+                       print("❌ Import Task Failed or Cancelled - Resetting UI")
+                       self.isReviewing = false
+                       self.showingSaveError = true
+                       self.saveErrorMessage = "Failed to load selected item. Please try again."
+                   }
+                }
+            }
+
             do {
                 var finalCGImage: CGImage?
                 var finalImage: PlatformImage?
                 
                 // 1. Try Video first (Safe URL loading)
-                if let movie = try? await item.loadTransferable(type: Movie.self) {
-                    print("🎥 Processing as Video/Movie (URL-based)...")
-                    if let (cgImage, location, date) = await processVideoData(movie.url) {
-                        finalCGImage = cgImage
-                        await MainActor.run {
-                            if let loc = location {
-                                 self.capturedMediaLocation = loc
-                                 print("📍 Video Location captured: \(loc)")
+                // We use a specific do-catch for transferable loading to diagnose issues
+                do {
+                    if let movie = try? await item.loadTransferable(type: Movie.self) {
+                        print("🎥 Processing as Video/Movie (URL-based)...")
+                         if let (cgImage, location, date) = await processVideoData(movie.url) {
+                            finalCGImage = cgImage
+                            await MainActor.run {
+                                if let loc = location {
+                                     self.capturedMediaLocation = loc
+                                     print("📍 Video Location captured: \(loc)")
+                                }
+                                if let d = date {
+                                    self.capturedMediaDate = d
+                                    print("📅 Video Date captured: \(d)")
+                                }
                             }
-                            if let d = date {
-                                self.capturedMediaDate = d
-                                print("📅 Video Date captured: \(d)")
-                            }
+                            
+                            #if canImport(UIKit)
+                            finalImage = UIImage(cgImage: cgImage)
+                            #elseif canImport(AppKit)
+                            finalImage = NSImage(cgImage: cgImage, size: .zero)
+                            #endif
+                            print("✅ Extracted Best Frame from Video URL")
                         }
-                        
-                        #if canImport(UIKit)
-                        finalImage = UIImage(cgImage: cgImage)
-                        #elseif canImport(AppKit)
-                        finalImage = NSImage(cgImage: cgImage, size: .zero)
-                        #endif
-                        print("✅ Extracted Best Frame from Video URL")
                     }
+                } catch {
+                     print("⚠️ Failed to load Movie transferable: \(error)")
                 }
                 
                 // 2. Fallback to Data (for Images) if Video failed or wasn't a video
                 if finalCGImage == nil {
-                     // CAUTION: large videos might still crash here if they failed the .movie check but succeed as .data
-                     // But typically PhotosPicker filters items.
-                     guard let data = try await item.loadTransferable(type: Data.self) else { return }
+                     print("📸 Attempting Data Load...")
+                     guard let data = try await item.loadTransferable(type: Data.self) else {
+                         print("❌ Failed to load Data transferable")
+                         return // Defer triggers failure handling
+                     }
+                     print("✅ Loaded \(data.count) bytes")
                      
                      #if canImport(UIKit)
                      // Try as Image
@@ -796,8 +1079,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
                      }
                 }
                 
-                guard let cgImage = finalCGImage else { return }
+                guard let cgImage = finalCGImage else {
+                    print("❌ Could not create CGImage from loaded content")
+                    return
+                }
                 let image = finalImage 
+                
+                loadingSuccess = true // Mark success to prevent defer failure handling
                 
                 await MainActor.run { 
                     self.isAnalyzing = true 
@@ -806,6 +1094,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                     
                     // Analyze for interactive results
                     // For photo library, we usually assume .up logic unless meta says otherwise
+                    print("🧠 Starting Intelligence Processing in .fullAnalysis mode...")
                     let newResults = try await self.processor.process(image: cgImage, orientation: .up, mode: .fullAnalysis)
                     
                     await MainActor.run {
@@ -1199,7 +1488,52 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 }
             }
             
-            // 2. Create Intelligent Queue Items (Master + Children)
+            // 2. Auto-save detected documents (rectified)
+            #if canImport(UIKit)
+            if let capturedImage = imageToSave {
+                // Find document results to auto-rectify and save
+                let documentResults = currentResults.compactMap { result -> (VNRectangleObservation, String?, String?)? in
+                    if case .document(let obs, let text, let label) = result {
+                        return (obs, text, label)
+                    }
+                    return nil
+                }
+                
+                for (observation, text, label) in documentResults {
+                    if let cgImage = capturedImage.cgImage {
+                        // Rectify the document
+                        if let rectifiedCGImage = await self.performRectification(
+                            observation: UnsafeSendable(value: observation),
+                            image: UnsafeSendable(value: cgImage)
+                        ) {
+                            let rectifiedImage = UIImage(cgImage: rectifiedCGImage)
+                            if let rectifiedData = rectifiedImage.jpegData(compressionQuality: 0.9) {
+                                // Create queue item for the rectified document
+                                let documentTitle = label ?? text?.prefix(50).description ?? "Document"
+                                let docQueueItem = DiverQueueItem.from(
+                                    documentImage: rectifiedData,
+                                    title: documentTitle,
+                                    tags: [],
+                                    text: text,
+                                    purposes: purposes,
+                                    date: Date(),
+                                    sessionID: sessionID,
+                                    placeID: capturePlaceID,
+                                    latitude: captureCoordinate?.latitude,
+                                    longitude: captureCoordinate?.longitude,
+                                    locationName: selectedPlaceTitle,
+                                    attachments: []
+                                )
+                                try queueStore.enqueue(docQueueItem)
+                                print("📄 Auto-saved rectified document: \(documentTitle)")
+                            }
+                        }
+                    }
+                }
+            }
+            #endif
+            
+            // 3. Create Intelligent Queue Items (Master + Children)
             do {
                 let queueItems = DiverQueueItem.items(intelligenceResults: currentResults, capturedImage: capturedData, siftedImage: siftedData, attachments: attachmentData, purposes: purposes, sessionID: sessionID, contextImageURL: contextImageURL, placeID: capturePlaceID, latitude: captureCoordinate?.latitude, longitude: captureCoordinate?.longitude, locationName: selectedPlaceTitle)
                 
@@ -1217,6 +1551,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                         
                         // Enforce SSOT: Reset VM state so we don't hold onto stale "capturedImage"
                         self.reset()
+                        self.shouldDismiss = true
                     }
                 }
             } catch {
@@ -1611,6 +1946,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         peelAmount = 0
         lastCaptureTime = nil
         sessionImages = []
+        accumulatedContexts = []
         
         // Reset process state
         isSaving = false
@@ -1639,8 +1975,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
         isAnalyzing = false
         isReviewing = false
         pipelineStatus = .idle
+        shouldDismiss = false
         
         print("🔄 Visual Intelligence VM: State Reset")
+        // debugPrint(Thread.callStackSymbols) // Uncomment to trace caller causing loop
     }
     
     public func reCapture() {
@@ -1658,20 +1996,55 @@ public class VisualIntelligenceViewModel: ObservableObject {
     
     // MARK: - UI Helpers
     
-    public func convertBoundingBox(_ box: CGRect, to size: CGSize) -> CGRect {
+    public func convertBoundingBox(_ box: CGRect, to viewSize: CGSize, imageAspectRatio: CGFloat = 0.75) -> CGRect {
         // Vision: Origin Bottom-Left, Normalized
         // SwiftUI: Origin Top-Left, Points
+        // Content Mode: .aspectFill (Crops to fill)
         
-        // Handle "Right" orientation (Portrait) where width/height might need swapping if buffer differs?
-        // Actually, Vision normalized coords are relative to the "Image" logical orientation.
-        // If we are portrait, the image is tall.
+        // 1. Calculate the Aspect Fill Rect (The Frame of the "Image" inside the View)
+        // Ratio = W / H
+        // View Ratio
+        let viewRatio = viewSize.width / viewSize.height
         
-        let w = box.width * size.width
-        let h = box.height * size.height
+        var renderWidth: CGFloat = viewSize.width
+        var renderHeight: CGFloat = viewSize.height
         
-        // Flip Y axis: Vision Y is from bottom. SwiftUI Y is from top.
-        let x = box.minX * size.width
-        let y = (1 - box.maxY) * size.height
+        // If View is "Wider" than Image (relative to ratios) -> Image fits Width, Crops Vertically?
+        // No. If View (1.0) > Image (0.5), View is fat, Image is skinny.
+        // To fill View Width, we scale Image. Height becomes huge. Top/Bot cropped.
+        
+        // Let's use scale factor overlap
+        // Target: View. Source: Image (Aspect only)
+        // Scale to FILL
+        let scaleW = viewSize.width / imageAspectRatio // Width based (if Height was 1)
+        // Wait, simpler:
+        // Image Size (Virtual) = (imageAspectRatio * 1000, 1000)
+        let virtualW = imageAspectRatio * 1000
+        let virtualH = 1000.0
+        
+        let scaleX = viewSize.width / virtualW
+        let scaleY = viewSize.height / virtualH
+        let scale = max(scaleX, scaleY)
+        
+        let fillW = virtualW * scale
+        let fillH = virtualH * scale
+        
+        // 2. Offsets (Center)
+        let offsetX = (viewSize.width - fillW) / 2.0
+        let offsetY = (viewSize.height - fillH) / 2.0
+        
+        // 3. Project Normalized Box
+        // Box.minX * fillW + offsetX
+        let x = offsetX + (box.minX * fillW)
+        
+        // Flip Y: Vision (0 is Bottom) -> View (0 is Top)
+        // Normalized Y=0 (Bottom) maps to fillH (Bottom relative to image rect)
+        // Normalized Y=1 (Top) maps to 0 (Top relative to image rect)
+        // rect.y = 1 - maxY
+        let y = offsetY + ((1.0 - box.maxY) * fillH)
+        
+        let w = box.width * fillW
+        let h = box.height * fillH
         
         return CGRect(x: x, y: y, width: w, height: h)
     }
@@ -1685,7 +2058,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
     
     private let contextService = ContextQuestionService()
 
-    private func enrichContext(from initialResults: [IntelligenceResult], accumulatedContext: [String]) async -> ([IntelligenceResult], String?, [EnrichmentData]) {
+    private func enrichContext(from initialResults: [IntelligenceResult], accumulatedContext: [String], locationOverride: CLLocation? = nil) async -> ([IntelligenceResult], String?, [EnrichmentData]) {
         if Task.isCancelled { return ([], nil, []) }
         
         // Services
@@ -1732,7 +2105,15 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }()
         
         async let placeEnrichment: EnrichmentSource? = {
-            guard let locService = locService, let location = await locService.getCurrentLocation() else { return nil }
+            // Use override if available (e.g. from Metadata), otherwise fetch live
+            let searchLocation: CLLocation?
+            if let override = locationOverride {
+                searchLocation = override
+            } else {
+                searchLocation = await locService?.getCurrentLocation()
+            }
+            
+            guard let location = searchLocation else { return nil }
             
             // Refinement: If we have a product or web title, we could technically search for stores matching it?
             // For now, generic nearby search is safest.
@@ -2051,4 +2432,24 @@ public class VisualIntelligenceViewModel: ObservableObject {
     }
 
 }
+
+// MARK: - Extensions
+
+#if canImport(UIKit)
+extension UIImage.Orientation {
+    var cgImagePropertyOrientation: CGImagePropertyOrientation {
+        switch self {
+        case .up: return .up
+        case .upMirrored: return .upMirrored
+        case .down: return .down
+        case .downMirrored: return .downMirrored
+        case .leftMirrored: return .leftMirrored
+        case .right: return .right
+        case .rightMirrored: return .rightMirrored
+        case .left: return .left
+        @unknown default: return .up
+        }
+    }
+}
+#endif
 

@@ -90,8 +90,16 @@ public final class PhotoLibraryImportService {
             var placeID: String?
             
             if let coord = location {
-                placeContext = await geocodingService.lookup(coordinate: coord)
-                locationName = placeContext?.name
+                // Check semantic location (Home/Work) first
+                if let semanticName = await determineSemanticLocation(for: coord) {
+                    locationName = semanticName
+                    // Still lookup place context for details, but we already have a strong name
+                    placeContext = await geocodingService.lookup(coordinate: coord)
+                } else {
+                    placeContext = await geocodingService.lookup(coordinate: coord)
+                    locationName = placeContext?.name
+                }
+                
                 placeID = placeContext?.placeID
             }
             
@@ -115,7 +123,7 @@ public final class PhotoLibraryImportService {
                 let item = ProcessedItem(
                     id: asset.id,
                     createdAt: asset.creationDate ?? Date(),
-                    rawPayload: nil, // Don't store full media data - load on-demand via photosAssetIdentifier
+                    rawPayload: asset.data.isEmpty ? nil : asset.data, // use eager data if present, otherwise nil (on-demand)
                     status: .queued, // Queue for processing - data loaded on-demand from PHAsset
                     source: "photoLibraryImport",
                     sessionID: sessionID,
@@ -201,6 +209,7 @@ public final class PhotoLibraryImportService {
                     type: asset.isVideo ? .video : .image,
                     attributionID: nil,
                     masterCaptureID: nil,
+                    photosAssetIdentifier: asset.photosItemIdentifier, // Pass identifier so it persists!
                     sessionID: fetchProcessedItem(assetID: asset.id)?.sessionID,
                     purposes: []
                 )
@@ -212,7 +221,7 @@ public final class PhotoLibraryImportService {
                     descriptor: descriptor,
                     source: "photoLibraryImport",
                     createdAt: asset.creationDate ?? Date(),
-                    payload: nil, // Don't load data - use photosAssetIdentifier instead
+                    payload: asset.data.isEmpty ? nil : asset.data, // Check if we eagerly loaded data
                     photosAssetIdentifier: asset.photosItemIdentifier
                 )
                 
@@ -307,10 +316,19 @@ public final class PhotoLibraryImportService {
             originalFilename = resources.first?.originalFilename
             print("📷 Extracted PHAsset metadata: date=\(creationDate?.formatted() ?? "nil"), location=\(location?.latitude ?? 0),\(location?.longitude ?? 0)")
         } else {
-            // Fallback: try EXIF for images if PHAsset not available
-            if !isVideo {
-                do {
-                    if let data = try await item.loadTransferable(type: Data.self) {
+            // Fallback: PHAsset not found (e.g. Limited Access). Eagerly load full data.
+            print("⚠️ PHAsset not found for \(itemIdentifier). Falling back to eager data loading.")
+            
+            do {
+                if let data = try await item.loadTransferable(type: Data.self) {
+                    // Update the asset data so we can persist it
+                    // ImportedAsset is immutable-ish but we create it at the end.
+                    // We need to pass this 'data' to the return struct.
+                    
+                    // Attempt to read EXIF/Metadata from the data
+                    // Note: For video, extracting metadata from Data is harder without AVAsset, but creationDate might be current date.
+                    
+                    if !isVideo {
                         if let source = CGImageSourceCreateWithData(data as CFData, nil),
                            let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] {
                             
@@ -334,23 +352,38 @@ public final class PhotoLibraryImportService {
                             }
                         }
                     }
-                } catch {
-                    print("⚠️ Error extracting EXIF: \(error)")
+                    
+                    // Return with DATA populated
+                    return ImportedAsset(
+                        id: UUID().uuidString,
+                        data: data,
+                        isVideo: isVideo,
+                        isScreenshot: isScreenshot,
+                        isScreenRecording: isScreenRecording,
+                        creationDate: creationDate,
+                        location: location,
+                        originalFilename: originalFilename,
+                        photosItemIdentifier: itemIdentifier
+                    )
                 }
+            } catch {
+                print("❌ Failed to eagerly load data for \(itemIdentifier): \(error)")
             }
         }
         
-        // Return asset with minimal data - just metadata and identifier
+        // Return asset with minimal data (or empty if we have PHAsset but didn't load data here)
+        // If PHAsset appeared: we return empty data (deferred).
+        // If PHAsset missing & Eager load failed: we return empty data (will fail downstream but we tried).
         return ImportedAsset(
             id: UUID().uuidString,
-            data: Data(), // Empty data - we'll use itemIdentifier to fetch when needed
+            data: Data(), // Empty data - deferred loading if PHAsset found, or failed if not.
             isVideo: isVideo,
             isScreenshot: isScreenshot,
             isScreenRecording: isScreenRecording,
             creationDate: creationDate,
             location: location,
             originalFilename: originalFilename,
-            photosItemIdentifier: itemIdentifier // Store for later retrieval
+            photosItemIdentifier: itemIdentifier
         )
     }
     
@@ -457,6 +490,33 @@ public final class PhotoLibraryImportService {
         }
         
         return saveThumbnailToDisk(image: downsampledImage, id: id)
+    }
+    
+    /// Check if the coordinate corresponds to Home or Work
+    private func determineSemanticLocation(for coordinate: CLLocationCoordinate2D) async -> String? {
+        let contactService = ContactService()
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        
+        // Fetch locations concurrently
+        // Note: checking permissions implicitly via ContactService
+        
+        do {
+            async let homeLoc = contactService.getHomeLocation()
+            async let workLoc = contactService.getWorkLocation()
+            
+            let (home, work) = try await (homeLoc, workLoc)
+            
+            if let home = home, location.distance(from: home) < 150 { // 150m threshold
+                return "Home"
+            }
+            if let work = work, location.distance(from: work) < 150 {
+                return "Work"
+            }
+        } catch {
+            print("⚠️ Semantic location check failed: \(error)")
+        }
+        
+        return nil
     }
     
     /// Legacy method - kept for backward compatibility

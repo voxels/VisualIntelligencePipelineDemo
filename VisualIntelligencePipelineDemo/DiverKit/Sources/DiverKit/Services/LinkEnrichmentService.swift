@@ -22,6 +22,10 @@ public struct EnrichmentData: Sendable, Codable, Identifiable {
     public let qrContext: QRCodeContext?
     public let weatherContext: WeatherContext?
     public let activityContext: ActivityContext?
+    public let sessionContext: String?
+    public let productContext: String?
+    public let visualContext: String?
+    public let sourceURL: String?
 
     public init(
         id: String? = nil,
@@ -39,7 +43,11 @@ public struct EnrichmentData: Sendable, Codable, Identifiable {
         placeContext: PlaceContext? = nil,
         qrContext: QRCodeContext? = nil,
         weatherContext: WeatherContext? = nil,
-        activityContext: ActivityContext? = nil
+        activityContext: ActivityContext? = nil,
+        sessionContext: String? = nil,
+        productContext: String? = nil,
+        visualContext: String? = nil,
+        sourceURL: String? = nil
     ) {
         self.placeContext = placeContext
         self.id = id ?? placeContext?.placeID ?? UUID().uuidString
@@ -57,6 +65,10 @@ public struct EnrichmentData: Sendable, Codable, Identifiable {
         self.qrContext = qrContext
         self.weatherContext = weatherContext
         self.activityContext = activityContext
+        self.sessionContext = sessionContext
+        self.productContext = productContext
+        self.visualContext = visualContext
+        self.sourceURL = sourceURL
     }
 }
 

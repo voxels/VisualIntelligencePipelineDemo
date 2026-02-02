@@ -11,6 +11,8 @@ struct ReprocessMetadataView: View {
     @State private var sessionTitle: String = ""
     @State private var sessionSummary: String = ""
     @State private var isLoading = false
+    @State private var loadedImageData: Data? = nil
+    @State private var isLoadingImage = false
     
     var body: some View {
         NavigationStack {
@@ -61,7 +63,14 @@ struct ReprocessMetadataView: View {
                     } label: {
                         if isLoading {
                             ProgressView()
-                        } else if item.rawPayload == nil {
+                        } else if isLoadingImage {
+                            HStack {
+                                ProgressView()
+                                Text("Loading from Photos...")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                        } else if effectiveImageData == nil {
                             Text("Original Image Missing")
                                 .foregroundStyle(.secondary)
                                 .frame(maxWidth: .infinity)
@@ -72,7 +81,7 @@ struct ReprocessMetadataView: View {
                         }
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(item.rawPayload == nil || isJSON(item.rawPayload) || isLoading)
+                    .disabled(effectiveImageData == nil || isLoading || isLoadingImage)
                     .listRowInsets(EdgeInsets())
                 }
             }
@@ -86,12 +95,32 @@ struct ReprocessMetadataView: View {
             .onAppear {
                 sessionTitle = item.title ?? "Untitled Session"
                 sessionSummary = item.summary ?? ""
+                
+                // If no rawPayload but has photosAssetIdentifier, load from Photos
+                if item.rawPayload == nil, let assetId = item.photosAssetIdentifier {
+                    isLoadingImage = true
+                    Task {
+                        let data = await PhotosAssetLoader.shared.loadImageData(identifier: assetId)
+                        await MainActor.run {
+                            loadedImageData = data
+                            isLoadingImage = false
+                        }
+                    }
+                }
             }
         }
     }
     
-    private var itemImage: UIImage? {
+    /// Effective image data: rawPayload or loaded from Photos
+    private var effectiveImageData: Data? {
         if let data = item.rawPayload, !isJSON(data) {
+            return data
+        }
+        return loadedImageData
+    }
+    
+    private var itemImage: UIImage? {
+        if let data = effectiveImageData {
             return UIImage(data: data)
         }
         return nil
@@ -104,7 +133,7 @@ struct ReprocessMetadataView: View {
     }
     
     private func startReprocessing() {
-        guard let imageData = item.rawPayload, !isJSON(imageData) else { return }
+        guard let imageData = effectiveImageData else { return }
         
         isLoading = true
         

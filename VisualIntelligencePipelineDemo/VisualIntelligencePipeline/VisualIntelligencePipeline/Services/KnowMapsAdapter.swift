@@ -139,73 +139,98 @@ final class KnowMapsRetrievalAdapter: KnowledgeGraphRetrievalService {
         self.container = container
     }
     
-    func retrieveRelevantContext(for query: String) async throws -> [(text: String, weight: Double)] {
+    func retrieveRelevantContext(for query: String, sessionID: String?) async throws -> [(text: String, weight: Double)] {
         var context: [(text: String, weight: Double)] = []
         
-        // 1. Check cached tastes for relevance
-        let tastes = container.cacheManager.cachedTasteResults
-        let relevantTastes = tastes.filter { result in
-            query.localizedCaseInsensitiveContains(result.parentCategory) ||
-            result.parentCategory.localizedCaseInsensitiveContains(query)
-        }
+        // CRITICAL: If sessionID is provided, scope ALL context to that session only
+        // This prevents concept contamination from previous imports/sessions
         
-        if !relevantTastes.isEmpty {
-            let tasteNames = relevantTastes.map { $0.parentCategory }.joined(separator: ", ")
-            context.append(("User matches tastes: \(tasteNames)", 1.0))
-        }
-        
-        // 2. Check cached industry/category results
-        let categories = container.cacheManager.cachedIndustryResults
-        let relevantCategories = categories.filter { result in
-            query.localizedCaseInsensitiveContains(result.parentCategory) ||
-            result.parentCategory.localizedCaseInsensitiveContains(query)
-        }
-        
-        if !relevantCategories.isEmpty {
-            let catNames = relevantCategories.map { $0.parentCategory }.joined(separator: ", ")
-            context.append(("User has interest in categories: \(catNames)", 1.0))
+        if sessionID == nil {
+            // Only use global user preferences if NOT scoped to a session
+            // 1. Check cached tastes for relevance
+            let tastes = container.cacheManager.cachedTasteResults
+            let relevantTastes = tastes.filter { result in
+                query.localizedCaseInsensitiveContains(result.parentCategory) ||
+                result.parentCategory.localizedCaseInsensitiveContains(query)
+            }
+            
+            if !relevantTastes.isEmpty {
+                let tasteNames = relevantTastes.map { $0.parentCategory }.joined(separator: ", ")
+                context.append(("User matches tastes: \(tasteNames)", 1.0))
+            }
+            
+            // 2. Check cached industry/category results
+            let categories = container.cacheManager.cachedIndustryResults
+            let relevantCategories = categories.filter { result in
+                query.localizedCaseInsensitiveContains(result.parentCategory) ||
+                result.parentCategory.localizedCaseInsensitiveContains(query)
+            }
+            
+            if !relevantCategories.isEmpty {
+                let catNames = relevantCategories.map { $0.parentCategory }.joined(separator: ", ")
+                context.append(("User has interest in categories: \(catNames)", 1.0))
+            }
         }
 
-        // 3. Search saved Diver items (ProcessedItems) and Boosted Concepts
-        if let savedItemsInfo = try? retrieveSavedItems(for: query) {
+        // 3. Search saved Diver items (ProcessedItems) - SESSION SCOPED if sessionID provided
+        if let savedItemsInfo = try? retrieveSavedItems(for: query, sessionID: sessionID) {
             context.append(contentsOf: savedItemsInfo)
         }
         
         return context
     }
 
-    private func retrieveSavedItems(for query: String) throws -> [(text: String, weight: Double)]? {
+    private func retrieveSavedItems(for query: String, sessionID: String?) throws -> [(text: String, weight: Double)]? {
         guard let manager = UnifiedDataManager.shared else { return nil }
         var results: [(text: String, weight: Double)] = []
         
-        // Fetch high-weight concepts to boost search
-        let conceptDescriptor = FetchDescriptor<UserConcept>(
-            predicate: #Predicate<UserConcept> { $0.weight > 1.2 },
-            sortBy: [SortDescriptor(\.weight, order: .reverse)]
-        )
-        let boostedConcepts = try manager.mainContext.fetch(conceptDescriptor)
-        
-        for concept in boostedConcepts.prefix(5) {
-             results.append(("User strongly values concept: \(concept.name)", concept.weight))
+        // CRITICAL FIX: Skip global UserConcept retrieval when scoped to a session
+        // This is the ROOT CAUSE of concept contamination (plants from yesterday appearing today)
+        if sessionID == nil {
+            // Only fetch global concepts if NOT session-scoped
+            let conceptDescriptor = FetchDescriptor<UserConcept>(
+                predicate: #Predicate<UserConcept> { $0.weight > 1.2 },
+                sortBy: [SortDescriptor(\.weight, order: .reverse)]
+            )
+            let boostedConcepts = try manager.mainContext.fetch(conceptDescriptor)
+            
+            for concept in boostedConcepts.prefix(5) {
+                 results.append(("User strongly values concept: \(concept.name)", concept.weight))
+            }
         }
         
-        // Simple search on title or summary
-        let descriptor = FetchDescriptor<ProcessedItem>(
-            predicate: #Predicate<ProcessedItem> { item in
-                (item.title?.localizedStandardContains(query) == true) ||
-                (item.summary?.localizedStandardContains(query) == true)
-            },
-            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
-        )
-        // Limit to recent/top 5 matches
-        var fetchDescriptor = descriptor
-        fetchDescriptor.fetchLimit = 5
-        
-        let items = try manager.mainContext.fetch(fetchDescriptor)
+        // Search ProcessedItems - SCOPED BY SESSION if provided
+        let items: [ProcessedItem]
+        if let sid = sessionID {
+            // Session-scoped: Only get context from THIS session
+            let descriptor = FetchDescriptor<ProcessedItem>(
+                predicate: #Predicate<ProcessedItem> { item in
+                    item.sessionID == sid &&
+                    ((item.title?.localizedStandardContains(query) == true) ||
+                     (item.summary?.localizedStandardContains(query) == true))
+                },
+                sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+            )
+            var fetchDescriptor = descriptor
+            fetchDescriptor.fetchLimit = 5
+            items = try manager.mainContext.fetch(fetchDescriptor)
+        } else {
+            // Global search (no session scoping)
+            let descriptor = FetchDescriptor<ProcessedItem>(
+                predicate: #Predicate<ProcessedItem> { item in
+                    (item.title?.localizedStandardContains(query) == true) ||
+                    (item.summary?.localizedStandardContains(query) == true)
+                },
+                sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+            )
+            var fetchDescriptor = descriptor
+            fetchDescriptor.fetchLimit = 5
+            items = try manager.mainContext.fetch(fetchDescriptor)
+        }
         
         if !items.isEmpty {
             let itemTitles = items.compactMap { $0.title }.joined(separator: ", ")
-            results.append(("User has saved related items: \(itemTitles)", 1.0))
+            results.append(("Session context: \(itemTitles)", 1.0))
         }
         
         return results.isEmpty ? nil : results
@@ -242,8 +267,8 @@ final class KnowMapsUnifiedAdapter: KnowledgeGraphRetrievalService, KnowledgeGra
     }
     
     // MARK: - Retrieval
-    func retrieveRelevantContext(for query: String) async throws -> [(text: String, weight: Double)] {
-        try await retrievalAdapter.retrieveRelevantContext(for: query)
+    func retrieveRelevantContext(for query: String, sessionID: String?) async throws -> [(text: String, weight: Double)] {
+        try await retrievalAdapter.retrieveRelevantContext(for: query, sessionID: sessionID)
     }
     
     // MARK: - Indexing

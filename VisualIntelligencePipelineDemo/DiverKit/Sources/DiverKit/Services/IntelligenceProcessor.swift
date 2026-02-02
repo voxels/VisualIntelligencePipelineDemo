@@ -93,7 +93,7 @@ extension IntelligenceResult {
         case .siftedSubject(_, let label): return label?.capitalized ?? "Subject Sifted"
         case .product: return "Product Detected"
         case .document(_, let text, let label): return text ?? label?.capitalized ?? "Document Scanned"
-        case .purpose: return "Possible Intent"
+        case .purpose(let statements): return statements.first ?? "Purpose"
         }
     }
     
@@ -113,7 +113,11 @@ extension IntelligenceResult {
         case .siftedSubject(_, let label): return label != nil ? "Sifted Object" : "Ready to Peel"
         case .product(let code, let type, _): return "\(type.rawValue.uppercased()): \(code)"
         case .document(_, _, let label): return label?.capitalized ?? "Auto-segmented document"
-        case .purpose(let statements): return statements.first ?? "Define your goal"
+        case .purpose(let statements): 
+            if statements.count > 1 {
+                return "+\(statements.count - 1) more"
+            }
+            return "Suggested Purpose"
         }
     }
     
@@ -228,17 +232,21 @@ public final class IntelligenceProcessor: Sendable {
     }
     
     private func executePipeline(mode: AnalysisMode, handlerFactory: () -> VNImageRequestHandler) async throws -> [IntelligenceResult] {
-         print("🧠 IntelligenceProcessor: Starting Pipeline (Mode: \(mode))")
+         if mode != .liveSifting {
+            print("🧠 IntelligenceProcessor: Starting Pipeline (Mode: \(mode))")
+         }
          var finalResults: [IntelligenceResult] = []
          
-         // 1. Sifting (First Pass)
-         // We always run sifting if included in mode or if implicit in Full Analysis
+         // 1. First Pass: Sifting + Barcodes (Always Run)
+         // We combine these as they are both "Live" capable and essential for Express Capture
          let siftingRequest = VNGenerateForegroundInstanceMaskRequest()
+         let barcodeRequest = VNDetectBarcodesRequest()
          
-         // Run Sift Pass
-         let siftHandler = handlerFactory()
-         try siftHandler.perform([siftingRequest])
+         // Run First Pass
+         let liveHandler = handlerFactory()
+         try liveHandler.perform([siftingRequest, barcodeRequest])
          
+         // Process Sifting Results
          var subjectBounds: CGRect?
          if let observation = siftingRequest.results?.first {
              finalResults.append(.siftedSubject(observation, label: nil))
@@ -247,45 +255,10 @@ public final class IntelligenceProcessor: Sendable {
              }
          }
          
-         // 2. Return early if Live Mode
-         if mode == .liveSifting {
-             return finalResults
-         }
-         
-         // 3. Full Analysis Configuration (Second Pass)
-         print("🧠 IntelligenceProcessor: Starting Full Analysis Pass")
-         
-         let barcodeRequest = VNDetectBarcodesRequest()
-         barcodeRequest.symbologies = [.qr, .upce, .ean13, .ean8, .code128]
-         
-         let textRequest = VNRecognizeTextRequest()
-         textRequest.recognitionLevel = .accurate
-         
-         let classificationRequest = VNClassifyImageRequest()
-         let documentRequest = VNDetectDocumentSegmentationRequest()
-         
-         // Apply ROI if Subject Found
-         if let roi = subjectBounds {
-             if roi.width > 0.05 && roi.height > 0.05 {
-                 print("🎯 Focusing Intelligence on Subject ROI: \(roi)")
-                 // Expand slightly to ensure we capture edges
-                 let paddedRoi = roi.insetBy(dx: -0.05, dy: -0.05).intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
-                 
-                 // barcodeRequest.regionOfInterest = paddedRoi // Fix: Allow barcode scanning on full frame
-                 textRequest.regionOfInterest = paddedRoi
-                 classificationRequest.regionOfInterest = paddedRoi // Focus classification on subject
-                 documentRequest.regionOfInterest = paddedRoi
-             }
-         } else {
-             print("🌍 No Subject Sifted - Analyzing Full Scene")
-         }
-         
-         // 4. Run Metadata Requests on FRESH Handler
-         let metadataHandler = handlerFactory()
-         try metadataHandler.perform([barcodeRequest, textRequest, classificationRequest, documentRequest])
-         
-         // 5. Process Metadata Results
-        if let observations = barcodeRequest.results {
+         // Process Barcode Results (Common to both modes)
+         if let observations = barcodeRequest.results, !observations.isEmpty {
+             print("🔍 IntelligenceProcessor: Found \(observations.count) barcodes")
+             
              // 1. Handle QR Codes: Respect Layout Direction
              let qrObservations = observations.filter { $0.symbology == .qr }
              
@@ -305,11 +278,11 @@ public final class IntelligenceProcessor: Sendable {
              
              for qr in sortedQRs {
                  if let payload = qr.payloadStringValue {
+                    print("   - QR Found: \(payload)")
                     if let url = URL(string: payload), payload.contains("://") || payload.lowercased().hasPrefix("http") {
                         finalResults.append(.qr(url))
                     } else if !payload.isEmpty {
                         // Support non-URL QR codes (e.g. WiFi, Text)
-                        // Treat as text but with high confidence since it's a barcode
                         finalResults.append(.text(payload, nil))
                     }
                  }
@@ -319,18 +292,58 @@ public final class IntelligenceProcessor: Sendable {
              for observation in observations where observation.symbology != .qr {
                  let type: IntelligenceResult.ProductCodeType = {
                      switch observation.symbology {
-                     case .upce, .code128: return .upc
-                     case .ean13, .ean8: return .ean
+                     case .upce, .code128, .code39, .code93: return .upc
+                     case .ean13, .ean8, .itf14: return .ean
                      default: return .unknown
                      }
                  }()
                  
                  let code = observation.payloadStringValue ?? ""
-                 let assets: [URL] = [] // Removed mock Picsum assets
+                 print("   - Barcode Found: \(code) (\(observation.symbology.rawValue))")
+                 let assets: [URL] = [] 
                  
                  finalResults.append(.product(code: code, type: type, mediaAssets: assets))
              }
          }
+         
+         // 2. Return early if Live Mode
+         if mode == .liveSifting {
+             return finalResults
+         }
+         
+         // 3. Full Analysis Configuration (Second Pass)
+         print("🧠 IntelligenceProcessor: Starting Full Analysis Pass")
+         
+         let textRequest = VNRecognizeTextRequest()
+         textRequest.recognitionLevel = .accurate
+         
+         let classificationRequest = VNClassifyImageRequest()
+         let documentRequest = VNDetectDocumentSegmentationRequest()
+         
+         // Apply ROI if Subject Found (Disabled for Barcode scan safety, but relevant for classification)
+         if let roi = subjectBounds, roi.width > 0.05 && roi.height > 0.05 {
+             print("🎯 Subject ROI Detected: \(roi) (Focusing Classification Only)")
+             // Expand slightly to ensure we capture edges
+             let paddedRoi = roi.insetBy(dx: -0.05, dy: -0.05).intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
+             
+             classificationRequest.regionOfInterest = paddedRoi // Focus classification on subject
+         } else {
+             print("🌍 No Subject Sifted - Analyzing Full Scene")
+         }
+         
+          
+          // 4. Run Metadata Requests on FRESH Handler
+          let metadataHandler = handlerFactory()
+          do {
+              try metadataHandler.perform([textRequest, classificationRequest, documentRequest])
+          } catch {
+              print("❌ IntelligenceProcessor: Vision request failed: \(error)")
+          }
+          
+          // 5. Process Metadata Results
+           // (Barcodes already processed)
+          
+           // Collect all OCR text
           // Collect all OCR text
           var ocrTextLines: [String] = []
           if let observations = textRequest.results {
@@ -371,6 +384,12 @@ public final class IntelligenceProcessor: Sendable {
                
                for observation in results {
                    finalResults.append(.document(observation, text: bestLabel, label: docType))
+               }
+               
+               // ALSO add all OCR text lines as .text results so they're captured in transcription
+               for line in ocrTextLines where line.count > 10 {
+                   let url = extractURL(from: line)
+                   finalResults.append(.text(line, url))
                }
           } else {
               // No document detected, check for loose text
@@ -485,18 +504,17 @@ public final class IntelligenceProcessor: Sendable {
                 }
                 
                 if !semanticResults.isEmpty {
-                    // Simulate checking "Next Best" options or related concepts
-                    // In a real implementation, we might run a secondary classifier or query knowledge graph
-                    try? await Task.sleep(nanoseconds: 500_000_000) // Simulate work
+                    // Real implementation: Use ContextQuestionService to find related purposes/intents
+                    let labels = semanticResults.map { $0.0 }.joined(separator: ", ")
                     
-                    for (label, _) in semanticResults {
-                        // Mock: Add specific alternatives for demo purposes
-                        if label.contains("coffee") {
-                            continuation.yield(.semantic("espresso", confidence: 0.6))
-                            continuation.yield(.semantic("latte art", confidence: 0.55))
-                        }
-                        if label.contains("computer") || label.contains("laptop") {
-                            continuation.yield(.purpose(statements: ["Coding Session", "Remote Work"]))
+                    if let service = await MainActor.run(body: { Services.shared.contextQuestionService }) {
+                        do {
+                            let suggestions = try await service.suggestPurposes(from: labels)
+                            if !suggestions.isEmpty {
+                                continuation.yield(.purpose(statements: suggestions))
+                            }
+                        } catch {
+                            print("⚠️ IntelligenceProcessor: Failed to verify contexts: \(error)")
                         }
                     }
                 }
@@ -508,9 +526,15 @@ public final class IntelligenceProcessor: Sendable {
                 }
                 
                 for text in textResults {
-                    // Detect potential dates or emails (simple regex mock)
-                    if text.contains("@") {
-                         continuation.yield(.semantic("contact info", confidence: 0.8))
+                    // Detect potential dates or emails (simple regex mock -> could upgrade to NSDataDetector)
+                    if let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue | NSTextCheckingResult.CheckingType.date.rawValue),
+                       let match = detector.firstMatch(in: text, options: [], range: NSRange(text.startIndex..<text.endIndex, in: text)) {
+                        
+                        if match.resultType == .date {
+                             continuation.yield(.semantic("Event Date Detected", confidence: 0.9))
+                        } else if match.resultType == .link && text.contains("@") {
+                             continuation.yield(.semantic("Contact Info", confidence: 0.9))
+                        }
                     }
                 }
                 

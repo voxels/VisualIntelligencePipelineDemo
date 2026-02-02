@@ -116,8 +116,9 @@ public final class MetadataPipelineService {
                 print("🏁 [MetadataPipeline] Complete. Success: \(successCount), Failed: \(errorCount)")
                 DiverLogger.queue.info("Queue processing complete - success: \(successCount), failed: \(errorCount), total: \(records.count)")
                 
-                // Generate summaries for collections that had items processed
+                // Generate summaries for sessions and collections that had items processed
                 if successCount > 0 {
+                    await self.generatePendingSessionSummaries()
                     await self.generatePendingCollectionSummaries()
                 }
                 
@@ -157,57 +158,174 @@ public final class MetadataPipelineService {
         // Cancel current queue work to avoid conflict/slowness
         currentTask?.cancel()
         
-        item.status = .processing
-        item.processingLog.append("\(Date().formatted()): Starting high-priority 'Process Now' workflow.")
+        // CRITICAL: Fetch the item from THIS service's context to avoid context mismatch
+        // The passed item may be from a different context (e.g., view's context)
+        let itemID = item.id
+        let fetchDescriptor = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.id == itemID }
+        )
+        
+        guard let localItem = try modelContext.fetch(fetchDescriptor).first else {
+            print("❌ processItemImmediately: Could not find item \(itemID) in pipeline context")
+            throw NSError(domain: "MetadataPipelineService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Item not found"])
+        }
+        
+        localItem.statusRaw = ProcessingStatus.processing.rawValue
+        localItem.updatedAt = Date() // CRITICAL: Update timestamp to prevent zombie check from marking as stalled
+        localItem.processingLog.append("\(Date().formatted()): Starting high-priority 'Process Now' workflow.")
         try? modelContext.save()
         
-        let localPipeline = LocalPipelineService(modelContext: modelContext)
-        
-        let targetURL = item.url
-        let targetTitle = item.title
-        
-        // Find or create LocalInput
-        // Splitting into two fetches to resolve: 'PredicateExpressions.Disjunction' compiler error
-        var input: LocalInput?
-        
-        if let url = targetURL {
-            let urlFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.url == url })
-            input = try? modelContext.fetch(urlFetch).first
-        }
-        
-        if input == nil, let title = targetTitle {
-            let titleFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.text == title })
-            input = try? modelContext.fetch(titleFetch).first
-        }
-        
-        if let input = input {
-            _ = try await localPipeline.process(
-                input: input,
-                enrichmentService: enrichmentService,
-                locationService: locationService,
-                foursquareService: foursquareService,
-                duckDuckGoService: duckDuckGoService,
-                weatherService: weatherService,
-                indexingService: indexingService,
-                contextService: contextService
+        do {
+            let localPipeline = LocalPipelineService(modelContext: modelContext)
+            
+            let targetURL = localItem.url
+            let targetTitle = localItem.title
+            
+            // CRITICAL: Detect if item has a user-set location that should be preserved
+            // If so, pass nil for locationService to prevent GPS override
+            // Be STRICT here - only detect truly user-explicit overrides
+            let hasUserSetLocation: Bool = {
+                guard let placeContext = localItem.placeContext else { return false }
+                
+                // Contact-set location (explicitly chosen from contacts)
+                if placeContext.contactIdentifier != nil { return true }
+                
+                // MapKit/manual location override (explicitly chosen from map)
+                if let placeID = placeContext.placeID {
+                    if placeID.hasPrefix("mapkit-") || placeID.hasPrefix("mk-") || placeID == "home-location" {
+                        return true
+                    }
+                }
+                
+                // NOTE: Don't just check for name + coordinates, as that catches pipeline-enriched items too
+                return false
+            }()
+            
+            // Skip locationService if user has already set a location
+            let effectiveLocationService = hasUserSetLocation ? nil : locationService
+            
+            if hasUserSetLocation {
+                localItem.processingLog.append("\(Date().formatted()): Preserving user-set location: \(localItem.placeContext?.name ?? "Unknown")")
+            }
+            
+            // Find or create LocalInput
+            // Splitting into two fetches to resolve: 'PredicateExpressions.Disjunction' compiler error
+            var input: LocalInput?
+            
+            if let url = targetURL {
+                let urlFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.url == url })
+                input = try? modelContext.fetch(urlFetch).first
+            }
+            
+            if input == nil, let title = targetTitle {
+                let titleFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.text == title })
+                input = try? modelContext.fetch(titleFetch).first
+            }
+            
+            // CRITICAL: Clear all calculated data for fresh reprocessing
+            // Preserve: id, url, rawPayload, sessionID, createdAt, source, photosAssetIdentifier
+            localItem.summary = nil
+            localItem.transcription = nil
+            localItem.tags = []
+            localItem.purposes = []
+            localItem.categories = []
+            localItem.questions = []
+            if !hasUserSetLocation {
+                localItem.placeContextData = nil
+            }
+            localItem.webContextData = nil
+            localItem.documentContextData = nil
+            localItem.qrContextData = nil
+            localItem.activityContextData = nil
+            // Note: Don't clear weatherContextData - it's capture-time only
+            localItem.processingLog.append("\(Date().formatted()): Cleared calculated data for fresh reprocessing (preserving user overrides: \(hasUserSetLocation)).")
+            
+            // CRITICAL: Also clear parent session summary so it regenerates with new item data
+            if let sessionID = localItem.sessionID {
+                let sessionFetch = FetchDescriptor<DiverSession>(
+                    predicate: #Predicate { $0.sessionID == sessionID }
+                )
+                if let session = try? modelContext.fetch(sessionFetch).first {
+                    session.summary = nil
+                    session.updatedAt = Date()
+                    localItem.processingLog.append("\(Date().formatted()): Cleared parent session summary for regeneration.")
+                }
+            }
+            
+            try? modelContext.save()
+            
+            // Create descriptor with the item's actual ID to ensure correct item is updated
+            let descriptor = DiverItemDescriptor(
+                id: localItem.id,
+                url: localItem.url ?? "",
+                title: localItem.title ?? "",
+                type: DiverItemType(rawValue: localItem.entityType ?? "web") ?? .web,
+                attributionID: localItem.attributionID,
+                masterCaptureID: localItem.masterCaptureID,
+                sessionID: localItem.sessionID
             )
-        } else {
-             // Fallback: create a temporary input from item data
-             let fallbackInput = LocalInput(url: item.url, source: "forced", inputType: item.entityType ?? "web")
-             modelContext.insert(fallbackInput)
-             _ = try await localPipeline.process(
-                input: fallbackInput,
-                enrichmentService: enrichmentService,
-                locationService: locationService,
-                foursquareService: foursquareService,
-                duckDuckGoService: duckDuckGoService,
-                weatherService: weatherService,
-                indexingService: indexingService,
-                contextService: contextService
-            )
+            
+            if let input = input {
+                _ = try await localPipeline.process(
+                    input: input,
+                    descriptor: descriptor,
+                    enrichmentService: enrichmentService,
+                    locationService: effectiveLocationService,
+                    foursquareService: foursquareService,
+                    duckDuckGoService: duckDuckGoService,
+                    weatherService: weatherService,
+                    indexingService: indexingService,
+                    contextService: contextService
+                )
+            } else {
+                 // Fallback: create a temporary input from item data
+                 // Include rawPayload for image captures
+                 var imageData: Data? = localItem.rawPayload
+                 
+                 // If no rawPayload but has photosAssetIdentifier, load on-demand
+                 if imageData == nil, let assetId = localItem.photosAssetIdentifier {
+                     imageData = await PhotosAssetLoader.shared.loadImageData(identifier: assetId)
+                 }
+                 
+                 // Use original source so pipeline knows how to handle (e.g., photoLibraryImport runs OCR)
+                 let fallbackInput = LocalInput(
+                     createdAt: localItem.createdAt,
+                     url: localItem.url,
+                     text: localItem.title,
+                     source: localItem.source ?? "reprocessing",
+                     inputType: localItem.entityType ?? "web",
+                     rawPayload: imageData
+                 )
+                 
+                 modelContext.insert(fallbackInput)
+                 _ = try await localPipeline.process(
+                    input: fallbackInput,
+                    descriptor: descriptor,
+                    enrichmentService: enrichmentService,
+                    locationService: effectiveLocationService,
+                    foursquareService: foursquareService,
+                    duckDuckGoService: duckDuckGoService,
+                    weatherService: weatherService,
+                    indexingService: indexingService,
+                    contextService: contextService
+                )
+            }
+            
+            // Mark as ready if processing succeeded
+            // CRITICAL: Set statusRaw directly (not through @Transient status) to ensure SwiftData persistence
+            localItem.statusRaw = ProcessingStatus.ready.rawValue
+            localItem.processingLog.append("\(Date().formatted()): Processing completed successfully.")
+            try modelContext.save()
+            
+        } catch {
+            // Handle errors - don't leave item stuck in processing state
+            localItem.statusRaw = ProcessingStatus.failed.rawValue
+            localItem.failureCount += 1
+            localItem.processingLog.append("\(Date().formatted()): Processing failed - \(error.localizedDescription)")
+            try? modelContext.save()
+            print("❌ processItemImmediately failed: \(error)")
+            throw error
         }
-        
-        try modelContext.save()
         
         // Restart the rest of the queue in background
         Task {
@@ -281,8 +399,48 @@ public final class MetadataPipelineService {
             try modelContext.save()
         }
         
-        // 3. Process imported PHAsset items (Photo Library imports with no rawPayload)
+        // 3. Process queued ProcessedItems that have no LocalInput (orphaned items after crash/resume)
+        await processQueuedOrphanItems()
+        
+        // 4. Process imported PHAsset items (Photo Library imports with no rawPayload)
         await processImportedPHAssetItems()
+    }
+    
+    /// Process queued items that have no corresponding LocalInput (e.g., stalled items reset earlier)
+    private func processQueuedOrphanItems() async {
+        let queuedFetch = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.statusRaw == "queued" },
+            sortBy: [SortDescriptor(\.createdAt)]
+        )
+        
+        guard let queuedItems = try? modelContext.fetch(queuedFetch), !queuedItems.isEmpty else {
+            return
+        }
+        
+        DiverLogger.pipeline.info("Processing \(queuedItems.count) queued items without LocalInput")
+        
+        for item in queuedItems {
+            if Task.isCancelled { break }
+            
+            // Check if there's already a LocalInput for this item
+            let itemURL = item.url
+            let urlFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.url == itemURL })
+            if let _ = try? modelContext.fetch(urlFetch).first {
+                // LocalInput exists, will be processed by step 2
+                continue
+            }
+            
+            // No LocalInput? Process this orphaned item directly
+            do {
+                try await processItemImmediately(item)
+            } catch {
+                DiverLogger.pipeline.error("Failed to process orphaned queued item \(item.id): \(error)")
+                item.status = .failed
+                item.failureCount += 1
+                item.processingLog.append("\(Date().formatted()): Failed to resume - \(error.localizedDescription)")
+                try? modelContext.save()
+            }
+        }
     }
     
     /// Process imported items that have a photosAssetIdentifier but no rawPayload.
@@ -319,8 +477,9 @@ public final class MetadataPipelineService {
                 continue
             }
             
-            // Load image data from PHAsset
-            guard let imageData = await loadDataFromPHAsset(identifier: assetIdentifier, isVideo: item.mediaType == "video") else {
+            // Load image data from PHAsset using shared loader
+            // This handles both images and videos (extracting best frame)
+            guard let imageData = await PhotosAssetLoader.shared.loadBestFrame(identifier: assetIdentifier) else {
                 item.status = .failed
                 item.processingLog.append("\(Date().formatted()): Failed to load data from PHAsset")
                 errorCount += 1
@@ -356,6 +515,7 @@ public final class MetadataPipelineService {
                     type: item.mediaType == "video" ? .video : .image,
                     attributionID: nil,
                     masterCaptureID: nil,
+                    photosAssetIdentifier: item.photosAssetIdentifier,
                     sessionID: item.sessionID,
                     purposes: []
                 )
@@ -391,105 +551,7 @@ public final class MetadataPipelineService {
         try? modelContext.save()
         print("📸 [MetadataPipeline] PHAsset processing complete. Success: \(successCount), Failed: \(errorCount)")
     }
-    
-    /// Load image/video data from PHAsset
-    /// For images: returns scaled image data
-    /// For videos: extracts best frame using AestheticsScoringService
-    private func loadDataFromPHAsset(identifier: String, isVideo: Bool) async -> Data? {
-        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
-        guard let asset = fetchResult.firstObject else {
-            print("⚠️ PHAsset not found for identifier: \(identifier)")
-            return nil
-        }
-        
-        if isVideo {
-            // For videos: request AVAsset and extract best frame
-            return await loadBestFrameFromVideo(asset: asset)
-        } else {
-            // For images: request scaled image
-            return await loadImageData(from: asset)
-        }
-    }
-    
-    // MARK: - PHImageManager Helpers (nonisolated to avoid actor isolation issues)
-    // PHImageManager callbacks run on background dispatch queues.
-    // By marking these as `nonisolated`, the continuation is not tied to MainActor,
-    // so the callback can safely resume from any queue without actor isolation crashes.
-    
-    /// Request scaled image from PHAsset - nonisolated to avoid actor isolation with PHImageManager callback
-    nonisolated private func requestImageFromPhotos(_ asset: PHAsset, targetSize: CGSize) async -> Data? {
-        let options = PHImageRequestOptions()
-        options.deliveryMode = .highQualityFormat
-        options.isNetworkAccessAllowed = true
-        options.isSynchronous = false
-        
-        return await withCheckedContinuation { continuation in
-            PHImageManager.default().requestImage(
-                for: asset,
-                targetSize: targetSize,
-                contentMode: .aspectFit,
-                options: options
-            ) { image, info in
-                guard let image = image else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                let data = image.jpegData(compressionQuality: 0.8)
-                continuation.resume(returning: data)
-            }
-        }
-    }
-    
-    /// Request AVAsset from PHAsset - nonisolated to avoid actor isolation with PHImageManager callback
-    nonisolated private func requestAVAssetFromPhotos(_ asset: PHAsset) async -> AVURLAsset? {
-        let videoOptions = PHVideoRequestOptions()
-        videoOptions.isNetworkAccessAllowed = true
-        videoOptions.deliveryMode = .mediumQualityFormat
-        
-        return await withCheckedContinuation { continuation in
-            PHImageManager.default().requestAVAsset(forVideo: asset, options: videoOptions) { avAsset, _, _ in
-                continuation.resume(returning: avAsset as? AVURLAsset)
-            }
-        }
-    }
-    
-    /// Load scaled image data from PHAsset
-    private func loadImageData(from asset: PHAsset) async -> Data? {
-        let targetSize = CGSize(width: 1024, height: 1024)
-        return await requestImageFromPhotos(asset, targetSize: targetSize)
-    }
-    
-    /// Load best frame from video using AestheticsScoringService
-    private func loadBestFrameFromVideo(asset: PHAsset) async -> Data? {
-        // Step 1: Get the AVAsset using nonisolated helper
-        guard let avAsset = await requestAVAssetFromPhotos(asset) else {
-            print("⚠️ [MetadataPipeline] AVURLAsset not available, using poster frame")
-            return await loadImageData(from: asset)
-        }
-        
-        // Step 2: Extract best frame using AestheticsScoringService
-        do {
-            let aestheticsService = AestheticsScoringService()
-            let bestFrames = try await aestheticsService.extractBestFrames(from: avAsset.url, count: 1)
-            
-            if let bestFrame = bestFrames.first?.image {
-                #if canImport(UIKit)
-                let uiImage = UIImage(cgImage: bestFrame)
-                let data = uiImage.jpegData(compressionQuality: 0.8)
-                print("✅ [MetadataPipeline] Extracted best frame from video with score: \(bestFrames.first?.score ?? 0)")
-                return data
-                #else
-                return nil
-                #endif
-            } else {
-                print("⚠️ [MetadataPipeline] No frames extracted from video, using poster")
-                return await loadImageData(from: asset)
-            }
-        } catch {
-            print("❌ [MetadataPipeline] Failed to extract video frame: \(error)")
-            return await loadImageData(from: asset)
-        }
-    }
+
 
     private func handle(record: DiverQueueRecord) async throws {
         let descriptor = record.item.descriptor
@@ -502,7 +564,8 @@ public final class MetadataPipelineService {
         if payload == nil, let assetIdentifier = record.item.photosAssetIdentifier {
             // Load data on-demand from PHAsset (memory-safe: 1024x1024 max)
             print("📸 [MetadataPipeline] Loading data from PHAsset: \(assetIdentifier)")
-            payload = await loadDataFromPHAsset(identifier: assetIdentifier, isVideo: descriptor.type == .video)
+            // Use shared loader for consistent video frame extraction
+            payload = await PhotosAssetLoader.shared.loadBestFrame(identifier: assetIdentifier)
             
             if payload == nil {
                 print("⚠️ [MetadataPipeline] Failed to load PHAsset data for: \(assetIdentifier)")
@@ -597,9 +660,77 @@ public final class MetadataPipelineService {
         await localPipeline.runDataDiagnostics()
     }
     
-    // MARK: - Collection Summary Generation
+    // MARK: - Session Summary Generation
     
-    /// Generate LLM summaries for collections that have newly processed items
+    /// Generate LLM summaries for sessions by aggregating item summaries
+    public func generatePendingSessionSummaries() async {
+        guard let contextService = self.contextService else {
+            print("⚠️ [MetadataPipeline] No contextService available for session summaries")
+            return
+        }
+        
+        do {
+            // Find sessions that need summaries regenerated
+            // Either nil summary, or empty summary
+            let sessionDescriptor = FetchDescriptor<DiverSession>(
+                predicate: #Predicate { $0.summary == nil }
+            )
+            let sessions = try modelContext.fetch(sessionDescriptor)
+            
+            print("🔄 [MetadataPipeline] Found \(sessions.count) sessions needing summaries")
+            
+            for session in sessions {
+                // Fetch all items for this session
+                let sessionID = session.sessionID
+                let itemDescriptor = FetchDescriptor<ProcessedItem>(
+                    predicate: #Predicate { $0.sessionID == sessionID },
+                    sortBy: [SortDescriptor(\.createdAt)]
+                )
+                
+                guard let items = try? modelContext.fetch(itemDescriptor), !items.isEmpty else {
+                    continue
+                }
+                
+                // Build aggregated context from item source material (transcriptions, not summaries)
+                let itemContexts = items.compactMap { item -> String? in
+                    var parts: [String] = []
+                    if let title = item.title, !title.isEmpty { parts.append("Title: \(title)") }
+                    if let transcription = item.transcription, !transcription.isEmpty {
+                        parts.append("OCR: \(transcription.prefix(300))")
+                    }
+                    if let place = item.placeContext?.name, !place.isEmpty {
+                        parts.append("Place: \(place)")
+                    }
+                    return parts.isEmpty ? nil : parts.joined(separator: " | ")
+                }.prefix(20) // Limit to avoid token overflow
+                
+                guard !itemContexts.isEmpty else { continue }
+                
+                let contextText = """
+                Session with \(items.count) captures at \(session.locationName ?? "unknown location").
+                
+                Captured items:
+                \(Array(itemContexts).joined(separator: "\n"))
+                
+                Generate a brief 1-2 sentence summary of what was captured in this session.
+                """
+                
+                let llmSummary = try await contextService.summarizeText(contextText)
+                
+                session.summary = llmSummary
+                session.updatedAt = Date()
+                
+                print("✅ [MetadataPipeline] Generated LLM summary for session '\(session.sessionID)': \(llmSummary.prefix(100))...")
+            }
+            
+            try modelContext.save()
+            
+        } catch {
+            print("⚠️ [MetadataPipeline] Failed to generate session summaries: \(error)")
+        }
+    }
+    
+    // MARK: - Collection Summary Generation
     private func generatePendingCollectionSummaries() async {
         guard let contextService = self.contextService else {
             print("⚠️ [MetadataPipeline] No contextService available for collection summaries")

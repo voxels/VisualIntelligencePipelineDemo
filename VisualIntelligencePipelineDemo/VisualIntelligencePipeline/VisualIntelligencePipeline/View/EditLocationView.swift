@@ -10,12 +10,10 @@ struct EditLocationView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.metadataPipelineService) private var pipelineService
     
-    @State private var fsqCandidates: [EnrichmentData] = []
-    @State private var mkCandidates: [EnrichmentData] = []
-    // Legacy support: candidates property computed or removed?
-    // We'll keep candidates as a computed property for the specific map logic if needed, but better to just iterate both.
-    var candidates: [EnrichmentData] { fsqCandidates + mkCandidates }
+    @State private var candidates: [EnrichmentData] = []
+    @State private var contactAddresses: [ContactAddress] = []
     @State private var isLoading = false
+    @State private var isLoadingContacts = false
     @State private var selectedCandidate: EnrichmentData?
     @State private var position: MapCameraPosition = .automatic
     @State private var visibleRegion: MKCoordinateRegion?
@@ -25,6 +23,16 @@ struct EditLocationView: View {
     @State private var selectedMapFeature: MapFeature?
     
     @Query private var sessions: [DiverSession]
+    
+    /// Contacts filtered by search text
+    private var filteredContactAddresses: [ContactAddress] {
+        guard !searchText.isEmpty else { return contactAddresses }
+        let lowercasedSearch = searchText.lowercased()
+        return contactAddresses.filter { contact in
+            contact.contactName.lowercased().contains(lowercasedSearch) ||
+            contact.formattedAddress.lowercased().contains(lowercasedSearch)
+        }
+    }
     
     private var sessionLocation: CLLocationCoordinate2D? {
         if let sessionID = item.sessionID, let session = sessions.first(where: { $0.sessionID == sessionID }),
@@ -55,90 +63,14 @@ struct EditLocationView: View {
     var body: some View {
         NavigationStack {
             List {
+                // Map Section
                 Section {
-                    Map(position: $position, selection: $selectedMapFeature) {
-                        // Current Item Location
-                        if let loc = itemLocationCoordinate {
-                            Marker("Current", coordinate: loc)
-                                .tint(.purple)
-                        }
-                        
-                        // Session Location (if different)
-                        if let sl = sessionLocation, sl.latitude != itemLocationCoordinate?.latitude {
-                             Marker("Session", coordinate: sl)
-                                .tint(.gray)
-                        }
-                        
-                        // Candidates
-                        ForEach(candidates) { candidate in
-                            if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
-                                let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-                                let isSelected = matchesSelection(candidate)
-                                
-                                Annotation(candidate.title ?? "Unknown", coordinate: coordinate) {
-                                    Button {
-                                        selectCandidate(candidate)
-                                    } label: {
-                                        Image(systemName: "mappin.circle.fill")
-                                            .font(.title)
-                                            .foregroundStyle(isSelected ? .green : .red)
-                                            .background(.white)
-                                            .clipShape(Circle())
-                                            .shadow(radius: 2)
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Explicitly render selected candidate if it's not in the candidate list
-                        if let selected = selectedCandidate, 
-                           let lat = selected.placeContext?.latitude, 
-                           let lon = selected.placeContext?.longitude,
-                           !candidates.contains(where: { matchesSelection($0) }) {
-                            
-                            Annotation(selected.title ?? "Selected", coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)) {
-                                Button {
-                                    // Already selected
-                                } label: {
-                                    Image(systemName: "mappin.circle.fill")
-                                        .font(.title)
-                                        .foregroundStyle(.green)
-                                        .background(.white)
-                                        .clipShape(Circle())
-                                        .shadow(radius: 2)
-                                }
-                            }
-                        }
-                    }
-                    .frame(height: 300)
-                    .listRowInsets(EdgeInsets())
-                    .mapControls {
-                        MapUserLocationButton()
-                        MapCompass()
-                        MapScaleView()
-                    }
-                    .onMapCameraChange { context in
-                        visibleRegion = context.region
-                    }
-                    .onChange(of: selectedMapFeature) { feature in
-                        if let feature {
-                            Task { await resolveMapFeature(feature) }
-                        }
-                    }
-                    .overlay(alignment: .bottomTrailing) {
-                        // "Search Here" button
-                        Button {
-                            Task { await fetchCandidates() }
-                        } label: {
-                            Image(systemName: "arrow.clockwise.circle.fill")
-                                .font(.title)
-                                .background(Color.white.clipShape(Circle()))
-                                .shadow(radius: 2)
-                        }
-                        .padding()
-                    }
+                    mapSection
+                        .frame(height: 280)
+                        .listRowInsets(EdgeInsets())
                 }
                 
+                // Current Location
                 Section("Current Location") {
                     VStack(alignment: .leading) {
                         Text(item.placeContext?.name ?? item.location ?? "Unknown Place")
@@ -152,7 +84,7 @@ struct EditLocationView: View {
                                 .foregroundStyle(.tertiary)
                         }
                     }
-                    .contentShape(Rectangle()) // Make full row tappable
+                    .contentShape(Rectangle())
                     .onTapGesture {
                         if let loc = itemLocationCoordinate {
                             withAnimation {
@@ -162,6 +94,7 @@ struct EditLocationView: View {
                     }
                 }
                 
+                // Selected Location
                 if let selected = selectedCandidate {
                     Section("Selected Location") {
                         VStack(alignment: .leading) {
@@ -192,27 +125,44 @@ struct EditLocationView: View {
                     }
                 }
                 
-                if !fsqCandidates.isEmpty {
-                    Section("Foursquare Places") {
-                        ForEach(fsqCandidates) { candidate in
+                // Places (MapKit-primary)
+                if !candidates.isEmpty {
+                    Section {
+                        ForEach(candidates) { candidate in
                             LocationCandidateRow(candidate: candidate, selectedID: selectedCandidate?.id) {
                                 selectCandidate(candidate)
                             }
                         }
+                    } header: {
+                        Label("Places", systemImage: "mappin.and.ellipse")
                     }
                 }
                 
-                if !mkCandidates.isEmpty {
-                    Section("Apple Maps") {
-                        ForEach(mkCandidates) { candidate in
-                            LocationCandidateRow(candidate: candidate, selectedID: selectedCandidate?.id) {
-                                selectCandidate(candidate)
-                            }
+                // Contact Addresses (at bottom)
+                if !filteredContactAddresses.isEmpty {
+                    Section {
+                        ForEach(filteredContactAddresses) { contact in
+                            contactRow(contact)
                         }
+                    } header: {
+                        Label("Contacts", systemImage: "person.2.fill")
+                    } footer: {
+                        Text("Sorted by distance from current location")
+                            .font(.caption2)
+                    }
+                } else if isLoadingContacts {
+                    Section {
+                        HStack {
+                            ProgressView()
+                            Text("Loading contacts...")
+                                .foregroundStyle(.secondary)
+                        }
+                    } header: {
+                        Label("Contacts", systemImage: "person.2.fill")
                     }
                 }
                 
-                if fsqCandidates.isEmpty && mkCandidates.isEmpty && !isLoading {
+                if candidates.isEmpty && filteredContactAddresses.isEmpty && !isLoading && !isLoadingContacts {
                      Section {
                          Text("No places found nearby.")
                              .foregroundStyle(.secondary)
@@ -236,7 +186,6 @@ struct EditLocationView: View {
                 }
             }
             .task(id: searchText) {
-                // Skip initial load to avoid overwriting onAppear data if no search text
                 if !searchText.isEmpty {
                     try? await Task.sleep(nanoseconds: 500_000_000)
                     await fetchCandidates()
@@ -258,6 +207,170 @@ struct EditLocationView: View {
         }
     }
     
+    // MARK: - Map Section
+    private var mapSection: some View {
+        Map(position: $position, selection: $selectedMapFeature) {
+            // Current Item Location
+            if let loc = itemLocationCoordinate {
+                Marker("Current", coordinate: loc)
+                    .tint(.purple)
+            }
+            
+            // Session Location (if different)
+            if let sl = sessionLocation, sl.latitude != itemLocationCoordinate?.latitude {
+                 Marker("Session", coordinate: sl)
+                    .tint(.gray)
+            }
+            
+            // Place Candidates
+            ForEach(candidates) { candidate in
+                if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
+                    let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                    let isSelected = matchesSelection(candidate)
+                    
+                    Annotation(candidate.title ?? "Unknown", coordinate: coordinate) {
+                        Button {
+                            selectCandidate(candidate)
+                        } label: {
+                            Image(systemName: "mappin.circle.fill")
+                                .font(.title)
+                                .foregroundStyle(isSelected ? .green : .red)
+                                .background(.white)
+                                .clipShape(Circle())
+                                .shadow(radius: 2)
+                        }
+                    }
+                }
+            }
+            
+            // Contact Address Markers
+            ForEach(filteredContactAddresses) { contact in
+                if let location = contact.location {
+                    Annotation(contact.displayTitle, coordinate: location.coordinate) {
+                        Button {
+                            selectContactAddress(contact)
+                        } label: {
+                            Image(systemName: "person.circle.fill")
+                                .font(.title)
+                                .foregroundStyle(.blue)
+                                .background(.white)
+                                .clipShape(Circle())
+                                .shadow(radius: 2)
+                        }
+                    }
+                }
+            }
+            
+            // Selected candidate marker (if not in candidates list)
+            if let selected = selectedCandidate, 
+               let lat = selected.placeContext?.latitude, 
+               let lon = selected.placeContext?.longitude,
+               !candidates.contains(where: { matchesSelection($0) }) {
+                
+                Annotation(selected.title ?? "Selected", coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)) {
+                    Image(systemName: "mappin.circle.fill")
+                        .font(.title)
+                        .foregroundStyle(.green)
+                        .background(.white)
+                        .clipShape(Circle())
+                        .shadow(radius: 2)
+                }
+            }
+        }
+        .mapControls {
+            MapUserLocationButton()
+            MapCompass()
+        }
+        .onMapCameraChange { context in
+            visibleRegion = context.region
+        }
+        .onChange(of: selectedMapFeature) {_, feature in
+            if let feature {
+                Task { await resolveMapFeature(feature) }
+            }
+        }
+        .overlay(alignment: .bottomTrailing) {
+            Button {
+                Task { await fetchCandidates() }
+            } label: {
+                Image(systemName: "arrow.clockwise.circle.fill")
+                    .font(.title)
+                    .background(Color.white.clipShape(Circle()))
+                    .shadow(radius: 2)
+            }
+            .padding()
+        }
+    }
+    
+    // MARK: - Contact Row
+    private func contactRow(_ contact: ContactAddress) -> some View {
+        Button {
+            selectContactAddress(contact)
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(contact.displayTitle)
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                    Text(contact.formattedAddress.replacingOccurrences(of: "\n", with: ", "))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    if let distance = contact.distance {
+                        Text(formatDistance(distance))
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                Spacer()
+                if let selected = selectedCandidate,
+                   selected.placeContext?.contactIdentifier == contact.contactIdentifier {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(.blue)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private func formatDistance(_ meters: Double) -> String {
+        if meters < 1000 {
+            return String(format: "%.0f m away", meters)
+        } else {
+            return String(format: "%.1f km away", meters / 1000)
+        }
+    }
+    
+    // MARK: - Actions
+    
+    private func selectContactAddress(_ contact: ContactAddress) {
+        guard let location = contact.location else { return }
+        
+        let enrichmentData = EnrichmentData(
+            title: contact.displayTitle,
+            descriptionText: contact.formattedAddress,
+            categories: ["Contact"],
+            location: contact.formattedAddress,
+            placeContext: PlaceContext(
+                name: contact.displayTitle,
+                categories: ["Contact Address"],
+                address: contact.formattedAddress,
+                latitude: location.coordinate.latitude,
+                longitude: location.coordinate.longitude,
+                contactIdentifier: contact.contactIdentifier
+            )
+        )
+        
+        selectedCandidate = enrichmentData
+        
+        withAnimation {
+            position = .region(MKCoordinateRegion(
+                center: location.coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+            ))
+        }
+    }
+    
     private func setupInitialPosition() {
         Task {
             // 1. Determine Map Position
@@ -270,7 +383,6 @@ struct EditLocationView: View {
                     position = .region(MKCoordinateRegion(center: sl, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
                 }
             } else {
-                // Attempt to get current location or default to SF
                 if let current = await Services.shared.locationService?.getCurrentLocation() {
                      await MainActor.run {
                          withAnimation {
@@ -278,9 +390,7 @@ struct EditLocationView: View {
                          }
                      }
                 } else {
-                    // Default to SF only if location services fail/unavailable
                     await MainActor.run {
-                        // Default to World View or Invalid, do NOT use SF.
                         print("⚠️ EditLocationView: Location unknown. Defaulting to world view.")
                         position = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 0, longitude: 0), span: MKCoordinateSpan(latitudeDelta: 180, longitudeDelta: 180)))
                     }
@@ -298,16 +408,10 @@ struct EditLocationView: View {
                 )
                 await MainActor.run {
                     self.selectedCandidate = currentPlace
-                    self.fsqCandidates = [currentPlace] // Default to FSQ list?
                 }
             }
             
-            // 3. Trigger nearby search AFTER position is set
-            // Short sleep to allow Map to update its region binding?
-            // Actually, we can pass the explicit center we just calculated to fetchCandidates to be safe
-            // regardless of whether visibleRegion has updated yet.
-            
-            // Re-calculate the center we just decided on
+            // 3. Trigger nearby search
             if let loc = itemLocationCoordinate { 
                 await fetchCandidates(explicitCenter: loc)
             } else if let sl = sessionLocation { 
@@ -315,10 +419,32 @@ struct EditLocationView: View {
             } else if let current = await Services.shared.locationService?.getCurrentLocation()?.coordinate { 
                 await fetchCandidates(explicitCenter: current)
             } else {
-                // If we defaulted to SF (Hardcoded), do NOT trigger an expensive/irrelevant API search.
-                // Just leave candidates empty.
                 print("⚠️ Location unknown. Skipping automatic place search.")
             }
+            
+            // 4. Load contact addresses
+            await loadContactAddresses()
+        }
+    }
+    
+    private func loadContactAddresses() async {
+        isLoadingContacts = true
+        defer { isLoadingContacts = false }
+        
+        // Get reference location for sorting
+        var referenceLocation: CLLocation?
+        if let coord = itemLocationCoordinate {
+            referenceLocation = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
+        } else if let sl = sessionLocation {
+            referenceLocation = CLLocation(latitude: sl.latitude, longitude: sl.longitude)
+        } else {
+            referenceLocation = await Services.shared.locationService?.getCurrentLocation()
+        }
+        
+        let addresses = await Services.shared.contactService?.fetchContactsWithAddresses(sortedByDistanceFrom: referenceLocation) ?? []
+        
+        await MainActor.run {
+            contactAddresses = addresses
         }
     }
     
@@ -340,47 +466,20 @@ struct EditLocationView: View {
         isLoading = true
         defer { isLoading = false }
         
-        // Prioritize map center if visible, otherwise item location
         let searchCenter = explicitCenter ?? visibleRegion?.center ?? itemLocationCoordinate ?? sessionLocation
         
         guard let center = searchCenter else { return }
         
-        async let fsqResults = searchFoursquare(at: center)
-        async let mkResults = searchMapKit(at: center)
-        
-        let (fsq, mk) = await (fsqResults, mkResults)
+        // Use LocationSearchAggregator for MapKit-primary search
+        let results = await LocationSearchAggregator.fetchCandidates(
+            query: searchText,
+            center: center,
+            foursquareService: Services.shared.foursquareService,
+            mapKitService: Services.shared.mapKitService
+        )
 
         await MainActor.run {
-            self.fsqCandidates = fsq
-            self.mkCandidates = mk
-        }
-    }
-    
-    private func searchFoursquare(at center: CLLocationCoordinate2D) async -> [EnrichmentData] {
-        guard let service = Services.shared.foursquareService else { return [] }
-        do {
-            if searchText.isEmpty {
-                return try await service.searchNearby(location: center, limit: 50)
-            } else {
-                return try await service.search(query: searchText, location: center, limit: 50)
-            }
-        } catch {
-            print("FSQ Error: \(error)")
-            return []
-        }
-    }
-    
-    private func searchMapKit(at center: CLLocationCoordinate2D) async -> [EnrichmentData] {
-        guard let service = Services.shared.mapKitService else { return [] }
-        do {
-             if searchText.isEmpty {
-                return try await service.searchNearby(location: center, limit: 50)
-            } else {
-                return try await service.search(query: searchText, location: center, limit: 50)
-            }
-        } catch {
-            print("MK Error: \(error)")
-            return []
+            self.candidates = results
         }
     }
     
@@ -389,32 +488,26 @@ struct EditLocationView: View {
         
         isUpdating = true
         
-        // Ensure we capture all necessary data before any potential view recycling
         let newContext = candidate.placeContext
         let newCategories = candidate.categories
         let newLocation = (newContext?.latitude != nil && newContext?.longitude != nil) ? "\(newContext!.latitude!),\(newContext!.longitude!)" : nil
         
         await MainActor.run {
             // 1. Update Core Metadata
-            // Improve "Old Name" detection: Look at placeContext first, but fall back to item.title if it's specific
             let currentTitle = item.title
             let isGenericTitle = ["Home", "Unknown Place", "Current Location", item.location, ""].contains(currentTitle ?? "")
             let oldName = item.placeContext?.name ?? (isGenericTitle ? nil : currentTitle)
 
             var finalContext = newContext
             
-            // Smart Merge: If new name looks like an address (starts with number) AND old name was valid, preserve old name
+            // Smart Merge: If new name looks like an address AND old name was valid, preserve old name
             if let newName = newContext?.name, let old = oldName, !old.isEmpty, old != "Unknown Place" {
-                // Heuristic: If new name looks like an address...
-                // Regex: Starts with 1+ digits, followed by space, then letters.
                 let isAddressLike = newName.range(of: "^\\d+\\s+[A-Za-z]+", options: .regularExpression) != nil
-                // And old name does NOT look like an address (to prevent preserving "123 Main St" over "125 Main St")
                 let oldIsAddressLike = old.range(of: "^\\d+\\s+[A-Za-z]+", options: .regularExpression) != nil
                 
                 if isAddressLike && !oldIsAddressLike {
                      print("ℹ️ Preserving old name '\(old)' because new name '\(newName)' looks like an address.")
                      
-                     // Create new context with old name but everything else from newContext
                      if let nc = newContext {
                          finalContext = PlaceContext(
                              name: old,
@@ -429,7 +522,8 @@ struct EditLocationView: View {
                              phoneNumber: nc.phoneNumber,
                              website: nc.website,
                              photos: nc.photos,
-                             tips: nc.tips
+                             tips: nc.tips,
+                             contactIdentifier: nc.contactIdentifier
                          )
                      }
                 }
@@ -437,11 +531,11 @@ struct EditLocationView: View {
             
             item.placeContext = finalContext
             
-            // Smart Title Update: Only if we didn't preserve the old name effectively
+            // Smart Title Update
             if let newName = finalContext?.name {
                 let current = item.title ?? ""
-                let candidates = ["Home", "Unknown Place", "Current Location", oldName, item.location].compactMap { $0 }
-                if current.isEmpty || candidates.contains(current) {
+                let genericCandidates = ["Home", "Unknown Place", "Current Location", oldName, item.location].compactMap { $0 }
+                if current.isEmpty || genericCandidates.contains(current) {
                     item.title = newName
                 }
             }
@@ -450,11 +544,10 @@ struct EditLocationView: View {
             }
             item.categories = newCategories
             
-            // Critical: Reset purposes/intent to force fresh regeneration based on new place
+            // Reset purposes for fresh regeneration
             item.purposes = []
             
-            // 2. Persist
-            // CRITICAL: Update linked Session immediately to "lock in" this location against reprocessing overrides
+            // 2. Update linked Session
             if let sessionID = item.sessionID, let session = sessions.first(where: { $0.sessionID == sessionID }) {
                 print("🔒 Locking in session location override: \(newContext?.name ?? "nil")")
                 session.locationName = newContext?.name
@@ -472,7 +565,7 @@ struct EditLocationView: View {
                 print("❌ Failed to save item after location update: \(error)")
             }
             
-            // 3. Trigger SILENT background reprocessing
+            // 3. Trigger background reprocessing
             Task {
                 try? await pipelineService?.processItemImmediately(item)
             }
@@ -498,17 +591,14 @@ struct EditLocationView: View {
     private func matchesSelection(_ candidate: EnrichmentData) -> Bool {
         guard let selected = selectedCandidate else { return false }
         
-        // 1. Direct ID Match
         if selected.id == candidate.id { return true }
         
-        // 2. Loose Match (Title + Location) to handle ID drift between API calls
         let titlesMatch = (selected.title == candidate.title)
         
         var locationsMatch = false
         if let l1 = selected.placeContext, let l2 = candidate.placeContext,
            let lat1 = l1.latitude, let lon1 = l1.longitude,
            let lat2 = l2.latitude, let lon2 = l2.longitude {
-            // Approx 10 meters tolerance (0.0001 deg is ~11m)
             locationsMatch = abs(lat1 - lat2) < 0.0001 && abs(lon1 - lon2) < 0.0001
         }
         
@@ -544,3 +634,4 @@ struct LocationCandidateRow: View {
          .buttonStyle(.plain)
     }
 }
+

@@ -1,8 +1,13 @@
 import Foundation
+import SwiftData
 
 @MainActor
 public final class Services {
     public static let shared = Services()
+    
+    /// Shared ModelContext - single source of truth for all services
+    /// Set this from the App's dataStore.mainContext at startup
+    public var modelContext: ModelContext?
     
     public var locationService: LocationService?
     public var foursquareService: ContextualEnrichmentService?
@@ -15,6 +20,7 @@ public final class Services {
     public var pendingReprocessContext: ReprocessContext?
     public var mapKitService: MapKitEnrichmentService?
     public var metadataPipelineService: MetadataPipelineService?
+    public var localPipelineService: LocalPipelineService?
     
     /// KnowMaps CloudCacheService for iCloud cache management
     public var cloudCacheService: Any?

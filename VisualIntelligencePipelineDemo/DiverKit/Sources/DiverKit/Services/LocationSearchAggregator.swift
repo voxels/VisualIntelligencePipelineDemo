@@ -12,57 +12,28 @@ public struct LocationSearchAggregator {
         mapKitService: MapKitEnrichmentService?
     ) async -> [EnrichmentData] {
         
-        async let fsqTask: [EnrichmentData] = {
-            if let service = foursquareService {
-                do {
-                    return query.isEmpty ? try await service.searchNearby(location: center, limit: 30) : try await service.search(query: query, location: center, limit: 30)
-                } catch {
-                    print("Foursquare search failed: \(error)")
-                }
-            }
-            return []
-        }()
+        // MapKit is now PRIMARY for search results
+        // Foursquare is used for supplemental enrichment ONLY (in detail view)
+        var mapResults: [EnrichmentData] = []
         
-        async let mapKitTask: [EnrichmentData] = {
-            if let service = mapKitService {
-                do {
-                    return query.isEmpty ? try await service.searchNearby(location: center, limit: 30) : try await service.search(query: query, location: center, limit: 30)
-                } catch {
-                    print("MapKit search failed: \(error)")
-                }
-            }
-            return []
-        }()
-        
-        let (fsqResults, mapResults) = await (fsqTask, mapKitTask)
-        
-        // Merge and Deduplicate
-        var merged: [EnrichmentData] = []
-        var seenNames = Set<String>()
-        
-        func addIfUnique(_ items: [EnrichmentData]) {
-            for item in items {
-                let name = item.title?.lowercased().trimmingCharacters(in: .whitespaces) ?? ""
-                if name.isEmpty { continue }
-                
-                if seenNames.contains(name) { continue }
-                
-                seenNames.insert(name)
-                merged.append(item)
+        if let service = mapKitService {
+            do {
+                mapResults = query.isEmpty 
+                    ? try await service.searchNearby(location: center, limit: 30) 
+                    : try await service.search(query: query, location: center, limit: 30)
+            } catch {
+                print("MapKit search failed: \(error)")
             }
         }
         
-        // Prioritize MapKit for local landmarks, but Foursquare has better venue details
-        // Interleaving or appending? Existing logic prioritized MapKit then Foursquare.
-        // Let's stick to valid results.
-        
-        // Add MapKit results
-        addIfUnique(mapResults)
-        
-        // Add Foursquare results
-        addIfUnique(fsqResults)
-        
-        return merged
+        // Deduplicate by name (in case of multiple MapKit sources)
+        var seen = Set<String>()
+        return mapResults.filter { item in
+            let name = item.title?.lowercased().trimmingCharacters(in: .whitespaces) ?? ""
+            if name.isEmpty || seen.contains(name) { return false }
+            seen.insert(name)
+            return true
+        }
     }
     
     public static func resolveMapFeature(
@@ -73,26 +44,14 @@ public struct LocationSearchAggregator {
         let coordinate = feature.coordinate
         let title = feature.title ?? "Selected Location"
         
-        // 1. Try Foursquare Lookup by Name/Location
-        if let fsqService = foursquareService {
-            do {
-                let results = try await fsqService.search(query: title, location: coordinate, limit: 1)
-                if let bestMatch = results.first {
-                    return bestMatch
-                }
-            } catch {
-                print("Foursquare lookup failed during resolve: \(error)")
+        // 1. Try MapKit first (primary source)
+        if let mapService = mapKitService {
+            if let placeData = try? await mapService.enrich(query: title, location: coordinate) {
+                return placeData
             }
         }
         
-        // 2. Fallback to MapKit
-        if let mapService = mapKitService {
-             if let placeData = try? await mapService.enrich(query: title, location: coordinate) {
-                 return placeData
-             }
-        }
-        
-        // 3. Manual Construction
+        // 2. Manual Construction fallback
         return EnrichmentData(
             title: title,
             descriptionText: "Apple Maps Location",
@@ -106,6 +65,31 @@ public struct LocationSearchAggregator {
             )
         )
     }
+    
+    /// Fetches supplemental Foursquare data for a place (categories, ratings, tips, photos).
+    /// Use this in detail views to enrich MapKit results with Foursquare data.
+    /// - Parameters:
+    ///   - title: The place name to search for
+    ///   - coordinate: The location coordinate
+    ///   - foursquareService: The Foursquare service
+    /// - Returns: Enriched PlaceContext with Foursquare data, or nil if not found
+    public static func fetchFoursquareSupplementalData(
+        title: String,
+        coordinate: CLLocationCoordinate2D,
+        foursquareService: ContextualEnrichmentService?
+    ) async -> PlaceContext? {
+        guard let fsqService = foursquareService else { return nil }
+        
+        do {
+            let results = try await fsqService.search(query: title, location: coordinate, limit: 1)
+            if let bestMatch = results.first {
+                return bestMatch.placeContext
+            }
+        } catch {
+            print("Foursquare supplemental lookup failed: \(error)")
+        }
+        return nil
+    }
 }
 
 public struct SimpleMapFeature {
@@ -117,3 +101,4 @@ public struct SimpleMapFeature {
         self.title = title
     }
 }
+

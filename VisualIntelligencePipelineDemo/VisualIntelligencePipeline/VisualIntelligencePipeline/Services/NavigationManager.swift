@@ -13,6 +13,7 @@ class NavigationManager: ObservableObject {
     @Published var selectedSession: DiverSession?
     @Published var selection: ProcessedItem?
     @Published var isScanActive: Bool = false
+    @Published var scanSessionID: String?
     @Published var searchQuery: String = ""
     @Published var isSearching: Bool = false
 }

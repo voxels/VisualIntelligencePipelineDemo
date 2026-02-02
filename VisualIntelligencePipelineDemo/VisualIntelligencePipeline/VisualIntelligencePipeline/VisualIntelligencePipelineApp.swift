@@ -101,6 +101,7 @@ struct VisualIntelligencePipelineApp: App {
         let dailyContextService = DailyContextService()
         
         // Register in shared Services singleton for VisualIntelligenceViewModel
+        Services.shared.modelContext = dataStore.mainContext  // Single source of truth
         Services.shared.locationService = locationService
         Services.shared.foursquareService = foursquareContextService
         Services.shared.duckDuckGoService = duckDuckGoContextService
@@ -109,6 +110,8 @@ struct VisualIntelligencePipelineApp: App {
         Services.shared.contextQuestionService = contextService
         Services.shared.dailyContextService = dailyContextService
         Services.shared.mapKitService = MapKitEnrichmentService()
+        
+        // Initialize MetadataPipelineService before registering it
         
 //        // Initially use only Yahoo URL service
 //        let initialEnrichment = CompositeLinkEnrichmentService(services: [duckDuckGoContextService])
@@ -123,6 +126,13 @@ struct VisualIntelligencePipelineApp: App {
             weatherService: weatherService,
             contextService: contextService
         )
+        
+        // Register in Services singleton for ViewModels that need it
+        Services.shared.metadataPipelineService = self.metadataPipelineService
+        
+        // Initialize LocalPipelineService (for foreground/UI operations like regeneration)
+        let localPipeline = LocalPipelineService(modelContext: dataStore.mainContext)
+        Services.shared.localPipelineService = localPipeline
 
         // Initialize KeychainService with app group
         self.keychainService = KeychainService(service: KeychainService.ServiceIdentifier.diver, accessGroup: AppGroupConfig.default.keychainAccessGroup)
@@ -475,7 +485,8 @@ struct VisualIntelligencePipelineApp: App {
                             descriptionText: nil,
                             styleTags: [],
                             categories: ["deep_link"],
-                            type: .web
+                            type: .web,
+                            photosAssetIdentifier: nil
                         )
 
                         let queueItem = DiverQueueItem(action: "process", descriptor: descriptor, source: "deep_link")
@@ -525,7 +536,8 @@ struct VisualIntelligencePipelineApp: App {
             id: DiverLinkWrapper.id(for: url),
             url: url.absoluteString,
             title: url.host ?? url.absoluteString,
-            categories: ["clipboard"]
+            categories: ["clipboard"],
+            photosAssetIdentifier: nil
         )
 
         Task {

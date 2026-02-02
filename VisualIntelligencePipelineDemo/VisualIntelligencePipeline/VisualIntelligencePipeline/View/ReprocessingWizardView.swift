@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import DiverKit
+import DiverShared
 
 struct ReprocessingWizardView: View {
     @Environment(\.modelContext) private var modelContext
@@ -22,6 +23,11 @@ struct ReprocessingWizardView: View {
     @State private var processingStatusMsg = ""
     @State private var progress: Double = 0.0
     @State private var reviewItems: [ProcessedItem] = []
+    
+    // Approval tracking - key is item.id
+    @State private var approvalStates: [String: ReviewApprovalState] = [:]
+    @State private var originalSnapshots: [String: ItemSnapshot] = [:]
+    @State private var editingItem: ProcessedItem? = nil
     
     // Dependencies (Inject or use shared)
     // For simplicity using shared services here, mirroring SettingsView
@@ -121,19 +127,64 @@ struct ReprocessingWizardView: View {
     var reviewView: some View {
         List {
             if reviewItems.isEmpty {
-                ContentUnavailableView("No Conflicts Found", systemImage: "checkmark.circle")
+                ContentUnavailableView("No Changes to Review", systemImage: "checkmark.circle", description: Text("All items processed without conflicts."))
             } else {
                 Section {
-                     Text("The system detected potential place conflicts for the following items. Please confirm the correct location and purpose.")
-                         .font(.caption)
-                         .foregroundStyle(.secondary)
+                    Text("Review changes below. Items you don't explicitly approve will remain unchanged.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    // Summary counts
+                    HStack {
+                        Label("\(approvedCount)", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Label("\(deniedCount)", systemImage: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                        Label("\(pendingCount)", systemImage: "questionmark.circle")
+                            .foregroundStyle(.secondary)
+                    }
+                    .font(.caption)
                 }
                 
                 ForEach(reviewItems) { item in
-                    ReviewItemRow(item: item)
+                    ReviewItemRow(
+                        item: item,
+                        approvalState: bindingForItem(item),
+                        onEditLocation: { editingItem = item }
+                    )
                 }
             }
         }
+        .sheet(item: $editingItem) { item in
+            if let session = sessionForItem(item) {
+                EditSessionLocationView(session: session)
+            }
+        }
+    }
+    
+    private var approvedCount: Int {
+        approvalStates.values.filter { $0 == .approved }.count
+    }
+    
+    private var deniedCount: Int {
+        approvalStates.values.filter { $0 == .denied }.count
+    }
+    
+    private var pendingCount: Int {
+        reviewItems.count - approvedCount - deniedCount
+    }
+    
+    private func bindingForItem(_ item: ProcessedItem) -> Binding<ReviewApprovalState> {
+        Binding(
+            get: { approvalStates[item.id] ?? .pending },
+            set: { approvalStates[item.id] = $0 }
+        )
+    }
+    
+    private func sessionForItem(_ item: ProcessedItem) -> DiverSession? {
+        guard let sessionID = item.sessionID else { return nil }
+        let fetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+        return try? modelContext.fetch(fetch).first
     }
     
     var completeView: some View {
@@ -157,6 +208,18 @@ struct ReprocessingWizardView: View {
         Task {
             do {
                 let pipeline = LocalPipelineService(modelContext: modelContext)
+                
+                processingStatusMsg = "Capturing original state..."
+                
+                // CRITICAL: Capture snapshots BEFORE reprocessing so we can rollback
+                let itemsToProcess = FetchDescriptor<ProcessedItem>(
+                    predicate: #Predicate { $0.createdAt >= cutoffDate }
+                )
+                if let items = try? modelContext.fetch(itemsToProcess) {
+                    for item in items {
+                        originalSnapshots[item.id] = ItemSnapshot(from: item)
+                    }
+                }
                 
                 processingStatusMsg = "Starting batch job..."
                 
@@ -204,9 +267,29 @@ struct ReprocessingWizardView: View {
     }
     
     private func finishReview() {
-        // Mark all reviewed items as ready
         for item in reviewItems {
-            item.status = .ready
+            let state = approvalStates[item.id] ?? .pending
+            
+            switch state {
+            case .approved:
+                // User approved - keep new data, mark ready
+                item.status = .ready
+                item.processingLog.append("\(Date().formatted()): User approved reprocessed changes.")
+                
+            case .denied:
+                // User denied - restore original snapshot if available
+                if let snapshot = originalSnapshots[item.id] {
+                    snapshot.restore(to: item)
+                    item.processingLog.append("\(Date().formatted()): User rejected changes. Restored original data.")
+                }
+                item.status = .ready
+                
+            case .pending:
+                // User didn't review - leave as-is (don't change status)
+                // Item stays in reviewRequired state or we can mark ready
+                item.status = .ready
+                item.processingLog.append("\(Date().formatted()): No explicit review. Changes kept by default.")
+            }
         }
         try? modelContext.save()
         currentStep = .complete
@@ -215,16 +298,39 @@ struct ReprocessingWizardView: View {
 
 struct ReviewItemRow: View {
     @Bindable var item: ProcessedItem
-    @State private var showingEdit = false
+    @Binding var approvalState: ReviewApprovalState
+    var onEditLocation: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(item.title ?? "Untitled")
-                .font(.headline)
+            HStack {
+                Text(item.title ?? "Untitled")
+                    .font(.headline)
+                Spacer()
+                // Approval status indicator
+                switch approvalState {
+                case .pending:
+                    Image(systemName: "questionmark.circle")
+                        .foregroundStyle(.secondary)
+                case .approved:
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                case .denied:
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.red)
+                }
+            }
+            
+            if let summary = item.summary, !summary.isEmpty {
+                Text(summary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
             
             if let log = item.processingLog.last {
                 Text(log)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.orange)
                     .padding(4)
                     .background(Color.orange.opacity(0.1))
@@ -234,14 +340,117 @@ struct ReviewItemRow: View {
             HStack {
                 if let place = item.placeContext?.name {
                     Label(place, systemImage: "mappin.and.ellipse")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("Confirm & Keep") {
-                    item.status = .ready
+            }
+            
+            // Action buttons
+            HStack(spacing: 12) {
+                Button {
+                    approvalState = .approved
+                } label: {
+                    Label("Keep", systemImage: "checkmark")
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+                .tint(.green)
+                
+                Button {
+                    approvalState = .denied
+                } label: {
+                    Label("Reject", systemImage: "xmark")
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+                .tint(.red)
+                
+                Button {
+                    onEditLocation()
+                } label: {
+                    Label("Edit", systemImage: "mappin")
+                        .font(.caption)
                 }
                 .buttonStyle(.bordered)
             }
         }
         .padding(.vertical, 4)
+    }
+}
+
+enum ReviewApprovalState {
+    case pending
+    case approved
+    case denied
+}
+
+/// Stores original item data for rollback if user denies changes
+struct ItemSnapshot {
+    // Identity & Core
+    let title: String?
+    let summary: String?
+    let entityType: String?
+    let url: String?
+    let tags: [String]
+    let sessionID: String?
+    
+    // Metadata
+    let transcription: String?
+    let categories: [String]
+    let location: String?
+    let price: Double?
+    let rating: Double?
+    let purposes: [String]
+    
+    // Contexts (Value types)
+    let placeContext: PlaceContext?
+    let webContext: WebContext?
+    let documentContext: DocumentContext?
+    let qrContext: QRCodeContext?
+    let questions: [String]
+    
+    init(from item: ProcessedItem) {
+        self.title = item.title
+        self.summary = item.summary
+        self.entityType = item.entityType
+        self.url = item.url
+        self.tags = item.tags
+        self.sessionID = item.sessionID
+        
+        self.transcription = item.transcription
+        self.categories = item.categories
+        self.location = item.location
+        self.price = item.price
+        self.rating = item.rating
+        self.purposes = item.purposes
+        
+        self.placeContext = item.placeContext
+        self.webContext = item.webContext
+        self.documentContext = item.documentContext
+        self.qrContext = item.qrContext
+        self.questions = item.questions
+    }
+    
+    func restore(to item: ProcessedItem) {
+        item.title = title
+        item.summary = summary
+        item.entityType = entityType
+        item.url = url
+        item.tags = tags
+        item.sessionID = sessionID
+        
+        item.transcription = transcription
+        item.categories = categories
+        item.location = location
+        item.price = price
+        item.rating = rating
+        item.purposes = purposes
+        
+        item.placeContext = placeContext
+        item.webContext = webContext
+        item.documentContext = documentContext
+        item.qrContext = qrContext
+        item.questions = questions
     }
 }
