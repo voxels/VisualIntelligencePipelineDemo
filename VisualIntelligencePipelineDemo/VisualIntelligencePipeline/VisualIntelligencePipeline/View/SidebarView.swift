@@ -189,54 +189,41 @@ struct SidebarView: View {
     /// Create a new note document for the session and open for editing
     private func createNewNoteForSession(_ session: DiverSession) {
         Task {
-            // Create empty document
-            let queueItem = DiverQueueItem.from(
-                title: "Session Note",
-                tags: ["note"],
-                text: "", // Start with empty text
-                sessionID: session.sessionID,
-                placeID: session.placeID,
-                latitude: session.latitude,
-                longitude: session.longitude,
-                locationName: session.locationName
-            )
+            // Create the note item DIRECTLY as ready, skipping queue processing
+            let noteID = UUID().uuidString
             
-            // Get the actual ID from the descriptor
-            let documentID = queueItem.descriptor.id
-            
-            // Enqueue and process immediately
-            do {
-                let queueDirectory = AppGroupContainer.queueDirectoryURL()!
-                let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
-                try queueStore.enqueue(queueItem)
+            await MainActor.run {
+                let newNote = ProcessedItem(
+                    id: noteID,
+                    title: "Session Note",
+                    entityType: "document",
+                    sessionID: session.sessionID
+                )
                 
-                // Process immediately to create the item
-                try await pipelineService.processPendingQueue()
+                // Set note properties
+                newNote.tags = ["note"]
+                newNote.categories = ["note"]
+                newNote.transcription = "" // Start empty for user to type
+                newNote.status = .ready // Ready immediately, no processing needed
                 
-                // Find the created item and select it directly
-                await MainActor.run {
-                    let fetch = FetchDescriptor<ProcessedItem>(
-                        predicate: #Predicate { $0.id == documentID }
-                    )
+                // Copy location name from session
+                newNote.location = session.locationName
+                
+                // Insert into context
+                modelContext.insert(newNote)
+                
+                do {
+                    try modelContext.save()
+                    print("✅ Created note directly, opening for editing: \(noteID)")
                     
-                    do {
-                        if let createdItem = try modelContext.fetch(fetch).first {
-                            print("✅ Created note, opening for editing: \(createdItem.id)")
-                            
-                            // Set session first to populate middle pane
-                            navigationManager.selectedSession = session
-                            
-                            // Then select the item to show detail
-                            navigationManager.selection = createdItem
-                        } else {
-                            print("⚠️ Note created but not found yet, ID: \(documentID)")
-                        }
-                    } catch {
-                        print("❌ Failed to fetch created note: \(error)")
-                    }
+                    // Set session first to populate middle pane
+                    navigationManager.selectedSession = session
+                    
+                    // Then select the item to show detail immediately
+                    navigationManager.selection = newNote
+                } catch {
+                    print("❌ Failed to save note: \(error)")
                 }
-            } catch {
-                print("❌ Failed to create new note: \(error)")
             }
         }
     }
@@ -255,15 +242,16 @@ struct SidebarView: View {
             sessionTerms.formUnion(item.purposes)
         }
         
-        // Match concepts by name similarity to session terms
+        // Match concepts by EXACT name equality (case-insensitive) for better relevance
+        // Filter out generic "At:" location purposes
+        let meaningfulTerms = sessionTerms.filter { !$0.hasPrefix("At: ") }
         let related = allConcepts.filter { concept in
-            sessionTerms.contains { term in
-                concept.name.localizedCaseInsensitiveContains(term) ||
-                term.localizedCaseInsensitiveContains(concept.name)
+            meaningfulTerms.contains { term in
+                term.lowercased() == concept.name.lowercased()
             }
         }
         
-        // Return top 5 by weight
+        // Return top 5 by weight (sorted)
         return Array(related.sorted(by: { $0.weight > $1.weight }).prefix(5))
     }
     
@@ -289,13 +277,11 @@ struct SidebarView: View {
             
             // Standalone Sessions (Removed, now in librarySection)
             
-            // Processing Items
+            // Processing Items - moved above Memory/Today
             if !processingItems.isEmpty {
                 processingSection
             }
             
-
-
             // Memory/Concepts
             memorySection
         }
@@ -859,6 +845,17 @@ struct SessionRowLabel: View {
         if let title = session.title, !title.isEmpty {
             return title
         }
+        
+        // Try to use a top concept from session items as fallback
+        let topConcept = sessionItems
+            .flatMap { $0.categories + $0.tags }
+            .reduce(into: [:]) { counts, concept in counts[concept, default: 0] += 1 }
+            .max(by: { $0.value < $1.value })?.key
+        
+        if let concept = topConcept, !concept.isEmpty {
+            return concept.capitalized
+        }
+        
         if let location = session.locationName, !location.isEmpty {
             return location
         }

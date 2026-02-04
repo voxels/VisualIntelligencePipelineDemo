@@ -768,7 +768,9 @@ public class VisualIntelligenceViewModel: ObservableObject {
                             }
                             
                             // Update State immediately so UI reflects the "truth"
-                            if let loc = currentLocation {
+                            // CRITICAL: Do NOT overwrite if user has already selected a place
+                            let hasUserSelection = await MainActor.run { self.selectedPlace != nil }
+                            if let loc = currentLocation, !hasUserSelection {
                                  await MainActor.run {
                                      self.currentCaptureCoordinate = loc.coordinate
                                  }

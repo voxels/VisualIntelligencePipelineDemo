@@ -1549,6 +1549,12 @@ public final class LocalPipelineService {
                 )
                 modelContext.insert(concept)
                 DiverLogger.pipeline.debug("Auto-created UserConcept: '\(candidate)' from source extraction")
+            } else {
+                // Increment weight for existing concept
+                if let existing = try? modelContext.fetch(descriptor).first {
+                    existing.weight += weight
+                    DiverLogger.pipeline.debug("Incremented UserConcept '\(candidate)' weight to \(existing.weight)")
+                }
             }
         }
     }
@@ -2104,13 +2110,8 @@ public final class LocalPipelineService {
             return
         }
         
-        // 4. Location Fallback
-        if let loc = item.location, !loc.isEmpty {
-            item.title = "At: \(loc)"
-            return
-        }
-
-        // 5. UUID Fallback (Default)
+        // 4. Date-based Fallback (Location is NOT a good title)
+        // User feedback: "location address is always being used as the default name even though it is not the most relevant piece of information"
         if item.title == nil || item.title == idString {
             item.title = "Visual Capture \(item.createdAt.formatted(date: .abbreviated, time: .shortened))"
         }

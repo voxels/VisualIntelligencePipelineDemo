@@ -58,8 +58,10 @@ struct ReferenceDetailContent: View {
 
                     // Show text editor for ANY document with transcription (notes, detected documents, etc.)
                     // This unifies the UX for all text-based content
+                    // Check if rawPayload is actually an image before showing image preview
+                    let hasValidImage = item.rawPayload != nil && UIImage(data: item.rawPayload!) != nil
                     let hasTextContent = item.entityType == "document" && 
-                                        (item.transcription != nil || item.rawPayload == nil)
+                                        (item.transcription != nil || !hasValidImage)
                     
                     if hasTextContent {
                         // Text editor for all text documents
@@ -282,7 +284,10 @@ struct ReferenceDetailContent: View {
                             .buttonStyle(.borderedProminent)
                             .tint(.blue)
                             
-                            if let urlString = item.url, let url = URL(string: urlString) {
+                            // Only show Open button for actual web URLs, not deeplinks to visual capture
+                            if let urlString = item.url, 
+                               let url = URL(string: urlString),
+                               !urlString.hasPrefix("secretatomics://") {
                                 Button {
                                     #if os(iOS)
                                     print("🔗 Opening URL: \(url)")

@@ -231,8 +231,9 @@ struct VisualIntelligenceReviewLayer: View {
         if let capturedImage = viewModel.capturedImage {
             Image(uiImage: capturedImage)
                 .resizable()
-                .aspectRatio(contentMode: .fill)
-                .ignoresSafeArea()
+                .aspectRatio(contentMode: .fit)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
         } else {
             Color.black.ignoresSafeArea()
             VStack(spacing: 16) {
