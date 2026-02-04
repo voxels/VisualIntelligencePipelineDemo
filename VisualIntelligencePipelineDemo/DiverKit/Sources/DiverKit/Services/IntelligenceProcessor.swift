@@ -290,6 +290,15 @@ public final class IntelligenceProcessor: Sendable {
              
              // 2. Handle Product Codes
              for observation in observations where observation.symbology != .qr {
+                 // Filter out false positives: require confidence and minimum code length
+                 guard let code = observation.payloadStringValue,
+                       !code.isEmpty,
+                       code.count >= 6, // Minimum valid barcode length
+                       observation.confidence > 0.5 else {
+                     print("   - Skipping low-confidence or invalid barcode: \(observation.payloadStringValue ?? "nil") (confidence: \(observation.confidence))")
+                     continue
+                 }
+                 
                  let type: IntelligenceResult.ProductCodeType = {
                      switch observation.symbology {
                      case .upce, .code128, .code39, .code93: return .upc
@@ -298,8 +307,7 @@ public final class IntelligenceProcessor: Sendable {
                      }
                  }()
                  
-                 let code = observation.payloadStringValue ?? ""
-                 print("   - Barcode Found: \(code) (\(observation.symbology.rawValue))")
+                 print("   - Barcode Found: \(code) (\(observation.symbology.rawValue), confidence: \(observation.confidence))")
                  let assets: [URL] = [] 
                  
                  finalResults.append(.product(code: code, type: type, mediaAssets: assets))

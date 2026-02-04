@@ -56,34 +56,15 @@ struct ReferenceDetailContent: View {
                     
                     // 0. Purpose Header (Removed - Moved to Intent Section)
 
-                    // Check if this is a note document
-                    let isNote = item.tags.contains("note") && item.entityType == "document"
+                    // Show text editor for ANY document with transcription (notes, detected documents, etc.)
+                    // This unifies the UX for all text-based content
+                    let hasTextContent = item.entityType == "document" && 
+                                        (item.transcription != nil || item.rawPayload == nil)
                     
-                    if isNote {
-                        // Text editor for notes
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Note Content")
-                                .font(.headline)
-                                .foregroundStyle(.secondary)
-                            
-                            TextEditor(text: Binding(
-                                get: { item.transcription ?? "" },
-                                set: { newText in
-                                    item.transcription = newText
-                                    item.summary = newText.isEmpty ? nil : String(newText.prefix(200))
-                                    try? item.modelContext?.save()
-                                }
-                            ))
-                            .frame(minHeight: 200)
-                            .padding(8)
-                            .background(Color(uiColor: .secondarySystemBackground))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                            )
-                        }
-                        .padding(.bottom, 12)
+                    if hasTextContent {
+                        // Text editor for all text documents
+                        TextEditorView(item: item)
+                            .padding(.bottom, 12)
                     } else if item.mediaType == "video", let assetID = item.photosAssetIdentifier {
                         // Video Player for video media type
                         PhotosVideoPlayerView(assetIdentifier: assetID)
@@ -276,7 +257,7 @@ struct ReferenceDetailContent: View {
                 }
                 
                 // Full Text / Transcription Section
-                if let text = item.transcription ?? (item.entityType == "document" ? item.summary : nil), !text.isEmpty {
+                if let text = item.transcription, !text.isEmpty {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Text("Full Text")
@@ -2049,5 +2030,64 @@ struct PhotosVideoPlayerView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Text Editor View
+
+struct TextEditorView: View {
+    let item: ProcessedItem
+    @State private var editedText: String = ""
+    @State private var hasUnsavedChanges = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Text Content")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                
+                Spacer()
+                
+                if hasUnsavedChanges {
+                    Button {
+                        saveChanges()
+                    } label: {
+                        Label("Save", systemImage: "checkmark.circle.fill")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.green)
+                }
+            }
+            
+            TextEditor(text: $editedText)
+                .frame(minHeight: 200)
+                .padding(8)
+                .background(Color(uiColor: .secondarySystemBackground))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                )
+                .onChange(of: editedText) { oldValue, newValue in
+                    hasUnsavedChanges = newValue != (item.transcription ?? "")
+                }
+        }
+        .onAppear {
+            editedText = item.transcription ?? ""
+        }
+    }
+    
+    private func saveChanges() {
+        item.transcription = editedText
+        item.summary = editedText.isEmpty ? nil : String(editedText.prefix(200))
+        try? item.modelContext?.save()
+        hasUnsavedChanges = false
+        
+        #if os(iOS)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        #endif
     }
 }

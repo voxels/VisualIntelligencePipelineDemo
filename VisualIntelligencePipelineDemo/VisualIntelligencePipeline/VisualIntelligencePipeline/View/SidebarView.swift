@@ -242,14 +242,17 @@ struct SidebarView: View {
     }
     
     /// Get concepts most related to a session based on tags and categories
+    /// Now includes allItems dependency to ensure updates when categories change
     private func relatedConcepts(for session: DiverSession) -> [UserConcept] {
+        // Force dependency on allItems to trigger recomputation
         let sessionItems = allItems.filter { $0.sessionID == session.sessionID }
         
-        // Collect all tags and categories from session items
+        // Collect all tags, categories, AND purposes from session items
         var sessionTerms = Set<String>()
         for item in sessionItems {
             sessionTerms.formUnion(item.tags)
             sessionTerms.formUnion(item.categories)
+            sessionTerms.formUnion(item.purposes)
         }
         
         // Match concepts by name similarity to session terms
@@ -261,7 +264,7 @@ struct SidebarView: View {
         }
         
         // Return top 5 by weight
-        return Array(related.prefix(5))
+        return Array(related.sorted(by: { $0.weight > $1.weight }).prefix(5))
     }
     
     // MARK: - Body

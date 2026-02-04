@@ -2352,7 +2352,8 @@ public final class LocalPipelineService {
         }
         
         // Sync Location Data if Item has it (User Override wins)
-        if let place = item.placeContext {
+        // CRITICAL: Skip generic "Home" locations to prevent contamination during reprocessing
+        if let place = item.placeContext, place.placeID != "home-location" {
             if let lat = place.latitude, let lon = place.longitude {
                 session.latitude = lat
                 session.longitude = lon
