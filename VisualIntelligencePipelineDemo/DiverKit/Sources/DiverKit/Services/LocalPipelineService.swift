@@ -1853,7 +1853,7 @@ public final class LocalPipelineService {
                         }
                     }
                     
-                    if let homeLoc = homeLoc, location.distance(from: homeLoc) < 100 {
+                    if let homeLoc = homeLoc, location.distance(from: homeLoc) < 300 {
                          let explicitLocationName = descriptor?.location
                          let isHomeName = explicitLocationName?.lowercased() == "home"
                          let isGenericOrEmpty = explicitLocationName == nil || explicitLocationName?.isEmpty == true

@@ -107,10 +107,10 @@ public final class MapKitEnrichmentService: ContextualEnrichmentService, @unchec
         
         // 1. Check Contact Locations (Home/Work) - "Unless it's a contact location"
         if let contactService = await Services.shared.contactService {
-            if let home = try? await contactService.getHomeLocation(), home.distance(from: location) < 100 {
+            if let home = try? await contactService.getHomeLocation(), home.distance(from: location) < 300 {
                 return nil // Treat as handled by ContactService/Personal Context
             }
-            if let work = try? await contactService.getWorkLocation(), work.distance(from: location) < 100 {
+            if let work = try? await contactService.getWorkLocation(), work.distance(from: location) < 300 {
                 return nil // Treat as handled by ContactService
             }
         }

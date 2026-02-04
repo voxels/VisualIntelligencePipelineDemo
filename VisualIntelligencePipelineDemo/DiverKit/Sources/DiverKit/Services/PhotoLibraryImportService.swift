@@ -506,10 +506,10 @@ public final class PhotoLibraryImportService {
             
             let (home, work) = try await (homeLoc, workLoc)
             
-            if let home = home, location.distance(from: home) < 150 { // 150m threshold
+            if let home = home, location.distance(from: home) < 300 { // 300m threshold
                 return "Home"
             }
-            if let work = work, location.distance(from: work) < 150 {
+            if let work = work, location.distance(from: work) < 300 {
                 return "Work"
             }
         } catch {
