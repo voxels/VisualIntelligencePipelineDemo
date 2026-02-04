@@ -450,6 +450,9 @@ public final class LocalPipelineService {
             
             // Ensure session is synced with potentially new location data
             self.syncSession(for: existing)
+            
+            // Mark as ready after successful processing
+            existing.status = .ready
             try? self.modelContext.save()
             
             // Fix looping/inbox bug: Delete input after processing

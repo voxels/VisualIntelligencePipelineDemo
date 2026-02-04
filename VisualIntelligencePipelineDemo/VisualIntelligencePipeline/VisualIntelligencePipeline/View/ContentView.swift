@@ -64,8 +64,17 @@ struct SessionItemsView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = SidebarViewModel()
     
+    // Session Actions State
+    @State private var sessionForLocationEdit: DiverSession?
+    @State private var sessionToRename: DiverSession?
+    @State private var newSessionTitle = ""
+    @State private var showingDeleteConfirmation = false
+    
     @Query(sort: \ProcessedItem.updatedAt, order: .reverse)
     private var allItems: [ProcessedItem]
+    
+    @Query(sort: \DiverCollection.updatedAt, order: .reverse)
+    private var collections: [DiverCollection]
     
     private var sessionItems: [ProcessedItem] {
         guard let session = session else { return [] }
@@ -88,6 +97,40 @@ struct SessionItemsView: View {
         }
         .sheet(item: $viewModel.itemToReprocess) { item in
             ReprocessMetadataView(item: item)
+        }
+        .sheet(item: $sessionForLocationEdit) { session in
+            EditSessionLocationView(session: session)
+        }
+        .alert("Rename Session", isPresented: Binding(
+            get: { sessionToRename != nil },
+            set: { if !$0 { sessionToRename = nil } }
+        )) {
+            TextField("Session Title", text: $newSessionTitle)
+            Button("Cancel", role: .cancel) {
+                sessionToRename = nil
+                newSessionTitle = ""
+            }
+            Button("Save") {
+                if let session = sessionToRename, !newSessionTitle.isEmpty {
+                    session.title = newSessionTitle
+                    session.updatedAt = Date()
+                    try? modelContext.save()
+                }
+                sessionToRename = nil
+                newSessionTitle = ""
+            }
+        } message: {
+            Text("Enter a new title for this session")
+        }
+        .alert("Delete Session?", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                if let session = session {
+                    deleteSession(session)
+                }
+            }
+        } message: {
+            Text("This will delete the session and all its items. This action cannot be undone.")
         }
     }
     
@@ -161,6 +204,49 @@ struct SessionItemsView: View {
         .navigationDestination(for: ProcessedItem.self) { item in
             ReferenceDetailView(item: item)
         }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                if let session = session {
+                    sessionActionsMenu(for: session)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Session Actions Menu
+    
+    @ViewBuilder
+    private func sessionActionsMenu(for session: DiverSession) -> some View {
+        Menu {
+            Button {
+                sessionForLocationEdit = session
+            } label: {
+                Label("Edit Location", systemImage: "mappin.and.ellipse")
+            }
+            
+            Button {
+                sessionToRename = session
+                newSessionTitle = sessionTitle(for: session)
+            } label: {
+                Label("Rename Session", systemImage: "pencil")
+            }
+            
+            Button {
+                analyzeSession(session)
+            } label: {
+                Label("Analyze Session", systemImage: "sparkles")
+            }
+            
+            Divider()
+            
+            Button(role: .destructive) {
+                showingDeleteConfirmation = true
+            } label: {
+                Label("Delete Session", systemImage: "trash")
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+        }
     }
     
     private func sessionTitle(for session: DiverSession) -> String {
@@ -176,6 +262,24 @@ struct SessionItemsView: View {
     private func deleteItem(_ item: ProcessedItem) {
         modelContext.delete(item)
         try? modelContext.save()
+    }
+    
+    private func deleteSession(_ session: DiverSession) {
+        // Delete all items in the session
+        for item in sessionItems {
+            modelContext.delete(item)
+        }
+        // Delete the session itself
+        modelContext.delete(session)
+        try? modelContext.save()
+    }
+    
+    private func analyzeSession(_ session: DiverSession) {
+        Task {
+            let localPipeline = LocalPipelineService(modelContext: modelContext)
+            await localPipeline.generateAndSaveSessionSummary(sessionID: session.sessionID)
+            print("✅ Triggered analysis for session: \(session.title ?? session.sessionID)")
+        }
     }
 }
 

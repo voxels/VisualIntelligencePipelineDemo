@@ -353,6 +353,8 @@ struct VisualIntelligencePipelineApp: App {
             // secretatomics://open?id=...
             if url.host == "open" {
                 handleOpenItem(url)
+            } else if url.host == "open-doc" {
+                handleOpenDocument(url)
             } else if url.host == "open-messages" {
                 handleDiverScheme(url)
             } else if url.host == "save-clipboard" {
@@ -398,6 +400,40 @@ struct VisualIntelligencePipelineApp: App {
                 }
             } catch {
                 print("❌ Failed to fetch item for deep link: \(error)")
+            }
+        }
+    }
+
+    private func handleOpenDocument(_ url: URL) {
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let id = components.queryItems?.first(where: { $0.name == "id" })?.value else {
+            print("❌ Invalid document link URL: \(url.absoluteString)")
+            return
+        }
+        
+        print("📄 Opening document for editing with ID: \(id)")
+        
+        Task {
+            let fetch = FetchDescriptor<ProcessedItem>(
+                predicate: #Predicate { $0.id == id }
+            )
+            
+            do {
+                if let item = try dataStore.mainContext.fetch(fetch).first {
+                    print("✅ Found document: \(item.title ?? "Untitled")")
+                    await MainActor.run {
+                        // Set as selected item (opens detail view)
+                        navigationManager.selection = item
+                        
+                        // Open Intelligence View with notes for this document
+                        // This will trigger the sheet presentation in the view
+                        navigationManager.isScanActive = true
+                    }
+                } else {
+                    print("⚠️ Document not found for ID: \(id)")
+                }
+            } catch {
+                print("❌ Failed to fetch document: \(error)")
             }
         }
     }

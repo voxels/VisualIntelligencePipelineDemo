@@ -61,6 +61,9 @@ struct SidebarView: View {
     @Query(sort: \DiverSession.updatedAt, order: .reverse)
     private var sessions: [DiverSession]
     
+    @Query(sort: \UserConcept.weight, order: .reverse)
+    private var allConcepts: [UserConcept]
+    
     // MARK: - Computed Properties
     
     private var readyItems: [ProcessedItem] {
@@ -181,6 +184,84 @@ struct SidebarView: View {
             return location
         }
         return session.createdAt.formatted(date: .abbreviated, time: .shortened)
+    }
+    
+    /// Create a new note document for the session and open for editing
+    private func createNewNoteForSession(_ session: DiverSession) {
+        Task {
+            // Create empty document
+            let queueItem = DiverQueueItem.from(
+                title: "Session Note",
+                tags: ["note"],
+                text: "", // Start with empty text
+                sessionID: session.sessionID,
+                placeID: session.placeID,
+                latitude: session.latitude,
+                longitude: session.longitude,
+                locationName: session.locationName
+            )
+            
+            // Get the actual ID from the descriptor
+            let documentID = queueItem.descriptor.id
+            
+            // Enqueue and process immediately
+            do {
+                let queueDirectory = AppGroupContainer.queueDirectoryURL()!
+                let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
+                try queueStore.enqueue(queueItem)
+                
+                // Process immediately to create the item
+                try await pipelineService.processPendingQueue()
+                
+                // Find the created item and select it directly
+                await MainActor.run {
+                    let fetch = FetchDescriptor<ProcessedItem>(
+                        predicate: #Predicate { $0.id == documentID }
+                    )
+                    
+                    do {
+                        if let createdItem = try modelContext.fetch(fetch).first {
+                            print("✅ Created note, opening for editing: \(createdItem.id)")
+                            
+                            // Set session first to populate middle pane
+                            navigationManager.selectedSession = session
+                            
+                            // Then select the item to show detail
+                            navigationManager.selection = createdItem
+                        } else {
+                            print("⚠️ Note created but not found yet, ID: \(documentID)")
+                        }
+                    } catch {
+                        print("❌ Failed to fetch created note: \(error)")
+                    }
+                }
+            } catch {
+                print("❌ Failed to create new note: \(error)")
+            }
+        }
+    }
+    
+    /// Get concepts most related to a session based on tags and categories
+    private func relatedConcepts(for session: DiverSession) -> [UserConcept] {
+        let sessionItems = allItems.filter { $0.sessionID == session.sessionID }
+        
+        // Collect all tags and categories from session items
+        var sessionTerms = Set<String>()
+        for item in sessionItems {
+            sessionTerms.formUnion(item.tags)
+            sessionTerms.formUnion(item.categories)
+        }
+        
+        // Match concepts by name similarity to session terms
+        let related = allConcepts.filter { concept in
+            sessionTerms.contains { term in
+                concept.name.localizedCaseInsensitiveContains(term) ||
+                term.localizedCaseInsensitiveContains(concept.name)
+            }
+        }
+        
+        // Return top 5 by weight
+        return Array(related.prefix(5))
     }
     
     // MARK: - Body
@@ -531,8 +612,42 @@ struct SidebarView: View {
     @ViewBuilder
     private var intelligenceSection: some View {
         if IntelligenceCapability.isAvailable {
-            Section("Last Session") {
+            Section("Current Context") {
                 if let lastSession = sessions.first {
+                    // Full contextual summary
+                    if let summary = lastSession.summary, !summary.isEmpty {
+                        Text(summary)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 8)
+                    }
+                    
+                    // Related concepts chips
+                    let concepts = relatedConcepts(for: lastSession)
+                    if !concepts.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(concepts) { concept in
+                                    Text(concept.name)
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.purple)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(
+                                            Capsule()
+                                                .fill(.purple.opacity(0.1))
+                                        )
+                                        .overlay(
+                                            Capsule()
+                                                .strokeBorder(.purple.opacity(0.3), lineWidth: 1)
+                                        )
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                    
                     Button {
                         navigationManager.scanSessionID = lastSession.sessionID
                         navigationManager.isScanActive = true
@@ -559,7 +674,7 @@ struct SidebarView: View {
                             }
                              
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("Add to Context")
+                                Text("Add Image")
                                     .font(.subheadline)
                                     .fontWeight(.medium)
                                     .foregroundStyle(.primary)
@@ -575,14 +690,33 @@ struct SidebarView: View {
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
                                 }
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    
+                    // New Note button - creates empty document for this session
+                    Button {
+                        createNewNoteForSession(lastSession)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "doc.text.fill")
+                                .font(.title2)
+                                .frame(width: 44, height: 44)
+                                .background(.purple.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                                .foregroundStyle(.purple)
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Add Note")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.primary)
                                 
-                                if let summary = lastSession.summary {
-                                    Text(summary)
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(4)
-                                        .padding(.top, 2)
-                                }
+                                Text("Add text to context")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
                             }
                         }
                     }

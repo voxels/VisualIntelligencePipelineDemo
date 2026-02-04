@@ -26,6 +26,7 @@ public struct VisualIntelligenceView: View {
     // Custom Context Input
     @State private var isEnteringCustomContext = false
     @State private var showingFullScreenReview = false
+    @State private var showingIntelligenceView = false
     @State private var customContextText = ""
     
     public init() {}
@@ -79,7 +80,8 @@ public struct VisualIntelligenceView: View {
             }
             .onDisappear {
                 UIDevice.current.endGeneratingDeviceOrientationNotifications()
-                viewModel.reset()
+                // Don't reset here - navigation to intelligence view triggers onDisappear
+                // Reset will happen when shouldDismiss triggers via onChange
             }
             .navigationTitle("Visual Intelligence")
             .navigationBarTitleDisplayMode(.inline)
@@ -125,6 +127,13 @@ public struct VisualIntelligenceView: View {
                     withAnimation {
                         navigationManager.isScanActive = false
                     }
+                    // Reset VM now that user is dismissing the entire capture session
+                    viewModel.reset()
+                }
+            }
+            .navigationDestination(isPresented: $showingIntelligenceView) {
+                IntelligenceResultsView(viewModel: viewModel) {
+                    viewModel.commitReviewSave()
                 }
             }
         }
@@ -151,16 +160,10 @@ public struct VisualIntelligenceView: View {
     private var navigationLayer: some View {
         AnyView(
             VStack(spacing: 0) {
-                // Top Stack: Location + Context
+                // Top Stack: Location only (Context moved to Intelligence View)
                 
                 SessionLocationBar(viewModel: viewModel)
                     .padding(.top, 8)
-                
-                if viewModel.isReviewing {
-                    ContextChipBar(viewModel: viewModel, isEnteringCustomContext: $isEnteringCustomContext)
-                        .padding(.vertical, 8)
-                        .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
-                }
                 
                 Spacer()
             }
@@ -175,6 +178,7 @@ public struct VisualIntelligenceView: View {
                 viewModel: viewModel,
                 isEnteringCustomContext: $isEnteringCustomContext,
                 showingFullScreenReview: $showingFullScreenReview,
+                showingIntelligenceView: $showingIntelligenceView,
                 orientation: orientation,
                 onResultSelected: { result in
                     handleResultSelection(result)
@@ -229,22 +233,6 @@ struct VisualIntelligenceReviewLayer: View {
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .ignoresSafeArea()
-                .overlay(
-                    ZStack {
-                        if let siftedImage = viewModel.siftedImage, let box = viewModel.siftedBoundingBox {
-                             SiftedSubjectView(siftedImage: siftedImage, boundingBox: box, peelAmount: $viewModel.peelAmount)
-                        } else if let box = viewModel.siftedBoundingBox {
-                            GeometryReader { proxy in
-                                let ratio = capturedImage.size.width / capturedImage.size.height
-                                let rect = viewModel.convertBoundingBox(box, to: proxy.size, imageAspectRatio: ratio)
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(LinearGradient(colors: [.white, .blue.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 3)
-                                    .frame(width: rect.width, height: rect.height)
-                                    .position(x: rect.midX, y: rect.midY)
-                            }
-                        }
-                    }
-                )
         } else {
             Color.black.ignoresSafeArea()
             VStack(spacing: 16) {
@@ -263,29 +251,6 @@ struct VisualIntelligenceCameraLayer: View {
     var body: some View {
         CameraPreviewView(session: viewModel.cameraManager.session)
             .ignoresSafeArea()
-            .overlay(
-                ZStack {
-                    if let box = viewModel.siftedBoundingBox, let image = viewModel.siftedImage {
-                        SiftedSubjectView(siftedImage: image, boundingBox: box, peelAmount: $viewModel.peelAmount)
-                    } else if let box = viewModel.siftedBoundingBox {
-                        GeometryReader { proxy in
-                             // Calculate aspect ratio based on orientation
-                            let ratio: CGFloat = {
-                                switch viewModel.currentOrientation {
-                                case .left, .right, .leftMirrored, .rightMirrored: return 0.75 // 3:4
-                                default: return 1.333 // 4:3
-                                }
-                            }()
-                            
-                            let rect = viewModel.convertBoundingBox(box, to: proxy.size, imageAspectRatio: ratio)
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(LinearGradient(colors: [.white, .blue.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 3)
-                                .frame(width: rect.width, height: rect.height)
-                                .position(x: rect.midX, y: rect.midY)
-                        }
-                    }
-                }
-            )
     }
 }
 
@@ -293,6 +258,7 @@ struct VisualIntelligenceHUD: View {
     @ObservedObject var viewModel: VisualIntelligenceViewModel
     @Binding var isEnteringCustomContext: Bool
     @Binding var showingFullScreenReview: Bool
+    @Binding var showingIntelligenceView: Bool
     let orientation: UIDeviceOrientation
     let onResultSelected: (IntelligenceResult) -> Void
     
@@ -312,96 +278,92 @@ struct VisualIntelligenceHUD: View {
     
     @ViewBuilder
     private var reviewHUD: some View {
-        VStack(spacing: 16) {
-            if viewModel.pipelineStatus != .idle && viewModel.pipelineStatus != .complete {
-                PipelineStatusView(status: viewModel.pipelineStatus)
-                    .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
-                    .zIndex(100)
-            }
-            
-            if let mediaResult = viewModel.results.first(where: { !$0.assets.isEmpty }) {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(mediaResult.assets, id: \.self) { url in
-                            AsyncImage(url: url) { image in
-                                image.resizable().aspectRatio(contentMode: .fill)
-                            } placeholder: {
-                                ZStack { Color.white.opacity(0.1); ProgressView().tint(.white) }
-                            }
-                            .frame(width: 140, height: 210)
-                            .cornerRadius(12)
-                            .glass(cornerRadius: 16)
-                        }
+        ZStack {
+            // Toast-style Pipeline Status Overlay
+            VStack {
+                if viewModel.pipelineStatus != .idle && viewModel.pipelineStatus != .complete {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                            .tint(.white)
+                        Text(viewModel.pipelineStatus.displayText)
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.white)
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Capsule())
+                    .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 4)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.pipelineStatus)
                 }
-                .frame(height: 220)
-                .transition(AnyTransition.move(edge: .trailing).combined(with: .opacity))
+                Spacer()
             }
+            .padding(.top, 100) // Below location bar
+            .zIndex(100)
             
-            if !viewModel.results.isEmpty {
-                ResultsOverlayView(results: viewModel.sortedResults) { result in
-                    onResultSelected(result)
-                }
-            }
-            
-            // ContextChipBar Removed (Moved to Top)
-            
-            // Control Cluster
-            HStack(spacing: 20) {
-                Button { showingFullScreenReview = true } label: {
-                    Group {
-                        if let siftedImage = viewModel.siftedImage {
-                            #if canImport(UIKit)
-                            Image(uiImage: siftedImage).resizable().scaledToFit()
-                            #elseif canImport(AppKit)
-                            Image(nsImage: siftedImage).resizable().scaledToFit()
-                            #endif
-                        } else if let image = viewModel.capturedImage {
-                            Image(uiImage: image).resizable().scaledToFill()
-                        } else {
-                            Color.white.opacity(0.2).overlay(ProgressView().tint(.white))
-                        }
-                    }
-                    .frame(width: 60, height: 60)
-                    .glass(cornerRadius: 12)
-                }
-                
-                Button { viewModel.cameraManager.capturePhoto() } label: {
-                    Image(systemName: "plus").font(.title3.bold()).foregroundStyle(.white)
-                        .frame(width: 44, height: 44).glass(cornerRadius: 22)
-                }
-                
-                Button { viewModel.reprocessPipeline() } label: {
-                    Image(systemName: "sparkles").font(.title3.bold()).foregroundStyle(.white)
-                        .frame(width: 44, height: 44).glass(cornerRadius: 22)
-                }
-                
+            // Bottom Control Cluster
+            VStack {
                 Spacer()
                 
-                Button { withAnimation { viewModel.reCapture() } } label: {
-                    Image(systemName: "arrow.triangle.2.circlepath").font(.title2).foregroundStyle(.white)
-                        .padding(20).glass(cornerRadius: 35)
-                }
-                
-                Button { viewModel.commitReviewSave() } label: {
-                    HStack {
-                        if viewModel.isAnalyzing || viewModel.isSaving {
-                            ProgressView().tint(.white)
-                        } else {
-                            Text("Save").fontWeight(.bold)
+                HStack(spacing: 16) {
+                    // Thumbnail
+                    Button { showingFullScreenReview = true } label: {
+                        Group {
+                            if let siftedImage = viewModel.siftedImage {
+                                #if canImport(UIKit)
+                                Image(uiImage: siftedImage).resizable().scaledToFit()
+                                #elseif canImport(AppKit)
+                                Image(nsImage: siftedImage).resizable().scaledToFit()
+                                #endif
+                            } else if let image = viewModel.capturedImage {
+                                Image(uiImage: image).resizable().scaledToFill()
+                            } else {
+                                Color.white.opacity(0.2).overlay(ProgressView().tint(.white))
+                            }
                         }
+                        .frame(width: 60, height: 60)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .glass(cornerRadius: 12)
                     }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 30)
-                    .padding(.vertical, 20)
-                    .background((viewModel.isAnalyzing || viewModel.isSaving ? Color.gray : Color.blue), in: RoundedRectangle(cornerRadius: 35))
-                    .glass(cornerRadius: 35)
+                    
+                    // Add Image (+)
+                    Button { viewModel.cameraManager.capturePhoto() } label: {
+                        Image(systemName: "plus").font(.title3.bold()).foregroundStyle(.white)
+                            .frame(width: 44, height: 44).glass(cornerRadius: 22)
+                    }
+                    
+                    // Intelligence Button (sparkles) - Visible, disabled until first analysis
+                    Button { showingIntelligenceView = true } label: {
+                        Image(systemName: "sparkles")
+                            .font(.title3.bold())
+                            .foregroundStyle(viewModel.hasCompletedFirstAnalysis ? .white : .white.opacity(0.4))
+                            .frame(width: 44, height: 44)
+                            .glass(cornerRadius: 22)
+                            .overlay(
+                                Group {
+                                    if viewModel.isAnalyzing {
+                                        ProgressView()
+                                            .scaleEffect(0.6)
+                                            .tint(.white)
+                                    }
+                                }
+                            )
+                    }
+                    .disabled(!viewModel.hasCompletedFirstAnalysis)
+                    
+                    Spacer()
+                    
+                    // Re-Capture
+                    Button { withAnimation { viewModel.reCapture() } } label: {
+                        Image(systemName: "arrow.triangle.2.circlepath").font(.title2).foregroundStyle(.white)
+                            .padding(20).glass(cornerRadius: 35)
+                    }
                 }
-                .disabled(viewModel.isAnalyzing || viewModel.isSaving)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 20)
         }
         .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
     }
@@ -658,7 +620,6 @@ struct ResultsOverlayView: View {
             if case .siftedSubject = $0 { return true }
             if case .text = $0 { return true }
             if case .product = $0 { return true }
-            if case .document = $0 { return true }
             return false
         }
     }
@@ -673,11 +634,14 @@ struct ResultsOverlayView: View {
     }
     
     private var actionResults: [IntelligenceResult] {
-        results.filter {
+        // Documents first, then QR codes and web links
+        let documents = results.filter { if case .document = $0 { return true }; return false }
+        let others = results.filter {
             if case .qr = $0 { return true }
             if case .richWeb = $0 { return true }
             return false
         }
+        return documents + others
     }
     
     var body: some View {
@@ -947,16 +911,99 @@ struct DocumentDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var hasSaved = false
     
+    // OCR Text Editing State
+    @State private var editableText: String = ""
+    @State private var isTextExpanded: Bool = false
+    
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color.black.ignoresSafeArea()
+            VStack(spacing: 0) {
+                // Image Section
+                ZStack {
+                    Color.black
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .padding()
+                }
+                .frame(maxHeight: isTextExpanded ? UIScreen.main.bounds.height * 0.4 : .infinity)
                 
-                Image(uiImage: image)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .padding()
+                // OCR Text Section
+                if !editableText.isEmpty || viewModel.rectifiedDocumentText != nil {
+                    VStack(alignment: .leading, spacing: 8) {
+                        // Header with toggle
+                        HStack {
+                            Text("Recognized Text")
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                            
+                            Spacer()
+                            
+                            Button {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                    isTextExpanded.toggle()
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text(isTextExpanded ? "Collapse" : "Expand")
+                                        .font(.caption)
+                                    Image(systemName: isTextExpanded ? "chevron.down" : "chevron.up")
+                                }
+                                .foregroundStyle(.white.opacity(0.7))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(.ultraThinMaterial, in: Capsule())
+                            }
+                        }
+                        .padding(.horizontal)
+                        
+                        if isTextExpanded {
+                            // Editable Text Area
+                            TextEditor(text: $editableText)
+                                .scrollContentBackground(.hidden)
+                                .background(Color.white.opacity(0.1))
+                                .foregroundStyle(.white)
+                                .font(.body)
+                                .frame(minHeight: 150, maxHeight: 300)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                )
+                                .padding(.horizontal)
+                            
+                            // Copy button
+                            HStack {
+                                Spacer()
+                                Button {
+                                    UIPasteboard.general.string = editableText
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                } label: {
+                                    Label("Copy Text", systemImage: "doc.on.doc")
+                                        .font(.caption)
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 8)
+                                        .background(.ultraThinMaterial, in: Capsule())
+                                }
+                                .padding(.horizontal)
+                            }
+                        } else {
+                            // Preview (collapsed state)
+                            Text(editableText.prefix(100) + (editableText.count > 100 ? "..." : ""))
+                                .font(.caption)
+                                .foregroundStyle(.white.opacity(0.7))
+                                .lineLimit(2)
+                                .padding(.horizontal)
+                        }
+                    }
+                    .padding(.vertical, 12)
+                    .background(Color.black.opacity(0.9))
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
+            .ignoresSafeArea(edges: .bottom)
+            .background(Color.black)
             .navigationTitle("Scanned Document")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -967,10 +1014,12 @@ struct DocumentDetailView: View {
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     if hasSaved {
                         Label("Saved", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                        .font(.subheadline.bold())
+                            .foregroundStyle(.green)
+                            .font(.subheadline.bold())
                     } else {
                         Button {
+                            // Sync edited text back to ViewModel before saving
+                            viewModel.rectifiedDocumentText = editableText
                             viewModel.saveDocument()
                             hasSaved = true
                         } label: {
@@ -978,13 +1027,21 @@ struct DocumentDetailView: View {
                                 ProgressView()
                             } else {
                                 Text("Save to Diver")
-                                .fontWeight(.bold)
+                                    .fontWeight(.bold)
                             }
                         }
                         .disabled(viewModel.isSavingDocument)
                     }
                     
                     ShareLink(item: Image(uiImage: image), preview: SharePreview("Scanned Document", image: Image(uiImage: image)))
+                }
+            }
+            .onAppear {
+                // Initialize editable text from ViewModel
+                editableText = viewModel.rectifiedDocumentText ?? ""
+                // Auto-expand if there's text to show
+                if !editableText.isEmpty {
+                    isTextExpanded = true
                 }
             }
         }
@@ -1046,3 +1103,622 @@ struct FullScreenImageView: View {
     }
 }
 
+// MARK: - Intelligence Results View (Split Screen)
+
+/// Intelligence Results View - Detailed results screen pushed from Capture View
+struct IntelligenceResultsView: View {
+    @ObservedObject var viewModel: VisualIntelligenceViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var isEnteringCustomContext = false
+    @State private var customContextText = ""
+    @State private var showingTextEditor = false // Toggle between image and text
+    
+    let onSave: () -> Void
+    
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Location Bar at Top
+                SessionLocationBar(viewModel: viewModel)
+                    .padding(.top, 8)
+                    .padding(.bottom, 12)
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Image/TextEditor Section with Toggle
+                        VStack(spacing: 12) {
+                            // Toggle Buttons
+                            HStack(spacing: 12) {
+                                Button {
+                                    withAnimation { showingTextEditor = false }
+                                } label: {
+                                    Text("Image")
+                                        .font(.caption.bold())
+                                        .foregroundStyle(showingTextEditor ? .white.opacity(0.6) : .white)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(showingTextEditor ? Color.white.opacity(0.1) : Color.blue)
+                                        .clipShape(Capsule())
+                                }
+                                
+                                Button {
+                                    withAnimation { showingTextEditor = true }
+                                } label: {
+                                    Text("Notes")
+                                        .font(.caption.bold())
+                                        .foregroundStyle(showingTextEditor ? .white : .white.opacity(0.6))
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(showingTextEditor ? Color.blue : Color.white.opacity(0.1))
+                                        .clipShape(Capsule())
+                                }
+                            }
+                            
+                            // Content
+                            if showingTextEditor {
+                                TextEditor(text: Binding(
+                                    get: { customContextText },
+                                    set: { customContextText = $0 }
+                                ))
+                                .frame(height: 200)
+                                .padding(12)
+                                .background(Color.white.opacity(0.1))
+                                .cornerRadius(12)
+                                .foregroundStyle(.white)
+                                .scrollContentBackground(.hidden)
+                            } else if let image = viewModel.capturedImage {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxHeight: 200)
+                                    .cornerRadius(12)
+                                    .shadow(color: .black.opacity(0.3), radius: 10)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        // Sectioned Grid of Buttons
+                        VStack(spacing: 24) {
+                            // Action Buttons Section
+                            if !actionButtons.isEmpty {
+                                buttonSection(title: "ACTIONS", buttons: actionButtons, columns: 2)
+                            }
+                            
+                            // Context Buttons Section  
+                            if !contextButtons.isEmpty {
+                                buttonSection(title: "CONTEXT", buttons: contextButtons, columns: 1, isContext: true)
+                            }
+                            
+                            // Detected Buttons Section
+                            if !detectedButtons.isEmpty {
+                                buttonSection(title: "DETECTED", buttons: detectedButtons, columns: 2)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    .padding(.bottom, 100) // Space for fixed save button
+                }
+                
+                // Fixed Save Button at Bottom
+                VStack(spacing: 0) {
+                    Divider().background(Color.white.opacity(0.2))
+                    
+                    Button {
+                        onSave()
+                    } label: {
+                        HStack(spacing: 12) {
+                            if viewModel.isSaving {
+                                ProgressView().tint(.white)
+                            } else {
+                                Image(systemName: "square.and.arrow.down.fill").font(.body.bold())
+                                Text("Save Capture").fontWeight(.bold)
+                            }
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(viewModel.isSaving ? Color.gray : Color.blue)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .shadow(color: .blue.opacity(0.4), radius: 8, x: 0, y: 4)
+                    }
+                    .disabled(viewModel.isSaving)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 16)
+                }
+                .background(Color.black.opacity(0.95))
+            }
+        }
+        .navigationTitle("Intelligence")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(false)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Dismiss") {
+                    viewModel.shouldDismiss = true
+                }
+            }
+        }
+        .sheet(isPresented: $viewModel.showingPlaceSelection) {
+            PlaceSelectionMapView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $viewModel.showingDocumentView) {
+            if let doc = viewModel.rectifiedDocument {
+                DocumentDetailView(viewModel: viewModel, image: doc)
+            }
+        }
+        .onAppear {
+            // Initialize text editor with document OCR text if available
+            if customContextText.isEmpty {
+                let documentText = viewModel.results.compactMap { result -> String? in
+                    if case .document(_, let text, _) = result {
+                        return text
+                    }
+                    return nil
+                }.joined(separator: "\n\n")
+                
+                if !documentText.isEmpty {
+                    customContextText = documentText
+                }
+            }
+        }
+        .alert("Add Context", isPresented: $isEnteringCustomContext) {
+            TextField("E.g. Gift for Mom", text: $customContextText)
+            Button("Cancel", role: .cancel) { }
+            Button("Add") {
+                viewModel.addUserContext(customContextText)
+                customContextText = ""
+            }
+        } message: {
+            Text("Add a custom label or purpose to this capture.")
+        }
+    }
+    
+    // MARK: - Helper Views
+    
+    @ViewBuilder
+    private func resultCard(for result: IntelligenceResult) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: result.icon)
+                    .font(.title3)
+                Spacer()
+            }
+            .foregroundStyle(.white.opacity(0.8))
+            
+            Text(result.title)
+                .font(.subheadline.bold())
+                .foregroundStyle(.white)
+                .lineLimit(2)
+            
+            let subtitle = result.subtitle
+            if !subtitle.isEmpty {
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.7))
+                    .lineLimit(2)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+        )
+    }
+    
+    @ViewBuilder
+    private func contextChip(text: String) -> some View {
+        let isSelected = viewModel.selectedPurposes.contains(text)
+        Button {
+            withAnimation {
+                if isSelected {
+                    viewModel.selectedPurposes.remove(text)
+                } else {
+                    viewModel.selectedPurposes.insert(text)
+                }
+            }
+        } label: {
+            Text(text)
+                .font(.caption.bold())
+                .foregroundStyle(isSelected ? .black : .white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(isSelected ? Color.white : Color.white.opacity(0.2))
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Color.white.opacity(0.3), lineWidth: 1))
+        }
+    }
+    
+    private var allContexts: [String] {
+        // Get purpose suggestions from results
+        let suggestions: [String]
+        if let purposeResult = viewModel.results.first(where: { if case .purpose = $0 { return true }; return false }),
+           case .purpose(let statements) = purposeResult {
+            suggestions = statements
+        } else {
+            suggestions = []
+        }
+        
+        // Combine selected and unselected, remove duplicates
+        let selected = Array(viewModel.selectedPurposes)
+        let unselected = suggestions.filter { !viewModel.selectedPurposes.contains($0) }
+        return (selected + unselected).sorted()
+    }
+    
+    // MARK: - Button Categorization
+    
+    private var actionButtons: [(String, String, () -> Void)] {
+        var buttons: [(String, String, () -> Void)] = []
+        
+        for result in viewModel.results {
+            switch result {
+            case .qr(let url):
+                buttons.append(("QR Code", "qrcode", {
+                    UIApplication.shared.open(url)
+                }))
+            case .richWeb(let url, _):
+                buttons.append(("Open Link", "link", {
+                    UIApplication.shared.open(url)
+                }))
+            case .document(let obs, _, _):
+                buttons.append(("View Document", "doc.text", {
+                    viewModel.handleDocumentSelection(obs)
+                }))
+            default:
+                break
+            }
+        }
+        
+        return buttons
+    }
+    
+    private var contextButtons: [(String, String, () -> Void)] {
+        let contexts = allContexts
+        return contexts.prefix(6).map { context in
+            (context, "tag", {
+                withAnimation {
+                    if viewModel.selectedPurposes.contains(context) {
+                        viewModel.selectedPurposes.remove(context)
+                    } else {
+                        viewModel.selectedPurposes.insert(context)
+                    }
+                }
+            })
+        }
+    }
+    
+    private var detectedButtons: [(String, String, () -> Void)] {
+        var buttons: [(String, String, () -> Void)] = []
+        
+        for result in viewModel.results {
+            switch result {
+            case .semantic(let label, _):
+                buttons.append((label.capitalized, "eye", {
+                    withAnimation {
+                        if viewModel.selectedPurposes.contains(label) {
+                            viewModel.selectedPurposes.remove(label)
+                            if viewModel.sessionTitle == label { viewModel.sessionTitle = nil }
+                        } else {
+                            viewModel.selectedPurposes.insert(label)
+                            viewModel.sessionTitle = label
+                        }
+                    }
+                }))
+            case .product(let code, _, _):
+                let text = "Barcode: \(code)"
+                buttons.append(("Barcode", "barcode", {
+                    withAnimation {
+                        if viewModel.selectedPurposes.contains(text) {
+                            viewModel.selectedPurposes.remove(text)
+                        } else {
+                            viewModel.selectedPurposes.insert(text)
+                        }
+                    }
+                }))
+            case .siftedSubject(let observation, let label):
+                if let label = label {
+                    buttons.append((label, "viewfinder", {
+                        withAnimation {
+                            if viewModel.activeObservation != nil {
+                                viewModel.activeObservation = nil
+                            } else {
+                                viewModel.activeObservation = observation
+                            }
+                        }
+                    }))
+                }
+            default:
+                break
+            }
+        }
+        
+        return buttons
+    }
+    
+    @ViewBuilder
+    private func buttonSection(title: String, buttons: [(String, String, () -> Void)], columns: Int, isContext: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header with optional regenerate button for CONTEXT
+            if title == "CONTEXT" {
+                HStack {
+                    Text(title)
+                        .font(.caption.bold())
+                        .foregroundStyle(.white.opacity(0.6))
+                    
+                    Spacer()
+                    
+                    Button {
+                        Task {
+                            await viewModel.regenerateContextSuggestions(for: viewModel.selectedPlace)
+                        }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                }
+            } else {
+                Text(title)
+                    .font(.caption.bold())
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+            
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: columns), spacing: 12) {
+                ForEach(0..<buttons.count, id: \.self) { index in
+                    let button = buttons[index]
+                    Button {
+                        button.2()
+                    } label: {
+                        if isContext {
+                            // Context buttons: no icon, multiline text, visual selection state
+                            let isSelected = viewModel.selectedPurposes.contains(button.0)
+                            Text(button.0)
+                                .font(.caption.bold())
+                                .foregroundStyle(isSelected ? .black : .white)
+                                .lineLimit(3)
+                                .multilineTextAlignment(.leading)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.vertical, 12)
+                                .padding(.horizontal, 8)
+                                .background(isSelected ? Color.white : Color.white.opacity(0.1))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(isSelected ? Color.clear : Color.white.opacity(0.2), lineWidth: 1)
+                                )
+                        } else {
+                            // Action/Detected buttons: icon + text with selection state
+                            let isSelected = viewModel.selectedPurposes.contains(button.0) || 
+                                           viewModel.selectedPurposes.contains(where: { $0.contains(button.0) })
+                            VStack(spacing: 8) {
+                                Image(systemName: button.1)
+                                    .font(.title3)
+                                    .foregroundStyle(isSelected ? .blue : .white.opacity(0.8))
+                                
+                                Text(button.0)
+                                    .font(.caption.bold())
+                                    .foregroundStyle(isSelected ? .blue : .white)
+                                    .lineLimit(2)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(isSelected ? Color.blue.opacity(0.2) : Color.white.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(isSelected ? Color.blue.opacity(0.5) : Color.white.opacity(0.2), lineWidth: isSelected ? 2 : 1)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // MARK: - Content Stack (broken out to help type-checker)
+    
+    @ViewBuilder
+    private var intelligenceContentStack: some View {
+        VStack(spacing: 20) {
+            // Pipeline Status
+            if viewModel.pipelineStatus != .idle && viewModel.pipelineStatus != .complete {
+                PipelineStatusView(status: viewModel.pipelineStatus)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+            }
+            
+            // Save Chip
+            saveSection
+            
+            // Actions Section
+            if !actionResults.isEmpty {
+                actionsSection
+            }
+            
+            // Context Section
+            contextSection
+        }
+        .padding(.vertical, 16)
+    }
+    
+    // MARK: - Sections
+    
+    @ViewBuilder
+    private var saveSection: some View {
+        HStack {
+            Button {
+                onSave()
+            } label: {
+                HStack(spacing: 8) {
+                    if viewModel.isSaving {
+                        ProgressView().tint(.white)
+                    } else {
+                        Image(systemName: "square.and.arrow.down.fill").font(.body.bold())
+                        Text("Save Capture").fontWeight(.bold)
+                    }
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 14)
+                .background(viewModel.isSaving ? Color.gray : Color.blue)
+                .clipShape(Capsule())
+                .shadow(color: .blue.opacity(0.4), radius: 8, x: 0, y: 4)
+            }
+            .disabled(viewModel.isSaving)
+            
+            Spacer()
+        }
+        .padding(.horizontal)
+    }
+    
+    @ViewBuilder
+    private var actionsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("ACTIONS")
+                .font(.caption).fontWeight(.bold)
+                .foregroundStyle(.white.opacity(0.6))
+                .padding(.horizontal)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(actionResults, id: \.self) { result in
+                        Button {
+                            handleResultSelection(result)
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: result.icon)
+                                Text(result.title).fontWeight(.medium)
+                            }
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .background(Color.green.opacity(0.3))
+                            .clipShape(Capsule())
+                            .overlay(Capsule().stroke(Color.green.opacity(0.5), lineWidth: 1))
+                        }
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var contextSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("CONTEXT")
+                .font(.caption).fontWeight(.bold)
+                .foregroundStyle(.white.opacity(0.6))
+                .padding(.horizontal)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    // Add Custom Button
+                    Button {
+                        isEnteringCustomContext = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus.circle.fill")
+                            Text("Add")
+                        }
+                        .font(.subheadline).fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(Color.blue)
+                        .clipShape(Capsule())
+                    }
+                    
+                    // Selected Contexts
+                    ForEach(Array(viewModel.selectedPurposes).sorted(), id: \.self) { context in
+                        contextChip(text: context, isSelected: true)
+                    }
+                    
+                    // AI Suggestions
+                    ForEach(purposeSuggestions, id: \.self) { statement in
+                        contextChip(text: statement, isSelected: false)
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func contextChip(text: String, isSelected: Bool) -> some View {
+        Button {
+            toggleContext(text)
+        } label: {
+            HStack(spacing: 4) {
+                Text(text)
+                if isSelected {
+                    Image(systemName: "checkmark").font(.caption.bold())
+                }
+            }
+            .font(.subheadline)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(.ultraThinMaterial)
+            .clipShape(Capsule())
+            .overlay(
+                Capsule().stroke(isSelected ? Color.blue : Color.white.opacity(0.2), lineWidth: isSelected ? 2 : 1)
+            )
+        }
+    }
+    
+    // MARK: - Helpers
+    
+    private var actionResults: [IntelligenceResult] {
+        let documents = viewModel.results.filter { if case .document = $0 { return true }; return false }
+        let others = viewModel.results.filter {
+            if case .qr = $0 { return true }
+            if case .richWeb = $0 { return true }
+            return false
+        }
+        return documents + others
+    }
+    
+    private var purposeSuggestions: [String] {
+        guard let purposeResult = viewModel.results.first(where: { if case .purpose = $0 { return true }; return false }),
+              case .purpose(let statements) = purposeResult else {
+            return []
+        }
+        return statements.filter { !viewModel.selectedPurposes.contains($0) }
+    }
+    
+    private func toggleContext(_ text: String) {
+        withAnimation {
+            if viewModel.selectedPurposes.contains(text) {
+                viewModel.selectedPurposes.remove(text)
+                if viewModel.sessionTitle == text { viewModel.sessionTitle = nil }
+            } else {
+                viewModel.selectedPurposes.insert(text)
+                viewModel.sessionTitle = text
+                viewModel.refineContext(with: text)
+            }
+        }
+        #if os(iOS)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        #endif
+    }
+    
+    private func handleResultSelection(_ result: IntelligenceResult) {
+        switch result {
+        case .document(let obs, let text, _):
+            viewModel.handleDocumentSelection(obs, text: text)
+        case .qr(let url):
+            UIApplication.shared.open(url)
+        case .richWeb(let url, _):
+            UIApplication.shared.open(url)
+        default:
+            break
+        }
+    }
+}

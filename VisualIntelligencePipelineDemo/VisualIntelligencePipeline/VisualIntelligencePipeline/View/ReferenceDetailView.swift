@@ -31,6 +31,8 @@ struct ReferenceDetailContent: View {
     @State private var showingMap = false
     @State private var showingEditLocation = false
     @State private var showingPlaceDetails = false // New State
+    @State private var isEditingTitle = false
+    @State private var editedTitle = ""
     
     @Query private var allItems: [ProcessedItem]
     @Query private var sessions: [DiverSession]
@@ -54,8 +56,36 @@ struct ReferenceDetailContent: View {
                     
                     // 0. Purpose Header (Removed - Moved to Intent Section)
 
-                    // Video Player for video media type
-                    if item.mediaType == "video", let assetID = item.photosAssetIdentifier {
+                    // Check if this is a note document
+                    let isNote = item.tags.contains("note") && item.entityType == "document"
+                    
+                    if isNote {
+                        // Text editor for notes
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Note Content")
+                                .font(.headline)
+                                .foregroundStyle(.secondary)
+                            
+                            TextEditor(text: Binding(
+                                get: { item.transcription ?? "" },
+                                set: { newText in
+                                    item.transcription = newText
+                                    item.summary = newText.isEmpty ? nil : String(newText.prefix(200))
+                                    try? item.modelContext?.save()
+                                }
+                            ))
+                            .frame(minHeight: 200)
+                            .padding(8)
+                            .background(Color(uiColor: .secondarySystemBackground))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                            )
+                        }
+                        .padding(.bottom, 12)
+                    } else if item.mediaType == "video", let assetID = item.photosAssetIdentifier {
+                        // Video Player for video media type
                         PhotosVideoPlayerView(assetIdentifier: assetID)
                             .frame(height: 300)
                             .cornerRadius(12)
@@ -92,10 +122,30 @@ struct ReferenceDetailContent: View {
                          }
                     }
                     
-                    Text(item.title ?? "Untitled")
+                    if isEditingTitle {
+                        TextField("Title", text: $editedTitle, onCommit: {
+                            if !editedTitle.isEmpty {
+                                item.title = editedTitle
+                                try? item.modelContext?.save()
+                            }
+                            isEditingTitle = false
+                        })
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .textFieldStyle(.roundedBorder)
+                        .onAppear {
+                            editedTitle = item.title ?? "Untitled"
+                        }
+                    } else {
+                        Text(item.title ?? "Untitled")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .onLongPressGesture {
+                                editedTitle = item.title ?? "Untitled"
+                                isEditingTitle = true
+                            }
+                    }
                     
                     if let url = item.resolvedWebURL {
                         Link(url.absoluteString, destination: url)

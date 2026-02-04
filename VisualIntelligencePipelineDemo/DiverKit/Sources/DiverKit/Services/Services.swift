@@ -31,13 +31,15 @@ public final class Services {
 public struct ReprocessContext {
     public let imageData: Data
     public let sessionID: String
+    public let sessionTitle: String?
     public let location: String?
     public let placeID: String?
     public let placeName: String?
     
-    public init(imageData: Data, sessionID: String, location: String? = nil, placeID: String? = nil, placeName: String? = nil) {
+    public init(imageData: Data, sessionID: String, sessionTitle: String? = nil, location: String? = nil, placeID: String? = nil, placeName: String? = nil) {
         self.imageData = imageData
         self.sessionID = sessionID
+        self.sessionTitle = sessionTitle
         self.location = location
         self.placeID = placeID
         self.placeName = placeName

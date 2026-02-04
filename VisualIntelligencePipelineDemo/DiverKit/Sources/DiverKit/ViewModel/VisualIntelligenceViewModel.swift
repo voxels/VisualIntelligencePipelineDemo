@@ -56,6 +56,9 @@ public class VisualIntelligenceViewModel: ObservableObject {
     @Published public var sessionTitle: String? // Explicit user-selected title
     @Published public var shouldDismiss: Bool = false
     
+    /// Derived: True when first analysis has produced results (no explicit state needed)
+    public var hasCompletedFirstAnalysis: Bool { !results.isEmpty }
+    
     // Map Selection
     @Published public var placeCandidates: [EnrichmentData] = []
     @Published public var selectedPlace: EnrichmentData?
@@ -75,6 +78,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
         case enriching = "Finding Location..."
         case reasoning = "Understanding Context..."
         case complete = "Complete"
+        
+        public var displayText: String { rawValue }
     }
     @Published public var pipelineStatus: PipelineStatus = .idle
     
@@ -298,6 +303,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         // 2. Set Session & Metadata
         self.activeSessionID = context.sessionID
+        self.sessionTitle = context.sessionTitle  // Preserve user's custom title
         self.currentCapturePlaceID = context.placeID
         if let loc = context.location {
             let parts = loc.split(separator: ",")
@@ -539,10 +545,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
                     if let sifted = newResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
                        case .siftedSubject(let observation, _) = sifted {
                         Task {
+                            // Use captured image's orientation for proper sifted subject rotation
+                            let imageOrientation = await MainActor.run { self.capturedImage?.imageOrientation }
+                            let cgOrientation = imageOrientation?.cgImagePropertyOrientation ?? .up
                             if let (sImage, sBounds) = await self.extractSiftedImage(
                                 observation: UnsafeSendable(value: observation),
                                 frame: UnsafeSendable(value: cgImage),
-                                orientation: .up
+                                orientation: cgOrientation
                             ) {
                                 await MainActor.run {
                                     self.siftedImage = sImage
@@ -567,6 +576,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                             }
                         }
                     }
+                    // Note: Context analysis Task (below) will set .reasoning → .complete
                 }
                 
                 // NEW: Automatically trigger "Analyze Context" after reprocessing
@@ -907,7 +917,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
                         
                         print("✅ Analysis Complete: Found \(fullResults.count) results")
                         
-                        await MainActor.run { self.pipelineStatus = .complete }
+                        // Update UI state (hasCompletedFirstAnalysis is now derived from !results.isEmpty)
+                        await MainActor.run {
+                            self.pipelineStatus = .complete
+                        }
                         
                         if shouldAutoSave {
                             print("🚀 Express Capture: Auto-saving...")
@@ -1106,17 +1119,24 @@ public class VisualIntelligenceViewModel: ObservableObject {
                         if let sifted = newResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
                            case .siftedSubject(let observation, _) = sifted {
                             Task {
+                            // Use captured image's orientation for proper sifted subject rotation
+                                let imageOrientation = await MainActor.run { self.capturedImage?.imageOrientation }
+                                let cgOrientation = imageOrientation?.cgImagePropertyOrientation ?? .up
                                 if let (sImage, sBounds) = await self.extractSiftedImage(
                                     observation: UnsafeSendable(value: observation),
                                     frame: UnsafeSendable(value: cgImage), // Overload used for CGImage
-                                    orientation: .up
+                                    orientation: cgOrientation
                                 ) {
                                     await MainActor.run {
                                         self.siftedImage = sImage
                                         self.siftedBoundingBox = sBounds
+                                        self.pipelineStatus = .reading // Complete sifting
                                     }
                                 }
                             }
+                        } else {
+                            // No sifted subject - update status immediately
+                            self.pipelineStatus = .reading
                         }
                         
                         self.isReviewing = true
@@ -1137,6 +1157,11 @@ public class VisualIntelligenceViewModel: ObservableObject {
                                     #endif
                                 }
                             }
+                        }
+                        // Verification complete - mark pipeline as complete
+                        await MainActor.run {
+                            self.pipelineStatus = .complete
+                            self.isAnalyzing = false
                         }
                     }
             } catch {
@@ -1167,10 +1192,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
                  try handler.perform([request])
                  
                  if let result = request.results?.first {
+                    // Use captured image's orientation for proper sifted subject rotation
+                    let imageOrientation = await MainActor.run { [weak self] in self?.capturedImage?.imageOrientation }
+                    let cgOrientation = imageOrientation?.cgImagePropertyOrientation ?? .up
                     if let (sImage, sBounds) = await self.extractSiftedImage(
                         observation: UnsafeSendable(value: result),
                         frame: UnsafeSendable(value: cgImage),
-                        orientation: .up
+                        orientation: cgOrientation
                     ) {
                         await MainActor.run { [weak self] in
                             self?.siftedImage = sImage
@@ -1223,8 +1251,12 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
             #if canImport(UIKit)
-            // Use default orientation for the sticker
-            let uiImage = UIImage(cgImage: cgImage)
+            // Vision's masked image is in normalized coordinates, but we need to render
+            // it with the proper orientation for display
+            let uiOrientation = uiImageOrientation(from: orientation)
+            let tempImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: uiOrientation)
+            // Normalize to actually render the pixels correctly
+            let uiImage = tempImage.normalizedOrientation()
             return (uiImage, bounds)
             #elseif canImport(AppKit)
             return (NSImage(cgImage: cgImage, size: .zero), bounds)
@@ -1287,8 +1319,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
     }
 
     #if canImport(UIKit)
-    @MainActor
-    private func uiImageOrientation(from orientation: CGImagePropertyOrientation) -> UIImage.Orientation {
+    nonisolated private func uiImageOrientation(from orientation: CGImagePropertyOrientation) -> UIImage.Orientation {
         switch orientation {
         case .up: return .up
         case .down: return .down
@@ -1452,8 +1483,31 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         let validIntent = purposes.first { !$0.starts(with: "At: ") }
         
+        // Find most prominent text from results as fallback
+        let prominentText: String? = {
+            // Priority 1: Document OCR text (first meaningful line)
+            for result in self.results {
+                if case .document(_, let text, _) = result, let text = text {
+                    let firstLine = text.split(separator: "\n").first?.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if let line = firstLine, !line.isEmpty, line.count > 3 {
+                        return String(line)
+                    }
+                }
+            }
+            
+            // Priority 2: Semantic labels (first capitalized)
+            for result in self.results {
+                if case .semantic(let label, _) = result {
+                    return label.capitalized
+                }
+            }
+            
+            // Priority 3: Any result title
+            return self.results.first?.title
+        }()
+        
         // Use the selected intent as the primary title if it exists, otherwise fall back to enriched title
-        let calculatedTitle = self.sessionTitle ?? validIntent ?? self.results.first?.title ?? "Visual Capture"
+        let calculatedTitle = self.sessionTitle ?? validIntent ?? prominentText ?? "Visual Capture"
         
         // Ensure the calculated title is actually used or stored
         if self.sessionTitle == nil {
@@ -1463,7 +1517,9 @@ public class VisualIntelligenceViewModel: ObservableObject {
         Task.detached(priority: .userInitiated) {
             #if canImport(UIKit)
             let capturedData = imageToSave?.jpegData(compressionQuality: 0.8)
-            let siftedData = siftedImg?.pngData()
+            // Normalize sifted image orientation before saving (apply rotation to pixel data)
+            let normalizedSifted = siftedImg?.normalizedOrientation()
+            let siftedData = normalizedSifted?.pngData()
             let attachmentData = sessionImgs.compactMap { $0.jpegData(compressionQuality: 0.8) }
             #elseif canImport(AppKit)
             let capturedData = imageToSave?.tiffRepresentation
@@ -1506,7 +1562,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                             observation: UnsafeSendable(value: observation),
                             image: UnsafeSendable(value: cgImage)
                         ) {
-                            let rectifiedImage = UIImage(cgImage: rectifiedCGImage)
+                            let rectifiedImage = UIImage(cgImage: rectifiedCGImage, scale: 1.0, orientation: capturedImage.imageOrientation)
                             if let rectifiedData = rectifiedImage.jpegData(compressionQuality: 0.9) {
                                 // Create queue item for the rectified document
                                 let documentTitle = label ?? text?.prefix(50).description ?? "Document"
@@ -1549,8 +1605,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
                         #endif
                         NotificationCenter.default.post(name: .diverQueueDidUpdate, object: nil)
                         
-                        // Enforce SSOT: Reset VM state so we don't hold onto stale "capturedImage"
-                        self.reset()
+                        // Don't reset VM - it should persist across navigation
+                        // Reset will happen when user dismisses the entire capture session
                         self.shouldDismiss = true
                     }
                 }
@@ -1592,9 +1648,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
         self.rectifiedDocumentText = text
         Task {
             guard let capturedImage = await MainActor.run(body: { self.capturedImage }) else { return }
-             // Ensure we have a CGImage and check orientation
+             // Use original image orientation - Vision's rectangle coordinates expect this
             #if canImport(UIKit)
             guard let cgImage = capturedImage.cgImage else { return }
+            let originalOrientation = capturedImage.imageOrientation
             #elseif canImport(AppKit)
             guard let cgImage = capturedImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
             #endif
@@ -1606,7 +1663,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
             ) {
                 await MainActor.run {
                     #if canImport(UIKit)
-                    self.rectifiedDocument = UIImage(cgImage: cgImage)
+                    // Apply original orientation to rectified document for correct display
+                    self.rectifiedDocument = UIImage(cgImage: cgImage, scale: 1.0, orientation: originalOrientation)
                     #elseif canImport(AppKit)
                     self.rectifiedDocument = NSImage(cgImage: cgImage, size: .zero)
                     #endif
@@ -1655,18 +1713,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         guard let correctedImage = filter.outputImage else { return nil }
         
-        // Scale to correct aspect ratio
-        // CIPerspectiveCorrection outputs an image of the size of the input image's extent.
-        // We need to scale it to avgWidth x avgHeight
-        let inputExtent = ciImage.extent
-        let scaleX = avgWidth / inputExtent.width
-        let scaleY = avgHeight / inputExtent.height
-        
-        let scaledImage = correctedImage
-            .transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
-            
+        // CIPerspectiveCorrection outputs the corrected image at the correct dimensions
+        // No additional scaling needed - just render it
         let context = CIContext(options: [.useSoftwareRenderer: false])
-        return context.createCGImage(scaledImage, from: scaledImage.extent)
+        return context.createCGImage(correctedImage, from: correctedImage.extent)
     }
     
     public func saveDocument(title: String? = nil, tags: [String] = []) {
@@ -1785,7 +1835,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }
     }
     
-    func regenerateContextSuggestions(for place: EnrichmentData?) async {
+    public func regenerateContextSuggestions(for place: EnrichmentData?) async {
         // Capture state on MainActor synchronously
         let (contextData, shouldProceed) = await MainActor.run { () -> (EnrichmentData?, Bool) in
             self.isAnalyzing = true
@@ -1974,6 +2024,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // Reset internal state
         isAnalyzing = false
         isReviewing = false
+        // hasCompletedFirstAnalysis is now derived from !results.isEmpty (auto-reset)
         pipelineStatus = .idle
         shouldDismiss = false
         
@@ -1995,6 +2046,43 @@ public class VisualIntelligenceViewModel: ObservableObject {
     }
     
     // MARK: - UI Helpers
+    
+    
+    /// Transforms a Vision bounding box to account for device orientation
+    public func transformBoundingBoxForOrientation(_ box: CGRect, orientation: CGImagePropertyOrientation) -> CGRect {
+        switch orientation {
+        case .up, .upMirrored:
+            // No rotation needed
+            return box
+            
+        case .down, .downMirrored:
+            // 180° rotation: flip both X and Y
+            return CGRect(
+                x: 1.0 - box.maxX,
+                y: 1.0 - box.maxY,
+                width: box.width,
+                height: box.height
+            )
+            
+        case .left, .leftMirrored:
+            // 90° counter-clockwise: swap dimensions, transform coordinates
+            return CGRect(
+                x: box.minY,
+                y: 1.0 - box.maxX,
+                width: box.height,
+                height: box.width
+            )
+            
+        case .right, .rightMirrored:
+            // 90° clockwise: swap dimensions, transform coordinates
+            return CGRect(
+                x: 1.0 - box.maxY,
+                y: box.minX,
+                width: box.height,
+                height: box.width
+            )
+        }
+    }
     
     public func convertBoundingBox(_ box: CGRect, to viewSize: CGSize, imageAspectRatio: CGFloat = 0.75) -> CGRect {
         // Vision: Origin Bottom-Left, Normalized
@@ -2437,7 +2525,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
 
 #if canImport(UIKit)
 extension UIImage.Orientation {
-    var cgImagePropertyOrientation: CGImagePropertyOrientation {
+    public var cgImagePropertyOrientation: CGImagePropertyOrientation {
         switch self {
         case .up: return .up
         case .upMirrored: return .upMirrored
@@ -2449,6 +2537,22 @@ extension UIImage.Orientation {
         case .left: return .left
         @unknown default: return .up
         }
+    }
+}
+
+extension UIImage {
+    /// Returns a new UIImage with orientation .up by rendering the image in the correct orientation
+    func normalizedOrientation() -> UIImage {
+        // If already .up, return self
+        guard imageOrientation != .up else { return self }
+        
+        // Render the image in correct orientation
+        UIGraphicsBeginImageContextWithOptions(size, false, scale)
+        draw(in: CGRect(origin: .zero, size: size))
+        let normalized = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return normalized ?? self
     }
 }
 #endif

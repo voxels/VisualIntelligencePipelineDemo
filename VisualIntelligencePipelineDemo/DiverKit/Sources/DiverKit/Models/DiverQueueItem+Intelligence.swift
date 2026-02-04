@@ -223,12 +223,12 @@ extension DiverQueueItem {
         return items
     }
 
-    public static func from(documentImage: Data, title: String? = nil, tags: [String] = [], text: String? = nil, purpose: String? = nil, purposes: Set<String> = [], date: Date? = nil, sessionID: String? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil, attachments: [Data]? = nil) -> DiverQueueItem {
+    public static func from(documentImage: Data? = nil, title: String? = nil, tags: [String] = [], text: String? = nil, purpose: String? = nil, purposes: Set<String> = [], date: Date? = nil, sessionID: String? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil, attachments: [Data]? = nil) -> DiverQueueItem {
         let id = UUID().uuidString
         let resolvedTitle = title ?? "Scanned Document"
         
-        // Virtual URL for document captures
-        let primaryURL = "diver-doc://\(id)"
+        // Virtual URL for document captures (using unified secretatomics scheme)
+        let primaryURL = "secretatomics://open-doc?id=\(id)"
         
         let descriptor = DiverItemDescriptor(
             id: id,
@@ -253,7 +253,7 @@ extension DiverQueueItem {
             descriptor: descriptor,
             source: "visual_intelligence",
             createdAt: date ?? Date(),
-            payload: documentImage,
+            payload: documentImage ?? Data(), // Use empty Data if nil
             attachments: attachments
         )
     }

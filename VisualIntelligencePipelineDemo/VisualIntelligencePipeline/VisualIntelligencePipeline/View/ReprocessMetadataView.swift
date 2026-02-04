@@ -148,6 +148,7 @@ struct ReprocessMetadataView: View {
         let context = ReprocessContext(
             imageData: imageData,
             sessionID: sessionID,
+            sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
             location: item.location,
             placeID: item.placeContext?.placeID,
             placeName: item.placeContext?.name
