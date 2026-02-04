@@ -23,6 +23,11 @@ New in this version is the **Daily Context Narrative**, located at the top of th
 - **Live Summarization**: As you capture visual context throughout the day, the `DailyContextService` appends these events to a running log.
 - **LLM Synthesis**: An on-device LLM (via `ContextQuestionService`) periodically analyzes this log to generate a narrative summary (e.g., *"Morning spent debugging SwiftUI at a coffee shop, followed by researching camera gear."*).
 - **Persistence**: This narrative persists for the day, giving users an at-a-glance understanding of their digital footprint.
+26: 
+27: ### 3. Unified Text and Note Editing
+28: - **Direct Note Creation**: The "New Note" action creates a ready-to-edit document instantly, bypassing the ingestion queue for zero latency.
+29: - **Unified Text Editor**: Whether it's a manually created note or a detected text document, the app uses a consistent `TextEditorView` with local state management and a manual **Save** button to ensure data integrity.
+30: - **OCR to Text**: Detected documents with OCR transcription are automatically hydrated into the text editor, allowing for immediate refinement.
 
 ## Dependencies
 
@@ -91,6 +96,8 @@ Visual Intelligence integrates with **KnowMaps** (1st party Service) to ground v
 -   **Context Retrieval**: The `KnowMapsAdapter` retrieves relevant context (`UserTopic`, `IndustryCategory`) based on a weighted vector search.
 -   **Concept Boosting**: Concepts with a weight `> 1.2` (e.g., "Coffee", "SwiftUI") are prioritized to bias the AI's understanding of the scene.
 -   **Personalized Ranking**: Search results and auto-categorization are influenced by the user's "Taste Profile" stored in the local vector database.
+95: -   **Concept Weight Preservation**: During session reprocessing, existing concept weights are incremented rather than overwritten, allowing for progressive refinement of items.
+96: -   **Session Titling Strategy**: Sessions automatically derive titles based on the most prominent concepts (categories/tags) found within their items, falling back to location addresses only when no semantic data is available.
 
 ### 3. Parallel Enrichment Pipeline
 Once an item is captured, it passes through `LocalPipelineService`, which orchestrates multiple concurrent enrichment providers:
@@ -101,6 +108,11 @@ Once an item is captured, it passes through `LocalPipelineService`, which orches
     -   **WeatherKit** (Apple SDK): Captures ambient conditions (e.g., "Sunny, 24°C").
     -   **CoreMotion** (Apple SDK): Logs user activity state (e.g., "Stationary", "Walking").
 5.  **Music Enrichment**: Uses **SpotifyAPI** (3rd party SDK) for identifying and enriching music entities.
+106: 
+107: ### 4. Enrichment Optimization
+108: To maximize battery life and reduce network usage, the pipeline implements an **Authoritative Location** strategy:
+109: - **User Truthing**: If a user has pinned a location or manually selected a place, the enrichment engine bypasses redundant GPS lookups and Foursquare nearby searches.
+110: - **Pinned Context**: Pinned locations are prioritized across new sessions, ensuring consistency in place-based tagging.
 
 ### 4. Generative Synthesis (Apple Intelligence)
 The final stage uses `ContextQuestionService` to synthesize a cohesive narrative using **Apple's SystemLanguageModel** (iOS 26.0+):

@@ -373,10 +373,17 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 print("📍 Context: Initializing fresh location lookup (No previous session context found)...")
                 
                 await MainActor.run {
-                    if !isLocationPinned {
+                    if !isLocationPinned || self.selectedPlace == nil {
                         self.selectedPlace = nil
                         self.currentCapturePlaceID = nil
                     }
+                }
+                
+                // CRITICAL: If location is pinned and we have a selection, DO NOT perform fresh lookup.
+                let shouldSkipLookup = await MainActor.run { self.isLocationPinned && self.selectedPlace != nil }
+                if shouldSkipLookup {
+                    print("📍 Context: Location is pinned (\(selectedPlace?.title ?? "Unknown")). Skipping fresh lookup.")
+                    return
                 }
                 
                 guard let locService = Services.shared.locationService else { return }
@@ -2195,6 +2202,15 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }()
         
         async let placeEnrichment: EnrichmentSource? = {
+            // Optimization: If location is pinned or already selected, skip searching nearby Foursquare venues.
+            let existingSelection = await MainActor.run { self.selectedPlace }
+            let pinned = await MainActor.run { self.isLocationPinned }
+            
+            if (pinned || existingSelection != nil), let selection = existingSelection {
+                print("📍 Enrichment: Using existing selection/pin for '\(selection.title ?? "Unknown")'. Skipping nearby search.")
+                return .places([selection])
+            }
+
             // Use override if available (e.g. from Metadata), otherwise fetch live
             let searchLocation: CLLocation?
             if let override = locationOverride {
