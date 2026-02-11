@@ -211,13 +211,39 @@ extension DiverQueueItem {
             attachments: attachments
         ))
         
-        // Add Children
-        for desc in childDescriptors {
-            items.append(DiverQueueItem(
-                action: "save",
-                descriptor: desc,
-                source: "visual_intelligence"
-            ))
+        // Add additional images from attachments as independent child items
+        // This ensures they are processed by the pipeline into their own ProcessedItems
+        if let attachments = attachments {
+            for (index, data) in attachments.enumerated() {
+                // Skip if this is already the primary payload
+                if data == effectivePayload { continue }
+                
+                let childID = UUID().uuidString
+                let childDescriptor = DiverItemDescriptor(
+                    id: childID,
+                    url: "diver-capture://\(childID)",
+                    title: "Photo: \(masterTitle) #\(index + 1)",
+                    descriptionText: "Secondary capture from the same session.",
+                    styleTags: semanticLabels,
+                    categories: ["visual_intelligence", "child_image"],
+                    location: locationName,
+                    type: .image,
+                    purpose: purpose,
+                    masterCaptureID: masterID,
+                    sessionID: sessionID,
+                    placeID: placeID,
+                    latitude: latitude,
+                    longitude: longitude,
+                    purposes: purposes
+                )
+                
+                items.append(DiverQueueItem(
+                    action: "save",
+                    descriptor: childDescriptor,
+                    source: "visual_intelligence",
+                    payload: data
+                ))
+            }
         }
         
         return items

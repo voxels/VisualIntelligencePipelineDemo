@@ -24,6 +24,37 @@ struct EditLocationView: View {
     
     @Query private var sessions: [DiverSession]
     
+    init(item: ProcessedItem) {
+        self.item = item
+        
+        // Synchronously determine initial position from available context
+        let initialCoord: CLLocationCoordinate2D? = {
+            // Priority 1: Structured Place Context
+            if let ctx = item.placeContext, let lat = ctx.latitude, let lon = ctx.longitude {
+                return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+            }
+            
+            // Priority 2: Parsed Location String
+            if let locString = item.location {
+                let components = locString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+                if components.count == 2,
+                   let lat = Double(components[0]),
+                   let lon = Double(components[1]) {
+                    return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                }
+            }
+            
+            // Fallback: This will jump if we don't have item-specific data, but it's better than world view
+            return nil
+        }()
+        
+        if let coord = initialCoord {
+            self._position = State(initialValue: .region(MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))))
+        } else {
+            // Default to automatic which might be user location if enabled
+            self._position = State(initialValue: .automatic)
+        }
+    }
     /// Contacts filtered by search text
     private var filteredContactAddresses: [ContactAddress] {
         guard !searchText.isEmpty else { return contactAddresses }
@@ -373,26 +404,21 @@ struct EditLocationView: View {
     
     private func setupInitialPosition() {
         Task {
-            // 1. Determine Map Position
-            if let loc = itemLocationCoordinate {
-                await MainActor.run {
-                    position = .region(MKCoordinateRegion(center: loc, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
-                }
-            } else if let sl = sessionLocation {
-                await MainActor.run {
-                    position = .region(MKCoordinateRegion(center: sl, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
-                }
-            } else {
-                if let current = await Services.shared.locationService?.getCurrentLocation() {
-                     await MainActor.run {
-                         withAnimation {
-                             position = .region(MKCoordinateRegion(center: current.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
-                         }
-                     }
-                } else {
+            // 1. If we don't have a specific position yet, try session or current location
+            if case .automatic = position {
+                if let sl = sessionLocation {
                     await MainActor.run {
-                        print("⚠️ EditLocationView: Location unknown. Defaulting to world view.")
-                        position = .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 0, longitude: 0), span: MKCoordinateSpan(latitudeDelta: 180, longitudeDelta: 180)))
+                        withAnimation {
+                            position = .region(MKCoordinateRegion(center: sl, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
+                        }
+                    }
+                } else {
+                    if let current = await Services.shared.locationService?.getCurrentLocation() {
+                         await MainActor.run {
+                             withAnimation {
+                                 position = .region(MKCoordinateRegion(center: current.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
+                             }
+                         }
                     }
                 }
             }

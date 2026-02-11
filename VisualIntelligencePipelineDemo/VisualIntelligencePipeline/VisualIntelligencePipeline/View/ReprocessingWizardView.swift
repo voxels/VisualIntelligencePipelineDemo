@@ -209,11 +209,14 @@ struct ReprocessingWizardView: View {
             do {
                 let pipeline = LocalPipelineService(modelContext: modelContext)
                 
+                // Normalize cutoffDate to the start of the selected day
+                let normalizedCutoff = Calendar.current.startOfDay(for: cutoffDate)
+                
                 processingStatusMsg = "Capturing original state..."
                 
                 // CRITICAL: Capture snapshots BEFORE reprocessing so we can rollback
                 let itemsToProcess = FetchDescriptor<ProcessedItem>(
-                    predicate: #Predicate { $0.createdAt >= cutoffDate }
+                    predicate: #Predicate { $0.createdAt >= normalizedCutoff }
                 )
                 if let items = try? modelContext.fetch(itemsToProcess) {
                     for item in items {
@@ -224,7 +227,7 @@ struct ReprocessingWizardView: View {
                 processingStatusMsg = "Starting batch job..."
                 
                 try await pipeline.reprocessPipeline(
-                    cutoffDate: cutoffDate,
+                    cutoffDate: normalizedCutoff,
                     enrichmentService: WebViewLinkEnrichmentService(), // Use fresh instance for batch
                     // Assuming Services.shared has these properly set
                     locationService: services.locationService, // Passed for type signature, but reprocess logic passes nil internally

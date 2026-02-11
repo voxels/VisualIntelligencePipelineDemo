@@ -106,4 +106,8 @@ final class HierarchicalMockEnrichmentService: ContextualEnrichmentService, @unc
     func search(query: String, location: CLLocationCoordinate2D, limit: Int) async throws -> [EnrichmentData] {
         return data != nil ? [data!] : []
     }
+
+    func fetchDetails(for id: String) async throws -> EnrichmentData? {
+        return data
+    }
 }

@@ -11,10 +11,12 @@ import DiverShared
 #if canImport(UIKit)
 import UIKit
 #endif
+import PhotosUI
 
 @MainActor
-public class SidebarViewModel: ObservableObject {
-    // MARK: - Inputs
+public final class SidebarViewModel: ObservableObject {
+    @Published public var isMaintaining = false
+    @Published public var maintenanceProgress: Double = 0
     @Published public var searchText = ""
     @Published public var sortOrder: SortOrder = .dateDescending
     @Published public var showingSettings = false
@@ -65,7 +67,7 @@ public class SidebarViewModel: ObservableObject {
         if !searchText.isEmpty {
             let text = searchText
             result = result.filter { item in
-                let titleMatch = item.title?.localizedCaseInsensitiveContains(text) ?? false
+                let titleMatch = item.displayTitle.localizedCaseInsensitiveContains(text)
                 let urlMatch = item.url?.localizedCaseInsensitiveContains(text) ?? false
                 // Check summary for semantic search
                 let summaryMatch = item.summary?.localizedCaseInsensitiveContains(text) ?? false
@@ -89,13 +91,13 @@ public class SidebarViewModel: ObservableObject {
             // Secondary Sort: User Selection
             switch sortOrder {
             case .dateDescending:
-                return (item1.lastProcessedAt ?? item1.updatedAt) > (item2.lastProcessedAt ?? item2.updatedAt)
+                return item1.updatedAt > item2.updatedAt
             case .dateAscending:
-                return (item1.lastProcessedAt ?? item1.updatedAt) < (item2.lastProcessedAt ?? item2.updatedAt)
+                return item1.updatedAt < item2.updatedAt
             case .titleAscending:
-                return (item1.title ?? item1.url ?? "") < (item2.title ?? item2.url ?? "")
+                return item1.displayTitle < item2.displayTitle
             case .titleDescending:
-                return (item1.title ?? item1.url ?? "") > (item2.title ?? item2.url ?? "")
+                return item1.displayTitle > item2.displayTitle
             }
         }
         
@@ -188,11 +190,130 @@ public class SidebarViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Actions
+    // MARK: - Session Management
+    
+    public func deleteSession(_ session: SessionMetadata, context: ModelContext) {
+        context.delete(session)
+        try? context.save()
+    }
+    
+    public func toggleFavorite(for session: SessionMetadata, context: ModelContext) {
+        session.isFavorite.toggle()
+        try? context.save()
+        print("⭐️ Toggled favorite for session: \(session.isFavorite)")
+    }
+    
+    public func renameSession(_ session: SessionMetadata, title: String, context: ModelContext) {
+        session.title = title
+        session.updatedAt = Date()
+        try? context.save()
+        print("✅ Renamed session to '\(title)'")
+    }
+    
+    public func renameCollection(_ collection: DiverCollection, name: String, context: ModelContext) {
+        collection.name = name
+        collection.updatedAt = Date()
+        try? context.save()
+        print("✅ Renamed collection to '\(name)'")
+    }
+    
+    public func addSessionToCollection(_ session: SessionMetadata, collection: DiverCollection, context: ModelContext) {
+        if !collection.sessionIDs.contains(session.sessionID) {
+            collection.sessionIDs.append(session.sessionID)
+            collection.updatedAt = Date()
+            try? context.save()
+            print("✅ Added session '\(session.displayTitle)' to collection '\(collection.name)'")
+        }
+    }
+    
+    public func createCollection(name: String, session: SessionMetadata, context: ModelContext) {
+        let collection = DiverCollection(
+            name: name,
+            sessionIDs: [session.sessionID]
+        )
+        context.insert(collection)
+        try? context.save()
+        print("✅ Created collection '\(name)' with session '\(session.displayTitle)'")
+    }
+    
+    public func toggleFavorite(for item: ProcessedItem, context: ModelContext) {
+        item.isFavorite.toggle()
+        try? context.save()
+        print("⭐️ Toggled favorite for item: \(item.isFavorite)")
+    }
+    
+    public func sessionTitle(for session: SessionMetadata) -> String {
+        return session.displayTitle
+    }
+    
+    public func relatedConcepts(for session: SessionMetadata, allItems: [ProcessedItem], allConcepts: [UserConcept]) -> [UserConcept] {
+        let sessionItems = allItems.filter { $0.session == session }
+        var sessionTerms = Set<String>()
+        for item in sessionItems {
+            sessionTerms.formUnion(item.tags)
+            sessionTerms.formUnion(item.categories)
+            sessionTerms.formUnion(item.purposes)
+            if let act = item.activityContext { sessionTerms.insert(act.type) }
+        }
+        let meaningfulTerms = sessionTerms.filter { !$0.hasPrefix("At: ") }
+        let related = allConcepts.filter { concept in
+            meaningfulTerms.contains { term in
+                term.lowercased() == concept.name.lowercased()
+            }
+        }
+        return Array(related.sorted(by: { $0.weight > $1.weight }).prefix(5))
+    }
+    
+    public func createNewNoteForSession(_ session: SessionMetadata, context: ModelContext) {
+        // Business logic to auto-create a summary note
+        let note = ProcessedItem(
+            id: UUID().uuidString,
+            title: "Note for \(session.displayTitle)",
+            createdAt: Date(),
+            status: .ready,
+            source: "ManualNote"
+        )
+        note.session = session
+        context.insert(note)
+        try? context.save()
+    }
     
     public func deleteItem(_ item: ProcessedItem, context: ModelContext) {
         context.delete(item)
         try? context.save()
+        print("🗑️ Deleted item \(item.id)")
+    }
+    
+    public func deleteCollection(_ collection: DiverCollection, context: ModelContext) {
+        context.delete(collection)
+        try? context.save()
+        print("🗑️ Deleted collection '\(collection.name)'")
+    }
+    
+    public func processItemNow(_ item: ProcessedItem) {
+        Task {
+            do {
+                try await pipelineService?.processItemImmediately(item)
+                print("✅ Triggered immediate processing for: \(item.displayTitle)")
+            } catch {
+                print("❌ Failed to process item immediately: \(error)")
+            }
+        }
+    }
+    
+    public func cancelProcessing(_ item: ProcessedItem, context: ModelContext) {
+        item.status = .failed
+        item.processingLog.append("\(Date().formatted()): Cancelled by user")
+        try? context.save()
+        print("🚫 Cancelled processing for: \(item.displayTitle)")
+    }
+    
+    public func analyzeSession(_ session: SessionMetadata, context: ModelContext) {
+        Task {
+            let localPipeline = LocalPipelineService(modelContext: context)
+            await localPipeline.generateAndSaveSessionSummary(sessionID: session.sessionID)
+            print("✅ Triggered analysis for session: \(session.displayTitle)")
+        }
     }
     
     public func reprocessItem(_ item: ProcessedItem) {
@@ -349,8 +470,14 @@ public class SidebarViewModel: ObservableObject {
         // Clear state
         showingCombineCollectionSheet = false
         combineCollectionName = ""
-        selectedSessions.removeAll()
         isSelectionMode = false
+    }
+    
+    /// Update session timestamp to make it "Current"
+    public func setSessionAsCurrent(_ session: DiverSession, context: ModelContext) {
+        session.updatedAt = Date()
+        try? context.save()
+        print("⏰ Set session '\(session.title ?? session.sessionID)' as Current")
     }
     
     public func duplicateSession(sessionID: String, context: ModelContext) {
@@ -454,13 +581,12 @@ public class SidebarViewModel: ObservableObject {
             
             try context.save()
             print("✅ Session duplication complete: \(newSessionID)")
-            
         } catch {
             print("❌ Failed to duplicate session items: \(error)")
         }
     }
     
-    public func mergeSessions(sourceID: String, targetID: String, context: ModelContext) {
+    public func moveSession(sourceID: String, targetID: String, context: ModelContext) {
         guard sourceID != targetID else { return }
         
         // 1. Fetch Items from Source
@@ -497,6 +623,107 @@ public class SidebarViewModel: ObservableObject {
         }
     }
 
+    public func moveItem(itemID: String, toSessionID: String, context: ModelContext) {
+        let itemFetch = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.id == itemID })
+        let sessionFetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == toSessionID })
+        
+        do {
+            if let item = try context.fetch(itemFetch).first,
+               let session = try context.fetch(sessionFetch).first {
+                item.session = session
+                item.sessionID = toSessionID
+                item.updatedAt = Date()
+                session.updatedAt = Date()
+                try context.save()
+                print("✅ Moved item \(itemID) to session \(toSessionID)")
+            }
+        } catch {
+            print("❌ Failed to move item: \(error)")
+        }
+    }
+    
+    public func moveSessionToCollection(sessionID: String, collectionID: String, context: ModelContext) {
+        let collectionFetch = FetchDescriptor<DiverCollection>(predicate: #Predicate { $0.collectionID == collectionID })
+        let sessionFetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+        
+        do {
+            if let collection = try context.fetch(collectionFetch).first,
+               let session = try context.fetch(sessionFetch).first {
+                
+                // Add to collection IDs if not present
+                if !collection.sessionIDs.contains(sessionID) {
+                    collection.sessionIDs.append(sessionID)
+                }
+                
+                session.parentCollection = collection
+                session.collectionID = collectionID
+                session.updatedAt = Date()
+                collection.updatedAt = Date()
+                
+                try context.save()
+                print("✅ Moved session \(sessionID) to collection \(collectionID)")
+            }
+        } catch {
+            print("❌ Failed to move session to collection: \(error)")
+        }
+    }
+    
+    public func removeSessionFromCollection(sessionID: String, context: ModelContext) {
+        let sessionFetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+        
+        do {
+            if let session = try context.fetch(sessionFetch).first {
+                // If it has a parent collection, update it
+                if let collectionID = session.collectionID {
+                    let collectionFetch = FetchDescriptor<DiverCollection>(predicate: #Predicate { $0.collectionID == collectionID })
+                    if let collection = try context.fetch(collectionFetch).first {
+                        collection.sessionIDs.removeAll { $0 == sessionID }
+                        collection.updatedAt = Date()
+                    }
+                }
+                
+                // Clear session pointers
+                session.parentCollection = nil
+                session.collectionID = nil
+                session.updatedAt = Date()
+                
+                try context.save()
+                print("✅ Removed session \(sessionID) from collection")
+            }
+        } catch {
+            print("❌ Failed to remove session from collection: \(error)")
+        }
+    }
+
+    
+    public func rebuildLibrary(context: ModelContext) {
+        let pipeline = LocalPipelineService(modelContext: context)
+        
+        isMaintaining = true
+        maintenanceProgress = 0
+        
+        Task {
+            do {
+                try await pipeline.maintainLibrary { progress in
+                    Task { @MainActor in
+                        self.maintenanceProgress = progress
+                    }
+                }
+                
+                Task { @MainActor in
+                    self.isMaintaining = false
+                    #if os(iOS)
+                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    #endif
+                }
+            } catch {
+                print("❌ Library maintenance failed: \(error)")
+                Task { @MainActor in
+                    self.isMaintaining = false
+                }
+            }
+        }
+    }
     
     public func shareItem(_ item: ProcessedItem) {
         Task {
@@ -683,7 +910,44 @@ public class SidebarViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Photo/Video Import
+    // MARK: - Photo Library Import
+    
+    public func importSelectedPhotos(_ items: [PhotosPickerItem], context: ModelContext) async {
+        // Use the proper PhotoLibraryImportService for clustering, session creation, and metadata extraction
+        let importService = PhotoLibraryImportService(modelContext: context)
+        
+        // Generate a collection name based on current date
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .short
+        let collectionName = "Import \(dateFormatter.string(from: Date()))"
+        
+        do {
+            let collection = try await importService.importItems(items, collectionName: collectionName)
+            print("✅ Imported \(items.count) photos into collection: \(collection.name)")
+            
+            // Process the imported items through the pipeline
+            try? await pipelineService?.processPendingQueue()
+        } catch {
+            print("❌ Failed to import photos: \(error)")
+        }
+    }
+    
+#if canImport(UIKit)
+    public func previewImage(for session: SessionMetadata, allItems: [ProcessedItem]) -> UIImage? {
+        let items = allItems.filter { $0.sessionID == session.sessionID }
+        for item in items {
+            if let data = item.rawPayload, let image = UIImage(data: data) {
+                return image
+            }
+            if let path = item.webContext?.snapshotURL, let image = UIImage(contentsOfFile: path) {
+                return image
+            }
+        }
+        return nil
+    }
+#endif
+
     public func importExternalItem(data: Data, filename: String? = nil, isVideo: Bool = false) {
         Task {
             do {
@@ -706,7 +970,7 @@ public class SidebarViewModel: ObservableObject {
                 else {
                     ext = isVideo ? "mov" : "jpg" // Fallback for unknown streams
                 }
-                let filename = "import-\(UUID().uuidString).\(ext)"
+                let _ = "import-\(UUID().uuidString).\(ext)"
                 let queueDirectory = AppGroupContainer.queueDirectoryURL()!
                 
                 let descriptor = DiverItemDescriptor(

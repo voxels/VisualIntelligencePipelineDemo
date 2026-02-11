@@ -3,7 +3,7 @@ import SwiftData
 import DiverShared
 
 @Model
-public final class ProcessedItem: Identifiable {
+public final class ProcessedItem: Identifiable, DiverObject {
     public var id: String = UUID().uuidString
     public var inputId: String?
     public var url: String?
@@ -49,6 +49,10 @@ public final class ProcessedItem: Identifiable {
     // Enrichment metadata
     public var categories: [String] = []
     public var location: String?
+    public var latitude: Double?
+    public var longitude: Double?
+    public var placeID: String?
+    public var originalDate: Date? // EXIF/Source date
     public var price: Double?
     public var rating: Double?
     public var purposes: [String] = [] // Migrated from single purpose
@@ -111,6 +115,8 @@ public final class ProcessedItem: Identifiable {
     public var parentItem: ProcessedItem?
 
     public var childItems: [ProcessedItem]?
+    
+    public var session: SessionMetadata?
 
     public init(
         id: String,
@@ -141,8 +147,13 @@ public final class ProcessedItem: Identifiable {
         photosAssetIdentifier: String? = nil,
         categories: [String] = [],
         location: String? = nil,
+        latitude: Double? = nil,
+        longitude: Double? = nil,
+        placeID: String? = nil,
+        originalDate: Date? = nil,
         price: Double? = nil,
         rating: Double? = nil,
+        isFavorite: Bool = false,
         purpose: String? = nil, // Deprecated argument
         purposes: Set<String> = [], // New argument
         productMetadata: String? = nil,
@@ -161,6 +172,7 @@ public final class ProcessedItem: Identifiable {
         self.rawPayload = rawPayload
         self.statusRaw = status.rawValue
         self.source = source
+        self.isFavorite = isFavorite
         self.updatedAt = updatedAt
         self.referenceCount = referenceCount
         self.lastProcessedAt = lastProcessedAt
@@ -177,9 +189,14 @@ public final class ProcessedItem: Identifiable {
         self.photosAssetIdentifier = photosAssetIdentifier
         self.categories = categories
         self.location = location
+        self.latitude = latitude
+        self.longitude = longitude
+        self.placeID = placeID
+        self.originalDate = originalDate
         self.price = price
         self.rating = rating
         self.productMetadata = productMetadata
+
         
         // Migrate/Merge
         var combined = purposes
@@ -201,7 +218,26 @@ public final class ProcessedItem: Identifiable {
             themes: themes
         )
     }
+    
+    // MARK: - DiverObject Conformance
+    
+    public var displayTitle: String {
+        title ?? url ?? "Untitled"
+    }
+    
+    public func asDTO() -> DiverObjectDTO {
+        DiverObjectDTO(
+            id: id,
+            title: displayTitle,
+            summary: summary,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            isFavorite: isFavorite,
+            type: .item
+        )
+    }
 }
+
 
 public struct MediaMetadata: Codable, Hashable, Sendable {
     public var mediaType: String?

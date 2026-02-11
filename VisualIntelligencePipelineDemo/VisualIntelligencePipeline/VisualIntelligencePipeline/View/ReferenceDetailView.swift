@@ -1714,6 +1714,19 @@ struct PlaceDetailSheet: View {
     var onAddTag: ((String) -> Void)? = nil // Callback for adding context
     @Environment(\.dismiss) private var dismiss
     
+    @State private var position: MapCameraPosition
+    
+    init(context: PlaceContext, onAddTag: ((String) -> Void)? = nil) {
+        self.context = context
+        self.onAddTag = onAddTag
+        
+        if let lat = context.latitude, let lon = context.longitude {
+            self._position = State(initialValue: .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: lat, longitude: lon), span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005))))
+        } else {
+            self._position = State(initialValue: .automatic)
+        }
+    }
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -1721,7 +1734,7 @@ struct PlaceDetailSheet: View {
                     
                     // 1. Map Header
                     if let lat = context.latitude, let lon = context.longitude {
-                        Map(initialPosition: .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: lat, longitude: lon), span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)))) {
+                        Map(position: $position) {
                             Marker(context.name ?? "Location", coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon))
                         }
                         .frame(height: 250)

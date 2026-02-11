@@ -138,40 +138,12 @@ struct SessionItemsView: View {
         List(selection: $selection) {
             Section {
                 ForEach(sessionItems) { item in
-                    NavigationLink(value: item) {
-                        ItemRow(item: item)
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) { deleteItem(item) } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                        Button { viewModel.itemToReprocess = item } label: {
-                            Label("Reprocess", systemImage: "arrow.clockwise")
-                        }
-                        .tint(.orange)
-                    }
-                    .contextMenu {
-                        Button {
-                            item.isFavorite.toggle()
-                        } label: {
-                            Label(
-                                item.isFavorite ? "Unfavorite" : "Favorite",
-                                systemImage: item.isFavorite ? "star.slash" : "star.fill"
-                            )
-                        }
-                        
-                        Button { viewModel.itemToReprocess = item } label: {
-                            Label("Reprocess", systemImage: "arrow.clockwise")
-                        }
-                        
-                        Divider()
-                        
-                        Button(role: .destructive) { deleteItem(item) } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
+                    ItemRowContainer(
+                        item: item,
+                        viewModel: viewModel,
+                        modelContext: modelContext,
+                        selection: $selection
+                    )
                 }
             } header: {
                 VStack(alignment: .leading, spacing: 8) {
@@ -328,6 +300,61 @@ struct ItemRowButton: View {
             
             Button(role: .destructive, action: onDelete) {
                 Label("Delete", systemImage: "trash")
+            }
+        }
+    }
+}
+
+// MARK: - Extracted Row for Performance and to fix Scope
+@MainActor
+struct ItemRowContainer: View {
+    let item: ProcessedItem
+    @ObservedObject var viewModel: SidebarViewModel
+    let modelContext: ModelContext
+    @Binding var selection: ProcessedItem?
+    
+    var body: some View {
+        NavigationLink(value: item) {
+            ItemRow(item: item)
+        }
+        .draggable(ItemTransfer(id: item.id))
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button(role: .destructive) {
+                modelContext.delete(item)
+                try? modelContext.save()
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            Button { viewModel.itemToReprocess = item } label: {
+                Label("Reprocess", systemImage: "arrow.clockwise")
+            }
+            .tint(.orange)
+        }
+        .contextMenu {
+            Button {
+                item.isFavorite.toggle()
+                try? modelContext.save()
+            } label: {
+                Label(
+                    item.isFavorite ? "Unfavorite" : "Favorite",
+                    systemImage: item.isFavorite ? "star.slash" : "star"
+                )
+            }
+            
+            Divider()
+            
+            Button {
+                viewModel.itemToEditLocation = item
+            } label: {
+                Label("Edit Location", systemImage: "mappin.and.ellipse")
+            }
+            
+            Button {
+                viewModel.itemToReprocess = item
+            } label: {
+                Label("Reprocess", systemImage: "arrow.clockwise")
             }
         }
     }

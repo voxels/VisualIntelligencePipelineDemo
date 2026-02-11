@@ -39,13 +39,16 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
     public let placeID: String?
     public let latitude: Double?
     public let longitude: Double?
+    public var isFavorite: Bool = false
     public var purposes: Set<String> = []
     public var processingLog: [String] = []
+
     
     public var tags: [String] { styleTags }
 
     public init(
-        id: String,
+        id: String = UUID().uuidString,
+
         url: String,
         title: String,
         descriptionText: String? = nil,
@@ -65,6 +68,7 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
         placeID: String? = nil,
         latitude: Double? = nil,
         longitude: Double? = nil,
+        isFavorite: Bool = false,
         purposes: Set<String> = [],
         processingLog: [String] = []
     ) {
@@ -88,6 +92,7 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
         self.placeID = placeID
         self.latitude = latitude
         self.longitude = longitude
+        self.isFavorite = isFavorite
         self.processingLog = processingLog
         
         // Migrate legacy purpose if needed
@@ -97,6 +102,7 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
         }
         self.purposes = combined
     }
+
 
     public var urlValue: URL? {
         URL(string: url)

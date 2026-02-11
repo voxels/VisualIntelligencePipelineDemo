@@ -14,6 +14,11 @@ public final class LocalPipelineService {
 
     public init(modelContext: ModelContext) {
         self.modelContext = modelContext
+        
+        // Reconcile relationships for backward compatibility (SwiftData Transition)
+        Task {
+            await self.reconcileRelationships()
+        }
     }
     
     // MARK: - Deterministic Context Builder
@@ -137,12 +142,45 @@ public final class LocalPipelineService {
                 }
             }
             
+            if existing.modality == nil || existing.modality?.isEmpty == true {
+                existing.modality = resolvedModality
+            }
+            if existing.tags.isEmpty, !resolvedTags.isEmpty {
+                existing.tags = resolvedTags
+            }
+            if existing.createdAt == Date.distantPast {
+                existing.createdAt = input.createdAt
+            }
+            if existing.rawPayload == nil {
+                existing.rawPayload = rawPayload
+            }
+            if existing.attributionID == nil {
+                existing.attributionID = descriptor?.attributionID
+            }
+            if existing.masterCaptureID == nil {
+                existing.masterCaptureID = descriptor?.masterCaptureID
+            }
+            if existing.sessionID == nil {
+                existing.sessionID = descriptor?.sessionID
+            }
+
             // Apply contextual Location -> Foursquare -> DuckDuckGo enrichment
             var effectiveLocation: CLLocation? = nil
             var hasUserOverride = false
             
-            // 1. Check EXISTING overrides (manual edits)
-            if let ctx = existing.placeContext, let lat = ctx.latitude, let lon = ctx.longitude {
+            // 1. Check EXISTING overrides (manual edits) or Descriptor overrides (e.g. pinned from UI)
+            // Priority: Descriptor (most recent user intent) > Existing Item (historical user intent)
+            if let descLoc = descriptor?.location,
+                let components = Optional(descLoc.split(separator: ",")),
+                components.count == 2,
+                let lat = Double(components[0].trimmingCharacters(in: .whitespaces)),
+                let lon = Double(components[1].trimmingCharacters(in: .whitespaces)) {
+                 
+                 effectiveLocation = CLLocation(latitude: lat, longitude: lon)
+                 hasUserOverride = true
+                 DiverLogger.pipeline.debug("Using Descriptor Location Override (Pinned): \(lat), \(lon)")
+            
+            } else if let ctx = existing.placeContext, let lat = ctx.latitude, let lon = ctx.longitude {
                 // Downgrade "Home" priority: Treat it as NOT a user override to allow content-based refinement (e.g. from photo metadata)
                 let isHome = ctx.placeID == "home-location"
                 
@@ -165,7 +203,44 @@ public final class LocalPipelineService {
                 hasUserOverride = true 
             }
             
-            // 2. Live Location (if no override)
+            // 2. Metadata (high priority truth)
+            // Check raw payload for location metadata if unavailable or if we want to augment "Home"
+            // If explicit metadata exists, it trumps "Home" but NOT explicit user overrides.
+            if effectiveLocation == nil || !hasUserOverride, let data = rawPayload, !isJSONData(data) {
+                 if let source = CGImageSourceCreateWithData(data as CFData, nil),
+                    let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
+                    let gps = props["{GPS}"] as? [String: Any],
+                    let lat = gps["Latitude"] as? Double,
+                    let latRef = gps["LatitudeRef"] as? String,
+                    let lng = gps["Longitude"] as? Double,
+                    let lngRef = gps["LongitudeRef"] as? String {
+                     
+                     let finalLat = latRef == "S" ? -lat : lat
+                     let finalLng = lngRef == "W" ? -lng : lng
+                     effectiveLocation = CLLocation(latitude: finalLat, longitude: finalLng)
+                     DiverLogger.pipeline.debug("Extracted Location from Image Metadata: \(finalLat), \(finalLng)")
+                     
+                     // Extract Original Date from EXIF
+                     if let exif = props["{Exif}"] as? [String: Any],
+                        let dateStr = exif["DateTimeOriginal"] as? String ?? exif["DateTimeDigitized"] as? String {
+                         let formatter = DateFormatter()
+                         formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
+                         if let date = formatter.date(from: dateStr) {
+                             existing.originalDate = date
+                             DiverLogger.pipeline.debug("Extracted Original Date from Image Metadata: \(date)")
+                         }
+                     }
+                 } else {
+
+                     // Fallback: Try Video Metadata
+                     if let videoLocation = await extractLocationFromVideo(data: data, identifier: existing.photosAssetIdentifier) {
+                         effectiveLocation = videoLocation
+                         DiverLogger.pipeline.debug("Extracted Location from Video Metadata: \(videoLocation.coordinate.latitude), \(videoLocation.coordinate.longitude)")
+                     }
+                 }
+             }
+
+            // 3. Live Location (LOWEST priority - only if nothing else found)
             // CRITICAL: Only use live location if the item is NEW (recent). 
             // Do NOT update location of old items to current device location during edits/reprocessing.
             let isRecent = abs(input.createdAt.timeIntervalSinceNow) < 300 // 5 minutes
@@ -177,29 +252,6 @@ public final class LocalPipelineService {
             // to see if Metadata/Session can find better. If not, we fall back to existing Home context later?
             // Actually, if we return effectiveLocation = nil, no enrichment happens, so existing fields aren't touched.
                 
-                // Fallback: Check raw payload for location metadata if unavailable (e.g. reprocessing)
-                // This now runs even if item was "Home" (since we set effectiveLocation = nil for Home above)
-                if effectiveLocation == nil, let data = rawPayload, !isJSONData(data) {
-                     if let source = CGImageSourceCreateWithData(data as CFData, nil),
-                        let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
-                        let gps = props["{GPS}"] as? [String: Any],
-                        let lat = gps["Latitude"] as? Double,
-                        let latRef = gps["LatitudeRef"] as? String,
-                        let lng = gps["Longitude"] as? Double,
-                        let lngRef = gps["LongitudeRef"] as? String {
-                         
-                         let finalLat = latRef == "S" ? -lat : lat
-                         let finalLng = lngRef == "W" ? -lng : lng
-                         effectiveLocation = CLLocation(latitude: finalLat, longitude: finalLng)
-                         DiverLogger.pipeline.debug("Extracted Location from Image Metadata: \(finalLat), \(finalLng)")
-                     } else {
-                         // Fallback: Try Video Metadata
-                         if let videoLocation = await extractLocationFromVideo(data: data, identifier: existing.photosAssetIdentifier) {
-                             effectiveLocation = videoLocation
-                             DiverLogger.pipeline.debug("Extracted Location from Video Metadata: \(videoLocation.coordinate.latitude), \(videoLocation.coordinate.longitude)")
-                         }
-                     }
-                 }
                  
                  // 3. QR Code Detection (Fallback if NO URL)
                  // User Request: "if i photograph a sign and a qr code is found, the title should be the name of the page"
@@ -227,9 +279,11 @@ public final class LocalPipelineService {
                        }
                  }
                  
-                 // Session Context Override
-                // CRITICAL: Only apply if NO user override.
-                if !hasUserOverride, let descriptorSessionID = descriptor?.sessionID ?? existing.sessionID {
+                 // Session Context Override (Last Resort / Grouping)
+                // CRITICAL: Only apply if NO user override and NO metadata found.
+                // NOTE: Session merge logic moved to verify grouping, not override location data of the item itself blindly?
+                // Actually, if an item is added to a session, it SHOULD inherit that session's location context if it has none.
+                if effectiveLocation == nil, let descriptorSessionID = descriptor?.sessionID ?? existing.sessionID {
                      let fetchSession = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == descriptorSessionID })
                      if let session = try? modelContext.fetch(fetchSession).first {
                          if let lat = session.latitude, let lng = session.longitude {
@@ -292,9 +346,15 @@ public final class LocalPipelineService {
                                   // Found it! Use the specific place from the sign.
                                   matchedEnrichment = textMatch
                               } else {
-                                  // Fallback to generic proximity search
-                                  matchedEnrichment = try await foursquareService.enrich(location: coords)
-                              }
+                              /* 
+                               // DISABLE AUTOMATIC VENUE MATCHING (User Request)
+                               // Only perform text-based verification, never blind coordinate matching.
+                               
+                              // Fallback to generic proximity search
+                              matchedEnrichment = try await foursquareService.enrich(location: coords)
+                              */
+                              DiverLogger.pipeline.debug("Skipping generic venue matching (Disabled per user request).")
+                          }
                           }
                          
                         if let fsEnrichment = matchedEnrichment {
@@ -483,9 +543,14 @@ public final class LocalPipelineService {
             photosAssetIdentifier: descriptor?.photosAssetIdentifier,
             categories: descriptor?.categories ?? [],
             location: descriptor?.location,
+            latitude: descriptor?.latitude,
+            longitude: descriptor?.longitude,
+            placeID: descriptor?.placeID,
             price: descriptor?.price,
+            isFavorite: descriptor?.isFavorite ?? false,
             purposes: descriptor?.purposes ?? []
         )
+
         
         // Insert immediately for live UI updates
         processed.status = ProcessingStatus.processing
@@ -512,9 +577,22 @@ public final class LocalPipelineService {
         
         // Apply contextual Location -> Foursquare -> DuckDuckGo enrichment
         var currentLocation: CLLocation? = nil
+        var hasUserOverride = false
+
+        // 0. Explicit Descriptor Location (Pinned)
+        if let descLoc = descriptor?.location,
+           let components = Optional(descLoc.split(separator: ",")),
+            components.count == 2,
+            let lat = Double(components[0].trimmingCharacters(in: .whitespaces)),
+            let lon = Double(components[1].trimmingCharacters(in: .whitespaces)) {
+             
+             currentLocation = CLLocation(latitude: lat, longitude: lon)
+             hasUserOverride = true
+             DiverLogger.pipeline.debug("Using Descriptor Location Override (Pinned): \(lat), \(lon)")
+        }
         
-        // 1. Try Metadata (image/video EXIF) first - explicit truth
-        if let data = rawPayload, !isJSONData(data) {
+        // 1. Try Metadata (image/video EXIF) first - explicit truth (Overrides "Home" or general GPS, but not Pinned)
+        if currentLocation == nil, let data = rawPayload, !isJSONData(data) {
              if let source = CGImageSourceCreateWithData(data as CFData, nil),
                 let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
                 let gps = props["{GPS}"] as? [String: Any],
@@ -524,16 +602,27 @@ public final class LocalPipelineService {
                 let lngRef = gps["LongitudeRef"] as? String {
                  
                  let finalLat = latRef == "S" ? -lat : lat
-                 let finalLng = lngRef == "W" ? -lng : lng
-                 currentLocation = CLLocation(latitude: finalLat, longitude: finalLng)
-                 DiverLogger.pipeline.debug("Extracted Location from New Item Metadata: \(finalLat), \(finalLng)")
-             } else if let videoLocation = await extractLocationFromVideo(data: data, identifier: descriptor?.photosAssetIdentifier) {
+                  let finalLng = lngRef == "W" ? -lng : lng
+                  currentLocation = CLLocation(latitude: finalLat, longitude: finalLng)
+                  DiverLogger.pipeline.debug("Extracted Location from New Item Metadata: \(finalLat), \(finalLng)")
+                  
+                  // Extract Original Date from EXIF
+                  if let exif = props["{Exif}"] as? [String: Any],
+                     let dateStr = exif["DateTimeOriginal"] as? String ?? exif["DateTimeDigitized"] as? String {
+                      let formatter = DateFormatter()
+                      formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
+                      if let date = formatter.date(from: dateStr) {
+                          processed.originalDate = date
+                          DiverLogger.pipeline.debug("Extracted Original Date from New Item Metadata: \(date)")
+                      }
+                  }
+              } else if let videoLocation = await extractLocationFromVideo(data: data, identifier: descriptor?.photosAssetIdentifier) {
                  currentLocation = videoLocation
                  DiverLogger.pipeline.debug("Extracted Location from New Item Video Metadata: \(videoLocation.coordinate.latitude), \(videoLocation.coordinate.longitude)")
              }
         }
         
-        // 2. Fallback to Live GPS ONLY if item is Recent (Captured now) and no metadata
+        // 2. Fallback to Live GPS ONLY if item is Recent (Captured now) and no metadata/override
         // This prevents library imports from adopting "Home" location incorrectly
         if currentLocation == nil {
              let isRecent = abs(input.createdAt.timeIntervalSinceNow) < 300 // 5 minutes
@@ -545,22 +634,19 @@ public final class LocalPipelineService {
              }
         }
         
-        // 3. SESSION CONTEXT OVERRIDE (Highest Priority for grouping)
-        // If user explicitly adds to a session, they likely want that session's context
-        // User Report: "current location is overriding the locaiton of the session" -> Fix: Apply this LAST to override.
-        var hasUserOverride = false
-        if let sessionID = descriptor?.sessionID ?? processed.sessionID {
-             let fetchSession = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
-             if let session: DiverSession = try? modelContext.fetch(fetchSession).first {
-                 var useSessionLoc = false
+        // 3. SESSION CONTEXT OVERRIDE (Only if we still have no location)
+        // If user explicitly adds to a session, they likely want that session's context if the item has none.
+        if currentLocation == nil, let sessionID = descriptor?.sessionID ?? processed.sessionID {
+             let fetchSession = FetchDescriptor<SessionMetadata>(predicate: #Predicate<SessionMetadata> { $0.sessionID == sessionID })
+             if let session: SessionMetadata = try? modelContext.fetch(fetchSession).first {
                  if let lat = session.latitude, let lng = session.longitude {
                      // Use session location if explicitly set
                      currentLocation = CLLocation(latitude: lat, longitude: lng)
                      DiverLogger.pipeline.debug("Using Session Location Override: \(lat), \(lng)")
-                     useSessionLoc = true
                  }
 
                  if let locName = session.locationName, !locName.isEmpty {
+                     // If session has a name, we treat adoption as an override
                      hasUserOverride = true
                  }
              }
@@ -674,8 +760,8 @@ public final class LocalPipelineService {
         // Re-assign Session ID based on Location to ensure all items at the same place are grouped (User Request).
         // Try to find an existing Session that matches this item's Place ID.
         if let placeID = processed.placeContext?.placeID, !placeID.isEmpty {
-             let desc = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.placeID == placeID })
-             if let existingSession: DiverSession = try? modelContext.fetch(desc).first {
+             let desc = FetchDescriptor<SessionMetadata>(predicate: #Predicate<SessionMetadata> { $0.placeID == placeID })
+             if let existingSession: SessionMetadata = try? modelContext.fetch(desc).first {
                  // Check if we are currently using a random/new session ID that differs from the persistent one
                  if existingSession.sessionID != processed.sessionID {
                      DiverLogger.pipeline.info("MERGING: Moving item \(processed.id) from session \(processed.sessionID ?? "nil") into existing Location Session \(existingSession.sessionID) (\(existingSession.locationName ?? "Unknown"))")
@@ -793,24 +879,29 @@ public final class LocalPipelineService {
         // We will fetch all pending items, delete them, and recreate them as inputs if needed.
         let queueFetch = FetchDescriptor<ProcessedItem>(
             predicate: #Predicate {
-                $0.statusRaw == "queued" ||
-                $0.statusRaw == "processing" ||
-                $0.statusRaw == "failed"
+                $0.createdAt >= cutoffDate && (
+                    $0.statusRaw == "queued" ||
+                    $0.statusRaw == "processing" ||
+                    $0.statusRaw == "failed"
+                )
             }
         )
         if let queuedItems: [ProcessedItem] = try? modelContext.fetch(queueFetch) {
-            let msg = "Clearing \(queuedItems.count) items from queue before reprocessing."
+            let msg = "Resetting \(queuedItems.count) stalled items in queue for reprocessing."
             DiverLogger.pipeline.info("\(msg)")
             await MainActor.run { logHandler?(msg) }
             
             for item in queuedItems {
-                // Ensure LocalInput exists or recreate it
+                // Reset status to queued instead of deleting, to preserve sessionID and other metadata
+                item.status = .queued
+                item.processingLog.append("\(Date().formatted()): Reset to queued during maintenance.")
+                
+                // Safety: Still ensure a LocalInput exists for the main loop fallback, 
+                // but the batch logic below will handle the actual processing efficiently.
                 if let inputIdStr = item.inputId, let inputID = UUID(uuidString: inputIdStr) {
-                    // Check if input exists
                     let inputDesc = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.id == inputID })
                     let existingInputs: [LocalInput]? = try? modelContext.fetch(inputDesc)
                     if existingInputs?.isEmpty ?? true {
-                        // Recreate LocalInput if missing
                          let input = LocalInput(
                             id: inputID,
                             createdAt: item.createdAt,
@@ -823,15 +914,13 @@ public final class LocalPipelineService {
                         modelContext.insert(input)
                     }
                 }
-                // Remove the stalled item
-                modelContext.delete(item)
             }
             try? modelContext.save()
         }
 
         // Fetch items created after the cutoff
         let fetch = FetchDescriptor<ProcessedItem>(
-            predicate: #Predicate { $0.createdAt > cutoffDate }
+            predicate: #Predicate { $0.createdAt >= cutoffDate }
         )
         let items = try modelContext.fetch(fetch)
         let countMsg = "Reprocessing \(items.count) items created after \(cutoffDate.formatted(date: .abbreviated, time: .shortened))"
@@ -899,8 +988,8 @@ public final class LocalPipelineService {
                     
                     // CRITICAL: Clear parent session summary so it regenerates with new item data
                     if let sessionID = freshItem.sessionID {
-                        let sessionFetch = FetchDescriptor<DiverSession>(
-                            predicate: #Predicate { $0.sessionID == sessionID }
+                        let sessionFetch = FetchDescriptor<SessionMetadata>(
+                            predicate: #Predicate<SessionMetadata> { $0.sessionID == sessionID }
                         )
                         if let session = try? self.modelContext.fetch(sessionFetch).first, session.summary != nil {
                             session.summary = nil
@@ -916,8 +1005,15 @@ public final class LocalPipelineService {
                             id: freshItem.id, // CRITICAL: Use existing ID
                             url: freshItem.url ?? "",
                             title: freshItem.title ?? "Untitled",
+                            categories: freshItem.categories,
                             location: freshItem.location,
-                            photosAssetIdentifier: freshItem.photosAssetIdentifier
+                            createdAt: freshItem.createdAt,
+                            type: DiverItemType(rawValue: freshItem.entityType ?? "web") ?? .web,
+                            attributionID: freshItem.attributionID,
+                            masterCaptureID: freshItem.masterCaptureID,
+                            photosAssetIdentifier: freshItem.photosAssetIdentifier,
+                            sessionID: freshItem.sessionID,
+                            purposes: Set(freshItem.purposes)
                         )
                         
                         logHandler?("Analyzing: \(freshItem.title ?? "Untitled")")
@@ -1055,6 +1151,11 @@ public final class LocalPipelineService {
         if let doc = enrichment.documentContext { item.documentContext = doc }
         
         if let newPlace = enrichment.placeContext {
+            // Sync top-level location fields for efficient spatial queries
+            if let lat = newPlace.latitude { item.latitude = lat }
+            if let lon = newPlace.longitude { item.longitude = lon }
+            if let pid = newPlace.placeID { item.placeID = pid }
+
             if !preservePlaceIdentity {
                 // Full overwrite
                 item.placeContext = newPlace
@@ -1069,8 +1170,8 @@ public final class LocalPipelineService {
                     address: existingPlace.address, // Keep
                     rating: existingPlace.rating ?? newPlace.rating, // Enrich
                     isOpen: existingPlace.isOpen ?? newPlace.isOpen, // Enrich
-                    latitude: existingPlace.latitude, // Keep coordinates of override
-                    longitude: existingPlace.longitude,
+                    latitude: existingPlace.latitude ?? newPlace.latitude, // Keep coordinates of override, or enrich
+                    longitude: existingPlace.longitude ?? newPlace.longitude,
                     priceLevel: existingPlace.priceLevel ?? newPlace.priceLevel, // Enrich
                     phoneNumber: existingPlace.phoneNumber ?? newPlace.phoneNumber, // Enrich
                     website: existingPlace.website ?? newPlace.website, // Enrich
@@ -1084,6 +1185,7 @@ public final class LocalPipelineService {
                  item.placeContext = newPlace
             }
         }
+
         
         if !enrichment.questions.isEmpty { item.questions = enrichment.questions }
         // questions are handled by the ViewModel/UI during the review phase
@@ -1419,7 +1521,7 @@ public final class LocalPipelineService {
         // e.g. "603 W 29th St, New York, NY"
         let range = NSRange(location: 0, length: title.utf16.count)
         let regex = try? NSRegularExpression(pattern: "^\\d+.*,")
-        if let match = regex?.firstMatch(in: title, options: [], range: range) {
+        if regex?.firstMatch(in: title, options: [], range: range) != nil {
             return true
         }
         return false
@@ -1562,11 +1664,11 @@ public final class LocalPipelineService {
         guard let sessionID = descriptor.sessionID else { return }
         
         // Fetch existing or create new
-        let fetch = FetchDescriptor<DiverSession>(
-            predicate: #Predicate { $0.sessionID == sessionID }
+        let fetch = FetchDescriptor<SessionMetadata>(
+            predicate: #Predicate<SessionMetadata> { $0.sessionID == sessionID }
         )
         
-        let session: DiverSession
+        let session: SessionMetadata
         if let existing = try? modelContext.fetch(fetch).first {
              session = existing
         } else {
@@ -1654,7 +1756,7 @@ public final class LocalPipelineService {
         // We defer to the Session's location name if available, as it represents the user's manual override or clustered location.
         var effectiveLocationName = item.location
         if let sessionID = item.sessionID {
-             let sessionDesc = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+             let sessionDesc = FetchDescriptor<SessionMetadata>(predicate: #Predicate<SessionMetadata> { $0.sessionID == sessionID })
              if let session = try? modelContext.fetch(sessionDesc).first, let locName = session.locationName {
                  effectiveLocationName = locName
              }
@@ -1836,12 +1938,9 @@ public final class LocalPipelineService {
                             fsEnrichment = m
                         }
                         
-                    } else if fsEnrichment == nil {
-                        // C. Fallback: If MapKit failed completely (e.g. wilderness), try generic Foursquare nearby
-                         fsEnrichment = try? await self.withTimeout(seconds: 15) {
-                            try await foursquareService.enrich(location: coords)
-                        }
                     }
+                    // User Request: Disable automatic generic Foursquare matching based on coordinates.
+                    // Only use Foursquare if we have a specific ID or a MapKit name to cross-reference.
                 }
 
                 // 3. Last Resort Fallback: Contact Detection (Home or Friends)
@@ -2046,7 +2145,7 @@ public final class LocalPipelineService {
     // MARK: - Session Summarization
     public func generateAndSaveSessionSummary(sessionID: String) async {
         let fetchItems = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.sessionID == sessionID })
-        let fetchMeta = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+        let fetchMeta = FetchDescriptor<SessionMetadata>(predicate: #Predicate<SessionMetadata> { $0.sessionID == sessionID })
         
         do {
             let items = try modelContext.fetch(fetchItems)
@@ -2059,6 +2158,7 @@ public final class LocalPipelineService {
             for item in recentItems {
                 combinedText += "Item: \(item.title ?? "Unknown")\n"
                 if let summary = item.summary { combinedText += "Description: \(summary)\n" }
+                if let activity = item.activityContext { combinedText += "Activity: \(activity.type) (\(activity.confidence))\n" }
                 if !item.purposes.isEmpty { combinedText += "Intents: \(item.purposes.joined(separator: ", "))\n" }
                 combinedText += "---\n"
             }
@@ -2138,7 +2238,7 @@ public final class LocalPipelineService {
             }
             
             // 2. Check DiverSession
-            let sessionDesc = FetchDescriptor<DiverSession>()
+            let sessionDesc = FetchDescriptor<SessionMetadata>()
             let sessions = try modelContext.fetch(sessionDesc)
             DiverLogger.pipeline.info("📊 Total DiverSession found: \(sessions.count)")
             
@@ -2164,7 +2264,7 @@ public final class LocalPipelineService {
         DiverLogger.pipeline.info("🔍 DATA DIAGNOSTICS COMPLETE")
     }
 
-    private func regenerateMissingSessions() throws {
+    public func regenerateMissingSessions() throws {
         let itemDesc = FetchDescriptor<ProcessedItem>()
         let items = try modelContext.fetch(itemDesc)
         
@@ -2175,7 +2275,7 @@ public final class LocalPipelineService {
             guard let sessionID = sessionID else { continue }
             
             // Check if exists
-            let fetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+            let fetch = FetchDescriptor<SessionMetadata>(predicate: #Predicate<SessionMetadata> { $0.sessionID == sessionID })
             if (try? modelContext.fetch(fetch).count) == 0 {
                 // Create new session
                 let session = DiverSession(sessionID: sessionID)
@@ -2185,10 +2285,16 @@ public final class LocalPipelineService {
                 if let first = sorted.first { session.createdAt = first.createdAt }
                 if let last = sorted.last { session.updatedAt = last.updatedAt }
                 
-                // Try to find a location
                 if let locItem = sorted.first(where: { $0.location != nil }) {
                     session.locationName = locItem.location
                     session.placeID = locItem.placeContext?.placeID
+                } else if let actItem = sorted.first(where: { $0.activityContext != nil || !$0.purposes.isEmpty }) {
+                    // Fallback to Semantic Activity / Purpose
+                    if let purpose = actItem.purposes.first(where: { !$0.isEmpty }) {
+                         session.title = purpose
+                    } else if let type = actItem.activityContext?.type {
+                        session.title = "Activity: \(type.capitalized)"
+                    }
                 }
                 
                 modelContext.insert(session)
@@ -2205,7 +2311,7 @@ public final class LocalPipelineService {
     }
 
 
-    private func recoverStuckItems() throws {
+    public func recoverStuckItems() throws {
         // Fetch items stuck in 'processing' state
         let fetch = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.statusRaw == "processing" })
         
@@ -2224,9 +2330,9 @@ public final class LocalPipelineService {
         }
     }
     
-    private func consolidateSessions() throws {
+    public func consolidateSessions() throws {
         // Fetch all sessions sorted by time
-        let desc = FetchDescriptor<DiverSession>(sortBy: [SortDescriptor(\.createdAt)])
+        let desc = FetchDescriptor<SessionMetadata>(sortBy: [SortDescriptor(\.createdAt)])
         let sessions = try modelContext.fetch(desc)
         
         guard !sessions.isEmpty else { return }
@@ -2335,48 +2441,154 @@ public final class LocalPipelineService {
     }
 
     private func syncSession(for item: ProcessedItem) {
-        // Ensure valid session ID
-        let sessionID = item.sessionID ?? UUID().uuidString
-        if item.sessionID == nil { item.sessionID = sessionID }
-        
-        // Fetch or Create Session
-        let fetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
-        let session: DiverSession
-        
-        if let existingSession = try? modelContext.fetch(fetch).first {
-            session = existingSession
-        } else {
-            // Create new if missing
-            session = DiverSession(sessionID: sessionID, createdAt: item.createdAt)
-            modelContext.insert(session)
-            DiverLogger.pipeline.info("Created new/restored DiverSession for item \(item.id)")
+        // Ensure robust relationship exists (Transition fallback)
+        if item.session == nil {
+            let sessionID = item.sessionID ?? UUID().uuidString
+            if item.sessionID == nil { item.sessionID = sessionID }
+            
+            let fetch = FetchDescriptor<SessionMetadata>(predicate: #Predicate<SessionMetadata> { $0.sessionID == sessionID })
+            if let existing = try? modelContext.fetch(fetch).first {
+                item.session = existing
+            } else {
+                let session = DiverSession(sessionID: sessionID, createdAt: item.createdAt)
+                modelContext.insert(session)
+                item.session = session
+                DiverLogger.pipeline.info("Created new DiverSession for item \(item.id)")
+            }
         }
         
-        // Sync Location Data if Item has it (User Override wins)
-        // CRITICAL: Skip generic "Home" locations to prevent contamination during reprocessing
-        if let place = item.placeContext, place.placeID != "home-location" {
-            if let lat = place.latitude, let lon = place.longitude {
+        guard let session = item.session else { return }
+        
+        // Sync Session Metadata
+        session.updatedAt = Date()
+        
+        // Propagate Favorite Status (Additive only - once a session is favorited via an item, it stays)
+        if item.isFavorite {
+            session.isFavorite = true
+        }
+
+        // Propagate Location if session is empty
+        if session.latitude == nil || session.longitude == nil {
+            if let lat = item.latitude, let lon = item.longitude {
                 session.latitude = lat
                 session.longitude = lon
+                session.placeID = item.placeID
+                session.locationName = item.location
             }
-            if let name = place.name {
-                session.locationName = name
-            } else if let locName = item.location, session.locationName == nil {
-                session.locationName = locName
-            }
-        } else if let locStr = item.location,
-                  let components = Optional(locStr.split(separator: ",")),
-                  components.count == 2,
-                  let lat = Double(components[0].trimmingCharacters(in: .whitespaces)),
-                  let lon = Double(components[1].trimmingCharacters(in: .whitespaces)) {
-            // Fallback to coord string
-            session.latitude = lat
-            session.longitude = lon
         }
         
-        // NOTE: Session summary is NOT set here anymore.
-        // Session summaries are generated via LLM in MetadataPipelineService.generatePendingSessionSummaries()
-        // which aggregates item transcriptions for a more meaningful summary.
+        // Sync Thumbnail Logic
+        // We pick the best thumbnail path from items in the session based on aestheticsScore
+        let targetSID = session.sessionID
+        let itemsFetch: FetchDescriptor<ProcessedItem> = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate<ProcessedItem> { $0.sessionID == targetSID },
+            sortBy: [SortDescriptor(\.aestheticsScore, order: .reverse)]
+        )
+        
+        if let sessionItems = try? modelContext.fetch(itemsFetch) {
+            // 1. Update thumbnailAssetIdentifier from highest scoring photo
+            if let bestPhotoItem = sessionItems.first(where: { $0.photosAssetIdentifier != nil }) {
+                session.thumbnailAssetIdentifier = bestPhotoItem.photosAssetIdentifier
+            }
+            
+            // 2. Update thumbnailPaths (file-based backups) from top 3 scoring items
+            let topPaths = sessionItems
+                .filter { $0.webContext?.snapshotURL != nil }
+                .prefix(3)
+                .compactMap { $0.webContext?.snapshotURL }
+            
+            session.thumbnailPaths = Array(topPaths)
+        }
+        
+        // Finalize Title logic
+        if session.title == nil || session.title?.isEmpty == true {
+             // Fallback: If session has no title, use item title
+             session.title = item.title
+        }
+    }
+
+    // MARK: - SwiftData Transition (Backward Compatibility)
+    
+    /// Reconciles string-based IDs with SwiftData @Relationship pointers.
+    /// This ensures that existing records are correctly linked via the new robust relationships.
+    public func reconcileRelationships() async {
+        DiverLogger.pipeline.info("🛠️ Starting SwiftData relationship reconciliation...")
+        
+        // 1. Link ProcessedItem to SessionMetadata
+        let itemsFetch: FetchDescriptor<ProcessedItem> = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate<ProcessedItem> { $0.session == nil && $0.sessionID != nil }
+        )
+        
+        if let items = try? modelContext.fetch(itemsFetch), !items.isEmpty {
+            DiverLogger.pipeline.info("🔗 Reconciling \(items.count) items to sessions...")
+            for item in items {
+                if let sessID = item.sessionID {
+                    let sessionFetch: FetchDescriptor<SessionMetadata> = FetchDescriptor<SessionMetadata>(
+                        predicate: #Predicate<SessionMetadata> { $0.sessionID == sessID }
+                    )
+                    if let session = (try? modelContext.fetch(sessionFetch))?.first {
+                        item.session = session
+                    }
+                }
+            }
+        }
+        
+        // 2. Link SessionMetadata to DiverCollection
+        let sessionsFetch: FetchDescriptor<SessionMetadata> = FetchDescriptor<SessionMetadata>(
+            predicate: #Predicate<SessionMetadata> { $0.parentCollection == nil && $0.collectionID != nil }
+        )
+        
+        if let sessions = try? modelContext.fetch(sessionsFetch), !sessions.isEmpty {
+            DiverLogger.pipeline.info("🔗 Reconciling \(sessions.count) sessions to collections...")
+            for session in sessions {
+                if let collID = session.collectionID {
+                    let collectionFetch: FetchDescriptor<DiverCollection> = FetchDescriptor<DiverCollection>(
+                        predicate: #Predicate<DiverCollection> { $0.collectionID == collID }
+                    )
+                    if let collection = (try? modelContext.fetch(collectionFetch))?.first {
+                        session.parentCollection = collection
+                    }
+                }
+            }
+        }
+        
+        try? modelContext.save()
+        DiverLogger.pipeline.info("✅ Relationship reconciliation complete.")
+    }
+
+    public func maintainLibrary(progressHandler: ((Double) -> Void)? = nil) async throws {
+        DiverLogger.pipeline.info("🧹 Starting Library Maintenance...")
+        
+        // 1. Recover stuck items
+        try recoverStuckItems()
+        progressHandler?(0.2)
+        
+        // 2. Regenerate missing sessions
+        try regenerateMissingSessions()
+        progressHandler?(0.4)
+        
+        // 3. Consolidate fragmented sessions
+        try consolidateSessions()
+        progressHandler?(0.6)
+        
+        // 4. Reconcile relationships
+        await reconcileRelationships()
+        progressHandler?(0.8)
+        
+        // 5. Regenerate ALL session summaries
+        let sessionFetch = FetchDescriptor<SessionMetadata>()
+        if let sessions = try? modelContext.fetch(sessionFetch) {
+            DiverLogger.pipeline.info("📝 Regenerating summaries for \(sessions.count) sessions...")
+            let total = Double(sessions.count)
+            for (index, session) in sessions.enumerated() {
+                await generateAndSaveSessionSummary(sessionID: session.sessionID)
+                let sessionProgress = 0.8 + (Double(index + 1) / total * 0.2)
+                progressHandler?(sessionProgress)
+            }
+        }
+        
+        try? modelContext.save()
+        DiverLogger.pipeline.info("✅ Library Maintenance Complete.")
     }
 }
 

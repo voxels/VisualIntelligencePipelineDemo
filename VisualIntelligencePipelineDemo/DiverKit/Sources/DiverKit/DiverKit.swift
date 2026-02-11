@@ -1,10 +1,39 @@
-//
 //  DiverKit.swift
 //  DiverKit
 //
 //  Shared utilities for the Diver ecosystem.
 //  Provides authentication, keychain services, and networking utilities.
 //
+
+import Foundation
+import SwiftUI
+import UniformTypeIdentifiers
+
+/// Sendable DTO for transferring a ProcessedItem via drag and drop
+public struct ItemTransfer: Codable, Transferable, Sendable {
+    public let id: String
+    
+    public init(id: String) {
+        self.id = id
+    }
+    
+    public static var transferRepresentation: some TransferRepresentation {
+        CodableRepresentation(contentType: .text)
+    }
+}
+
+/// Sendable DTO for transferring a DiverSession via drag and drop
+public struct SessionTransfer: Codable, Transferable, Sendable {
+    public let id: String
+    
+    public init(id: String) {
+        self.id = id
+    }
+    
+    public static var transferRepresentation: some TransferRepresentation {
+        CodableRepresentation(contentType: .text)
+    }
+}
 
 import Foundation
 

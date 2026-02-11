@@ -239,8 +239,8 @@ struct VisualIntelligencePipelineApp: App {
                 // Process queue when app enters foreground
                 Task {
                     try? await metadataPipelineService.processPendingQueue()
-                    // Run Data Diagnostics to reassure user
-                    await metadataPipelineService.runDataDiagnostics()
+                    // Defer Data Diagnostics / Session Consolidation (User Request)
+                    // await metadataPipelineService.runDataDiagnostics()
                 }
 
                 // Check for Daily Narrative Backfill

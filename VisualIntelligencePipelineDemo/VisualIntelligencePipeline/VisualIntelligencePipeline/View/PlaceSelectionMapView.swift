@@ -14,6 +14,16 @@ struct PlaceSelectionMapView: View {
     @State private var searchText = ""
     @State private var contactAddresses: [ContactAddress] = []
     @State private var isLoadingContacts = false
+    
+    init(viewModel: VisualIntelligenceViewModel) {
+        self.viewModel = viewModel
+        
+        if let coordinate = viewModel.currentCaptureCoordinate {
+            self._position = State(initialValue: .region(MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))))
+        } else {
+            self._position = State(initialValue: .automatic)
+        }
+    }
 
     /// Contacts filtered by search text
     private var filteredContactAddresses: [ContactAddress] {
@@ -77,7 +87,7 @@ struct PlaceSelectionMapView: View {
                 }
             )) {
                 // Place Candidates
-                ForEach(viewModel.placeCandidates, id: \.placeContext?.placeID) { candidate in
+                ForEach(viewModel.placeCandidates, id: \.id) { candidate in
                     if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
                         Annotation(candidate.title ?? "Place", coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)) {
                             Button {
@@ -279,9 +289,8 @@ struct PlaceSelectionMapView: View {
     }
     
     private func setupInitialPosition() {
-        if let coordinate = viewModel.currentCaptureCoordinate {
-            position = .region(MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)))
-        } else {
+        // Only run async lookup if we didn't have a coordinate to start with
+        if case .automatic = position {
              Task {
                  if let current = await Services.shared.locationService?.getCurrentLocation() {
                       await MainActor.run {

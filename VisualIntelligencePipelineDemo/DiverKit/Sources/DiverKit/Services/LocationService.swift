@@ -30,8 +30,12 @@ public final class LocationService: NSObject, LocationProvider, @unchecked Senda
         
         switch status {
         case .notDetermined:
-            locationManager.requestWhenInUseAuthorization()
-            return nil
+            return await withCheckedContinuation { continuation in
+                self.locationContinuation = continuation
+                locationManager.requestWhenInUseAuthorization()
+                // The delegate method locationManagerDidChangeAuthorization will handle the state change
+                // and we'll trigger requestLocation() there if authorized.
+            }
         case .restricted, .denied:
             return nil
         case .authorizedAlways, .authorizedWhenInUse:
@@ -59,6 +63,21 @@ extension LocationService: CLLocationManagerDelegate {
     }
     
     public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        // Handle authorization changes if necessary
+        let status = manager.authorizationStatus
+        #if os(iOS) || os(visionOS) || os(tvOS) || os(watchOS)
+        let isAuthorized = status == .authorizedAlways || status == .authorizedWhenInUse
+        #else
+        let isAuthorized = status == .authorizedAlways
+        #endif
+
+        if isAuthorized {
+            // Only trigger if we are waiting for a continuation
+            if locationContinuation != nil {
+                manager.requestLocation()
+            }
+        } else if status == .denied || status == .restricted {
+            locationContinuation?.resume(returning: nil)
+            locationContinuation = nil
+        }
     }
 }

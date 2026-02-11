@@ -18,6 +18,7 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var sharedWithYouManager: SharedWithYouManager
+    @ObservedObject var viewModel: SidebarViewModel
 
     @State private var showingClearConfirmation = false
     @State private var isClearing = false
@@ -109,6 +110,20 @@ struct SettingsView: View {
                 // Maintenance Section
                 Section {
                     Button {
+                        viewModel.rebuildLibrary(context: modelContext)
+                    } label: {
+                        HStack {
+                            Label("Rebuild Library", systemImage: "arrow.triangle.2.circlepath.icloud")
+                            if viewModel.isMaintaining {
+                                Spacer()
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            }
+                        }
+                    }
+                    .disabled(viewModel.isMaintaining)
+                    
+                    Button {
                         showingReprocessingWizard = true
                     } label: {
                         Label("Reprocess Pipeline", systemImage: "arrow.triangle.2.circlepath.circle")
@@ -130,7 +145,13 @@ struct SettingsView: View {
                 } header: {
                     Text("Maintenance")
                 } footer: {
-                    Text("Clean up and re-run intelligence on historical items.")
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("**Rebuild Library**: Fixes broken relationships, restores missing sessions, and regenerates summaries based on already processed data. (Fast)")
+                        Text("**Reprocess Pipeline**: Re-runs the entire intelligence pipeline (OCR, analysis) on historical items. (Slow)")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 4)
                 }
 
                 Section {
@@ -445,7 +466,7 @@ struct StorageInfoRow: View {
         return SharedWithYouManager(queueStore: queueStore, isEnabled: true)
     }()
 
-    SettingsView()
+    SettingsView(viewModel: SidebarViewModel())
         .modelContainer(for: [ProcessedItem.self], inMemory: true)
         .environmentObject(manager)
 }

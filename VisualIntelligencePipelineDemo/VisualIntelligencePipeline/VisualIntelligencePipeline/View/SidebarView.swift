@@ -61,6 +61,9 @@ struct SidebarView: View {
     @Query(sort: \DiverSession.updatedAt, order: .reverse)
     private var sessions: [DiverSession]
     
+    @Query(filter: #Predicate<DiverSession> { $0.isFavorite == true }, sort: \DiverSession.updatedAt, order: .reverse)
+    private var favoriteSessions: [DiverSession]
+    
     @Query(sort: \UserConcept.weight, order: .reverse)
     private var allConcepts: [UserConcept]
     
@@ -89,171 +92,6 @@ struct SidebarView: View {
         readyItems.filter { $0.sessionID == nil }
     }
     
-    /// Get items for a specific session
-    private func items(for sessionID: String) -> [ProcessedItem] {
-        readyItems.filter { $0.sessionID == sessionID }
-            .sorted { ($0.updatedAt) > ($1.updatedAt) }
-    }
-    
-    /// Get sessions for a collection
-    private func sessions(for collection: DiverCollection) -> [DiverSession] {
-        sessions.filter { collection.sessionIDs.contains($0.sessionID) }
-            .sorted { $0.updatedAt > $1.updatedAt }
-    }
-    
-    /// Delete an item from the database
-    private func deleteItem(_ item: ProcessedItem) {
-        modelContext.delete(item)
-        try? modelContext.save()
-    }
-    
-    /// Delete a session and all its items from the database
-    private func deleteSession(_ session: DiverSession, items: [ProcessedItem]) {
-        // Delete all items in the session
-        for item in items {
-            modelContext.delete(item)
-        }
-        // Delete the session itself
-        modelContext.delete(session)
-        try? modelContext.save()
-    }
-    
-    /// Delete a collection and all its sessions and items from the database
-    private func deleteCollection(_ collection: DiverCollection, sessions: [DiverSession], items: [ProcessedItem]) {
-        // Delete all items
-        for item in items {
-            modelContext.delete(item)
-        }
-        // Delete all sessions
-        for session in sessions {
-            modelContext.delete(session)
-        }
-        // Delete the collection itself
-        modelContext.delete(collection)
-        try? modelContext.save()
-    }
-    
-    /// Delete all selected sessions and their items
-    private func deleteSelectedSessions() {
-        for sessionID in viewModel.selectedSessions {
-            // Find the session
-            if let session = sessions.first(where: { $0.sessionID == sessionID }) {
-                // Delete all items in this session
-                let items = allItems.filter { $0.sessionID == sessionID }
-                for item in items {
-                    modelContext.delete(item)
-                }
-                // Delete the session
-                modelContext.delete(session)
-            }
-        }
-        try? modelContext.save()
-        
-        // Clear selection and exit selection mode
-        viewModel.selectedSessions.removeAll()
-        viewModel.isSelectionMode = false
-    }
-    
-    /// Add a session to an existing collection
-    private func addSession(_ session: DiverSession, to collection: DiverCollection) {
-        if !collection.sessionIDs.contains(session.sessionID) {
-            collection.sessionIDs.append(session.sessionID)
-            collection.updatedAt = Date()
-            try? modelContext.save()
-            print("✅ Added session '\(session.title ?? session.sessionID)' to collection '\(collection.name)'")
-        }
-    }
-    
-    /// Create a new collection with a session
-    private func createCollection(name: String, with session: DiverSession) {
-        let collection = DiverCollection(
-            name: name,
-            sessionIDs: [session.sessionID]
-        )
-        modelContext.insert(collection)
-        try? modelContext.save()
-        print("✅ Created collection '\(name)' with session '\(session.title ?? session.sessionID)'")
-    }
-    
-    /// Get display title for a session
-    private func sessionTitle(for session: DiverSession) -> String {
-        if let title = session.title, !title.isEmpty {
-            return title
-        }
-        if let location = session.locationName, !location.isEmpty {
-            return location
-        }
-        return session.createdAt.formatted(date: .abbreviated, time: .shortened)
-    }
-    
-    /// Create a new note document for the session and open for editing
-    private func createNewNoteForSession(_ session: DiverSession) {
-        Task {
-            // Create the note item DIRECTLY as ready, skipping queue processing
-            let noteID = UUID().uuidString
-            
-            await MainActor.run {
-                let newNote = ProcessedItem(
-                    id: noteID,
-                    title: "Session Note",
-                    entityType: "document",
-                    sessionID: session.sessionID
-                )
-                
-                // Set note properties
-                newNote.tags = ["note"]
-                newNote.categories = ["note"]
-                newNote.transcription = "" // Start empty for user to type
-                newNote.status = .ready // Ready immediately, no processing needed
-                
-                // Copy location name from session
-                newNote.location = session.locationName
-                
-                // Insert into context
-                modelContext.insert(newNote)
-                
-                do {
-                    try modelContext.save()
-                    print("✅ Created note directly, opening for editing: \(noteID)")
-                    
-                    // Set session first to populate middle pane
-                    navigationManager.selectedSession = session
-                    
-                    // Then select the item to show detail immediately
-                    navigationManager.selection = newNote
-                } catch {
-                    print("❌ Failed to save note: \(error)")
-                }
-            }
-        }
-    }
-    
-    /// Get concepts most related to a session based on tags and categories
-    /// Now includes allItems dependency to ensure updates when categories change
-    private func relatedConcepts(for session: DiverSession) -> [UserConcept] {
-        // Force dependency on allItems to trigger recomputation
-        let sessionItems = allItems.filter { $0.sessionID == session.sessionID }
-        
-        // Collect all tags, categories, AND purposes from session items
-        var sessionTerms = Set<String>()
-        for item in sessionItems {
-            sessionTerms.formUnion(item.tags)
-            sessionTerms.formUnion(item.categories)
-            sessionTerms.formUnion(item.purposes)
-        }
-        
-        // Match concepts by EXACT name equality (case-insensitive) for better relevance
-        // Filter out generic "At:" location purposes
-        let meaningfulTerms = sessionTerms.filter { !$0.hasPrefix("At: ") }
-        let related = allConcepts.filter { concept in
-            meaningfulTerms.contains { term in
-                term.lowercased() == concept.name.lowercased()
-            }
-        }
-        
-        // Return top 5 by weight (sorted)
-        return Array(related.sorted(by: { $0.weight > $1.weight }).prefix(5))
-    }
     
     // MARK: - Body
     
@@ -268,6 +106,7 @@ struct SidebarView: View {
             }
             
             // Collections with Sessions
+            favoritesSection
             librarySection
             
             // Shared with You
@@ -303,6 +142,23 @@ struct SidebarView: View {
         .sheet(item: $sessionForLocationEdit) { session in
             EditSessionLocationView(session: session)
         }
+        .overlay(alignment: .bottom) {
+            if viewModel.isMaintaining {
+                VStack(spacing: 8) {
+                    ProgressView(value: viewModel.maintenanceProgress)
+                        .progressViewStyle(.linear)
+                    Text("Rebuilding Library (\(Int(viewModel.maintenanceProgress * 100))%)...")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(10)
+                .background(.ultraThinMaterial)
+                .cornerRadius(8)
+                .shadow(radius: 2)
+                .padding()
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
@@ -329,6 +185,7 @@ struct SidebarView: View {
                     
                     Divider()
                     
+                    
                     Button {
                         viewModel.showingSettings = true
                     } label: {
@@ -340,7 +197,7 @@ struct SidebarView: View {
             }
         }
         .sheet(isPresented: $viewModel.showingSettings) {
-            SettingsView()
+            SettingsView(viewModel: viewModel)
         }
         .sheet(isPresented: $viewModel.showingShortcutGallery) {
             ShortcutGalleryView()
@@ -354,7 +211,7 @@ struct SidebarView: View {
         .onChange(of: selectedPhotos) { oldValue, newValue in
             guard !newValue.isEmpty else { return }
             Task {
-                await importSelectedPhotos(newValue)
+                await viewModel.importSelectedPhotos(newValue, context: modelContext)
                 selectedPhotos = []
             }
         }
@@ -366,7 +223,7 @@ struct SidebarView: View {
             }
             Button("Create") {
                 if let session = sessionForNewCollection, !newCollectionName.isEmpty {
-                    createCollection(name: newCollectionName, with: session)
+                    viewModel.createCollection(name: newCollectionName, session: session, context: modelContext)
                 }
                 sessionForNewCollection = nil
                 newCollectionName = ""
@@ -385,10 +242,7 @@ struct SidebarView: View {
             }
             Button("Save") {
                 if let collection = collectionToRename, !newCollectionName.isEmpty {
-                    collection.name = newCollectionName
-                    collection.updatedAt = Date()
-                    try? modelContext.save()
-                    print("✅ Renamed collection to '\(newCollectionName)'")
+                    viewModel.renameCollection(collection, name: newCollectionName, context: modelContext)
                 }
                 collectionToRename = nil
                 newCollectionName = ""
@@ -407,10 +261,7 @@ struct SidebarView: View {
             }
             Button("Save") {
                 if let session = sessionToRename, !newSessionTitle.isEmpty {
-                    session.title = newSessionTitle
-                    session.updatedAt = Date()
-                    try? modelContext.save()
-                    print("✅ Renamed session to '\(newSessionTitle)'")
+                    viewModel.renameSession(session, title: newSessionTitle, context: modelContext)
                 }
                 sessionToRename = nil
                 newSessionTitle = ""
@@ -420,26 +271,67 @@ struct SidebarView: View {
         }
     }
     
-    private func importSelectedPhotos(_ items: [PhotosPickerItem]) async {
-        // Use the proper PhotoLibraryImportService for clustering, session creation, and metadata extraction
-        let importService = PhotoLibraryImportService(modelContext: modelContext)
-        
-        // Generate a collection name based on current date
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        dateFormatter.timeStyle = .short
-        let collectionName = "Import \(dateFormatter.string(from: Date()))"
-        
-        do {
-            let collection = try await importService.importItems(items, collectionName: collectionName)
-            print("✅ Imported \(items.count) photos into collection: \(collection.name)")
-            
-            // Process the imported items through the pipeline
-            try? await pipelineService.processPendingQueue()
-        } catch {
-            print("❌ Failed to import photos: \(error)")
+    @ViewBuilder
+    private var favoritesSection: some View {
+        if !favoriteItems.isEmpty || !favoriteSessions.isEmpty {
+            Section("Favorites") {
+                // Favorite Sessions
+                ForEach(favoriteSessions) { session in
+                    NavigationLink(value: session) {
+                        Label {
+                            Text(session.displayTitle)
+                        } icon: {
+                            Image(systemName: "star.fill")
+                                .foregroundStyle(.yellow)
+                        }
+                    }
+                    .contextMenu {
+                        Button {
+                            viewModel.toggleFavorite(for: session, context: modelContext)
+                        } label: {
+                            Label("Unfavorite", systemImage: "star.slash")
+                        }
+                    }
+                }
+                
+                // Favorite Items
+                ForEach(favoriteItems) { item in
+                    Button {
+                        // Find parent session
+                        if let sessionID = item.sessionID {
+                            if let session = sessions.first(where: { $0.sessionID == sessionID }) {
+                                selectedSession = session
+                                navigationManager.selectedSession = session
+                            }
+                        }
+                        // Select the item itself
+                        navigationManager.selection = item
+                    } label: {
+                        ItemRow(item: item)
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        if let sessionID = item.sessionID, let session = sessions.first(where: { $0.sessionID == sessionID }) {
+                            Button {
+                                viewModel.setSessionAsCurrent(session, context: modelContext)
+                            } label: {
+                                Label("Set session as Current", systemImage: "clock.arrow.2.circlepath")
+                            }
+                            Divider()
+                        }
+                        
+                        Button {
+                            viewModel.toggleFavorite(for: item, context: modelContext)
+                        } label: {
+                            Label(item.isFavorite ? "Unfavorite" : "Favorite",
+                                  systemImage: item.isFavorite ? "star.slash" : "star.fill")
+                        }
+                    }
+                }
+            }
         }
     }
+    
     
     // MARK: - Sections
     
@@ -449,11 +341,40 @@ struct SidebarView: View {
             // 1. Collections (Folders)
             ForEach(collections) { collection in
                 DisclosureGroup {
-                    ForEach(sessions(for: collection)) { session in
-                        NavigationLink(value: session) {
-                            SessionRowLabel(session: session, allItems: allItems)
-                        }
+                    ForEach(sessions.filter { collection.sessionIDs.contains($0.sessionID) }.sorted { $0.updatedAt > $1.updatedAt }) { session in
+                        SidebarSessionRow(
+                            session: session,
+                            viewModel: viewModel,
+                            allItems: allItems,
+                            allConcepts: allConcepts,
+                            onLocationEdit: { sessionForLocationEdit = $0 },
+                            onRename: { s, t in sessionToRename = s; newSessionTitle = t },
+                            onNewCollection: { s, t in sessionForNewCollection = s; newCollectionName = t; showingCreateCollection = true },
+                            onAddSession: { s, c in viewModel.addSessionToCollection(session, collection: c, context: modelContext) },
+                            collections: collections,
+                            analyzeSession: { viewModel.analyzeSession($0, context: modelContext) }
+                        )
                         .contextMenu {
+                            // Set as Current (Priority Action)
+                            Button {
+                                viewModel.setSessionAsCurrent(session, context: modelContext)
+                            } label: {
+                                Label("Set as Current", systemImage: "clock.arrow.2.circlepath")
+                            }
+                            
+                            Button {
+                                collectionToRename = collection
+                                newCollectionName = collection.name
+                            } label: {
+                                Label("Rename Collection", systemImage: "pencil")
+                            }
+                            
+                            Button(role: .destructive) {
+                                viewModel.deleteCollection(collection, context: modelContext)
+                            } label: {
+                                Label("Delete Collection", systemImage: "trash")
+                            }
+                            
                             Button {
                                 sessionForLocationEdit = session
                             } label: {
@@ -462,7 +383,7 @@ struct SidebarView: View {
                             
                             Button {
                                 sessionToRename = session
-                                newSessionTitle = sessionTitle(for: session)
+                                newSessionTitle = session.displayTitle
                             } label: {
                                 Label("Rename Session", systemImage: "pencil")
                             }
@@ -473,9 +394,10 @@ struct SidebarView: View {
                                 Label("Analyze Session", systemImage: "sparkles")
                             }
                             
+                            Divider()
+                            
                             Button(role: .destructive) {
-                                let items = allItems.filter { $0.sessionID == session.sessionID }
-                                deleteSession(session, items: items)
+                                viewModel.deleteSession(session, context: modelContext)
                             } label: {
                                 Label("Delete Session", systemImage: "trash")
                             }
@@ -485,118 +407,194 @@ struct SidebarView: View {
                     Label(collection.name, systemImage: "folder.fill")
                         .foregroundStyle(.purple)
                 }
-                .contextMenu {
-                    Button {
-                       collectionToRename = collection
-                       newCollectionName = collection.name
-                    } label: {
-                        Label("Rename Collection", systemImage: "pencil")
-                    }
-                    
-                    Button(role: .destructive) {
-                        let sess = sessions(for: collection)
-                        let items = allItems.filter { item in
-                            sess.contains { $0.sessionID == item.sessionID }
-                        }
-                        deleteCollection(collection, sessions: sess, items: items)
-                    } label: {
-                        Label("Delete Collection", systemImage: "trash")
-                    }
+                .dropDestination(for: SessionTransfer.self) { transfers, location in
+                    guard let transfer = transfers.first else { return false }
+                    viewModel.moveSessionToCollection(sessionID: transfer.id, collectionID: collection.collectionID, context: modelContext)
+                    return true
                 }
+                
             }
             
             // 2. Standalone Sessions (Files)
             ForEach(standaloneSessions) { session in
-                if viewModel.isSelectionMode {
-                    // Selection mode: tap to select, show checkmark
-                    Button {
-                        if viewModel.selectedSessions.contains(session.sessionID) {
-                            viewModel.selectedSessions.remove(session.sessionID)
-                        } else {
-                            viewModel.selectedSessions.insert(session.sessionID)
-                        }
-                    } label: {
-                        HStack {
-                            Image(systemName: viewModel.selectedSessions.contains(session.sessionID) ? "checkmark.circle.fill" : "circle")
-                                .foregroundStyle(viewModel.selectedSessions.contains(session.sessionID) ? .blue : .secondary)
-                            SessionRowLabel(session: session, allItems: allItems)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    // Normal mode: navigate to session
-                    NavigationLink(value: session) {
-                        SessionRowLabel(session: session, allItems: allItems)
-                    }
-                    .contextMenu {
-                        // Add to existing collection
-                        if !collections.isEmpty {
-                            Menu {
-                                ForEach(collections) { collection in
-                                    Button {
-                                        addSession(session, to: collection)
-                                    } label: {
-                                        Label(collection.name, systemImage: "folder.fill")
-                                    }
-                                }
-                            } label: {
-                                Label("Add to Collection", systemImage: "folder.badge.plus")
-                            }
-                        }
-                        
-                        // Create new collection from session
-                        Button {
-                            sessionForNewCollection = session
-                            newCollectionName = sessionTitle(for: session)
-                            showingCreateCollection = true
-                        } label: {
-                            Label("Create New Collection", systemImage: "folder.fill.badge.plus")
-                        }
-                        
-                        Button {
-                            sessionForLocationEdit = session
-                        } label: {
-                            Label("Edit Location", systemImage: "mappin.and.ellipse")
-                        }
-                        
-                        Button {
-                            sessionToRename = session
-                            newSessionTitle = sessionTitle(for: session)
-                        } label: {
-                            Label("Rename Session", systemImage: "pencil")
-                        }
-                        
-                        Button {
-                            analyzeSession(session)
-                        } label: {
-                            Label("Analyze Session", systemImage: "sparkles")
-                        }
-                        
-                        Divider()
-                        
-                        Button(role: .destructive) {
-                            let items = allItems.filter { $0.sessionID == session.sessionID }
-                            deleteSession(session, items: items)
-                        } label: {
-                            Label("Delete Session", systemImage: "trash")
-                        }
-                    }
-                }
+                SidebarSessionRow(
+                    session: session,
+                    viewModel: viewModel,
+                    allItems: allItems,
+                    allConcepts: allConcepts,
+                    onLocationEdit: { sessionForLocationEdit = $0 },
+                    onRename: { s, t in sessionToRename = s; newSessionTitle = t },
+                    onNewCollection: { s, t in sessionForNewCollection = s; newCollectionName = t; showingCreateCollection = true },
+                    onAddSession: { s, c in viewModel.addSessionToCollection(session, collection: c, context: modelContext) },
+                    collections: collections,
+                    analyzeSession: { viewModel.analyzeSession($0, context: modelContext) }
+                )
             }
             
             // Delete selected button
             if viewModel.isSelectionMode && !viewModel.selectedSessions.isEmpty {
                 Button(role: .destructive) {
-                    deleteSelectedSessions()
+                    viewModel.deleteSelectedSessions(context: modelContext)
                 } label: {
                     Label("Delete \(viewModel.selectedSessions.count) Selected", systemImage: "trash")
                         .foregroundStyle(.red)
                 }
             }
         }
+        .dropDestination(for: SessionTransfer.self) { transfers, location in
+            guard let transfer = transfers.first else { return false }
+            // Remove from ANY collection (move to root) when dropped on the general library area
+            Task { @MainActor in
+                viewModel.removeSessionFromCollection(sessionID: transfer.id, context: modelContext)
+            }
+            return true
+        }
     }
     
-
+    struct SidebarSessionRow: View {
+        let session: DiverSession
+        @ObservedObject var viewModel: SidebarViewModel
+        let allItems: [ProcessedItem]
+        let allConcepts: [UserConcept]
+        
+        let onLocationEdit: (DiverSession) -> Void
+        let onRename: (DiverSession, String) -> Void
+        let onNewCollection: (DiverSession, String) -> Void
+        let onAddSession: (DiverSession, DiverCollection) -> Void
+        let collections: [DiverCollection]
+        let analyzeSession: (DiverSession) -> Void
+        
+        @Environment(\.modelContext) private var modelContext
+        
+        var body: some View {
+            if viewModel.isSelectionMode {
+                selectionRow
+                    .contextMenu {
+                        contextMenuContent
+                    }
+            } else {
+                NavigationLink(value: session) {
+                    SessionRowLabel(session: session, allItems: allItems)
+                }
+                .contextMenu {
+                    contextMenuContent
+                }
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        viewModel.deleteSession(session, context: modelContext)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                    
+                    Button {
+                        onRename(session, session.displayTitle)
+                    } label: {
+                        Label("Rename", systemImage: "pencil")
+                    }
+                    .tint(.blue)
+                }
+                .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                    Button {
+                        viewModel.setSessionAsCurrent(session, context: modelContext)
+                    } label: {
+                        Label("Set Current", systemImage: "clock.arrow.2.circlepath")
+                    }
+                    .tint(.orange)
+                }
+                .draggable(SessionTransfer(id: session.sessionID))
+                .dropDestination(for: ItemTransfer.self) { transfers, location in
+                    guard let transfer = transfers.first else { return false }
+                    viewModel.moveItem(itemID: transfer.id, toSessionID: session.sessionID, context: modelContext)
+                    return true
+                }
+            }
+        }
+        
+        private var selectionRow: some View {
+            Button {
+                if viewModel.selectedSessions.contains(session.sessionID) {
+                    viewModel.selectedSessions.remove(session.sessionID)
+                } else {
+                    viewModel.selectedSessions.insert(session.sessionID)
+                }
+            } label: {
+                HStack {
+                    Image(systemName: viewModel.selectedSessions.contains(session.sessionID) ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(viewModel.selectedSessions.contains(session.sessionID) ? .blue : .secondary)
+                    SessionRowLabel(session: session, allItems: allItems)
+                }
+            }
+            .buttonStyle(.plain)
+        }
+        
+        @ViewBuilder
+        private var contextMenuContent: some View {
+            // Set as Current (Priority Action)
+            Button {
+                viewModel.setSessionAsCurrent(session, context: modelContext)
+            } label: {
+                Label("Set as Current", systemImage: "clock.arrow.2.circlepath")
+            }
+            
+            Divider()
+            
+            // Add to existing collection
+            if !collections.isEmpty {
+                Menu {
+                    ForEach(collections) { collection in
+                        Button {
+                            onAddSession(session, collection)
+                        } label: {
+                            Label(collection.name, systemImage: "folder.fill")
+                        }
+                    }
+                } label: {
+                    Label("Add to Collection", systemImage: "folder.badge.plus")
+                }
+            }
+            
+            // Create new collection from session
+            Button {
+                onNewCollection(session, session.displayTitle)
+            } label: {
+                Label("Create New Collection", systemImage: "folder.fill.badge.plus")
+            }
+            
+            Button {
+                onLocationEdit(session)
+            } label: {
+                Label("Edit Location", systemImage: "mappin.and.ellipse")
+            }
+            
+            Button {
+                onRename(session, session.displayTitle)
+            } label: {
+                Label("Rename Session", systemImage: "pencil")
+            }
+            
+            Button {
+                analyzeSession(session)
+            } label: {
+                Label("Analyze Session", systemImage: "sparkles")
+            }
+            
+            Divider()
+            
+            Button(role: .destructive) {
+                viewModel.deleteSession(session, context: modelContext)
+            } label: {
+                Label("Delete Session", systemImage: "trash")
+            }
+        }
+    }
+    
+    private func analyzeSession(_ session: DiverSession) {
+        Task {
+            let localPipeline = LocalPipelineService(modelContext: modelContext)
+            await localPipeline.generateAndSaveSessionSummary(sessionID: session.sessionID)
+            print("✅ Triggered analysis for session: \(session.title ?? session.sessionID)")
+        }
+    }
     
     @ViewBuilder
     private var intelligenceSection: some View {
@@ -612,7 +610,7 @@ struct SidebarView: View {
                     }
                     
                     // Related concepts chips
-                    let concepts = relatedConcepts(for: lastSession)
+                    let concepts = viewModel.relatedConcepts(for: lastSession, allItems: allItems, allConcepts: allConcepts)
                     if !concepts.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
@@ -661,7 +659,7 @@ struct SidebarView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 8))
                                     .foregroundStyle(.cyan)
                             }
-                             
+                            
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Add Image")
                                     .font(.subheadline)
@@ -674,7 +672,7 @@ struct SidebarView: View {
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
                                 } else {
-                                     Text(lastSession.title ?? "Current Session")
+                                    Text(lastSession.title ?? "Current Session")
                                         .font(.caption2)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
@@ -686,7 +684,7 @@ struct SidebarView: View {
                     
                     // New Note button - creates empty document for this session
                     Button {
-                        createNewNoteForSession(lastSession)
+                        viewModel.createNewNoteForSession(lastSession, context: modelContext)
                     } label: {
                         HStack(spacing: 12) {
                             Image(systemName: "doc.text.fill")
@@ -724,20 +722,10 @@ struct SidebarView: View {
     }
     
     private func previewImage(for session: DiverSession) -> UIImage? {
-        let items = allItems.filter { $0.sessionID == session.sessionID }
-        for item in items {
-            if let data = item.rawPayload, let image = UIImage(data: data) {
-                return image
-            }
-            // Add other checks if needed (e.g. cached thumbnails)
-            if let path = item.webContext?.snapshotURL, let image = UIImage(contentsOfFile: path) {
-                return image
-            }
-        }
-        return nil
+        viewModel.previewImage(for: session, allItems: allItems)
     }
     
-
+    
     
     @ViewBuilder
     private var processingSection: some View {
@@ -769,7 +757,7 @@ struct SidebarView: View {
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                         Button {
-                            processItemNow(item)
+                            viewModel.processNow(item)
                         } label: {
                             Label("Process Now", systemImage: "bolt.fill")
                         }
@@ -777,7 +765,7 @@ struct SidebarView: View {
                     }
                     .swipeActions(edge: .leading, allowsFullSwipe: false) {
                         Button(role: .destructive) {
-                            cancelProcessing(item)
+                            viewModel.cancelProcessing(item, context: modelContext)
                         } label: {
                             Label("Cancel", systemImage: "xmark.circle")
                         }
@@ -791,25 +779,6 @@ struct SidebarView: View {
     }
     
     /// Process an item immediately with high priority
-    private func processItemNow(_ item: ProcessedItem) {
-        Task {
-            do {
-                try await pipelineService.processItemImmediately(item)
-                print("✅ Triggered immediate processing for: \(item.title ?? item.id)")
-                // Status change is saved in the service; @Query should auto-update
-            } catch {
-                print("❌ Failed to process item immediately: \(error)")
-            }
-        }
-    }
-    
-    /// Cancel processing for an item
-    private func cancelProcessing(_ item: ProcessedItem) {
-        item.status = .failed
-        item.processingLog.append("\(Date().formatted()): Cancelled by user")
-        try? modelContext.save()
-        print("🚫 Cancelled processing for: \(item.title ?? item.id)")
-    }
     
     
     
@@ -825,14 +794,6 @@ struct SidebarView: View {
         }
     }
     
-    /// Trigger session analysis
-    private func analyzeSession(_ session: DiverSession) {
-        Task {
-            let localPipeline = LocalPipelineService(modelContext: modelContext)
-            await localPipeline.generateAndSaveSessionSummary(sessionID: session.sessionID)
-            print("✅ Triggered analysis for session: \(session.title ?? session.sessionID)")
-        }
-    }
 }
 
 // MARK: - Session Row Label (for 3-pane navigation)
@@ -868,6 +829,14 @@ struct SessionRowLabel: View {
             // Only show location in subtitle if we have a title (otherwise it's the title)
             components.append(loc)
         }
+        
+        // Add dominant activity/purpose if available
+        let purposes = sessionItems.flatMap { $0.purposes }.filter { !$0.isEmpty }
+        if let topPurpose = purposes.reduce(into: [:], { counts, purpose in counts[purpose, default: 0] += 1 })
+            .max(by: { $0.value < $1.value })?.key {
+            components.append(topPurpose)
+        }
+        
         components.append(session.createdAt.formatted(date: .abbreviated, time: .shortened))
         return components.joined(separator: " • ")
     }
@@ -889,6 +858,12 @@ struct SessionRowLabel: View {
     }
     
     private var fallbackConfig: ItemIconConfig {
+        // Check for dominant purpose to determine icon (e.g. Activity)
+        let purposes = sessionItems.flatMap { $0.purposes }
+        if !purposes.isEmpty {
+            return ItemIconConfig(iconName: "figure.run", color: .orange)
+        }
+        
         if let first = sessionItems.first {
             return ItemIconConfig.forItem(first)
         }
@@ -896,13 +871,13 @@ struct SessionRowLabel: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .center, spacing: 0) {
             // Hero Image with overlay text
             if let image = heroImage {
                 Image(uiImage: image)
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 120)
+                    .aspectRatio(1, contentMode: .fit)
+                    .frame(minWidth: 0, maxWidth: 280, minHeight: 0, maxHeight: 280)
                     .clipped()
                     .overlay {
                         LinearGradient(
@@ -952,7 +927,6 @@ struct SessionRowLabel: View {
                 }
             }
             
-
             
             // LLM Session Summary
             if let summary = session.summary, !summary.isEmpty {
@@ -962,13 +936,13 @@ struct SessionRowLabel: View {
                     .lineLimit(3)
                     .padding(.top, 4)
             } else {
-                Text("No Summary Available (ID: \(session.sessionID.prefix(4)))")
+                Text("No Summary Available")
                     .font(.caption2)
                     .foregroundStyle(.red)
                     .padding(.top, 4)
             }
         }
-        .padding(.vertical, 4)
+        .padding(4)
     }
 }
 
@@ -979,13 +953,11 @@ struct ItemRow: View {
     let item: ProcessedItem
     
     private var displayTitle: String {
-        item.title ?? item.url ?? "Untitled"
+        item.displayTitle
     }
     
     private var formattedDate: String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: item.updatedAt, relativeTo: Date())
+        item.relativeUpdatedDate
     }
     
     var body: some View {
@@ -1002,9 +974,15 @@ struct ItemRow: View {
                 
                 HStack(spacing: 4) {
                     if let entityType = item.entityType {
-                        Text(entityType.capitalized)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                        if entityType.lowercased() == "activity", let purpose = item.purposes.first {
+                            Text(purpose)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text(entityType.capitalized)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     Text("•")
                         .foregroundStyle(.tertiary)
@@ -1060,7 +1038,7 @@ struct ItemRowWithActions: View {
                 Button {
                     item.isFavorite.toggle()
                 } label: {
-                    Label(item.isFavorite ? "Unfavorite" : "Favorite", 
+                    Label(item.isFavorite ? "Unfavorite" : "Favorite",
                           systemImage: item.isFavorite ? "star.slash" : "star.fill")
                 }
                 
@@ -1089,9 +1067,10 @@ struct ThumbnailView: View {
     var body: some View {
         Group {
             if let data = item.rawPayload, let uiImage = UIImage(data: data) {
+                let isCutout = hasAlpha(uiImage)
                 Image(uiImage: uiImage)
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
+                    .aspectRatio(contentMode: isCutout ? .fit : .fill)
             } else if let snapshotPath = item.webContext?.snapshotURL, FileManager.default.fileExists(atPath: snapshotPath) {
                 AsyncImage(url: URL(fileURLWithPath: snapshotPath)) { phase in
                     if let image = phase.image {
@@ -1121,6 +1100,12 @@ struct ThumbnailView: View {
                 .font(.system(size: size * 0.5))
         }
     }
+    
+    private func hasAlpha(_ image: UIImage) -> Bool {
+        guard let cgImage = image.cgImage else { return false }
+        let alpha = cgImage.alphaInfo
+        return alpha == .first || alpha == .last || alpha == .premultipliedFirst || alpha == .premultipliedLast
+    }
 }
 
 struct ItemIconConfig {
@@ -1130,36 +1115,36 @@ struct ItemIconConfig {
     static func forItem(_ item: ProcessedItem) -> ItemIconConfig {
         // Check specific types first
         if let type = item.entityType?.lowercased() {
-             switch type {
-             case "document", "pdf":
-                 return ItemIconConfig(iconName: "doc.text.fill", color: .blue)
-             case "link", "web", "page":
-                 return ItemIconConfig(iconName: "safari.fill", color: .cyan)
-             case "image", "photo":
-                 return ItemIconConfig(iconName: "photo.fill", color: .purple)
-             case "place", "venue", "landmark":
-                 return ItemIconConfig(iconName: "mappin.circle.fill", color: .red)
-             case "activity", "event":
+            switch type {
+            case "document", "pdf":
+                return ItemIconConfig(iconName: "doc.text.fill", color: .blue)
+            case "link", "web", "page":
+                return ItemIconConfig(iconName: "safari.fill", color: .cyan)
+            case "image", "photo":
+                return ItemIconConfig(iconName: "photo.fill", color: .purple)
+            case "place", "venue", "landmark":
+                return ItemIconConfig(iconName: "mappin.circle.fill", color: .red)
+            case "activity", "event":
                 return ItemIconConfig(iconName: "figure.run", color: .orange)
-             case "video":
-                 return ItemIconConfig(iconName: "play.rectangle.fill", color: .pink)
-             case "product":
-                 return ItemIconConfig(iconName: "cart.fill", color: .green)
-             case "contact", "person":
-                 return ItemIconConfig(iconName: "person.crop.circle.fill", color: .indigo)
-             case "qr", "qrcode":
-                 return ItemIconConfig(iconName: "qrcode", color: .gray)
-             default:
-                 break
-             }
+            case "video":
+                return ItemIconConfig(iconName: "play.rectangle.fill", color: .pink)
+            case "product":
+                return ItemIconConfig(iconName: "cart.fill", color: .green)
+            case "contact", "person":
+                return ItemIconConfig(iconName: "person.crop.circle.fill", color: .indigo)
+            case "qr", "qrcode":
+                return ItemIconConfig(iconName: "qrcode", color: .gray)
+            default:
+                break
+            }
         }
         
         // Fallback checks
         if item.placeContext != nil {
-             return ItemIconConfig(iconName: "mappin.circle.fill", color: .red)
+            return ItemIconConfig(iconName: "mappin.circle.fill", color: .red)
         }
         if item.rawPayload != nil {
-             return ItemIconConfig(iconName: "photo.fill", color: .purple)
+            return ItemIconConfig(iconName: "photo.fill", color: .purple)
         }
         
         return ItemIconConfig(iconName: "square.fill", color: .gray)
@@ -1189,7 +1174,7 @@ struct DailySummaryCard: View {
                     Text(service.dailySummary)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .lineLimit(4)
+                        .lineLimit(nil)
                 }
             }
             .padding(.vertical, 4)
@@ -1211,3 +1196,4 @@ struct DailySummaryCard: View {
         }
     }
 }
+

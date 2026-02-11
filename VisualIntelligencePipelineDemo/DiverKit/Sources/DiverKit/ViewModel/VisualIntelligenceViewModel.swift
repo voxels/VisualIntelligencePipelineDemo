@@ -553,8 +553,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
                        case .siftedSubject(let observation, _) = sifted {
                         Task {
                             // Use captured image's orientation for proper sifted subject rotation
-                            let imageOrientation = await MainActor.run { self.capturedImage?.imageOrientation }
-                            let cgOrientation = imageOrientation?.cgImagePropertyOrientation ?? .up
+                            let cgOrientation = await MainActor.run { () -> CGImagePropertyOrientation in
+                                #if canImport(UIKit)
+                                return self.capturedImage?.imageOrientation.cgImagePropertyOrientation ?? .up
+                                #else
+                                return .up
+                                #endif
+                            }
                             if let (sImage, sBounds) = await self.extractSiftedImage(
                                 observation: UnsafeSendable(value: observation),
                                 frame: UnsafeSendable(value: cgImage),
@@ -748,7 +753,11 @@ public class VisualIntelligenceViewModel: ObservableObject {
                          // We run Barcode + Text + Classification AND Check for Sifted ROI
                          
                     do {
+                        #if canImport(UIKit)
                         print("📸 Vision Orientation: \(visionOrientation.rawValue) (Raw: \(image?.imageOrientation.rawValue ?? -1))")
+                        #else
+                        print("📸 Vision Orientation: \(visionOrientation.rawValue)")
+                        #endif
                         
                         let fullResults = try await self.processor.process(image: cgImage, orientation: visionOrientation, mode: .fullAnalysis)
                         print("✅ Raw Analysis Results: \(fullResults.map { $0.title })")
@@ -889,7 +898,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                                 var finalResults: [IntelligenceResult] = []
                                 
                                 // Check if enrichment produced a rich web result
-                                let hasRichWeb = enriched.contains { if case .richWeb = $0 { return true }; return false }
+                                let _ = enriched.contains { if case .richWeb = $0 { return true }; return false }
                                 
                                 // First, add all non-obsolete results
                                 for result in resultsWithPurpose {
@@ -1012,7 +1021,6 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 
                 // 1. Try Video first (Safe URL loading)
                 // We use a specific do-catch for transferable loading to diagnose issues
-                do {
                     if let movie = try? await item.loadTransferable(type: Movie.self) {
                         print("🎥 Processing as Video/Movie (URL-based)...")
                          if let (cgImage, location, date) = await processVideoData(movie.url) {
@@ -1036,9 +1044,6 @@ public class VisualIntelligenceViewModel: ObservableObject {
                             print("✅ Extracted Best Frame from Video URL")
                         }
                     }
-                } catch {
-                     print("⚠️ Failed to load Movie transferable: \(error)")
-                }
                 
                 // 2. Fallback to Data (for Images) if Video failed or wasn't a video
                 if finalCGImage == nil {
@@ -1129,8 +1134,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
                            case .siftedSubject(let observation, _) = sifted {
                             Task {
                             // Use captured image's orientation for proper sifted subject rotation
-                                let imageOrientation = await MainActor.run { self.capturedImage?.imageOrientation }
-                                let cgOrientation = imageOrientation?.cgImagePropertyOrientation ?? .up
+                                let cgOrientation = await MainActor.run { () -> CGImagePropertyOrientation in 
+                                    #if canImport(UIKit)
+                                    return self.capturedImage?.imageOrientation.cgImagePropertyOrientation ?? .up
+                                    #else
+                                    return .up
+                                    #endif
+                                }
                                 if let (sImage, sBounds) = await self.extractSiftedImage(
                                     observation: UnsafeSendable(value: observation),
                                     frame: UnsafeSendable(value: cgImage), // Overload used for CGImage
@@ -1202,8 +1212,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
                  
                  if let result = request.results?.first {
                     // Use captured image's orientation for proper sifted subject rotation
-                    let imageOrientation = await MainActor.run { [weak self] in self?.capturedImage?.imageOrientation }
-                    let cgOrientation = imageOrientation?.cgImagePropertyOrientation ?? .up
+                     let cgOrientation = await MainActor.run { () -> CGImagePropertyOrientation in
+                         #if canImport(UIKit)
+                         return self.capturedImage?.imageOrientation.cgImagePropertyOrientation ?? .up
+                         #else
+                         return .up
+                         #endif
+                     }
                     if let (sImage, sBounds) = await self.extractSiftedImage(
                         observation: UnsafeSendable(value: result),
                         frame: UnsafeSendable(value: cgImage),
@@ -1567,14 +1582,22 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 for (observation, text, label) in documentResults {
                     if let cgImage = capturedImage.cgImage {
                         // Rectify the document
+                        #if canImport(UIKit)
+                        let orientation = capturedImage.imageOrientation.cgImagePropertyOrientation
+                        #else
+                        let orientation: CGImagePropertyOrientation = .up
+                        #endif
+                        
                         if let rectifiedCGImage = await self.performRectification(
                             observation: UnsafeSendable(value: observation),
-                            image: UnsafeSendable(value: cgImage)
+                            image: UnsafeSendable(value: cgImage),
+                            orientation: orientation
                         ) {
-                            let rectifiedImage = UIImage(cgImage: rectifiedCGImage, scale: 1.0, orientation: capturedImage.imageOrientation)
+                            // CIPerspectiveCorrection outputs an upright image, so we must specify .up to avoid re-rotation
+                            let rectifiedImage = UIImage(cgImage: rectifiedCGImage, scale: 1.0, orientation: .up)
                             if let rectifiedData = rectifiedImage.jpegData(compressionQuality: 0.9) {
                                 // Create queue item for the rectified document
-                                let documentTitle = label ?? text?.prefix(50).description ?? "Document"
+                                let documentTitle = "Doc: " + (label ?? text?.prefix(50).description ?? "Scanned")
                                 let docQueueItem = DiverQueueItem.from(
                                     documentImage: rectifiedData,
                                     title: documentTitle,
@@ -1663,17 +1686,25 @@ public class VisualIntelligenceViewModel: ObservableObject {
             let originalOrientation = capturedImage.imageOrientation
             #elseif canImport(AppKit)
             guard let cgImage = capturedImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
+            let originalOrientation: CGImagePropertyOrientation = .up
             #endif
             
             // Offload rectification
+            #if canImport(UIKit)
+            let orientation = originalOrientation.cgImagePropertyOrientation
+            #else
+            let orientation = originalOrientation
+            #endif
+            
             if let cgImage = await performRectification(
                 observation: UnsafeSendable(value: observation),
-                image: UnsafeSendable(value: cgImage)
+                image: UnsafeSendable(value: cgImage),
+                orientation: orientation
             ) {
                 await MainActor.run {
                     #if canImport(UIKit)
-                    // Apply original orientation to rectified document for correct display
-                    self.rectifiedDocument = UIImage(cgImage: cgImage, scale: 1.0, orientation: originalOrientation)
+                    // CIPerspectiveCorrection outputs an upright image, so we must specify .up to avoid re-rotation
+                    self.rectifiedDocument = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
                     #elseif canImport(AppKit)
                     self.rectifiedDocument = NSImage(cgImage: cgImage, size: .zero)
                     #endif
@@ -1686,13 +1717,16 @@ public class VisualIntelligenceViewModel: ObservableObject {
     nonisolated(nonsending)
     private func performRectification(
         observation: UnsafeSendable<VNRectangleObservation>,
-        image: UnsafeSendable<CGImage>
+        image: UnsafeSendable<CGImage>,
+        orientation: CGImagePropertyOrientation
     ) async -> CGImage? {
-        let ciImage = CIImage(cgImage: image.value)
+        let ciImage = CIImage(cgImage: image.value).oriented(orientation)
         
         // Convert Vision normalized coordinates to Image coordinates
-        let width = CGFloat(image.value.width)
-        let height = CGFloat(image.value.height)
+        // Vision's observation is relative to the ORIENTED image
+        let orientedExtent = ciImage.extent
+        let width = orientedExtent.width
+        let height = orientedExtent.height
         
         func scale(_ point: CGPoint) -> CGPoint {
             return CGPoint(x: point.x * width, y: point.y * height)
@@ -1706,11 +1740,11 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // Calculate estimated physical dimensions
         let topWidth = hypot(topRight.x - topLeft.x, topRight.y - topLeft.y)
         let bottomWidth = hypot(bottomRight.x - bottomLeft.x, bottomRight.y - bottomLeft.y)
-        let avgWidth = (topWidth + bottomWidth) / 2.0
+        let _ = (topWidth + bottomWidth) / 2.0
         
         let leftHeight = hypot(topLeft.x - bottomLeft.x, topLeft.y - bottomLeft.y)
         let rightHeight = hypot(topRight.x - bottomRight.x, topRight.y - bottomRight.y)
-        let avgHeight = (leftHeight + rightHeight) / 2.0
+        let _ = (leftHeight + rightHeight) / 2.0
         
         // Apply CIPerspectiveCorrection
         let filter = CIFilter(name: "CIPerspectiveCorrection")!
@@ -2101,10 +2135,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // 1. Calculate the Aspect Fill Rect (The Frame of the "Image" inside the View)
         // Ratio = W / H
         // View Ratio
-        let viewRatio = viewSize.width / viewSize.height
-        
-        var renderWidth: CGFloat = viewSize.width
-        var renderHeight: CGFloat = viewSize.height
+        let _ = viewSize.width / viewSize.height
         
         // If View is "Wider" than Image (relative to ratios) -> Image fits Width, Crops Vertically?
         // No. If View (1.0) > Image (0.5), View is fat, Image is skinny.
@@ -2113,7 +2144,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // Let's use scale factor overlap
         // Target: View. Source: Image (Aspect only)
         // Scale to FILL
-        let scaleW = viewSize.width / imageAspectRatio // Width based (if Height was 1)
+        let _ = viewSize.width / imageAspectRatio // Width based (if Height was 1)
         // Wait, simpler:
         // Image Size (Virtual) = (imageAspectRatio * 1000, 1000)
         let virtualW = imageAspectRatio * 1000
@@ -2440,7 +2471,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
     }
 
     nonisolated private func processVideoData(_ url: URL) async -> (CGImage, CLLocation?, Date?)? {
-         let asset = AVAsset(url: url)
+         let asset = AVURLAsset(url: url)
          
          // Cleanup: If the URL is our temporary usage one, we should ideally delete it after function exit? 
          // But Transferable 'importing' block owns the file creation. Caller should manage?
@@ -2463,7 +2494,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 // Try dateValue first, then stringValue parsing if needed
                 if let d = try? await dateItem.load(.dateValue) {
                     foundDate = d
-                } else if let s = try? await dateItem.load(.stringValue) {
+                } else if let _ = try? await dateItem.load(.stringValue) {
                      // Basic ISO parser if needed, or leave nil
                      // usually commonKeyCreationDate via load(.dateValue) works for recent iOS
                 }
@@ -2490,12 +2521,11 @@ public class VisualIntelligenceViewModel: ObservableObject {
                      try? handler.perform([aestheticsRequest, classifyRequest])
                      
                      // 1. Check for UI/Screenshot content
-                     var isUI = false
                      if let classifications = classifyRequest.results {
                          for classification in classifications.prefix(3) {
                              let id = classification.identifier.lowercased()
                              if id.contains("screenshot") || id.contains("web_site") || id.contains("menu") {
-                                 isUI = true
+                                 // isUI = true // Placeholder for future use
                                  break
                              }
                          }

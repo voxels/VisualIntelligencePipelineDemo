@@ -91,8 +91,13 @@ extension IntelligenceResult {
         case .semantic(let label, _): return label.capitalized
         case .entertainment(let title, _, _): return title
         case .siftedSubject(_, let label): return label?.capitalized ?? "Subject Sifted"
-        case .product: return "Product Detected"
-        case .document(_, let text, let label): return text ?? label?.capitalized ?? "Document Scanned"
+        case .product: return "Product" // Simplification
+        case .document(_, let text, let label): 
+            let prefix = "Doc: "
+            if let text = text {
+                return prefix + (text.count > 25 ? String(text.prefix(25)) + "..." : text)
+            }
+            return prefix + (label?.capitalized ?? "Scanned")
         case .purpose(let statements): return statements.first ?? "Purpose"
         }
     }
@@ -143,7 +148,7 @@ extension IntelligenceResult {
             }
             return "hand.raised.fingers.spread"
         case .product: return "barcode.viewfinder"
-        case .document: return "doc.text.viewfinder"
+        case .document: return "doc.text.below.ecg.fill" // More distinct document icon
         case .purpose: return "sparkles.rectangle.stack"
         }
     }
