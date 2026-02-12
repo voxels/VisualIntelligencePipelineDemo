@@ -35,7 +35,7 @@ Since we do not collect your data, we cannot sell it, share it, or lose it. You 
 ## 5. Contact Us
 If you have any questions about this privacy policy or our privacy practices, please contact us at:
 
-**Email:** privacy@secretatomics.com
+**Email:** info@secretatomics.com
 
 ---
-*This policy is simple because our business model is simple: We sell an app, not your data.*
+*This policy is simple because our business model is simple: We make apps, not data.*

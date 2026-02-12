@@ -141,6 +141,11 @@ struct SidebarView: View {
                 SharedWithYouView(manager: sharedWithYouManager)
             }
                         
+            // Inbox (Uncategorized Items)
+            if !uncategorizedItems.isEmpty {
+                inboxSection
+            }
+                        
             // Processing Items - moved above Memory/Today
             if !processingItems.isEmpty {
                 processingSection
@@ -675,7 +680,53 @@ struct SidebarView: View {
         viewModel.previewImage(for: session, allItems: allItems)
     }
     
-    
+    @ViewBuilder
+    private var inboxSection: some View {
+        Section("Inbox") {
+            ForEach(uncategorizedItems) { item in
+                Button {
+                    // Navigate to item
+                    navigationManager.selection = item
+                } label: {
+                    ItemRow(item: item)
+                }
+                .buttonStyle(.plain)
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        viewModel.deleteItem(item, context: modelContext)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
+                .contextMenu {
+                    Button {
+                        viewModel.toggleFavorite(for: item, context: modelContext)
+                    } label: {
+                        Label(item.isFavorite ? "Unfavorite" : "Favorite",
+                              systemImage: item.isFavorite ? "star.slash" : "star.fill")
+                    }
+                    
+                    if !collections.isEmpty {
+                        Menu {
+                            ForEach(collections) { collection in
+                                Button {
+                                    // Move item to a new session in this collection?
+                                    // Or just assign to collection (not supported directly on item)
+                                    // Best: Create new session in collection with this item
+                                    viewModel.createSessionWithItem(item, in: collection, context: modelContext)
+                                } label: {
+                                    Label(collection.name, systemImage: "folder")
+                                }
+                            }
+                        } label: {
+                            Label("Move to Collection", systemImage: "folder.badge.plus")
+                        }
+                    }
+                }
+                .draggable(ItemTransfer(id: item.id))
+            }
+        }
+    }
     
     @ViewBuilder
     private var processingSection: some View {

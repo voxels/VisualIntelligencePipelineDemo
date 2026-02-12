@@ -1,5 +1,5 @@
 //
-//  LinkPreviewView.swift
+//  ActionLinkPreviewView.swift
 //  ActionExtension
 //
 //  Created by Claude on 12/24/25.
@@ -91,7 +91,7 @@ struct ActionLinkPreviewView: View {
                     // Action buttons
                     VStack(spacing: 12) {
                         Button(action: { handleSave() }) {
-                            Label("Save to Diver", systemImage: "square.and.arrow.down")
+                            Label("Save to Visual Intelligence", systemImage: "square.and.arrow.down")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
@@ -112,7 +112,7 @@ struct ActionLinkPreviewView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Save to Diver")
+            .navigationTitle("Save to Visual Intelligence")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

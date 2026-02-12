@@ -258,7 +258,7 @@ final class ActionViewController: UIViewController {
 
             try queueStore.enqueue(queueItem)
 
-            showSuccess(message: "Saved to Diver ✅")
+            showSuccess(message: "Saved to Visual Intelligence ✅")
         } catch {
             showError("Failed to save: \(error.localizedDescription)")
         }

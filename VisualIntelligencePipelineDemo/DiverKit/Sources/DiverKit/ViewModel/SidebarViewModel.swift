@@ -237,6 +237,30 @@ public final class SidebarViewModel: ObservableObject {
         print("✅ Created collection '\(name)' with session '\(session.displayTitle)'")
     }
     
+    public func createSessionWithItem(_ item: ProcessedItem, in collection: DiverCollection, context: ModelContext) {
+        let newSession = DiverSession(
+            sessionID: UUID().uuidString,
+            title: item.title ?? "New Session",
+            createdAt: Date()
+        )
+        newSession.parentCollection = collection
+        newSession.collectionID = collection.collectionID
+        
+        context.insert(newSession)
+        
+        // Update item relation
+        item.session = newSession
+        item.sessionID = newSession.sessionID
+        item.updatedAt = Date()
+        
+        // Update collection
+        collection.sessionIDs.append(newSession.sessionID)
+        collection.updatedAt = Date()
+        
+        try? context.save()
+        print("✅ Created session with item in collection '\(collection.name)'")
+    }
+    
     public func toggleFavorite(for item: ProcessedItem, context: ModelContext) {
         item.isFavorite.toggle()
         try? context.save()

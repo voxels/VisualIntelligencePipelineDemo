@@ -48,25 +48,11 @@
 		1E03CFC72EFB55570020DAA5 /* VisualIntelligencePipelineWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1E03CFB22EFB55560020DAA5 /* VisualIntelligencePipelineWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1E03CFDE2EFB582B0020DAA5 /* DiverKit in Frameworks */ = {isa = PBXBuildFile; productRef = 1E03CFDD2EFB582B0020DAA5 /* DiverKit */; };
 		1E03CFE02EFB582B0020DAA5 /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = 1E03CFDF2EFB582B0020DAA5 /* DiverShared */; };
-		1E03CFE12EFB58690020DAA5 /* LinkEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF5F2EFB20310020DAA5 /* LinkEntity.swift */; };
-		1E03CFE22EFB58690020DAA5 /* LinkEntityQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF602EFB20310020DAA5 /* LinkEntityQuery.swift */; };
-		1E03CFE32EFB58700020DAA5 /* SearchLinksIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF652EFB20310020DAA5 /* SearchLinksIntent.swift */; };
-		1E03CFE42EFB58700020DAA5 /* OpenLinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF632EFB20310020DAA5 /* OpenLinkIntent.swift */; };
-		1E03CFE52EFB58700020DAA5 /* ShareLinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF662EFB20310020DAA5 /* ShareLinkIntent.swift */; };
-		1E03CFE62EFB58700020DAA5 /* SaveLinkIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF642EFB20310020DAA5 /* SaveLinkIntent.swift */; };
-		1E03CFE72EFB58790020DAA5 /* IntentConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF682EFB20310020DAA5 /* IntentConfigurationView.swift */; };
-		1E03CFE82EFB58790020DAA5 /* SaveLinkSnippet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF692EFB20310020DAA5 /* SaveLinkSnippet.swift */; };
-		1E03CFE92EFB58790020DAA5 /* ShareLinkSnippet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF6A2EFB20310020DAA5 /* ShareLinkSnippet.swift */; };
-		1E03CFEA2EFB58800020DAA5 /* AppShortcutsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF6C2EFB20310020DAA5 /* AppShortcutsProvider.swift */; };
 		1E03D0212EFBD2C20020DAA5 /* VisualIntelligenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D01E2EFBD2C20020DAA5 /* VisualIntelligenceView.swift */; };
 		1E03D0222EFBD2C20020DAA5 /* SiftedOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D01D2EFBD2C20020DAA5 /* SiftedOverlayView.swift */; };
 		1E03D0242EFBD2E00020DAA5 /* ShortcutGalleryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0232EFBD2E00020DAA5 /* ShortcutGalleryView.swift */; };
 		1E03D02A2EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0262EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift */; };
 		1E03D02B2EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0272EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift */; };
-		1E03D02C2EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0262EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift */; };
-		1E03D02D2EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0272EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift */; };
-		1E03D0312EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D02F2EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift */; };
-		1E03D0322EFBD3F20020DAA5 /* ScreenshotProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D02E2EFBD3F20020DAA5 /* ScreenshotProcessor.swift */; };
 		1E03D0332EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D02F2EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift */; };
 		1E03D0342EFBD3F20020DAA5 /* ScreenshotProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D02E2EFBD3F20020DAA5 /* ScreenshotProcessor.swift */; };
 		1E03D03A2EFBFA3F0020DAA5 /* NavigationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0392EFBFA3F0020DAA5 /* NavigationManager.swift */; };
@@ -95,11 +81,9 @@
 		37997726604359E13F76B1A0 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D231EE83CF65D9AC35B008C /* Item.swift */; };
 		3A32536C2FA1DF6EC0C11FC7 /* KnowMapsCacheStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5F7ECEBD4A56317495CB23 /* KnowMapsCacheStoreTests.swift */; };
 		3C668DAE3E62367FB8BE14C4 /* pipeline_logs.json in Resources */ = {isa = PBXBuildFile; fileRef = D3F518C128886017CE831B4F /* pipeline_logs.json */; };
-		46927070FF2831F6075D3D75 /* VisualIntelligencePipelineWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC9FC65787822C92BB6745FA /* VisualIntelligencePipelineWidgetBundle.swift */; };
 		490FF136B95629B7A0F2B975 /* pipeline_logs.json in Resources */ = {isa = PBXBuildFile; fileRef = D3F518C128886017CE831B4F /* pipeline_logs.json */; };
 		4A56E688FF7DAA668529A522 /* knowmaps in Frameworks */ = {isa = PBXBuildFile; productRef = E3868CE0F6C1311492AD13DA /* knowmaps */; };
 		509E90F3732304106B92F65B /* KnowMapsAdapterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 302C82230AAB7048E4F825EA /* KnowMapsAdapterTests.swift */; };
-		60A9232EA88E9129D4F3F140 /* VisualIntelligencePipelineLockScreenWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D476721579A13301A52E5DB /* VisualIntelligencePipelineLockScreenWidget.swift */; };
 		614657885EE471E116CA4657 /* KnowMapsCacheStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5F7ECEBD4A56317495CB23 /* KnowMapsCacheStoreTests.swift */; };
 		6B38751B4CB9C372675E2B68 /* KnowMapsCacheStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 573D807F9496EBE7C68BF217 /* KnowMapsCacheStore.swift */; };
 		6C73332234F2B781B52900E1 /* DiverUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 017D7749A3E3DB921F44A2C4 /* DiverUITests.swift */; };
@@ -107,21 +91,12 @@
 		703C31A9FC71D8132CF9C709 /* KnowMapsServiceContainerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87AB3C01B38C1569F168108F /* KnowMapsServiceContainerTests.swift */; };
 		70F3ADB8AADAD2E6219F3B28 /* DiverQueueProcessingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B202E6BE357E18D064F157 /* DiverQueueProcessingService.swift */; };
 		7A97FA6E7E545D294AF576AF /* TestAnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B43CAFE7C5D15E858C87F0 /* TestAnalyticsService.swift */; };
-		85684D59FCE1E6CF833EC618 /* LinkTimelineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44CA1AF23313DAADDB182525 /* LinkTimelineProvider.swift */; };
 		8730250FFD9A0747B80E3ECB /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE51F7E92601A1166CD41ED /* SidebarView.swift */; };
-		8ED216B399E1ED8561CBBD64 /* VisualIntelligencePipelineHomeScreenWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BD9542DB250A68066B25807 /* VisualIntelligencePipelineHomeScreenWidget.swift */; };
 		9133AD759AFD71A72AF7CC9F /* VisualIntelligencePipelineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A210F16E7A971A22AD25B3 /* VisualIntelligencePipelineApp.swift */; };
-		9481525E5EDCC35C183FB6A4 /* VisualIntelligenceScanWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82345CE2DEBC41D157A5C68D /* VisualIntelligenceScanWidget.swift */; };
 		9C1477C768B43E8BAF2FD052 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DEBECFBAC4353E5D8AE4A6E /* ContentView.swift */; };
-		AC4704648FE84E4EB1B616C5 /* LinkEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF5F2EFB20310020DAA5 /* LinkEntity.swift */; };
-		AC4704648FE84E4EB1B616C6 /* LinkEntityQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF602EFB20310020DAA5 /* LinkEntityQuery.swift */; };
-		AC4704648FE84E4EB1B616C7 /* SearchLinksIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF652EFB20310020DAA5 /* SearchLinksIntent.swift */; };
-		AC4704648FE84E4EB1B616C8 /* LinkTimelineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44CA1AF23313DAADDB182525 /* LinkTimelineProvider.swift */; };
-		A3982F3A0A03A7C76F0607BE /* DiverUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D00EAA88E023ADF17BF38A /* DiverUITestsLaunchTests.swift */; };
-		AC4704648FE84E4EB1B616C4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2BC0702F99CC4FE6C5A23AA /* Assets.xcassets */; };
 		9D7387990C610DC31DF602CB /* KnowMapsServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09530E9966028D5CC948DC91 /* KnowMapsServiceContainer.swift */; };
 		9EE8B468574234FF0A3BD035 /* DiverQueueItemHierarchyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3CA07A0775461AC2587072 /* DiverQueueItemHierarchyTests.swift */; };
-		BBF37C79B39862CFADC5853B /* VisualIntelligencePipelineInteractiveWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103F1E9BBD648913E8566C91 /* VisualIntelligencePipelineInteractiveWidget.swift */; };
+		A3982F3A0A03A7C76F0607BE /* DiverUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D00EAA88E023ADF17BF38A /* DiverUITestsLaunchTests.swift */; };
 		C801C970A6F920AD638CB380 /* CloudKitTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C6CAD26DB5DBCD80179B1F /* CloudKitTestSupport.swift */; };
 		D39E055BB52C5B748AAC3627 /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = 13F65F202B46C02117A3AE0B /* DiverShared */; };
 		EC2F090ED557029F6DD6EAF7 /* ActionViewControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E07633E6BD803CADEDC71A /* ActionViewControllerTests.swift */; };
@@ -772,7 +747,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AC4704648FE84E4EB1B616C3 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -814,9 +788,8 @@
 		1E03CFAE2EFB55560020DAA5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-files = (
-
-);
+			files = (
+			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		39039BF8536FC14F06DE92B5 /* Sources */ = {

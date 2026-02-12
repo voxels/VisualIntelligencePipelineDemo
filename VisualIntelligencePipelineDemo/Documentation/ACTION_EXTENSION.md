@@ -414,7 +414,7 @@ Long-press on extension icon in share sheet:
 - [ ] Tags can be selected/deselected
 
 **Save Flow**:
-- [ ] "Save to Diver" creates queue item
+- [ ] "Save to Visual Intelligence" creates queue item
 - [ ] Queue item has correct URL and tags
 - [ ] Success message displayed
 - [ ] Extension dismisses after save

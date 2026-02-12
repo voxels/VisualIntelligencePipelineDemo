@@ -3,7 +3,7 @@ import SwiftUI
 import AppIntents
 
 struct DiverLockScreenWidget: Widget {
-    let kind: String = "DiverLockScreenWidget"
+    let kind: String = "VisualIntelligenceLockScreenWidget"
 
     var body: some WidgetConfiguration {
         AppIntentConfiguration(
@@ -13,7 +13,7 @@ struct DiverLockScreenWidget: Widget {
         ) { entry in
             LockScreenWidgetView(entry: entry)
         }
-        .configurationDisplayName("Diver")
+        .configurationDisplayName("Visual Intelligence")
         .description("Quick access to recent links")
         .supportedFamilies([
             .accessoryCircular,
