@@ -1434,10 +1434,37 @@ public final class LocalPipelineService {
                  newTags.append(String(describing: type))
                  accumulatedContext += "\nIdentify Media: \(title) (\(type))"
                  
-            case .document(_, let text, let label):
+            case .document(_, let text, let label, let rectifiedImage):
                 contextLog += "• Document: \(label ?? "Scanned")\n"
                 newTags.append("Document")
-                if let t = text { accumulatedContext += "\nDocument Content: \(t)" }
+                if let t = text { 
+                    accumulatedContext += "\nDocument Content: \(t)"
+                    // CRITICAL: Set transcription if not already set (fixes TextEditor issue)
+                    if item.transcription == nil {
+                         item.transcription = t
+                    } else {
+                         item.transcription! += "\n" + t
+                    }
+                }
+                
+                // Save Rectified Image to DocumentContext
+                if let rectified = rectifiedImage {
+                    let newContext: DocumentContext
+                    if let existing = item.documentContext {
+                         newContext = DocumentContext(
+                            fileType: existing.fileType,
+                            pageCount: existing.pageCount,
+                            author: existing.author,
+                            rectifiedPayload: rectified // Update with new image
+                         )
+                    } else {
+                         newContext = DocumentContext(
+                            fileType: "image/jpeg",
+                            rectifiedPayload: rectified
+                         )
+                    }
+                    item.documentContext = newContext
+                }
                 
             default: break
             }

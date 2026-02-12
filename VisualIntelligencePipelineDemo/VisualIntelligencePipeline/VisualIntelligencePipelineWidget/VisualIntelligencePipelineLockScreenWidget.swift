@@ -6,7 +6,7 @@ struct VisualIntelligencePipelineLockScreenWidget: Widget {
     let kind: String = "VisualIntelligencePipelineLockScreenWidget"
 
     var body: some WidgetConfiguration {
-        AppIntentConfiguration(
+        AppIntentConfiguration<SearchLinksIntent, LockScreenWidgetView>(
             kind: kind,
             intent: SearchLinksIntent.self,
             provider: LinkTimelineProvider()
@@ -16,9 +16,9 @@ struct VisualIntelligencePipelineLockScreenWidget: Widget {
         .configurationDisplayName("Visual Intelligence")
         .description("Quick access to recent links")
         .supportedFamilies([
-            .accessoryCircular,
-            .accessoryRectangular,
-            .accessoryInline
+            WidgetFamily.accessoryCircular,
+            WidgetFamily.accessoryRectangular,
+            WidgetFamily.accessoryInline
         ])
     }
 }

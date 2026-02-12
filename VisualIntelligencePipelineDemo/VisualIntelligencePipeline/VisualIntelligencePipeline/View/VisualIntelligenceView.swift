@@ -433,7 +433,7 @@ extension VisualIntelligenceView {
     // Helper to bridge the new View callback to the existing logic
     func handleResultSelection(_ result: IntelligenceResult) {
         switch result {
-        case .document(let obs, _, _):
+        case .document(let obs, _, _, _):
             viewModel.handleDocumentSelection(obs)
         case .text(let text, let url):
             if let url {
@@ -1260,7 +1260,7 @@ struct IntelligenceResultsView: View {
             // Initialize text editor with document OCR text if available
             if customContextText.isEmpty {
                 let documentText = viewModel.results.compactMap { result -> String? in
-                    if case .document(_, let text, _) = result {
+                    if case .document(_, let text, _, _) = result {
                         return text
                     }
                     return nil
@@ -1372,7 +1372,7 @@ struct IntelligenceResultsView: View {
                 buttons.append(("Open Link", "link", {
                     UIApplication.shared.open(url)
                 }))
-            case .document(let obs, _, _):
+            case .document(let obs, _, _, _):
                 buttons.append(("View Document", "doc.text", {
                     viewModel.handleDocumentSelection(obs)
                 }))
@@ -1719,7 +1719,7 @@ struct IntelligenceResultsView: View {
     
     private func handleResultSelection(_ result: IntelligenceResult) {
         switch result {
-        case .document(let obs, let text, _):
+        case .document(let obs, let text, _, _):
             viewModel.handleDocumentSelection(obs, text: text)
         case .qr(let url):
             UIApplication.shared.open(url)

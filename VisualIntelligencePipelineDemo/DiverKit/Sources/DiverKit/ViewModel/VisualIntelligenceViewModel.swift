@@ -286,12 +286,18 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 let generator = AVAssetImageGenerator(asset: asset)
                 generator.appliesPreferredTrackTransform = true
                 if let cgImage = try? generator.copyCGImage(at: .zero, actualTime: nil) {
+                    #if canImport(UIKit)
                     self.capturedImage = PlatformImage(cgImage: cgImage)
+                    #elseif canImport(AppKit)
+                    let size = NSSize(width: cgImage.width, height: cgImage.height)
+                    self.capturedImage = PlatformImage(cgImage: cgImage, size: size)
+                    #endif
                     self.siftedImage = self.capturedImage
                 }
             } catch {
                 print("❌ VI ViewModel: Failed to prepare video for reprocessing: \(error)")
             }
+            return
         } else {
             // Image Path
             #if canImport(UIKit)
@@ -1530,7 +1536,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         let prominentText: String? = {
             // Priority 1: Document OCR text (first meaningful line)
             for result in self.results {
-                if case .document(_, let text, _) = result, let text = text {
+                if case .document(_, let text, _, _) = result, let text = text {
                     let firstLine = text.split(separator: "\n").first?.trimmingCharacters(in: .whitespacesAndNewlines)
                     if let line = firstLine, !line.isEmpty, line.count > 3 {
                         return String(line)
@@ -1557,7 +1563,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             self.sessionTitle = calculatedTitle
         }
         
-        Task.detached(priority: .userInitiated) {
+        Task.detached(priority: .userInitiated) { () -> Void in
             #if canImport(UIKit)
             let capturedData = imageToSave?.jpegData(compressionQuality: 0.8)
             // Normalize sifted image orientation before saving (apply rotation to pixel data)
@@ -1592,7 +1598,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             if let capturedImage = imageToSave {
                 // Find document results to auto-rectify and save
                 let documentResults = currentResults.compactMap { result -> (VNRectangleObservation, String?, String?)? in
-                    if case .document(let obs, let text, let label) = result {
+                    if case .document(let obs, let text, let label, _) = result {
                         return (obs, text, label)
                     }
                     return nil
@@ -2211,7 +2217,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // Services
         let webService = self.webViewService
         let locService = Services.shared.locationService
-        let fsService = Services.shared.foursquareService
+//        let fsService = Services.shared.foursquareService
         
         // --- PHASE 1: Data Extraction & Pre-computation ---
         // Identify critical entities that drive enrichment
@@ -2269,15 +2275,18 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 searchLocation = await locService?.getCurrentLocation()
             }
             
-            guard let location = searchLocation else { return nil }
+//            guard let location = searchLocation else { return nil }
             
             // Refinement: If we have a product or web title, we could technically search for stores matching it?
-            // For now, generic nearby search is safest.
-            guard let fsService = fsService else { return nil }
-            if let candidates = try? await fsService.searchNearby(location: location.coordinate, limit: 50), !candidates.isEmpty {
-                return .places(candidates)
+//            // For now, generic nearby search is safest.
+//            guard let fsService = fsService else { return nil }
+//            if let candidates = try? await fsService.searchNearby(location: location.coordinate, limit: 50), !candidates.isEmpty {
+//                return .places(candidates)
+//            }
+            if let existing = existingSelection {
+                return .places([existing])
             }
-            return nil
+            return .places([])
         }()
         
         // Await all results

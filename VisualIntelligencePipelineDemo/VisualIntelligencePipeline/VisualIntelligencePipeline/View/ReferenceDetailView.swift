@@ -59,15 +59,8 @@ struct ReferenceDetailContent: View {
                     // Show text editor for ANY document with transcription (notes, detected documents, etc.)
                     // This unifies the UX for all text-based content
                     // Check if rawPayload is actually an image before showing image preview
-                    let hasValidImage = item.rawPayload != nil && UIImage(data: item.rawPayload!) != nil
-                    let hasTextContent = item.entityType == "document" && 
-                                        (item.transcription != nil || !hasValidImage)
-                    
-                    if hasTextContent {
-                        // Text editor for all text documents
-                        TextEditorView(item: item)
-                            .padding(.bottom, 12)
-                    } else if item.mediaType == "video" {
+                    // 1. Media Content (Video or Image)
+                    if item.mediaType == "video" {
                         if let assetID = item.photosAssetIdentifier {
                             // Video Player for Photos Asset
                             PhotosVideoPlayerView(assetIdentifier: assetID)
@@ -83,35 +76,58 @@ struct ReferenceDetailContent: View {
                                 .shadow(radius: 4)
                                 .padding(.bottom, 12)
                         }
-                    } else if let data = item.rawPayload, let uiImage = UIImage(data: data) {
-                        Image(uiImage: uiImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .cornerRadius(12)
-                            .shadow(radius: 4)
-                            .padding(.bottom, 12)
-                            .glass(cornerRadius: 12)
-                    } else if let snapshotPath = item.webContext?.snapshotURL {
-                         // Use AsyncImage for reliable file/url loading
-                         AsyncImage(url: URL(fileURLWithPath: snapshotPath)) { phase in
-                             if let image = phase.image {
-                                 image
-                                     .resizable()
-                                     .aspectRatio(contentMode: .fit)
-                                     .cornerRadius(12)
-                                     .shadow(radius: 4)
-                                     .padding(.bottom, 12)
-                                     .glass(cornerRadius: 12)
-                             } else if phase.error != nil {
-                                 Color.gray.opacity(0.1)
-                                     .frame(height: 200)
-                                     .overlay(Image(systemName: "photo.badge.exclamationmark"))
-                                     .cornerRadius(12)
-                             } else {
-                                 ProgressView()
-                                     .frame(height: 200)
+                    } else {
+                        // Image Handling: Priority -> Rectified Document -> Raw Image -> Web Snapshot
+                        if let rectData = item.documentContext?.rectifiedPayload, let uiImage = UIImage(data: rectData) {
+                             Image(uiImage: uiImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .cornerRadius(12)
+                                .shadow(radius: 4)
+                                .padding(.bottom, 12)
+                                .glass(cornerRadius: 12)
+                        } else if let data = item.rawPayload, let uiImage = UIImage(data: data) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .cornerRadius(12)
+                                .shadow(radius: 4)
+                                .padding(.bottom, 12)
+                                .glass(cornerRadius: 12)
+                        } else if let snapshotPath = item.webContext?.snapshotURL {
+                             // Use AsyncImage for reliable file/url loading
+                             AsyncImage(url: URL(fileURLWithPath: snapshotPath)) { phase in
+                                 if let image = phase.image {
+                                     image
+                                         .resizable()
+                                         .aspectRatio(contentMode: .fit)
+                                         .cornerRadius(12)
+                                         .shadow(radius: 4)
+                                         .padding(.bottom, 12)
+                                         .glass(cornerRadius: 12)
+                                 } else if phase.error != nil {
+                                     Color.gray.opacity(0.1)
+                                         .frame(height: 200)
+                                         .overlay(Image(systemName: "photo.badge.exclamationmark"))
+                                         .cornerRadius(12)
+                                 } else {
+                                     ProgressView()
+                                         .frame(height: 200)
+                                 }
                              }
-                         }
+                        }
+                    }
+                    
+                    // 2. Text Editor / Content
+                    // Show if we have text content OR it's a manual note (which implies text intent)
+                    let showTextEditor = (item.transcription != nil && !item.transcription!.isEmpty) ||
+                                         item.source == "ManualNote" ||
+                                         (item.entityType == "document" && item.transcription != nil)
+                    
+                    if showTextEditor {
+                        // Text editor for all text documents
+                        TextEditorView(item: item)
+                            .padding(.bottom, 12)
                     }
                     
                     if isEditingTitle {

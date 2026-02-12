@@ -1,0 +1,1 @@
+../../VisualIntelligencePipeline/AppIntents/Intents/OpenVisualIntelligenceIntent.swift

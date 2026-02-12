@@ -94,11 +94,13 @@ public struct DocumentContext: Codable, Sendable {
     public let fileType: String
     public let pageCount: Int?
     public let author: String?
+    public let rectifiedPayload: Data? // Rectified/deskewed image data
     
-    public init(fileType: String, pageCount: Int? = nil, author: String? = nil) {
+    public init(fileType: String, pageCount: Int? = nil, author: String? = nil, rectifiedPayload: Data? = nil) {
         self.fileType = fileType
         self.pageCount = pageCount
         self.author = author
+        self.rectifiedPayload = rectifiedPayload
     }
 }
 

@@ -644,6 +644,18 @@ public final class SidebarViewModel: ObservableObject {
         }
     }
     
+    public func moveItems(_ items: [ItemTransfer], to session: SessionMetadata, context: ModelContext) {
+        for itemTransfer in items {
+            let itemID = itemTransfer.id
+            let descriptor = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.id == itemID })
+            if let item = try? context.fetch(descriptor).first {
+                item.session = session
+                item.updatedAt = Date()
+            }
+        }
+        try? context.save()
+    }
+
     public func moveSessionToCollection(sessionID: String, collectionID: String, context: ModelContext) {
         let collectionFetch = FetchDescriptor<DiverCollection>(predicate: #Predicate { $0.collectionID == collectionID })
         let sessionFetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })

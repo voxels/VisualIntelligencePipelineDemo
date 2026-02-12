@@ -9,6 +9,8 @@ import WidgetKit
 struct SaveLinkIntent: AppIntent {
     static var title: LocalizedStringResource = "Save Link to Visual Intelligence"
     static var description = IntentDescription("Save a URL to your library.")
+    
+    init() {}
 
     @Parameter(title: "URL")
     var url: URL

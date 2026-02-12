@@ -1,0 +1,1 @@
+../../VisualIntelligencePipeline/AppIntents/Entities/LinkEntityQuery.swift

@@ -1,6 +1,9 @@
 import Foundation
 import Vision
 import CoreVideo
+import CoreImage
+import CoreImage.CIFilterBuiltins
+import VideoToolbox
 
 public enum IntelligenceResult {
     case qr(URL)
@@ -9,7 +12,7 @@ public enum IntelligenceResult {
     case entertainment(title: String, type: EntertainmentType, assets: [URL] = [])
     case siftedSubject(VNInstanceMaskObservation, label: String?)
     case product(code: String, type: ProductCodeType, mediaAssets: [URL] = [])
-    case document(VNRectangleObservation, text: String?, label: String?)
+    case document(VNRectangleObservation, text: String?, label: String?, rectifiedImage: Data? = nil)
     case purpose(statements: [String])
     
     case richWeb(url: URL, data: EnrichmentData)
@@ -50,11 +53,12 @@ extension IntelligenceResult: Hashable {
             hasher.combine(5)
             hasher.combine(code)
             hasher.combine(type)
-        case .document(let obs, let text, let label):
+        case .document(let obs, let text, let label, let rectifiedImage):
             hasher.combine(6)
             hasher.combine(obs)
             hasher.combine(text)
             hasher.combine(label)
+            hasher.combine(rectifiedImage)
         case .purpose(let statements):
             hasher.combine(7)
             hasher.combine(statements)
@@ -73,7 +77,7 @@ extension IntelligenceResult: Hashable {
         case (.entertainment(let t1, let ty1, _), .entertainment(let t2, let ty2, _)): return t1 == t2 && ty1 == ty2
         case (.siftedSubject(let o1, let l1), .siftedSubject(let o2, let l2)): return o1 === o2 && l1 == l2
         case (.product(let c1, let t1, _), .product(let c2, let t2, _)): return c1 == c2 && t1 == t2
-        case (.document(let o1, let t1, let l1), .document(let o2, let t2, let l2)): return o1 === o2 && t1 == t2 && l1 == l2
+        case (.document(let o1, let t1, let l1, let r1), .document(let o2, let t2, let l2, let r2)): return o1 === o2 && t1 == t2 && l1 == l2 && r1 == r2
         case (.purpose(let s1), .purpose(let s2)): return s1 == s2
         case (.richWeb(let u1, let d1), .richWeb(let u2, let d2)): return u1 == u2 && d1.title == d2.title
         default: return false
@@ -92,7 +96,7 @@ extension IntelligenceResult {
         case .entertainment(let title, _, _): return title
         case .siftedSubject(_, let label): return label?.capitalized ?? "Subject Sifted"
         case .product: return "Product" // Simplification
-        case .document(_, let text, let label): 
+        case .document(_, let text, let label, _): 
             let prefix = "Doc: "
             if let text = text {
                 return prefix + (text.count > 25 ? String(text.prefix(25)) + "..." : text)
@@ -117,7 +121,7 @@ extension IntelligenceResult {
             }
         case .siftedSubject(_, let label): return label != nil ? "Sifted Object" : "Ready to Peel"
         case .product(let code, let type, _): return "\(type.rawValue.uppercased()): \(code)"
-        case .document(_, _, let label): return label?.capitalized ?? "Auto-segmented document"
+        case .document(_, _, let label, _): return label?.capitalized ?? "Auto-segmented document"
         case .purpose(let statements): 
             if statements.count > 1 {
                 return "+\(statements.count - 1) more"
@@ -225,18 +229,21 @@ public final class IntelligenceProcessor: Sendable {
     }
     
     private func performRequests(cvPixelBuffer: CVPixelBuffer, orientation: CGImagePropertyOrientation, mode: AnalysisMode) async throws -> [IntelligenceResult] {
-        return try await executePipeline(mode: mode) {
+        var cgImage: CGImage?
+        VTCreateCGImageFromCVPixelBuffer(cvPixelBuffer, options: nil, imageOut: &cgImage)
+        
+        return try await executePipeline(mode: mode, sourceImage: cgImage) {
             VNImageRequestHandler(cvPixelBuffer: cvPixelBuffer, orientation: orientation, options: [:])
         }
     }
     
     private func performRequests(cgImage: CGImage, orientation: CGImagePropertyOrientation, mode: AnalysisMode) async throws -> [IntelligenceResult] {
-        return try await executePipeline(mode: mode) {
+        return try await executePipeline(mode: mode, sourceImage: cgImage) {
             VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
         }
     }
     
-    private func executePipeline(mode: AnalysisMode, handlerFactory: () -> VNImageRequestHandler) async throws -> [IntelligenceResult] {
+    private func executePipeline(mode: AnalysisMode, sourceImage: CGImage? = nil, handlerFactory: () -> VNImageRequestHandler) async throws -> [IntelligenceResult] {
          if mode != .liveSifting {
             print("🧠 IntelligenceProcessor: Starting Pipeline (Mode: \(mode))")
          }
@@ -396,8 +403,17 @@ public final class IntelligenceProcessor: Sendable {
                let docType = semanticLabels.first
                
                for observation in results {
-                   finalResults.append(.document(observation, text: bestLabel, label: docType))
+                   // Rectify Image
+                   var rectifiedData: Data? = nil
+                   if let source = sourceImage {
+                       let docManager = DocumentManager()
+                       rectifiedData = docManager.rectifyImage(source, using: observation)
+                   }
+                   
+                   finalResults.append(.document(observation, text: bestLabel, label: docType, rectifiedImage: rectifiedData))
                }
+               
+               // ALSO add all OCR text lines as .text results so they're captured in transcription
                
                // ALSO add all OCR text lines as .text results so they're captured in transcription
                for line in ocrTextLines where line.count > 10 {

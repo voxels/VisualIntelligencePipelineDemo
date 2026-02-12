@@ -113,10 +113,14 @@
 		9133AD759AFD71A72AF7CC9F /* VisualIntelligencePipelineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A210F16E7A971A22AD25B3 /* VisualIntelligencePipelineApp.swift */; };
 		9481525E5EDCC35C183FB6A4 /* VisualIntelligenceScanWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82345CE2DEBC41D157A5C68D /* VisualIntelligenceScanWidget.swift */; };
 		9C1477C768B43E8BAF2FD052 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DEBECFBAC4353E5D8AE4A6E /* ContentView.swift */; };
+		AC4704648FE84E4EB1B616C5 /* LinkEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF5F2EFB20310020DAA5 /* LinkEntity.swift */; };
+		AC4704648FE84E4EB1B616C6 /* LinkEntityQuery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF602EFB20310020DAA5 /* LinkEntityQuery.swift */; };
+		AC4704648FE84E4EB1B616C7 /* SearchLinksIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03CF652EFB20310020DAA5 /* SearchLinksIntent.swift */; };
+		AC4704648FE84E4EB1B616C8 /* LinkTimelineProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44CA1AF23313DAADDB182525 /* LinkTimelineProvider.swift */; };
+		A3982F3A0A03A7C76F0607BE /* DiverUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D00EAA88E023ADF17BF38A /* DiverUITestsLaunchTests.swift */; };
+		AC4704648FE84E4EB1B616C4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2BC0702F99CC4FE6C5A23AA /* Assets.xcassets */; };
 		9D7387990C610DC31DF602CB /* KnowMapsServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09530E9966028D5CC948DC91 /* KnowMapsServiceContainer.swift */; };
 		9EE8B468574234FF0A3BD035 /* DiverQueueItemHierarchyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3CA07A0775461AC2587072 /* DiverQueueItemHierarchyTests.swift */; };
-		A3982F3A0A03A7C76F0607BE /* DiverUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D00EAA88E023ADF17BF38A /* DiverUITestsLaunchTests.swift */; };
-		AC4704648FE84E4EB1B616C3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2BC0702F99CC4FE6C5A23AA /* Assets.xcassets */; };
 		BBF37C79B39862CFADC5853B /* VisualIntelligencePipelineInteractiveWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 103F1E9BBD648913E8566C91 /* VisualIntelligencePipelineInteractiveWidget.swift */; };
 		C801C970A6F920AD638CB380 /* CloudKitTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C6CAD26DB5DBCD80179B1F /* CloudKitTestSupport.swift */; };
 		D39E055BB52C5B748AAC3627 /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = 13F65F202B46C02117A3AE0B /* DiverShared */; };
@@ -810,28 +814,9 @@
 		1E03CFAE2EFB55560020DAA5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = (
-				1E03CFE72EFB58790020DAA5 /* IntentConfigurationView.swift in Sources */,
-				1E03CFE82EFB58790020DAA5 /* SaveLinkSnippet.swift in Sources */,
-				1E03CFE92EFB58790020DAA5 /* ShareLinkSnippet.swift in Sources */,
-				1E03CFE32EFB58700020DAA5 /* SearchLinksIntent.swift in Sources */,
-				1E03D02C2EFBD38E0020DAA5 /* OpenVisualIntelligenceIntent.swift in Sources */,
-				1E03D02D2EFBD38E0020DAA5 /* VisualIntelligenceIntent.swift in Sources */,
-				1E03CFE42EFB58700020DAA5 /* OpenLinkIntent.swift in Sources */,
-				1E03CFE52EFB58700020DAA5 /* ShareLinkIntent.swift in Sources */,
-				1E03D0312EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift in Sources */,
-				1E03D0322EFBD3F20020DAA5 /* ScreenshotProcessor.swift in Sources */,
-				1E03CFEA2EFB58800020DAA5 /* AppShortcutsProvider.swift in Sources */,
-				1E03CFE62EFB58700020DAA5 /* SaveLinkIntent.swift in Sources */,
-				1E03CFE12EFB58690020DAA5 /* LinkEntity.swift in Sources */,
-				1E03CFE22EFB58690020DAA5 /* LinkEntityQuery.swift in Sources */,
-				46927070FF2831F6075D3D75 /* VisualIntelligencePipelineWidgetBundle.swift in Sources */,
-				8ED216B399E1ED8561CBBD64 /* VisualIntelligencePipelineHomeScreenWidget.swift in Sources */,
-				60A9232EA88E9129D4F3F140 /* VisualIntelligencePipelineLockScreenWidget.swift in Sources */,
-				BBF37C79B39862CFADC5853B /* VisualIntelligencePipelineInteractiveWidget.swift in Sources */,
-				9481525E5EDCC35C183FB6A4 /* VisualIntelligenceScanWidget.swift in Sources */,
-				85684D59FCE1E6CF833EC618 /* LinkTimelineProvider.swift in Sources */,
-			);
+files = (
+
+);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		39039BF8536FC14F06DE92B5 /* Sources */ = {

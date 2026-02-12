@@ -120,7 +120,7 @@ extension DiverQueueItem {
                 )
                 childDescriptors.append(desc)
                 
-            case .document(_, let text, let label):
+            case .document(_, let text, let label, _):
                 if let text { fullText += text + "\n" }
                 if let label { semanticLabels.append(label) }
                 

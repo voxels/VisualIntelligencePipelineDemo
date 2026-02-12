@@ -372,94 +372,9 @@ struct SidebarView: View {
             ForEach(libraryItems) { item in
                 switch item {
                 case .collection(let collection):
-                    // 1. Collection Row
-                    DisclosureGroup {
-                    ForEach(sessions.filter { collection.sessionIDs.contains($0.sessionID) }.sorted { $0.updatedAt > $1.updatedAt }) { session in
-                        SidebarSessionRow(
-                            session: session,
-                            viewModel: viewModel,
-                            allItems: allItems,
-                            allConcepts: allConcepts,
-                            onLocationEdit: { sessionForLocationEdit = $0 },
-                            onRename: { s, t in sessionToRename = s; newSessionTitle = t },
-                            onNewCollection: { s, t in sessionForNewCollection = s; newCollectionName = t; showingCreateCollection = true },
-                            onAddSession: { s, c in viewModel.addSessionToCollection(session, collection: c, context: modelContext) },
-                            collections: collections,
-                            analyzeSession: { viewModel.analyzeSession($0, context: modelContext) }
-                        )
-                        .contextMenu {
-                            // Set as Current (Priority Action)
-                            Button {
-                                viewModel.setSessionAsCurrent(session, context: modelContext)
-                            } label: {
-                                Label("Set as Current", systemImage: "clock.arrow.2.circlepath")
-                            }
-                            
-                            Button {
-                                collectionToRename = collection
-                                newCollectionName = collection.name
-                            } label: {
-                                Label("Rename Collection", systemImage: "pencil")
-                            }
-                            
-                            Button(role: .destructive) {
-                                viewModel.deleteCollection(collection, context: modelContext)
-                            } label: {
-                                Label("Delete Collection", systemImage: "trash")
-                            }
-                            
-                            Button {
-                                sessionForLocationEdit = session
-                            } label: {
-                                Label("Edit Location", systemImage: "mappin.and.ellipse")
-                            }
-                            
-                            Button {
-                                sessionToRename = session
-                                newSessionTitle = session.displayTitle
-                            } label: {
-                                Label("Rename Session", systemImage: "pencil")
-                            }
-                            
-                            Button {
-                                analyzeSession(session)
-                            } label: {
-                                Label("Analyze Session", systemImage: "sparkles")
-                            }
-                            
-                            Divider()
-                            
-                            Button(role: .destructive) {
-                                viewModel.deleteSession(session, context: modelContext)
-                            } label: {
-                                Label("Delete Session", systemImage: "trash")
-                            }
-                        }
-                    }
-                } label: {
-                    Label(collection.name, systemImage: "folder.fill")
-                        .foregroundStyle(.purple)
-                }
-                .dropDestination(for: SessionTransfer.self) { transfers, location in
-                    guard let transfer = transfers.first else { return false }
-                    viewModel.moveSessionToCollection(sessionID: transfer.id, collectionID: collection.collectionID, context: modelContext)
-                    return true
-                }
-                
+                    collectionGroup(for: collection)
                 case .session(let session):
-                    // 2. Standalone Session Row
-                    SidebarSessionRow(
-                        session: session,
-                        viewModel: viewModel,
-                        allItems: allItems,
-                        allConcepts: allConcepts,
-                        onLocationEdit: { sessionForLocationEdit = $0 },
-                        onRename: { s, t in sessionToRename = s; newSessionTitle = t },
-                        onNewCollection: { s, t in sessionForNewCollection = s; newCollectionName = t; showingCreateCollection = true },
-                        onAddSession: { s, c in viewModel.addSessionToCollection(session, collection: c, context: modelContext) },
-                        collections: collections,
-                        analyzeSession: { viewModel.analyzeSession($0, context: modelContext) }
-                    )
+                    standaloneSessionRow(for: session)
                 }
             }
             
@@ -718,6 +633,10 @@ struct SidebarView: View {
                     // New Note button - creates empty document for this session
                     Button {
                         let newNote = viewModel.createNewNoteForSession(lastSession, context: modelContext)
+                        // Ensure we navigate hierarchy: Session -> Item
+                        // 1. Select the session (Pushes Content Pane on iPhone)
+                        navigationManager.selectedSession = lastSession
+                        // 2. Select the item (Pushes Detail Pane)
                         navigationManager.selection = newNote
                     } label: {
                         HStack(spacing: 12) {
@@ -1236,3 +1155,118 @@ struct DailySummaryCard: View {
     }
 }
 
+
+extension SidebarView {
+    private func sessions(in collection: DiverCollection) -> [DiverSession] {
+        sessions.filter { collection.sessionIDs.contains($0.sessionID) }
+                .sorted { $0.updatedAt > $1.updatedAt }
+    }
+
+    @ViewBuilder
+    private func collectionSessionContextMenu(session: DiverSession, collection: DiverCollection) -> some View {
+        // Set as Current (Priority Action)
+        Button {
+            viewModel.setSessionAsCurrent(session, context: modelContext)
+        } label: {
+            Label("Set as Current", systemImage: "clock.arrow.2.circlepath")
+        }
+        
+        Button {
+            collectionToRename = collection
+            newCollectionName = collection.name
+        } label: {
+            Label("Rename Collection", systemImage: "pencil")
+        }
+        
+        Button(role: .destructive) {
+            viewModel.removeSessionFromCollection(sessionID: session.sessionID, context: modelContext)
+        } label: {
+            Label("Remove from Collection", systemImage: "folder.badge.minus")
+        }
+        
+        Button(role: .destructive) {
+            viewModel.deleteCollection(collection, context: modelContext)
+        } label: {
+            Label("Delete Collection", systemImage: "trash")
+        }
+        
+        Button {
+            sessionForLocationEdit = session
+        } label: {
+            Label("Edit Location", systemImage: "mappin.and.ellipse")
+        }
+        
+        Button {
+            sessionToRename = session
+            newSessionTitle = session.displayTitle
+        } label: {
+            Label("Rename Session", systemImage: "pencil")
+        }
+        
+        Button {
+            analyzeSession(session)
+        } label: {
+            Label("Analyze Session", systemImage: "sparkles")
+        }
+        
+        Divider()
+        
+        Button(role: .destructive) {
+            viewModel.deleteSession(session, context: modelContext)
+        } label: {
+            Label("Delete Session", systemImage: "trash")
+        }
+    }
+
+    @ViewBuilder
+    private func collectionGroup(for collection: DiverCollection) -> some View {
+        DisclosureGroup {
+            ForEach(sessions(in: collection)) { session in
+                SidebarSessionRow(
+                    session: session,
+                    viewModel: viewModel,
+                    allItems: allItems,
+                    allConcepts: allConcepts,
+                    onLocationEdit: { sessionForLocationEdit = $0 },
+                    onRename: { s, t in sessionToRename = s; newSessionTitle = t },
+                    onNewCollection: { s, t in sessionForNewCollection = s; newCollectionName = t; showingCreateCollection = true },
+                    onAddSession: { s, c in viewModel.addSessionToCollection(session, collection: c, context: modelContext) },
+                    collections: collections,
+                    analyzeSession: { viewModel.analyzeSession($0, context: modelContext) }
+                )
+                .contextMenu {
+                    collectionSessionContextMenu(session: session, collection: collection)
+                }
+                .dropDestination(for: ItemTransfer.self) { items, location in
+                    // Allow dropping items into sessions inside collections
+                    viewModel.moveItems(items, to: session, context: modelContext)
+                    return true
+                }
+            }
+        } label: {
+            Label(collection.name, systemImage: "folder.fill")
+                .foregroundStyle(.purple)
+        }
+        .dropDestination(for: SessionTransfer.self) { transfers, location in
+            guard let transfer = transfers.first else { return false }
+            viewModel.moveSessionToCollection(sessionID: transfer.id, collectionID: collection.collectionID, context: modelContext)
+            return true
+        }
+    }
+    
+    @ViewBuilder
+    private func standaloneSessionRow(for session: DiverSession) -> some View {
+        SidebarSessionRow(
+            session: session,
+            viewModel: viewModel,
+            allItems: allItems,
+            allConcepts: allConcepts,
+            onLocationEdit: { sessionForLocationEdit = $0 },
+            onRename: { s, t in sessionToRename = s; newSessionTitle = t },
+            onNewCollection: { s, t in sessionForNewCollection = s; newCollectionName = t; showingCreateCollection = true },
+            onAddSession: { s, c in viewModel.addSessionToCollection(session, collection: c, context: modelContext) },
+            collections: collections,
+            analyzeSession: { viewModel.analyzeSession($0, context: modelContext) }
+        )
+    }
+}

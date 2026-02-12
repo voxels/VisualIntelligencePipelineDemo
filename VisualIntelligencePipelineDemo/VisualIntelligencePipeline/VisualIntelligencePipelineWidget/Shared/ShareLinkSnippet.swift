@@ -1,0 +1,1 @@
+../../VisualIntelligencePipeline/AppIntents/Views/ShareLinkSnippet.swift
