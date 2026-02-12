@@ -86,7 +86,7 @@ struct ReferenceDetailContent: View {
                                 .shadow(radius: 4)
                                 .padding(.bottom, 12)
                                 .glass(cornerRadius: 12)
-                        } else if let data = item.rawPayload, let uiImage = UIImage(data: data) {
+                        } else if let data = item.rawPayload, let uiImage = UIImage.fromDataWithOrientation(data) {
                             Image(uiImage: uiImage)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)

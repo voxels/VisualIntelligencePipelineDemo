@@ -385,7 +385,7 @@ struct SidebarView: View {
     
     @ViewBuilder
     private var librarySection: some View {
-        Section("Library") {
+        Section {
             // Unified Sorted Library
             ForEach(libraryItems) { item in
                 switch item {
@@ -405,22 +405,26 @@ struct SidebarView: View {
                         .foregroundStyle(.red)
                 }
             }
-        }
-        .dropDestination(for: SessionTransfer.self) { transfers, location in
-            guard let transfer = transfers.first else { return false }
-            // Remove from ANY collection (move to root) when dropped on the general library area
-            Task { @MainActor in
-                viewModel.removeSessionFromCollection(sessionID: transfer.id, context: modelContext)
-            }
-            return true
-        }
-        .dropDestination(for: ItemTransfer.self) { transfers, location in
-            guard let transfer = transfers.first else { return false }
-            // Create a NEW standalone session with this item
-            Task { @MainActor in
-                viewModel.createStandaloneSessionWithItem(itemID: transfer.id, context: modelContext)
-            }
-            return true
+        } header: {
+            Text("Library")
+                .dropDestination(for: SessionTransfer.self) { transfers, location in
+                    guard let transfer = transfers.first else { return false }
+                    // Remove from ANY collection (move to root) when dropped on the general library area
+                    Task { @MainActor in
+                        viewModel.removeSessionFromCollection(sessionID: transfer.id, context: modelContext)
+                    }
+                    return true
+                }
+                .dropDestination(for: ItemTransfer.self) { transfers, location in
+                    guard let transfer = transfers.first else { return false }
+                    // Create a NEW standalone session with this item
+                    Task { @MainActor in
+                        if let newSession = viewModel.createStandaloneSessionWithItem(itemID: transfer.id, context: modelContext) {
+                            selectedSession = newSession
+                        }
+                    }
+                    return true
+                }
         }
     }
     
@@ -1340,19 +1344,21 @@ extension SidebarView {
         } label: {
             Label(collection.name, systemImage: "folder.fill")
                 .foregroundStyle(.purple)
-        }
-        .dropDestination(for: SessionTransfer.self) { transfers, location in
-            guard let transfer = transfers.first else { return false }
-            viewModel.moveSessionToCollection(sessionID: transfer.id, collectionID: collection.collectionID, context: modelContext)
-            return true
-        }
-        .dropDestination(for: ItemTransfer.self) { transfers, location in
-            guard let transfer = transfers.first else { return false }
-            // Create a NEW session INSIDE this collection with this item
-            Task { @MainActor in
-                viewModel.createSessionInCollectionWithItem(itemID: transfer.id, collectionID: collection.collectionID, context: modelContext)
-            }
-            return true
+                .dropDestination(for: SessionTransfer.self) { transfers, location in
+                    guard let transfer = transfers.first else { return false }
+                    viewModel.moveSessionToCollection(sessionID: transfer.id, collectionID: collection.collectionID, context: modelContext)
+                    return true
+                }
+                .dropDestination(for: ItemTransfer.self) { transfers, location in
+                    guard let transfer = transfers.first else { return false }
+                    // Create a NEW session INSIDE this collection with this item
+                    Task { @MainActor in
+                        if let newSession = viewModel.createSessionInCollectionWithItem(itemID: transfer.id, collectionID: collection.collectionID, context: modelContext) {
+                            selectedSession = newSession
+                        }
+                    }
+                    return true
+                }
         }
     }
     

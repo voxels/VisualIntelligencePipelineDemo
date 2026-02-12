@@ -239,7 +239,7 @@ public final class SidebarViewModel: ObservableObject {
         print("✅ Created collection '\(name)' with session '\(session.displayTitle)'")
     }
     
-    public func createSessionWithItem(_ item: ProcessedItem, in collection: DiverCollection, context: ModelContext) {
+    public func createSessionWithItem(_ item: ProcessedItem, in collection: DiverCollection, context: ModelContext) -> DiverSession {
         let newSession = DiverSession(
             sessionID: UUID().uuidString,
             title: item.title ?? "New Session",
@@ -261,9 +261,10 @@ public final class SidebarViewModel: ObservableObject {
         
         try? context.save()
         print("✅ Created session with item in collection '\(collection.name)'")
+        return newSession
     }
     
-    public func createStandaloneSessionWithItem(itemID: String, context: ModelContext) {
+    public func createStandaloneSessionWithItem(itemID: String, context: ModelContext) -> DiverSession? {
         let itemFetch = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.id == itemID })
         
         do {
@@ -282,13 +283,15 @@ public final class SidebarViewModel: ObservableObject {
                 
                 try context.save()
                 print("✅ Created standalone session with item: \(item.displayTitle)")
+                return newSession
             }
         } catch {
             print("❌ Failed to create standalone session: \(error)")
         }
+        return nil
     }
     
-    public func createSessionInCollectionWithItem(itemID: String, collectionID: String, context: ModelContext) {
+    public func createSessionInCollectionWithItem(itemID: String, collectionID: String, context: ModelContext) -> DiverSession? {
         let itemFetch = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.id == itemID })
         let collectionFetch = FetchDescriptor<DiverCollection>(predicate: #Predicate { $0.collectionID == collectionID })
         
@@ -296,11 +299,12 @@ public final class SidebarViewModel: ObservableObject {
             if let item = try context.fetch(itemFetch).first,
                let collection = try context.fetch(collectionFetch).first {
                 
-                createSessionWithItem(item, in: collection, context: context)
+                return createSessionWithItem(item, in: collection, context: context)
             }
         } catch {
             print("❌ Failed to create session in collection: \(error)")
         }
+        return nil
     }
     
     public func duplicateItem(_ item: ProcessedItem, to session: DiverSession, context: ModelContext) {
@@ -361,9 +365,6 @@ public final class SidebarViewModel: ObservableObject {
         context.insert(newItem)
         try? context.save()
         print("✅ Duplicated item '\(item.displayTitle)' to session '\(session.displayTitle)'")
-    }
-            print("❌ Failed to create session in collection: \(error)")
-        }
     }
     
     public func toggleFavorite(for item: ProcessedItem, context: ModelContext) {
