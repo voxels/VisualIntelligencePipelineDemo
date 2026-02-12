@@ -648,9 +648,16 @@ public final class MetadataPipelineService {
                 status: .failed,
                 source: record.item.source,
                 attributionID: descriptor.attributionID,
-                processingLog: ["\(Date().formatted()): Initial processing failure: \(error.localizedDescription)"], failureCount: 1
+                sessionID: descriptor.sessionID, // Ensure we pass the session ID if known from descriptor
+                processingLog: ["\(Date().formatted()): Initial processing failure: \(error.localizedDescription)"], 
+                failureCount: 1
             )
             modelContext.insert(failedItem)
+            
+            // CRITICAL: Ensure even failed items have a session so they aren't orphaned in UI
+            let localPipeline = LocalPipelineService(modelContext: modelContext)
+            localPipeline.syncSession(for: failedItem)
+            
             DiverLogger.pipeline.error("Created failed item \(id) due to: \(error)")
         }
         try modelContext.save()

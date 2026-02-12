@@ -153,6 +153,15 @@ struct SidebarView: View {
             
             // Memory/Concepts
             memorySection
+            
+            #if DEBUG || DEBUG_MEMORY
+            // Debug Info
+            Section("Info") {
+                Text("Total Items: \(allItems.count)")
+                Text("Uncategorized: \(uncategorizedItems.count)")
+                Text("Sessions: \(sessions.count)")
+            }
+            #endif
         }
         .listStyle(.sidebar)
         .navigationTitle("Visual Intelligence")

@@ -163,6 +163,9 @@ public final class LocalPipelineService {
             if existing.sessionID == nil {
                 existing.sessionID = descriptor?.sessionID
             }
+            
+            // CRITICAL: Ensure session is synced immediately for existing items too
+            self.syncSession(for: existing)
 
             // Apply contextual Location -> Foursquare -> DuckDuckGo enrichment
             var effectiveLocation: CLLocation? = nil
@@ -556,6 +559,12 @@ public final class LocalPipelineService {
         processed.status = ProcessingStatus.processing
         processed.processingLog.append("\(Date().formatted()): Starting new item pipeline.")
         print("🚀 [LocalPipeline] Starting pipeline for item: \(processed.id)")
+        
+        // CRITICAL: Ensure session is assigned and synced IMMEDIATELY upon creation
+        // This guarantees the item appears in a session (even if just "Visual Capture") 
+        // and doesn't get lost in the "Inbox" / undefined state.
+        self.syncSession(for: processed)
+        
         modelContext.insert(processed)
         try? modelContext.save()
         
@@ -2493,7 +2502,7 @@ public final class LocalPipelineService {
         return firstByte == 0x7B || firstByte == 0x5B
     }
 
-    private func syncSession(for item: ProcessedItem) {
+    func syncSession(for item: ProcessedItem) {
         // Ensure robust relationship exists (Transition fallback)
         if item.session == nil {
             let sessionID = item.sessionID ?? UUID().uuidString
