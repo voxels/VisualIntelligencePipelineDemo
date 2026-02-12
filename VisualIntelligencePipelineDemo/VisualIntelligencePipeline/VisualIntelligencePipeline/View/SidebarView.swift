@@ -140,9 +140,7 @@ struct SidebarView: View {
             if #available(iOS 16.0, *) {
                 SharedWithYouView(manager: sharedWithYouManager)
             }
-            
-            // Standalone Sessions (Removed, now in librarySection)
-            
+                        
             // Processing Items - moved above Memory/Today
             if !processingItems.isEmpty {
                 processingSection
