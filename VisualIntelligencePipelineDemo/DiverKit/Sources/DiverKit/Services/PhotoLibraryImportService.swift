@@ -11,6 +11,7 @@ import AVFoundation
 #if canImport(UIKit)
 import UIKit
 #endif
+import ImageIO
 
 /// Service for importing photos and videos from the user's library.
 /// Handles batch processing, metadata extraction, clustering, and persistence.
@@ -178,6 +179,93 @@ public final class PhotoLibraryImportService {
         
         return collection
     }
+
+    /// Import selected photos/videos into an EXISTING session.
+    /// - Parameters:
+    ///   - items: PhotosPickerItems from multi-select picker
+    ///   - session: The existing DiverSession to import into
+    /// - Returns: List of created ProcessedItems
+    @MainActor
+    public func importItems(
+        _ items: [PhotosPickerItem],
+        into session: DiverSession
+    ) async throws -> [ProcessedItem] {
+        print("📥 PhotoLibraryImportService: Starting import of \(items.count) items into session '\(session.displayTitle)'...")
+        
+        // 1. Extract metadata from items
+        var importedAssets: [ImportedAsset] = []
+        let batchSize = 10
+        
+        for batchStart in stride(from: 0, to: items.count, by: batchSize) {
+            let batchEnd = min(batchStart + batchSize, items.count)
+            let batch = Array(items[batchStart..<batchEnd])
+            
+            for item in batch {
+                if let asset = await extractAssetMetadataOnly(from: item) {
+                    importedAssets.append(asset)
+                }
+            }
+        }
+        
+        // 2. Create ProcessedItems directly for this session
+        var newItems: [ProcessedItem] = []
+        var assetToPhotoItem: [String: PhotosPickerItem] = [:]
+        
+        for (index, item) in items.enumerated() {
+            if index < importedAssets.count {
+                assetToPhotoItem[importedAssets[index].id] = item
+            }
+        }
+        
+        for asset in importedAssets {
+            let item = ProcessedItem(
+                id: asset.id,
+                createdAt: asset.creationDate ?? Date(),
+                rawPayload: asset.data.isEmpty ? nil : asset.data,
+                status: .queued,
+                source: "photoLibraryImport",
+                sessionID: session.sessionID, // Explicitly assign to target session
+                mediaType: asset.isVideo ? "video" : (asset.isScreenshot ? "screenshot" : "image"),
+                filename: asset.originalFilename,
+                photosAssetIdentifier: asset.photosItemIdentifier
+            )
+            item.session = session // Set relationship
+            
+            // Set location if available (don't override session location, just item)
+            if let loc = asset.location {
+                item.location = "\(loc.latitude),\(loc.longitude)"
+                // Try to geocode individual item
+                if let itemPlace = await geocodingService.lookup(coordinate: loc) {
+                    item.placeContext = itemPlace
+                }
+            }
+            
+            modelContext.insert(item)
+            newItems.append(item)
+        }
+        
+        // 3. Update session timestamp
+        session.updatedAt = Date()
+        try modelContext.save()
+        
+        // 4. Extract thumbnail if session has none
+        if (session.thumbnailPaths.isEmpty), let firstAsset = importedAssets.first, let photoItem = assetToPhotoItem[firstAsset.id] {
+            Task.detached(priority: .background) {
+                await self.extractThumbnailForSession(asset: firstAsset, photoItem: photoItem)
+            }
+        }
+        
+        // 5. Enqueue items
+        Task.detached(priority: .background) {
+            await self.enqueueItemsToProcessingQueue(
+                assets: importedAssets,
+                assetToPhotoItem: assetToPhotoItem
+            )
+        }
+        
+        print("✅ Added \(newItems.count) items to session '\(session.displayTitle)'")
+        return newItems
+    }
     
     /// Enqueue imported items to DiverQueueStore for full pipeline processing.
     /// Uses photosAssetIdentifier instead of loading full payload data to avoid memory crashes.
@@ -241,8 +329,17 @@ public final class PhotoLibraryImportService {
     private func saveThumbnailToDisk(image: CGImage, id: String) -> String? {
         #if canImport(UIKit)
         let uiImage = UIImage(cgImage: image)
-        guard let data = uiImage.jpegData(compressionQuality: 0.8) else { return nil }
+        return saveThumbnailToDisk(image: uiImage, id: id)
+        #else
+        return nil
+        #endif
+    }
+    
+    #if canImport(UIKit)
+    private func saveThumbnailToDisk(image: UIImage, id: String) -> String? {
+        guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
         
+        // Ensure directory exists
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let dir = docs.appendingPathComponent("thumbnails", isDirectory: true)
         
@@ -256,10 +353,8 @@ public final class PhotoLibraryImportService {
             print("⚠️ Failed to save thumbnail: \(error)")
             return nil
         }
-        #else
-        return nil
-        #endif
     }
+    #endif
     
     private func fetchProcessedItem(assetID: String) -> ProcessedItem? {
         let id = assetID
@@ -478,9 +573,17 @@ public final class PhotoLibraryImportService {
             return nil
         }
         
+        // 1. Get Orientation from Properties
+        var orientation: CGImagePropertyOrientation = .up
+        if let properties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [String: Any],
+           let rawOrientation = properties[kCGImagePropertyOrientation as String] as? UInt32,
+           let cgOrientation = CGImagePropertyOrientation(rawValue: rawOrientation) {
+            orientation = cgOrientation
+        }
+        
         let downsampleOptions: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
-            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceCreateThumbnailWithTransform: false, // Do NOT transform, we handle it via UIImage to bake it correctly
             kCGImageSourceThumbnailMaxPixelSize: 300,
             kCGImageSourceShouldCacheImmediately: false
         ]
@@ -489,7 +592,15 @@ public final class PhotoLibraryImportService {
             return nil
         }
         
+        #if canImport(UIKit)
+        // Convert to UIImage with correct orientation
+        let uiOrientation = UIImage.Orientation(rawValue: Int(orientation.rawValue))
+        let uiImage = UIImage(cgImage: downsampledImage, scale: 1.0, orientation: uiOrientation ?? .up)
+        return saveThumbnailToDisk(image: uiImage, id: id)
+        #else
+        // Fallback for macOS (if needed later)
         return saveThumbnailToDisk(image: downsampledImage, id: id)
+        #endif
     }
     
     /// Check if the coordinate corresponds to Home or Work

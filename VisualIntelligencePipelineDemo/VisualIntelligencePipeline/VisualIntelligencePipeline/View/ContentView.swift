@@ -98,6 +98,9 @@ struct SessionItemsView: View {
         .sheet(item: $viewModel.itemToReprocess) { item in
             ReprocessMetadataView(item: item)
         }
+        .sheet(item: $viewModel.itemToDuplicate) { item in
+            SessionPickerSheet(item: item, viewModel: viewModel)
+        }
         .sheet(item: $sessionForLocationEdit) { session in
             EditSessionLocationView(session: session)
         }
@@ -352,9 +355,80 @@ struct ItemRowContainer: View {
             }
             
             Button {
+                viewModel.itemToDuplicate = item
+            } label: {
+                Label("Duplicate to Session...", systemImage: "plus.square.on.square")
+            }
+            
+            Button {
                 viewModel.itemToReprocess = item
             } label: {
                 Label("Reprocess", systemImage: "arrow.clockwise")
+            }
+        }
+    }
+}
+
+// MARK: - Session Picker Sheet
+
+struct SessionPickerSheet: View {
+    let item: ProcessedItem
+    @ObservedObject var viewModel: SidebarViewModel
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    
+    @Query(sort: \DiverSession.updatedAt, order: .reverse)
+    private var sessions: [DiverSession]
+    
+    @State private var searchText = ""
+    
+    var filteredSessions: [DiverSession] {
+        if searchText.isEmpty {
+            return sessions
+        } else {
+            return sessions.filter { 
+                ($0.title ?? "").localizedCaseInsensitiveContains(searchText) || 
+                ($0.locationName ?? "").localizedCaseInsensitiveContains(searchText)
+            }
+        }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(filteredSessions) { session in
+                    Button {
+                        viewModel.duplicateItem(item, to: session, context: modelContext)
+                        dismiss()
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(session.displayTitle)
+                                    .foregroundStyle(.primary)
+                                if let loc = session.locationName {
+                                    Text(loc)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            Spacer()
+                            if session.sessionID == item.sessionID {
+                                Text("Current")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .disabled(session.sessionID == item.sessionID)
+                }
+            }
+            .searchable(text: $searchText, prompt: "Search sessions...")
+            .navigationTitle("Duplicate into Session")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
             }
         }
     }

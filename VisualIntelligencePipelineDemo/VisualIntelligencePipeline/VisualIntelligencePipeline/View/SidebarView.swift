@@ -252,9 +252,15 @@ struct SidebarView: View {
         )
         .onChange(of: selectedPhotos) { oldValue, newValue in
             guard !newValue.isEmpty else { return }
+            let target = viewModel.importTargetSession
             Task {
-                await viewModel.importSelectedPhotos(newValue, context: modelContext)
+                await viewModel.importSelectedPhotos(newValue, context: modelContext, targetSession: target)
                 selectedPhotos = []
+                
+                // Reset target session on main actor
+                await MainActor.run {
+                    viewModel.importTargetSession = nil
+                }
             }
         }
         .alert("Create New Collection", isPresented: $showingCreateCollection) {
@@ -408,6 +414,14 @@ struct SidebarView: View {
             }
             return true
         }
+        .dropDestination(for: ItemTransfer.self) { transfers, location in
+            guard let transfer = transfers.first else { return false }
+            // Create a NEW standalone session with this item
+            Task { @MainActor in
+                viewModel.createStandaloneSessionWithItem(itemID: transfer.id, context: modelContext)
+            }
+            return true
+        }
     }
     
     struct SidebarSessionRow: View {
@@ -461,13 +475,19 @@ struct SidebarView: View {
                     .tint(.orange)
                 }
                 .draggable(SessionTransfer(id: session.sessionID))
-                .dropDestination(for: ItemTransfer.self) { transfers, location in
-                    guard let transfer = transfers.first else { return false }
-                    viewModel.moveItem(itemID: transfer.id, toSessionID: session.sessionID, context: modelContext)
+                .dropDestination(for: ItemTransfer.self) { items, location in
+                    // Allow dropping items into sessions inside collections
+                    viewModel.moveItems(items, to: session, context: modelContext)
                     return true
+                } isTargeted: { targeted in
+                    isTargeted = targeted
                 }
+                .background(isTargeted ? Color.accentColor.opacity(0.15) : Color.clear)
+                .cornerRadius(8)
             }
         }
+        
+        @State private var isTargeted = false
         
         private var selectionRow: some View {
             Button {
@@ -517,6 +537,14 @@ struct SidebarView: View {
                 onNewCollection(session, session.displayTitle)
             } label: {
                 Label("Create New Collection", systemImage: "folder.fill.badge.plus")
+            }
+            
+            Button {
+                // Set target session and open picker
+                viewModel.importTargetSession = session
+                viewModel.isImporting = true
+            } label: {
+                Label("Import Photos to Session", systemImage: "photo.badge.plus")
             }
             
             Button {
@@ -634,13 +662,20 @@ struct SidebarView: View {
                                 } else {
                                     Text(lastSession.title ?? "Current Session")
                                         .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
+                                    .lineLimit(1)
                                 }
                             }
                         }
                     }
                     .buttonStyle(.plain)
+                    .contextMenu {
+                        Button {
+                            viewModel.importTargetSession = lastSession
+                            viewModel.isImporting = true
+                        } label: {
+                            Label("Import from Photos", systemImage: "photo")
+                        }
+                    }
                     
                     // New Note button - creates empty document for this session
                     Button {
@@ -886,7 +921,7 @@ struct SessionRowLabel: View {
             if let image = heroImage {
                 Image(uiImage: image)
                     .resizable()
-                    .aspectRatio(1, contentMode: .fit)
+                    .aspectRatio(contentMode: .fit)
                     .frame(minWidth: 0, maxWidth: 280, minHeight: 0, maxHeight: 280)
                     .clipped()
                     .overlay {
@@ -1295,6 +1330,7 @@ extension SidebarView {
                 .contextMenu {
                     collectionSessionContextMenu(session: session, collection: collection)
                 }
+                .draggable(SessionTransfer(id: session.sessionID))
                 .dropDestination(for: ItemTransfer.self) { items, location in
                     // Allow dropping items into sessions inside collections
                     viewModel.moveItems(items, to: session, context: modelContext)
@@ -1308,6 +1344,14 @@ extension SidebarView {
         .dropDestination(for: SessionTransfer.self) { transfers, location in
             guard let transfer = transfers.first else { return false }
             viewModel.moveSessionToCollection(sessionID: transfer.id, collectionID: collection.collectionID, context: modelContext)
+            return true
+        }
+        .dropDestination(for: ItemTransfer.self) { transfers, location in
+            guard let transfer = transfers.first else { return false }
+            // Create a NEW session INSIDE this collection with this item
+            Task { @MainActor in
+                viewModel.createSessionInCollectionWithItem(itemID: transfer.id, collectionID: collection.collectionID, context: modelContext)
+            }
             return true
         }
     }

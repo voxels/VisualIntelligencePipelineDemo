@@ -9,6 +9,16 @@ import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 
+// Define custom UTTypes for Diver objects to prevent ambiguity
+public extension UTType {
+    static var diverItem: UTType {
+        UTType(exportedAs: "com.secretatomics.diver.item")
+    }
+    static var diverSession: UTType {
+        UTType(exportedAs: "com.secretatomics.diver.session")
+    }
+}
+
 /// Sendable DTO for transferring a ProcessedItem via drag and drop
 public struct ItemTransfer: Codable, Transferable, Sendable {
     public let id: String
@@ -18,7 +28,7 @@ public struct ItemTransfer: Codable, Transferable, Sendable {
     }
     
     public static var transferRepresentation: some TransferRepresentation {
-        CodableRepresentation(contentType: .text)
+        CodableRepresentation(contentType: .diverItem)
     }
 }
 
@@ -31,7 +41,7 @@ public struct SessionTransfer: Codable, Transferable, Sendable {
     }
     
     public static var transferRepresentation: some TransferRepresentation {
-        CodableRepresentation(contentType: .text)
+        CodableRepresentation(contentType: .diverSession)
     }
 }
 

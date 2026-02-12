@@ -1300,10 +1300,9 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
             #if canImport(UIKit)
-            // Vision's masked image is in normalized coordinates, but we need to render
-            // it with the proper orientation for display
-            let uiOrientation = uiImageOrientation(from: orientation)
-            let tempImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: uiOrientation)
+            // Vision's masked image is already in the correct orientation (pixels are upright relative to subject)
+            // So we should NOT re-apply the orientation, otherwise we get double rotation.
+            let tempImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
             // Normalize to actually render the pixels correctly
             let uiImage = tempImage.normalizedOrientation()
             return (uiImage, bounds)

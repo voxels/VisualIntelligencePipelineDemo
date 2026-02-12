@@ -24,6 +24,7 @@ public final class SidebarViewModel: ObservableObject {
     @Published public var showingVisualIntelligence = false
     @Published public var showingShortcutGallery = false
     @Published public var isImporting = false
+    @Published public var importTargetSession: DiverSession? // Target session for import
     
     // Selection Mode
     @Published public var isSelectionMode = false
@@ -31,6 +32,7 @@ public final class SidebarViewModel: ObservableObject {
     @Published public var groupSummaryResult: SummaryResult? = nil
     @Published public var itemToEditLocation: ProcessedItem?
     @Published public var itemToReprocess: ProcessedItem?
+    @Published public var itemToDuplicate: ProcessedItem?
     @Published public var showingDeleteConfirmation = false
     @Published public var showingCombineCollectionSheet = false
     @Published public var combineCollectionName = ""
@@ -261,6 +263,109 @@ public final class SidebarViewModel: ObservableObject {
         print("✅ Created session with item in collection '\(collection.name)'")
     }
     
+    public func createStandaloneSessionWithItem(itemID: String, context: ModelContext) {
+        let itemFetch = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.id == itemID })
+        
+        do {
+            if let item = try context.fetch(itemFetch).first {
+                let newSession = DiverSession(
+                    sessionID: UUID().uuidString,
+                    title: item.title ?? "New Session",
+                    createdAt: Date()
+                )
+                
+                context.insert(newSession)
+                
+                item.session = newSession
+                item.sessionID = newSession.sessionID
+                item.updatedAt = Date()
+                
+                try context.save()
+                print("✅ Created standalone session with item: \(item.displayTitle)")
+            }
+        } catch {
+            print("❌ Failed to create standalone session: \(error)")
+        }
+    }
+    
+    public func createSessionInCollectionWithItem(itemID: String, collectionID: String, context: ModelContext) {
+        let itemFetch = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.id == itemID })
+        let collectionFetch = FetchDescriptor<DiverCollection>(predicate: #Predicate { $0.collectionID == collectionID })
+        
+        do {
+            if let item = try context.fetch(itemFetch).first,
+               let collection = try context.fetch(collectionFetch).first {
+                
+                createSessionWithItem(item, in: collection, context: context)
+            }
+        } catch {
+            print("❌ Failed to create session in collection: \(error)")
+        }
+    }
+    
+    public func duplicateItem(_ item: ProcessedItem, to session: DiverSession, context: ModelContext) {
+        let newItem = ProcessedItem(
+            id: UUID().uuidString,
+            inputId: item.inputId,
+            url: item.url,
+            title: item.title,
+            summary: item.summary,
+            entityType: item.entityType,
+            modality: item.modality,
+            tags: item.tags,
+            createdAt: Date(), // New creation date
+            rawPayload: item.rawPayload,
+            status: .ready, // Assume ready if copying a processed item
+            source: item.source,
+            updatedAt: Date(),
+            referenceCount: 0,
+            lastProcessedAt: Date(), // Don't reprocess immediately
+            wrappedLink: item.wrappedLink,
+            payloadRef: item.payloadRef,
+            attributionID: item.attributionID,
+            masterCaptureID: item.masterCaptureID,
+            sessionID: session.sessionID, // Target Session
+            transcription: item.transcription,
+            themes: item.themes,
+            mediaType: item.mediaType,
+            fileSize: item.fileSize,
+            filename: item.filename,
+            photosAssetIdentifier: item.photosAssetIdentifier,
+            categories: item.categories,
+            location: item.location,
+            latitude: item.latitude,
+            longitude: item.longitude,
+            placeID: item.placeID,
+            originalDate: item.originalDate,
+            price: item.price,
+            rating: item.rating,
+            isFavorite: false, // Don't copy favorite status
+            purposes: Set(item.purposes),
+            productMetadata: item.productMetadata,
+            processingLog: ["Copied from \(item.id)"],
+            failureCount: 0
+        )
+        
+        // Copy large data blobs
+        newItem.weatherContextData = item.weatherContextData
+        newItem.activityContextData = item.activityContextData
+        newItem.placeContextData = item.placeContextData
+        newItem.webContextData = item.webContextData
+        newItem.documentContextData = item.documentContextData
+        newItem.qrContextData = item.qrContextData
+        newItem.questions = item.questions
+        
+        // Link to Session
+        newItem.session = session
+        
+        context.insert(newItem)
+        try? context.save()
+        print("✅ Duplicated item '\(item.displayTitle)' to session '\(session.displayTitle)'")
+    }
+            print("❌ Failed to create session in collection: \(error)")
+        }
+    }
+    
     public func toggleFavorite(for item: ProcessedItem, context: ModelContext) {
         item.isFavorite.toggle()
         try? context.save()
@@ -299,6 +404,7 @@ public final class SidebarViewModel: ObservableObject {
             source: "ManualNote"
         )
         note.session = session
+        note.sessionID = session.sessionID
         context.insert(note)
         try? context.save()
         return note
@@ -946,19 +1052,27 @@ public final class SidebarViewModel: ObservableObject {
     
     // MARK: - Photo Library Import
     
-    public func importSelectedPhotos(_ items: [PhotosPickerItem], context: ModelContext) async {
+    public func importSelectedPhotos(_ items: [PhotosPickerItem], context: ModelContext, targetSession: DiverSession? = nil) async {
         // Use the proper PhotoLibraryImportService for clustering, session creation, and metadata extraction
         let importService = PhotoLibraryImportService(modelContext: context)
         
-        // Generate a collection name based on current date
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        dateFormatter.timeStyle = .short
-        let collectionName = "Import \(dateFormatter.string(from: Date()))"
-        
         do {
-            let collection = try await importService.importItems(items, collectionName: collectionName)
-            print("✅ Imported \(items.count) photos into collection: \(collection.name)")
+            if let target = targetSession {
+                 // Import into EXISTING session
+                 print("📥 Importing \(items.count) items into existing session: \(target.displayTitle)")
+                 let _ = try await importService.importItems(items, into: target)
+                 print("✅ Added \(items.count) photos to session: \(target.displayTitle)")
+            } else {
+                // Default: Create NEW collection
+                // Generate a collection name based on current date
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateStyle = .medium
+                dateFormatter.timeStyle = .short
+                let collectionName = "Import \(dateFormatter.string(from: Date()))"
+                
+                let collection = try await importService.importItems(items, collectionName: collectionName)
+                print("✅ Imported \(items.count) photos into collection: \(collection.name)")
+            }
             
             // Process the imported items through the pipeline
             try? await pipelineService?.processPendingQueue()
