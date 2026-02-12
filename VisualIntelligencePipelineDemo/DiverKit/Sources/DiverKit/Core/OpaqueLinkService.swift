@@ -5,7 +5,7 @@ public final class OpaqueLinkService {
     public init() {}
     
     /// Generates a privacy-safe universal link for a saved item.
-    /// Example: diver://item?id=8B12A34F
+    /// Example: secretatomics://item?id=8B12A34F
     public func generateLink(for item: LocalInput) -> URL? {
         let shortID = item.id.uuidString.replacingOccurrences(of: "-", with: "").prefix(12)
         var components = URLComponents()
@@ -22,8 +22,7 @@ public final class OpaqueLinkService {
         let isHostScheme = url.scheme == "secretatomics" && url.host == "item"
         let isSecretAtomicsHost = host == "secretatomics.com"
             || host == "www.secretatomics.com"
-            || host == "diver.secretatomics.com"
-            || host == "www.diver.secretatomics.com"
+            || host == "secretatomics.com"
         let isSecretAtomicsUniversalLink = url.scheme == "https" && isSecretAtomicsHost && (url.path == "/item" || url.path.hasPrefix("/item/"))
         
         guard isHostScheme || isSecretAtomicsUniversalLink else {

@@ -67,13 +67,22 @@ struct ReferenceDetailContent: View {
                         // Text editor for all text documents
                         TextEditorView(item: item)
                             .padding(.bottom, 12)
-                    } else if item.mediaType == "video", let assetID = item.photosAssetIdentifier {
-                        // Video Player for video media type
-                        PhotosVideoPlayerView(assetIdentifier: assetID)
-                            .frame(height: 300)
-                            .cornerRadius(12)
-                            .shadow(radius: 4)
-                            .padding(.bottom, 12)
+                    } else if item.mediaType == "video" {
+                        if let assetID = item.photosAssetIdentifier {
+                            // Video Player for Photos Asset
+                            PhotosVideoPlayerView(assetIdentifier: assetID)
+                                .frame(height: 300)
+                                .cornerRadius(12)
+                                .shadow(radius: 4)
+                                .padding(.bottom, 12)
+                        } else if let data = item.rawPayload {
+                            // Video Player for Raw Data (Imports/Reprocessed)
+                            DataVideoPlayer(data: data)
+                                .frame(height: 300)
+                                .cornerRadius(12)
+                                .shadow(radius: 4)
+                                .padding(.bottom, 12)
+                        }
                     } else if let data = item.rawPayload, let uiImage = UIImage(data: data) {
                         Image(uiImage: uiImage)
                             .resizable()
@@ -998,20 +1007,7 @@ struct FlowLayout: Layout {
 
 // MARK: - Shared with You Helper
 
-struct AttributionViewWrapper: UIViewRepresentable {
-    let highlight: SWHighlight
-    
-    func makeUIView(context: Context) -> SWAttributionView {
-        let view = SWAttributionView()
-        view.highlight = highlight
-        view.horizontalAlignment = .leading
-        return view
-    }
-    
-    func updateUIView(_ uiView: SWAttributionView, context: Context) {
-        uiView.highlight = highlight
-    }
-}
+
 
 // MARK: - Map Popover
 
@@ -2107,5 +2103,36 @@ struct TextEditorView: View {
         #if os(iOS)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         #endif
+    }
+}
+
+// MARK: - Data Video Player
+struct DataVideoPlayer: View {
+    let data: Data
+    @State private var player: AVPlayer?
+    
+    var body: some View {
+        ZStack {
+            if let player = player {
+                VideoPlayer(player: player)
+            } else {
+                ZStack {
+                    Color.black
+                    ProgressView().tint(.white)
+                }
+            }
+        }
+        .onAppear {
+            if player == nil {
+                // Write data to temporary file
+                let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("mov")
+                do {
+                    try data.write(to: tempURL)
+                    self.player = AVPlayer(url: tempURL)
+                } catch {
+                    print("❌ DataVideoPlayer: Failed to write temp video: \(error)")
+                }
+            }
+        }
     }
 }

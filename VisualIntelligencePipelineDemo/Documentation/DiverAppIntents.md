@@ -19,9 +19,9 @@ This document describes the App Intents supported by Diver, their usage, sample 
   - Does NOT wrap the URL (saves original)
   - Confirmation dialog includes tags if provided
 - **Sample phrases:**
-  - "Save to Diver"
-  - "Save link in Diver"
-  - "Add to Diver"
+  - "Save to Visual Intelligence"
+  - "Save link in Visual Intelligence"
+  - "Add to Visual Intelligence"
 - **Shortcuts Use Case:** Save from Safari share sheet with custom tags
 
 ---

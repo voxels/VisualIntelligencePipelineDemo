@@ -1787,6 +1787,16 @@ public final class LocalPipelineService {
         )
         
         do {
+            if !ContextQuestionService.isAvailable {
+                // Fallback: Just skip LLM refinement.
+                // Status moves to ready, minimal heuristics applied if needed (but title extraction happens elsewhere)
+                 print("⚠️ [LocalPipeline] LLM not available. Skipping deep analysis.")
+                 item.statusRaw = ProcessingStatus.ready.rawValue
+                 item.processingLog.append("\(Date().formatted()): LLM Analysis Skipped (Unavailable). Finalized.")
+                 try modelContext.save()
+                 return
+            }
+            
             print("🧠 [LocalPipeline] Starting LLM Analysis for item: \(item.id)")
             let (summary, questions, purpose, tags) = try await contextService.processContext(from: currentData, sessionID: item.sessionID)
             
@@ -2169,13 +2179,29 @@ public final class LocalPipelineService {
             let scrubbedText = combinedText.replacingOccurrences(of: "Home", with: "Location", options: .caseInsensitive)
                                          .replacingOccurrences(of: "At Location", with: "At Unknown Location")
             
-            let service = ContextQuestionService()
-            let summary = try await service.summarizeText(scrubbedText)
+            let summary: String
             
-            if let meta = try modelContext.fetch(fetchMeta).first {
+            // Fetch session metadata early for location context
+            let session = try modelContext.fetch(fetchMeta).first
+            let locationName = session?.locationName ?? "Location"
+            
+            if ContextQuestionService.isAvailable {
+                let service = ContextQuestionService()
+                summary = try await service.summarizeText(scrubbedText)
+            } else {
+                 let titleList = recentItems
+                     .compactMap { $0.title }
+                     .filter { $0 != "Untitled" && $0 != "Visual Capture" && !$0.isEmpty }
+                     .prefix(3)
+                     .joined(separator: ", ")
+                 
+                 summary = "Session with \(items.count) items at \(locationName). Includes: \(titleList.isEmpty ? "Captured Media" : titleList)."
+            }
+            
+            if let meta = session {
                 meta.summary = summary
                 try modelContext.save()
-                DiverLogger.pipeline.info("✅ Auto-generated summary for session \(sessionID)")
+                DiverLogger.pipeline.info("✅ generated summary for session \(sessionID)")
             }
         } catch {
             DiverLogger.pipeline.error("Failed to auto-generate session summary: \(error)")

@@ -1,6 +1,6 @@
-# Diver: Visual Intelligence Pipeline
+# Visual Intelligence Pipeline
 
-Diver is an advanced iOS/macOS application for capturing, organizing, and enriching visual information. It leverages on-device machine learning, Apple's Vision framework, and Large Language Models to transform captured images and unstructured data into structured, searchable insights.
+Visual Intelligence Pipeline is an advanced iOS application for capturing, organizing, and enriching visual information. It leverages on-device machine learning, Apple's Vision framework, and Large Language Models to transform captured images and unstructured data into structured, searchable insights.
 
 ## Core Features
 

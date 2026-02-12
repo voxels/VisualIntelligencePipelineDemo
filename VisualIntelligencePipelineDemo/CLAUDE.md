@@ -62,10 +62,7 @@ cd DiverShared && swift test && cd ../DiverKit && swift test && cd ../Diver
    - Standalone app for developing and testing Visual Intelligence features
    - Includes: Camera, Sifting, Reprocessing, Location Editing
    - Location: `VisualIntelligencePipeline/`
-4. **VisualIntelligencePipeline** (Demo App / Feature Application)
-   - Standalone app for developing and testing Visual Intelligence features
-   - Includes: Camera, Sifting, Reprocessing, Location Editing
-   - Location: `VisualIntelligencePipeline/`
+
 
 ### Key Architectural Patterns
 
@@ -225,6 +222,11 @@ cd DiverShared && swift test
 - `Diver/Diver/Services/KnowMapsServiceContainer.swift` - Service dependency injection
 - `Diver/Diver/Services/KnowMapsAdapter.swift` - Diver → Know Maps model mapping
 - `Diver/Diver/Services/DiverQueueProcessingService.swift` - Queue drain + cache storage
+
+### UI Architecture & ViewModels
+- `DiverKit/Sources/DiverKit/ViewModel/SidebarViewModel.swift` - Centralized sidebar logic
+- `DiverKit/Sources/DiverKit/ViewModel/ProcessedItemViewModel.swift` - Logic for individual items
+- `VisualIntelligencePipeline/VisualIntelligencePipeline/View/SidebarView.swift` - Main navigation UI
 
 ### Networking
 - `DiverKit/Sources/DiverKit/Core/HTTPClient.swift` - Low-level request/response

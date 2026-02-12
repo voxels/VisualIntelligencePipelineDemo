@@ -218,7 +218,7 @@ private func performSaveAndShare(url: URL, tags: [String]) async {
 ### Alternative Flow: Save Only
 
 1-4. (Same as above)
-5. **User taps "Save to Diver"**
+5. **User taps "Save to Visual Intelligence"**
 6. **Extension**:
    - Saves link to queue
    - Shows success message

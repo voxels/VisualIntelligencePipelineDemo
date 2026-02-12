@@ -17,7 +17,7 @@ Status update (current): Phase 0.5 added to fix blocking test issues; Phase 2 ba
 
 ## Phase 2: Action Extension Tests + Safety
 - Prompt: "Add Action Extension tests for queue enqueue, wrapped-link creation, and validation failures. Ensure missing keychain secret shows a safe error state and does not enqueue."
-- Prompt: "Add tests for MessagesLaunchStore integration and diver://open-messages deep link handling."
+- Prompt: "Add tests for MessagesLaunchStore integration and secretatomics://open-messages deep link handling."
 - Prompt: "Add a manual smoke test checklist for extension performance limits (no heavy processing, no network dependencies)."
 
 ## Phase 3: Data Model + SwiftData + UI Recovery

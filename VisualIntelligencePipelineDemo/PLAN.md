@@ -352,7 +352,7 @@ Phase 0 progress: the fixtures/data scaffolding, entitlements, adapter wiring, a
 ### 🟡 Medium Priority
 
 3. **Messages Integration Not in Plan**
-   - **Existing Feature:** `MessagesLaunchStore` + `diver://open-messages` deep linking already implemented
+   - **Existing Feature:** `MessagesLaunchStore` + `secretatomics://open-messages` deep linking already implemented
    - **Impact:** Plan doesn't document or test this flow
    - **Action:** Add to Phase 2 tests; document in plan
 
@@ -418,7 +418,7 @@ Phase 2 implementation is complete with comprehensive test coverage and keychain
 - [x] Share sheet integration via UIActivityViewController
 - [x] Validation: Uses Validation.isValidURL() before wrapping
 - [x] Privacy: Descriptor stores original URL, wrapped URL only for sharing
-- [x] Messages integration: MessagesLaunchStore + `diver://open-messages` deep linking
+- [x] Messages integration: MessagesLaunchStore + `secretatomics://open-messages` deep linking
 - [x] Clipboard: Wrapped link copied to UIPasteboard
 - [x] ActionExtension-specific tests — 6 tests added ✅
 - [x] Handle missing keychain secret with safe fallback (shows error, no enqueue) ✅
@@ -447,7 +447,7 @@ Phase 2 implementation is complete with comprehensive test coverage and keychain
    - Max body length: 2000 chars
    - Dependency injection for testing (UserDefaults parameter)
 2. **Deep Link Handling** (`DiverApp.swift`)
-   - Scheme: `diver://open-messages?body=<url_encoded_link>`
+   - Scheme: `secretatomics://open-messages?body=<url_encoded_link>`
    - Triggers SMS compose with wrapped link
 3. **Keychain Secret Generation** (`DiverApp.swift`)
    - 32-byte random secret generated on first launch
@@ -913,9 +913,9 @@ Current Phase 4 Plan (from PLAN.md):
           AppShortcut(
               intent: SaveLinkIntent(),
               phrases: [
-                  "Save to Diver",
-                  "Save link in Diver",
-                  "Add to Diver"
+                  "Save to Visual Intelligence",
+                  "Save link in Visual Intelligence",
+                  "Add to Visual Intelligence"
               ],
               shortTitle: "Save Link",
               systemImageName: "link.badge.plus"

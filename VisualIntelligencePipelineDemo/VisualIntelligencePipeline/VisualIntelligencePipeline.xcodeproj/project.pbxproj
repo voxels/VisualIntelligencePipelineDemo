@@ -264,14 +264,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		1E03CF332EFAE80F0020DAA5 /* Exceptions for "ActionExtension" folder in "ActionExtension" target */ = {
+		1E03CF332EFAE80F0020DAA5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
 			target = 1E03CF242EFAE80F0020DAA5 /* ActionExtension */;
 		};
-		1E03CFC82EFB55570020DAA5 /* Exceptions for "VisualIntelligencePipelineWidget" folder in "VisualIntelligencePipelineWidget" target */ = {
+		1E03CFC82EFB55570020DAA5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -281,30 +281,8 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		1E03CF272EFAE80F0020DAA5 /* ActionExtension */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				1E03CF332EFAE80F0020DAA5 /* Exceptions for "ActionExtension" folder in "ActionExtension" target */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = ActionExtension;
-			sourceTree = "<group>";
-		};
-		1E03CFB72EFB55560020DAA5 /* VisualIntelligencePipelineWidget */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				1E03CFC82EFB55570020DAA5 /* Exceptions for "VisualIntelligencePipelineWidget" folder in "VisualIntelligencePipelineWidget" target */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = VisualIntelligencePipelineWidget;
-			sourceTree = "<group>";
-		};
+		1E03CF272EFAE80F0020DAA5 /* ActionExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (1E03CF332EFAE80F0020DAA5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = ActionExtension; sourceTree = "<group>"; };
+		1E03CFB72EFB55560020DAA5 /* VisualIntelligencePipelineWidget */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (1E03CFC82EFB55570020DAA5 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = VisualIntelligencePipelineWidget; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -759,19 +737,19 @@
 			mainGroup = 1E22CEC1E3B0DD2512498573;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				6C05A9FFCDA3479D80049137 /* XCLocalSwiftPackageReference "DiverShared" */,
+				6C05A9FFCDA3479D80049137 /* XCLocalSwiftPackageReference "../DiverShared" */,
 				768C9FC0535F0C6FE9CDA823 /* XCRemoteSwiftPackageReference "Know-Maps" */,
-				C33B03A7450D89B7C1CA333C /* XCLocalSwiftPackageReference "DiverKit" */,
+				C33B03A7450D89B7C1CA333C /* XCLocalSwiftPackageReference "../DiverKit" */,
 			);
 			productRefGroup = 7D9E5CDB6F9092AB765657B4 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				87F388E85B00E01AD0AECC95 /* VisualIntelligencePipeline */,
 				1E03CF242EFAE80F0020DAA5 /* ActionExtension */,
 				1E03CFB12EFB55560020DAA5 /* VisualIntelligencePipelineWidget */,
 				2C5172D6F90533D12DE96E9F /* VisualIntelligencePipelineTests */,
 				5E9F14A5B740369163794194 /* DiverUITests_macOS */,
-				87F388E85B00E01AD0AECC95 /* VisualIntelligencePipeline */,
 				F27D800C841D2305CDC76CF7 /* DiverUITests_iOS */,
 				FB45EBA8D8C09CA4808CD555 /* VisualIntelligencePipelineTests_macOS */,
 			);
@@ -1593,11 +1571,11 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		6C05A9FFCDA3479D80049137 /* XCLocalSwiftPackageReference "DiverShared" */ = {
+		6C05A9FFCDA3479D80049137 /* XCLocalSwiftPackageReference "../DiverShared" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../DiverShared;
 		};
-		C33B03A7450D89B7C1CA333C /* XCLocalSwiftPackageReference "DiverKit" */ = {
+		C33B03A7450D89B7C1CA333C /* XCLocalSwiftPackageReference "../DiverKit" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../DiverKit;
 		};
@@ -1629,12 +1607,12 @@
 		};
 		1E03CFDD2EFB582B0020DAA5 /* DiverKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = C33B03A7450D89B7C1CA333C /* XCLocalSwiftPackageReference "DiverKit" */;
+			package = C33B03A7450D89B7C1CA333C /* XCLocalSwiftPackageReference "../DiverKit" */;
 			productName = DiverKit;
 		};
 		1E03CFDF2EFB582B0020DAA5 /* DiverShared */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 6C05A9FFCDA3479D80049137 /* XCLocalSwiftPackageReference "DiverShared" */;
+			package = 6C05A9FFCDA3479D80049137 /* XCLocalSwiftPackageReference "../DiverShared" */;
 			productName = DiverShared;
 		};
 		1E03D0402EFC20E20020DAA5 /* knowmaps */ = {

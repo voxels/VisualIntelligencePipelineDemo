@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import DiverShared
 #if canImport(FoundationModels)
 import FoundationModels
 #endif
@@ -14,6 +15,18 @@ import FoundationModels
 public final class ContextQuestionService: Sendable {
     
     public init() {}
+
+    public static var isAvailable: Bool {
+        // Enforce device restrictions (e.g. iPhone 16+) defined in Shared module
+        guard IntelligenceCapability.isAvailable else { return false }
+        
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, macOS 19.0, *) {
+            return true
+        }
+        #endif
+        return false
+    }
 
     /// Generates precise definitive statements about the possible activity and an automated purpose based on enrichment data.
     /// - Parameters:
@@ -126,6 +139,9 @@ public final class ContextQuestionService: Sendable {
             } catch LanguageModelSession.GenerationError.exceededContextWindowSize(let errorContext) {
                 print("⚠️ Context window exceeded even after chaining: \(errorContext)")
                 return ("Context too long.", [], nil, [])
+            } catch let error as LanguageModelSession.GenerationError {
+                print("⚠️ GenAI GenerationError (falling back): \(error)")
+                return (data.descriptionText, [], nil, [])
             } catch {
                 print("⚠️ GenAI error (falling back to basic context): \(error)")
                 // Fallback: return basic context without AI insights
@@ -147,6 +163,9 @@ public final class ContextQuestionService: Sendable {
             do {
                 let result = try await runTextSummary(text: sanitizeForLLM(text))
                 return result
+            } catch let error as LanguageModelSession.GenerationError {
+                print("⚠️ Summary GenerationError: \(error)")
+                 return String(text.prefix(200)) + "..."
             } catch {
                 print("⚠️ Summary generation failed: \(error)")
                 return String(text.prefix(200)) + "..."

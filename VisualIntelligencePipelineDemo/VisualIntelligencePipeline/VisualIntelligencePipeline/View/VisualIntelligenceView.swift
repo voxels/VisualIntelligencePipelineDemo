@@ -6,6 +6,7 @@ import Photos
 import PhotosUI
 import WebKit
 import MapKit
+import AVKit
 
 /// Agent [DESIGN] - Unified Shutter UI (iOS 26)
 public struct VisualIntelligenceView: View {
@@ -228,7 +229,11 @@ struct VisualIntelligenceReviewLayer: View {
     @ObservedObject var viewModel: VisualIntelligenceViewModel
     
     var body: some View {
-        if let capturedImage = viewModel.capturedImage {
+        if let videoURL = viewModel.capturedVideoURL {
+            VideoPlayer(player: AVPlayer(url: videoURL))
+                .aspectRatio(contentMode: .fit)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if let capturedImage = viewModel.capturedImage {
             Image(uiImage: capturedImage)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
@@ -594,6 +599,7 @@ struct PipelineStatusView: View {
         case .enriching: return .orange
         case .reasoning: return .pink
         case .complete: return .green
+        case .failed: return .red
         case .idle: return .gray
         }
     }
@@ -606,6 +612,7 @@ struct PipelineStatusView: View {
         case .enriching: return "Querying maps and sensors"
         case .reasoning: return "Generating contextual insights"
         case .complete: return "Ready for review"
+        case .failed: return "Analysis Failed"
         case .idle: return "Waiting for capture"
         }
     }
@@ -1027,7 +1034,7 @@ struct DocumentDetailView: View {
                             if viewModel.isSavingDocument {
                                 ProgressView()
                             } else {
-                                Text("Save to Diver")
+                                Text("Save to Visual Intelligence")
                                     .fontWeight(.bold)
                             }
                         }

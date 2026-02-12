@@ -93,6 +93,33 @@ struct SidebarView: View {
     }
     
     
+    // MARK: - Library Sorting
+    
+    private enum LibraryItem: Identifiable {
+        case collection(DiverCollection)
+        case session(DiverSession)
+        
+        var id: String {
+            switch self {
+            case .collection(let c): return c.collectionID
+            case .session(let s): return s.sessionID
+            }
+        }
+        
+        var updatedAt: Date {
+            switch self {
+            case .collection(let c): return c.updatedAt
+            case .session(let s): return s.updatedAt
+            }
+        }
+    }
+    
+    private var libraryItems: [LibraryItem] {
+        let collectionItems = collections.map { LibraryItem.collection($0) }
+        let sessionItems = standaloneSessions.map { LibraryItem.session($0) }
+        return (collectionItems + sessionItems).sorted { $0.updatedAt > $1.updatedAt }
+    }
+    
     // MARK: - Body
     
     var body: some View {
@@ -101,7 +128,7 @@ struct SidebarView: View {
             intelligenceSection
             
             // Daily Summary
-            if let service = Services.shared.dailyContextService {
+            if ContextQuestionService.isAvailable, let service = Services.shared.dailyContextService {
                 DailySummaryCard(service: service)
             }
             
@@ -129,6 +156,9 @@ struct SidebarView: View {
         .searchable(text: $viewModel.searchText, prompt: "Search items...")
         .refreshable {
             await viewModel.refresh()
+            if #available(iOS 16.0, macOS 13.0, *) {
+                sharedWithYouManager.refreshHighlights()
+            }
         }
         .onAppear {
             viewModel.setPipelineService(pipelineService)
@@ -338,9 +368,12 @@ struct SidebarView: View {
     @ViewBuilder
     private var librarySection: some View {
         Section("Library") {
-            // 1. Collections (Folders)
-            ForEach(collections) { collection in
-                DisclosureGroup {
+            // Unified Sorted Library
+            ForEach(libraryItems) { item in
+                switch item {
+                case .collection(let collection):
+                    // 1. Collection Row
+                    DisclosureGroup {
                     ForEach(sessions.filter { collection.sessionIDs.contains($0.sessionID) }.sorted { $0.updatedAt > $1.updatedAt }) { session in
                         SidebarSessionRow(
                             session: session,
@@ -413,22 +446,21 @@ struct SidebarView: View {
                     return true
                 }
                 
-            }
-            
-            // 2. Standalone Sessions (Files)
-            ForEach(standaloneSessions) { session in
-                SidebarSessionRow(
-                    session: session,
-                    viewModel: viewModel,
-                    allItems: allItems,
-                    allConcepts: allConcepts,
-                    onLocationEdit: { sessionForLocationEdit = $0 },
-                    onRename: { s, t in sessionToRename = s; newSessionTitle = t },
-                    onNewCollection: { s, t in sessionForNewCollection = s; newCollectionName = t; showingCreateCollection = true },
-                    onAddSession: { s, c in viewModel.addSessionToCollection(session, collection: c, context: modelContext) },
-                    collections: collections,
-                    analyzeSession: { viewModel.analyzeSession($0, context: modelContext) }
-                )
+                case .session(let session):
+                    // 2. Standalone Session Row
+                    SidebarSessionRow(
+                        session: session,
+                        viewModel: viewModel,
+                        allItems: allItems,
+                        allConcepts: allConcepts,
+                        onLocationEdit: { sessionForLocationEdit = $0 },
+                        onRename: { s, t in sessionToRename = s; newSessionTitle = t },
+                        onNewCollection: { s, t in sessionForNewCollection = s; newCollectionName = t; showingCreateCollection = true },
+                        onAddSession: { s, c in viewModel.addSessionToCollection(session, collection: c, context: modelContext) },
+                        collections: collections,
+                        analyzeSession: { viewModel.analyzeSession($0, context: modelContext) }
+                    )
+                }
             }
             
             // Delete selected button
@@ -598,11 +630,10 @@ struct SidebarView: View {
     
     @ViewBuilder
     private var intelligenceSection: some View {
-        if IntelligenceCapability.isAvailable {
-            Section("Current Context") {
+        Section("Current Context") {
                 if let lastSession = sessions.first {
                     // Full contextual summary
-                    if let summary = lastSession.summary, !summary.isEmpty {
+                    if ContextQuestionService.isAvailable, let summary = lastSession.summary, !summary.isEmpty {
                         Text(summary)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -610,28 +641,30 @@ struct SidebarView: View {
                     }
                     
                     // Related concepts chips
-                    let concepts = viewModel.relatedConcepts(for: lastSession, allItems: allItems, allConcepts: allConcepts)
-                    if !concepts.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                ForEach(concepts) { concept in
-                                    Text(concept.name)
-                                        .font(.caption)
-                                        .fontWeight(.medium)
-                                        .foregroundStyle(.purple)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(
-                                            Capsule()
-                                                .fill(.purple.opacity(0.1))
-                                        )
-                                        .overlay(
-                                            Capsule()
-                                                .strokeBorder(.purple.opacity(0.3), lineWidth: 1)
-                                        )
+                    if ContextQuestionService.isAvailable {
+                        let concepts = viewModel.relatedConcepts(for: lastSession, allItems: allItems, allConcepts: allConcepts)
+                        if !concepts.isEmpty {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(concepts) { concept in
+                                        Text(concept.name)
+                                            .font(.caption)
+                                            .fontWeight(.medium)
+                                            .foregroundStyle(.purple)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(
+                                                Capsule()
+                                                    .fill(.purple.opacity(0.1))
+                                            )
+                                            .overlay(
+                                                Capsule()
+                                                    .strokeBorder(.purple.opacity(0.3), lineWidth: 1)
+                                            )
+                                    }
                                 }
+                                .padding(.vertical, 4)
                             }
-                            .padding(.vertical, 4)
                         }
                     }
                     
@@ -684,7 +717,8 @@ struct SidebarView: View {
                     
                     // New Note button - creates empty document for this session
                     Button {
-                        viewModel.createNewNoteForSession(lastSession, context: modelContext)
+                        let newNote = viewModel.createNewNoteForSession(lastSession, context: modelContext)
+                        navigationManager.selection = newNote
                     } label: {
                         HStack(spacing: 12) {
                             Image(systemName: "doc.text.fill")
@@ -719,7 +753,6 @@ struct SidebarView: View {
                 }
             }
         }
-    }
     
     private func previewImage(for session: DiverSession) -> UIImage? {
         viewModel.previewImage(for: session, allItems: allItems)
@@ -929,16 +962,16 @@ struct SessionRowLabel: View {
             
             
             // LLM Session Summary
-            if let summary = session.summary, !summary.isEmpty {
+            if ContextQuestionService.isAvailable, let summary = session.summary, !summary.isEmpty {
                 Text(summary)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(3)
                     .padding(.top, 4)
-            } else {
+            } else if ContextQuestionService.isAvailable {
                 Text("No Summary Available")
                     .font(.caption2)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(.secondary.opacity(0.5)) // Made less prominent
                     .padding(.top, 4)
             }
         }
@@ -972,20 +1005,26 @@ struct ItemRow: View {
                     .fontWeight(.medium)
                     .lineLimit(2)
                 
-                HStack(spacing: 4) {
-                    if let entityType = item.entityType {
-                        if entityType.lowercased() == "activity", let purpose = item.purposes.first {
-                            Text(purpose)
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            Text(entityType.capitalized)
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                if ContextQuestionService.isAvailable {
+                    HStack(spacing: 4) {
+                        if let entityType = item.entityType {
+                            if entityType.lowercased() == "activity", let purpose = item.purposes.first {
+                                Text(purpose)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            } else {
+                                Text(entityType.capitalized)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                        Text("•")
+                            .foregroundStyle(.tertiary)
+                        Text(formattedDate)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
                     }
-                    Text("•")
-                        .foregroundStyle(.tertiary)
+                } else {
                     Text(formattedDate)
                         .font(.caption2)
                         .foregroundStyle(.tertiary)

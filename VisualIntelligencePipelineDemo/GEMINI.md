@@ -32,6 +32,7 @@ The project includes a sophisticated "Visual Intelligence" capability:
     *   **Environmental:** WeatherKit (Current conditions).
     *   **Web:** Metadata extraction for related links.
     *   **Aesthetics:** Quality scoring for images and video frames.
+    *   **Cutouts:** Lifted subject support with proper alpha channel handling.
 *   **Pipeline Services:**
     *   **LocalPipelineService:** The core orchestrator. Handles ingestion, enrichment, and persistence.
     *   **Reprocessing:** Supports silent background reprocessing of items (`reprocessPipeline`) to update metadata or apply new algorithms. Includes logic to **prevent duplicates** by reusing existing item IDs.
@@ -85,8 +86,16 @@ The following rules have been established based on past incidents and must be fo
     *   **Staleness:** Be aware that local Swift Package dependencies (like `knowmaps`) can resolve to stale commits. If you encounter "inaccessible due to 'internal' protection level" errors for properties that *should* be public, it is likely a stale dependency cache.
     *   **Workarounds:** While clean fixes are preferred, runtime reflection (using `Mirror`) is an acceptable *temporary* workaround to bypass strict access control/staleness issues to get the feature working immediately, provided it is documented.
 
+4.  **UI & MapKit Stability:**
+    *   **Stable Identifiers:** Use `.id` (UUID) rather than `placeID` for identifying MapKit results in SwiftUI lists. MapKit IDs can be unstable or duplicated, causing selection bugs.
+    *   **Aspect Ratios:** Use aspect-ratio based layouts for images instead of fixed dimensions to support responsive sidebar resizing.
+
 ## Terminology Updates
 
 *   **DiverSession:** The entity previously known as `SessionMetadata` is now referred to as `DiverSession` in the codebase.
     *   **Technical Note:** For data compatibility and CloudKit sync reasons, the underlying class is still named `SessionMetadata`, but `DiverSession` is provided as a global typealias. Continue to use `DiverSession` in new code.
+
+*   **View Models:**
+    *   **SidebarViewModel:** Centralizes all sidebar state, including session management, drag-and-drop, and library maintenance.
+    *   **ProcessedItemViewModel:** Manages logic for individual items, including reprocessing and deletion.
 

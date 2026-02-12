@@ -43,6 +43,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
     @Published public var siftedImage: PlatformImage?
     @Published public var siftedBoundingBox: CGRect?
     @Published public var capturedImage: PlatformImage?
+    @Published public var capturedVideoURL: URL? // For video reprocessing
     @Published public var sessionImages: [PlatformImage] = [] // For multi-image capture
     @Published public var activeSessionID: String = UUID().uuidString // Session Persistence
     public var accumulatedContexts: [String] = [] // For sequential context history
@@ -78,6 +79,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         case enriching = "Finding Location..."
         case reasoning = "Understanding Context..."
         case complete = "Complete"
+        case failed = "Failed"
         
         public var displayText: String { rawValue }
     }
@@ -269,37 +271,51 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         print("🔄 VI ViewModel: Found pending reprocess context for session \(context.sessionID)")
         
-        // 1. Load Image
-        // 1. Load Image
-        #if canImport(UIKit)
-        if let image = UIImage(data: context.imageData) {
-            self.capturedImage = image
-            self.siftedImage = image 
-        } else {
-            // Fallback: Try CIImage or CGImageSource debug
-            print("❌ VI ViewModel: UIImage(data:) failed for session \(context.sessionID). Size: \(context.imageData.count) bytes. Trying fallbacks...")
-            
-            // Attempt CGImageSource directly for robustness
-            if let source = CGImageSourceCreateWithData(context.imageData as CFData, nil),
-               let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) {
-                let image = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
-                self.capturedImage = image
-                self.siftedImage = image
-                print("✅ VI ViewModel: Recovered image via CGImageSource.")
-            } else if let ciImage = CIImage(data: context.imageData) {
-                 let context = CIContext()
-                 if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
-                     self.capturedImage = UIImage(cgImage: cgImage)
-                     self.siftedImage = self.capturedImage
-                     print("✅ VI ViewModel: Recovered image via CIImage.")
-                 } else {
-                     print("❌ VI ViewModel: CIImage created but CGImage failed.")
-                 }
-            } else {
-                 print("❌ VI ViewModel: All image recovery attempts failed. Data header: \(context.imageData.prefix(20).map { String(format: "%02hhx", $0) }.joined())")
+        // 2. Data Type Detection (Image vs Video)
+        let isVideo = self.isDataVideo(context.imageData)
+        
+        if isVideo {
+            print("🎥 VI ViewModel: Detected Video Data for session \(context.sessionID)")
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("mov")
+            do {
+                try context.imageData.write(to: tempURL)
+                self.capturedVideoURL = tempURL
+                
+                // Generate Thumbnail
+                let asset = AVAsset(url: tempURL)
+                let generator = AVAssetImageGenerator(asset: asset)
+                generator.appliesPreferredTrackTransform = true
+                if let cgImage = try? generator.copyCGImage(at: .zero, actualTime: nil) {
+                    self.capturedImage = PlatformImage(cgImage: cgImage)
+                    self.siftedImage = self.capturedImage
+                }
+            } catch {
+                print("❌ VI ViewModel: Failed to prepare video for reprocessing: \(error)")
             }
+        } else {
+            // Image Path
+            #if canImport(UIKit)
+            if let image = UIImage(data: context.imageData) {
+                self.capturedImage = image
+                self.siftedImage = image 
+            } else {
+                // ... (Existing fallback logic) ...
+                 // Fallback: Try CIImage or CGImageSource debug
+                 print("❌ VI ViewModel: UIImage(data:) failed for session \(context.sessionID). Size: \(context.imageData.count) bytes. Trying fallbacks...")
+                 
+                 // Attempt CGImageSource directly for robustness
+                 if let source = CGImageSourceCreateWithData(context.imageData as CFData, nil),
+                    let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) {
+                     let image = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
+                     self.capturedImage = image
+                     self.siftedImage = image
+                     print("✅ VI ViewModel: Recovered image via CGImageSource.")
+                 } else {
+                     print("❌ VI ViewModel: All image recovery attempts failed.")
+                 }
+            }
+            #endif
         }
-        #endif
         
         // 2. Set Session & Metadata
         self.activeSessionID = context.sessionID
@@ -312,16 +328,6 @@ public class VisualIntelligenceViewModel: ObservableObject {
             }
         }
         
-        // 3. Pre-fill Place Candidate if we have ID/Name
-        // COMMENTED OUT: User request to CLEAR previous selection on reprocess to allow fresh search/detection
-        /*
-        if let pid = context.placeID, let name = context.placeName {
-            // Create a dummy enrichment data to represent current place
-            let placeContext = PlaceContext(name: name, categories: [], placeID: pid, address: nil, latitude: self.currentCaptureCoordinate?.latitude, longitude: self.currentCaptureCoordinate?.longitude)
-            let enrichment = EnrichmentData(title: name, descriptionText: nil, categories: [], styleTags: [], location: context.location, price: nil, rating: nil, questions: [], placeContext: placeContext)
-            self.selectedPlace = enrichment
-        }
-        */
         // Only clear if not pinned
         if !isLocationPinned {
             self.selectedPlace = nil
@@ -333,10 +339,23 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // 5. Trigger Analysis immediately
         if let image = self.capturedImage {
             self.analyzeReprocessImage(image)
+        } else {
+            print("⚠️ VI ViewModel: No image available for analysis after load.")
+            self.pipelineStatus = .failed
+            self.isAnalyzing = false
         }
         
         // 6. Clear context so we don't loop
         Services.shared.pendingReprocessContext = nil
+    }
+    
+    private func isDataVideo(_ data: Data) -> Bool {
+        let len = data.count
+        if len < 4 { return false }
+        let header = data.prefix(12).map { String(format: "%02hhx", $0) }.joined()
+        // Common MP4/MOV signatures (ftyp, moov, etc at start or offset 4)
+        // User provided: 0000001c 66747970 (ftyp) 6d703432 (mp42)
+        return header.contains("66747970") || header.contains("6d6f6f76") // ftyp or moov
     }
     
     // MARK: - Location Initialization

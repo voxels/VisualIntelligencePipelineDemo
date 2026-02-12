@@ -123,23 +123,35 @@ public class DailyContextService: ObservableObject {
         
         // 3. Generate Summary via LLM
         do {
-            let prompt = """
-            Create a concise, one-sentence summary of the user's focus over the last 24 hours based on these activities. 
-            Prioritize the most recent items (the ones at the end of the list).
-            If no activities are listed, say "No recent activity."
-            
-            Current time: \(Date().formatted())
-            Activities (Last 24 Hours):
-            \(formattedContext)
-            
-            Summary (ONE SENTENCE):
-            """
-            
-            let summary = try await contextService.summarizeText(prompt)
-            
-            await MainActor.run {
-                self.dailySummary = summary
-                self.saveState()
+            if ContextQuestionService.isAvailable {
+                let prompt = """
+                Create a concise, one-sentence summary of the user's focus over the last 24 hours based on these activities.
+                Prioritize the most recent items (the ones at the end of the list).
+                If no activities are listed, say "No recent activity."
+                
+                Current time: \(Date().formatted())
+                Activities (Last 24 Hours):
+                \(formattedContext)
+                
+                Summary (ONE SENTENCE):
+                """
+                
+                let summary = try await contextService.summarizeText(prompt)
+                
+                await MainActor.run {
+                    self.dailySummary = summary
+                    self.saveState()
+                }
+            } else {
+                 // Heuristic Fallback
+                 let count = items.count
+                 let locations = Set(items.compactMap { $0.location }).prefix(2).joined(separator: " and ")
+                 let fallback = "Captured \(count) items\(locations.isEmpty ? "" : " at " + locations) today."
+                 
+                 await MainActor.run {
+                     self.dailySummary = fallback
+                     self.saveState()
+                 }
             }
             
         } catch {

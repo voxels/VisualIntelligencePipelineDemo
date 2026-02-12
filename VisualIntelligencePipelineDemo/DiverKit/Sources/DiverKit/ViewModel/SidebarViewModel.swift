@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import DiverShared
+
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -264,7 +265,7 @@ public final class SidebarViewModel: ObservableObject {
         return Array(related.sorted(by: { $0.weight > $1.weight }).prefix(5))
     }
     
-    public func createNewNoteForSession(_ session: SessionMetadata, context: ModelContext) {
+    public func createNewNoteForSession(_ session: SessionMetadata, context: ModelContext) -> ProcessedItem {
         // Business logic to auto-create a summary note
         let note = ProcessedItem(
             id: UUID().uuidString,
@@ -276,6 +277,7 @@ public final class SidebarViewModel: ObservableObject {
         note.session = session
         context.insert(note)
         try? context.save()
+        return note
     }
     
     public func deleteItem(_ item: ProcessedItem, context: ModelContext) {
@@ -760,28 +762,24 @@ public final class SidebarViewModel: ObservableObject {
             }
             
             #if os(iOS)
-            // Show native share sheet
+            // Use RichLinkSharer for consistent rich media previews
             await MainActor.run {
                 guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                       let rootViewController = windowScene.windows.first?.rootViewController else {
                     return
                 }
                 
-                let activityVC = UIActivityViewController(
-                    activityItems: [wrappedLink],
-                    applicationActivities: nil
+                // Use the configured URL if possible
+                guard let finalURL = URL(string: wrappedLink) else { return }
+                
+                let sharer = RichLinkSharer.shared
+                sharer.presentShareSheet(
+                    from: rootViewController,
+                    url: finalURL,
+                    title: item.title,
+                    image: nil, // Could extract image from item if we wanted to pass it
+                    originalURL: url
                 )
-                
-                // For iPad
-                if let popover = activityVC.popoverPresentationController {
-                    popover.sourceView = rootViewController.view
-                    popover.sourceRect = CGRect(x: rootViewController.view.bounds.midX,
-                                                y: rootViewController.view.bounds.midY,
-                                                width: 0, height: 0)
-                    popover.permittedArrowDirections = []
-                }
-                
-                rootViewController.present(activityVC, animated: true)
             }
             #endif
         }

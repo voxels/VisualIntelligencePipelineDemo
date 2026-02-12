@@ -8,6 +8,11 @@
 - `DiverKit/`: Shared Swift Package (`Package.swift`).
   - `DiverKit/Sources/DiverKit/`: Reusable modules (e.g., `Auth/`, `Core/Networking/`, `Storage/`, `Services/`).
   - `DiverKit/Tests/DiverKitTests/`: Package tests.
+- `DiverShared/`: Shared definitions & types (Pure Swift, no dependencies).
+  - `DiverShared/Sources/DiverShared/`: Data models, App Group config, primitive types.
+- `VisualIntelligencePipeline/`: Visual Intelligence Feature Sandbox & Demo App.
+  - `VisualIntelligencePipeline/VisualIntelligencePipeline/`: SwiftUI app source.
+  - `VisualIntelligencePipeline/VisualIntelligencePipelineTests/`: Unit tests for VI features.
 
 Prefer putting cross-platform/shared logic in `DiverKit` and keeping `Diver/Diver/` focused on UI + app wiring.
 

@@ -2,8 +2,8 @@ import WidgetKit
 import SwiftUI
 import AppIntents
 
-struct DiverHomeScreenWidget: Widget {
-    let kind: String = "DiverHomeScreenWidget"
+struct VisualIntelligencePipelineHomeScreenWidget: Widget {
+    let kind: String = "VisualIntelligencePipelineHomeScreenWidget"
 
     var body: some WidgetConfiguration {
         AppIntentConfiguration(
@@ -11,16 +11,16 @@ struct DiverHomeScreenWidget: Widget {
             intent: SearchLinksIntent.self,
             provider: LinkTimelineProvider()
         ) { entry in
-            DiverWidgetView(entry: entry)
+            VisualIntelligencePipelineWidgetView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("Diver Links")
-        .description("View and access your recent Diver links")
+        .configurationDisplayName("Visual Intelligence Pipeline Links")
+        .description("View and access your recent Visual Intelligence Pipeline links")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
-struct DiverWidgetView: View {
+struct VisualIntelligencePipelineWidgetView: View {
     @Environment(\.widgetFamily) var family
     let entry: LinkEntry
 
@@ -186,7 +186,7 @@ struct LargeWidgetView: View {
 
             // Footer
             HStack {
-                Text("Tap to open in Diver")
+                Text("Tap to open in Visual Intelligence Pipeline")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
                 Spacer()
@@ -206,7 +206,7 @@ struct LinkRow: View {
     var showSummary: Bool = false
 
     var body: some View {
-        Link(destination: link.url ?? URL(string: "diver://")!) {
+        Link(destination: link.url ?? URL(string: "secretatomics://")!) {
             HStack(alignment: .top, spacing: 8) {
                 // Icon
                 Image(systemName: "link")

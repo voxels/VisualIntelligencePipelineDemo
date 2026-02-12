@@ -30,7 +30,7 @@ class SharedWithYouManager: NSObject, ObservableObject {
     @Published private(set) var isEnabled: Bool
 
     /// Initialize the manager with a queue store for enqueueing shared content
-    init(queueStore: DiverQueueStore, pipelineService: MetadataPipelineService? = nil, isEnabled: Bool = true) {
+    init(queueStore: DiverQueueStore, pipelineService: MetadataPipelineService? = nil, isEnabled: Bool = false) {
         self.queueStore = queueStore
         self.pipelineService = pipelineService
         self.isEnabled = isEnabled
@@ -58,7 +58,15 @@ class SharedWithYouManager: NSObject, ObservableObject {
         Task { @MainActor in
             let fetchedHighlights = highlightCenter.highlights
             self.highlights = fetchedHighlights
-            logger.debug("Refreshed highlights: \(fetchedHighlights.count) items")
+            logger.info("♻️ [SharedWithYou] Refreshed highlights. Count: \(fetchedHighlights.count)")
+            
+            for (index, highlight) in fetchedHighlights.enumerated() {
+                logger.debug("   [\(index)] ID: \(String(describing: highlight.identifier)), URL: \(highlight.url.absoluteString)")
+            }
+            
+            if fetchedHighlights.isEmpty {
+                logger.debug("   [SharedWithYou] No highlights found. Check system settings or if links are actually shared.")
+            }
         }
     }
 
@@ -83,7 +91,7 @@ class SharedWithYouManager: NSObject, ObservableObject {
 
         // Create descriptor - DiverItemDescriptor requires id and url at minimum
         let itemId = DiverLinkWrapper.id(for: url)
-        let attributionID = String(describing:highlight.identifier)
+        let attributionID = String(describing: highlight.identifier)
         logger.debug("🔎 [SharedWithYou] Processing highlight: \(url.absoluteString), attributionID: \(attributionID)")
         
         let descriptor = DiverItemDescriptor(
@@ -205,7 +213,7 @@ extension SharedWithYouManager: SWHighlightCenterDelegate {
 
     nonisolated func highlightCenterHighlightsDidChange(_ highlightCenter: SWHighlightCenter) {
         Task { @MainActor in
-            logger.debug("Highlights changed notification received")
+            logger.info("🔔 [SharedWithYou] Delegate received highlightsDidChange notification")
             refreshHighlights()
         }
     }

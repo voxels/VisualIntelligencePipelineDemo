@@ -59,10 +59,11 @@ final class ShareLinkIntentTests: XCTestCase {
         let result = try await intent.perform()
 
         // Then
-        XCTAssertFalse(result.value?.isEmpty ?? true, "Wrapped link should not be empty")
-        XCTAssertTrue(result.value?.hasPrefix("https://secretatomics.com/w/") == true, "Should use correct base URL")
-        XCTAssertTrue(result.value?.contains("?v=1") == true, "Should include version parameter")
-        XCTAssertTrue(result.value?.contains("&sig=") == true, "Should include signature")
+        XCTAssertNotNil(result.value, "Wrapped link should not be nil")
+        let urlString = result.value?.absoluteString ?? ""
+        XCTAssertTrue(urlString.hasPrefix("https://secretatomics.com/w/"), "Should use correct base URL")
+        XCTAssertTrue(urlString.contains("?v=1"), "Should include version parameter")
+        XCTAssertTrue(urlString.contains("&sig="), "Should include signature")
     }
 
     func testShareLinkIntent_ValidURL_QueuesItem() async throws {
@@ -94,7 +95,7 @@ final class ShareLinkIntentTests: XCTestCase {
         let result = try await intent.perform()
 
         // Then
-        XCTAssertFalse(result.value?.isEmpty ?? true)
+        XCTAssertNotNil(result.value)
 
         let items = try queueStore.pendingEntries()
         XCTAssertEqual(items.first?.item.descriptor.title, testURL.absoluteString)
@@ -112,8 +113,8 @@ final class ShareLinkIntentTests: XCTestCase {
         let result = try await intent.perform()
 
         // Then
-        XCTAssertEqual(result.value, "", "Should return empty string for invalid URL")
-        // XCTAssertTrue(result.dialog.debugDescription.contains("not valid"), "Should indicate URL is invalid")
+        // We now return the original URL on error
+        XCTAssertEqual(result.value, invalidURL, "Should return original URL for invalid URL")
     }
 
     // MARK: - Keychain Tests
@@ -134,8 +135,8 @@ final class ShareLinkIntentTests: XCTestCase {
         let result = try await intent.perform()
 
         // Then
-        XCTAssertEqual(result.value, "", "Should return empty string when keychain fails")
-        // XCTAssertTrue(result.dialog.debugDescription.contains("keychain"), "Should mention keychain error")
+        // We returns original URL on failure
+        XCTAssertEqual(result.value, testURL, "Should return original URL when keychain fails")
 
         // Restore secret for other tests
         let testSecret = String(repeating: "a", count: 64)
@@ -154,11 +155,7 @@ final class ShareLinkIntentTests: XCTestCase {
         let result = try await intent.perform()
 
         // Then
-        let wrappedLink = result.value ?? ""
-        XCTAssertFalse(wrappedLink.isEmpty)
-
-        // Parse wrapped link
-        guard let wrappedURL = URL(string: wrappedLink) else {
+        guard let wrappedURL = result.value else {
             XCTFail("Wrapped link should be a valid URL")
             return
         }
@@ -190,7 +187,7 @@ final class ShareLinkIntentTests: XCTestCase {
 
         // Then
         // Even if queueing fails, we should still get the wrapped link
-        XCTAssertFalse(result.value?.isEmpty ?? true, "Should return wrapped link even if queueing fails")
+        XCTAssertNotNil(result.value, "Should return wrapped link even if queueing fails")
     }
 
     // MARK: - Edge Cases
@@ -207,7 +204,7 @@ final class ShareLinkIntentTests: XCTestCase {
         let result = try await intent.perform()
 
         // Then
-        XCTAssertFalse(result.value?.isEmpty ?? true, "Should handle long URLs")
+        XCTAssertNotNil(result.value, "Should handle long URLs")
     }
 
     func testShareLinkIntent_URLWithSpecialCharacters_EncodesCorrectly() async throws {
@@ -222,7 +219,7 @@ final class ShareLinkIntentTests: XCTestCase {
         let result = try await intent.perform()
 
         // Then
-        XCTAssertFalse(result.value?.isEmpty ?? true, "Should handle special characters")
+        XCTAssertNotNil(result.value, "Should handle special characters")
 
         let items = try queueStore.pendingEntries()
         XCTAssertEqual(items.first?.item.descriptor.url, specialURL.absoluteString)
@@ -238,8 +235,9 @@ final class ShareLinkIntentTests: XCTestCase {
         let result = try await intent.perform()
 
         // Then
-        XCTAssertFalse(result.value?.isEmpty ?? true)
+        XCTAssertNotNil(result.value)
         let items = try queueStore.pendingEntries()
         XCTAssertEqual(items.first?.item.descriptor.title, "测试页面 🚀")
     }
 }
+

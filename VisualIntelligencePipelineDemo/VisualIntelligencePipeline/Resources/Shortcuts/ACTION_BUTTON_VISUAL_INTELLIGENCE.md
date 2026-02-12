@@ -228,7 +228,7 @@ NSDataDetector    URL Validation
            ↓
     Copy to Clipboard
            ↓
-  Save to Diver Queue
+  Save to Visual Intelligence Queue
            ↓
    Open Messages App
 ```

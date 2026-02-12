@@ -137,7 +137,7 @@ struct CaptureReviewView: View {
                         HStack(spacing: 12) {
                             Image(systemName: "sparkles.tv.fill")
                                 .font(.system(size: 24))
-                            Text("Save to Diver")
+                            Text("Save to Visual Intelligence")
                                 .fontWeight(.bold)
                         }
                         .foregroundStyle(.white)

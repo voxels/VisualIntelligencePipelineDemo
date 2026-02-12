@@ -715,12 +715,26 @@ public final class MetadataPipelineService {
                 Generate a brief 1-2 sentence summary of what was captured in this session.
                 """
                 
-                let llmSummary = try await contextService.summarizeText(contextText)
+                let llmSummary: String
+                
+                if ContextQuestionService.isAvailable {
+                    llmSummary = try await contextService.summarizeText(contextText)
+                } else {
+                    // Heuristic Fallback
+                    let count = items.count
+                    // Use itemContexts (which has titles/OCR) to extract unique titles
+                    let titles = items.compactMap { $0.title }
+                        .filter { !$0.isEmpty && $0 != "Untitled" && $0 != "Visual Capture" }
+                        .prefix(3)
+                        .joined(separator: ", ")
+                    
+                    llmSummary = "Session with \(count) items. Includes: \(titles.isEmpty ? "Captured content" : titles)."
+                }
                 
                 session.summary = llmSummary
                 session.updatedAt = Date()
                 
-                print("✅ [MetadataPipeline] Generated LLM summary for session '\(session.sessionID)': \(llmSummary.prefix(100))...")
+                print("✅ [MetadataPipeline] Generated summary for session '\(session.sessionID)': \(llmSummary.prefix(100))...")
             }
             
             try modelContext.save()
@@ -770,12 +784,21 @@ public final class MetadataPipelineService {
                 
                 let contextText = "Collection: \(collection.name)\n\nItems:\n" + Array(itemSummaries).joined(separator: "\n")
                 
-                let llmSummary = try await contextService.summarizeText(contextText)
+                let summary: String
                 
-                collection.llmSummary = llmSummary
+                if ContextQuestionService.isAvailable {
+                    summary = try await contextService.summarizeText(contextText)
+                } else {
+                    // Heuristic Fallback
+                    let count = allItems.count
+                    let examples = allItems.compactMap { $0.title }.filter { !$0.isEmpty && $0 != "Untitled" }.prefix(3).joined(separator: ", ")
+                    summary = "Collection containing \(count) items. Includes: \(examples.isEmpty ? "Various items" : examples)."
+                }
+                
+                collection.llmSummary = summary
                 collection.updatedAt = Date()
                 
-                print("✅ [MetadataPipeline] Generated LLM summary for collection '\(collection.name)'")
+                print("✅ [MetadataPipeline] Generated summary for collection '\(collection.name)'")
             }
             
             try modelContext.save()

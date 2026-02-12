@@ -310,38 +310,30 @@ final class ActionViewController: UIViewController {
 
             let wrappedString = wrappedURL.absoluteString
 
-            // Step 3: Copy to clipboard
-            UIPasteboard.general.string = wrappedString
-
-            // Step 4: Open Messages
-            openMessages(with: wrappedString)
+            // Step 3: Share via RichLinkSharer
+            // We use the original URL for scraping if available, and the wrapped URL as the primary link
+            // However, for secretatomics:// links, we want to ensure the preview is rich.
+            // RichLinkSharer handles this by creating LPLinkMetadata manually.
+            
+            await MainActor.run {
+                RichLinkSharer.shared.presentShareSheet(
+                    from: self,
+                    url: wrappedURL,
+                    title: descriptor.title,
+                    image: nil, // We could fetch a favicon or screenshot if available
+                    originalURL: url
+                )
+                
+                // Complete the extension request after presentation (or let the share sheet dismissal handle it?)
+                // The ShareSheet is presented modally. We should probably wait?
+                // Actually, for an Action Extension, we present the interface, user interacts, then we complete.
+                // If we present a share sheet on top of our view, we are fine.
+                // But we should probably close our own extension view once the share sheet is done?
+                // No, UIActivityViewController is a view controller.
+            }
         } catch {
             showError("Failed to save and share: \(error.localizedDescription)")
         }
-    }
-
-    // MARK: - Messages Integration
-
-    private func openMessages(with link: String) {
-        MessagesLaunchStore.save(body: link)
-        let candidates = ["sms:", "sms://"].compactMap(URL.init(string:))
-        attemptOpenMessages(with: candidates)
-    }
-
-    private func attemptOpenMessages(with candidates: [URL]) {
-        guard let url = candidates.first else {
-            showSuccess(message: "Link copied! Open Messages to share.")
-            return
-        }
-
-        extensionContext?.open(url, completionHandler: { [weak self] success in
-            guard let self = self else { return }
-            if success {
-                return
-            }
-            let remaining = Array(candidates.dropFirst())
-            self.attemptOpenMessages(with: remaining)
-        })
     }
 
     // MARK: - Simple Status Views (Fallback)

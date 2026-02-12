@@ -37,28 +37,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // Shared with You Section
-                Section {
-                    if #available(iOS 16.0, macOS 13.0, *) {
-                        Toggle("Shared with You", isOn: Binding(
-                            get: { sharedWithYouManager.isEnabled },
-                            set: { sharedWithYouManager.setEnabled($0) }
-                        ))
-                        .tint(.blue)
 
-                        if sharedWithYouManager.isEnabled {
-                            Text("Automatically save links shared in Messages")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    } else {
-                        Text("Shared with You requires iOS 16+ or macOS 13+")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                } header: {
-                    Text("Features")
-                }
 
                 // Personal Information Section
                 Section {
@@ -195,6 +174,33 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("About")
+                }
+                
+                // Shared with You Section
+                Section {
+                    if #available(iOS 16.0, macOS 13.0, *) {
+                        Toggle("Shared with You", isOn: Binding(
+                            get: { sharedWithYouManager.isEnabled },
+                            set: { sharedWithYouManager.setEnabled($0) }
+                        ))
+                        .tint(.blue)
+
+                        if sharedWithYouManager.isEnabled {
+                            Text("Automatically save links shared in Messages")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else {
+                        Text("Shared with You requires iOS 16+ or macOS 13+")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text("Features")
+                } footer: {
+                    if sharedWithYouManager.isEnabled {
+                        Text("To see shared links, ensure 'Shared with You' is enabled in Settings > Messages > Shared with You.")
+                    }
                 }
             }
             .navigationTitle("Settings")

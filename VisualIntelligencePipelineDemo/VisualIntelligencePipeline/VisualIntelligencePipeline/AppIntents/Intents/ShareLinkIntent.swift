@@ -20,11 +20,11 @@ struct ShareLinkIntent: AppIntent {
     internal static var _testQueueStore: DiverQueueStore?
 
     @MainActor
-    func perform() async throws -> some IntentResult & ReturnsValue<String> & ProvidesDialog & ShowsSnippetView {
+    func perform() async throws -> some IntentResult & ReturnsValue<URL> & ProvidesDialog & ShowsSnippetView {
         // Validate URL
         guard Validation.isValidURL(url.absoluteString) else {
             return .result(
-                value: "",
+                value: url, // Return original on error? Or empty? URL cannot be empty. Return original.
                 dialog: "The provided URL is not valid."
             )
         }
@@ -39,7 +39,7 @@ struct ShareLinkIntent: AppIntent {
             let secret = Data(base64Encoded: secretString)
         else {
             return .result(
-                value: "",
+                value: url,
                 dialog: "Unable to access keychain secret."
             )
         }
@@ -53,7 +53,7 @@ struct ShareLinkIntent: AppIntent {
             includePayload: true
         ) else {
             return .result(
-                value: "",
+                value: url,
                 dialog: "Failed to create wrapped link."
             )
         }
@@ -84,7 +84,7 @@ struct ShareLinkIntent: AppIntent {
             try queueStore.enqueue(queueItem)
 
             return .result(
-                value: wrappedString,
+                value: wrappedURL,
                 dialog: "Created Visual Intelligence link for \"\(title ?? url.host ?? "link")\" and saved to library.",
                 view: ShareLinkSnippet(
                     host: title ?? url.host ?? "Link",
@@ -94,7 +94,7 @@ struct ShareLinkIntent: AppIntent {
         } catch {
             // Still return the wrapped link even if queueing fails
             return .result(
-                value: wrappedString,
+                value: wrappedURL,
                 dialog: "Created Visual Intelligence link for \"\(title ?? url.host ?? "link")\" but failed to save: \(error.localizedDescription)",
                 view: ShareLinkSnippet(
                     host: title ?? url.host ?? "Link",
