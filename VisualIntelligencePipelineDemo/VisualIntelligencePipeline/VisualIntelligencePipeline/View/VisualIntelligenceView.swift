@@ -120,7 +120,7 @@ public struct VisualIntelligenceView: View {
             }
             .fullScreenCover(isPresented: $showingFullScreenReview) {
                 if let image = viewModel.capturedImage {
-                    FullScreenImageView(image: image)
+                    FullScreenImageView(image: image, sessionImages: viewModel.sessionImages)
                 }
             }
             .onChange(of: viewModel.shouldDismiss) {_, newValue in
@@ -144,49 +144,43 @@ public struct VisualIntelligenceView: View {
     
     @ViewBuilder
     private var backgroundLayer: some View {
-        AnyView(
-            Group {
-                if viewModel.isReviewing {
-                    VisualIntelligenceReviewLayer(viewModel: viewModel)
-                } else if viewModel.cameraManager.isReady {
-                    VisualIntelligenceCameraLayer(viewModel: viewModel)
-                } else {
-                    bootingLayer
-                }
+        Group {
+            if viewModel.isReviewing {
+                VisualIntelligenceReviewLayer(viewModel: viewModel)
+            } else if viewModel.cameraManager.isReady {
+                VisualIntelligenceCameraLayer(viewModel: viewModel)
+            } else {
+                bootingLayer
             }
-        )
+        }
     }
     
     @ViewBuilder
     private var navigationLayer: some View {
-        AnyView(
-            VStack(spacing: 0) {
-                // Top Stack: Location only (Context moved to Intelligence View)
-                
-                SessionLocationBar(viewModel: viewModel)
-                    .padding(.top, 8)
-                
-                Spacer()
-            }
-            .zIndex(100)
-        )
+        VStack(spacing: 0) {
+            // Top Stack: Location only (Context moved to Intelligence View)
+            
+            SessionLocationBar(viewModel: viewModel)
+                .padding(.top, 8)
+            
+            Spacer()
+        }
+        .zIndex(100)
     }
     
     @ViewBuilder
     private var hudLayer: some View {
-        AnyView(
-            VisualIntelligenceHUD(
-                viewModel: viewModel,
-                isEnteringCustomContext: $isEnteringCustomContext,
-                showingFullScreenReview: $showingFullScreenReview,
-                showingIntelligenceView: $showingIntelligenceView,
-                orientation: orientation,
-                onResultSelected: { result in
-                    handleResultSelection(result)
-                }
-            )
-            .zIndex(20)
+        VisualIntelligenceHUD(
+            viewModel: viewModel,
+            isEnteringCustomContext: $isEnteringCustomContext,
+            showingFullScreenReview: $showingFullScreenReview,
+            showingIntelligenceView: $showingIntelligenceView,
+            orientation: orientation,
+            onResultSelected: { result in
+                handleResultSelection(result)
+            }
         )
+        .zIndex(20)
     }
     
     private func angleForOrientation(_ orientation: UIDeviceOrientation) -> Angle {
@@ -233,6 +227,17 @@ struct VisualIntelligenceReviewLayer: View {
             VideoPlayer(player: AVPlayer(url: videoURL))
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if !viewModel.sessionImages.isEmpty {
+            TabView(selection: $viewModel.capturedImage) {
+                ForEach(viewModel.sessionImages, id: \.self) { image in
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .tag(image as UIImage?) // Tag for selection
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .always))
         } else if let capturedImage = viewModel.capturedImage {
             Image(uiImage: capturedImage)
                 .resizable()
@@ -314,24 +319,27 @@ struct VisualIntelligenceHUD: View {
                 Spacer()
                 
                 HStack(spacing: 16) {
-                    // Thumbnail
-                    Button { showingFullScreenReview = true } label: {
-                        Group {
-                            if let siftedImage = viewModel.siftedImage {
-                                #if canImport(UIKit)
-                                Image(uiImage: siftedImage).resizable().scaledToFit()
-                                #elseif canImport(AppKit)
-                                Image(nsImage: siftedImage).resizable().scaledToFit()
-                                #endif
-                            } else if let image = viewModel.capturedImage {
-                                Image(uiImage: image).resizable().scaledToFill()
-                            } else {
-                                Color.white.opacity(0.2).overlay(ProgressView().tint(.white))
-                            }
+                    // Live Camera Thumbnail (Picture-in-Picture)
+                    Button {
+                        // Resumes live camera mode
+                        withAnimation {
+                            viewModel.reCapture()
                         }
-                        .frame(width: 60, height: 60)
+                    } label: {
+                        Group {
+                            // Show live camera feed
+                            CameraPreviewView(session: viewModel.cameraManager.session)
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 60, height: 80) // Portrait ratio
+                                .clipped()
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                                )
+                        }
+                        .frame(width: 60, height: 80)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .glass(cornerRadius: 12)
+                        .shadow(radius: 5)
                     }
                     
                     // Add Image (+)
@@ -414,17 +422,18 @@ extension View {
     @ViewBuilder
     func glass(cornerRadius: CGFloat) -> some View {
         if #available(iOS 26.0, macOS 19.0, *) {
-            AnyView(self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius)))
+            self.glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius))
         } else {
-            AnyView(self.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius)))
+            self.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
         }
     }
     
+    @ViewBuilder
     func glassCapsule() -> some View {
         if #available(iOS 26.0, macOS 19.0, *) {
-            AnyView(self.glassEffect(.regular, in: Capsule()))
+            self.glassEffect(.regular, in: Capsule())
         } else {
-            AnyView(self.background(.ultraThinMaterial, in: Capsule()))
+            self.background(.ultraThinMaterial, in: Capsule())
         }
     }
 }
@@ -1076,38 +1085,60 @@ struct WebView: UIViewRepresentable {
 }
 
 struct FullScreenImageView: View {
-    let image: UIImage
+    let image: UIImage // Fallback/Single
+    var sessionImages: [UIImage] = []
+    
     @Environment(\.dismiss) private var dismiss
+    @State private var selectedImage: UIImage?
+    
+    init(image: UIImage, sessionImages: [UIImage] = []) {
+        self.image = image
+        self.sessionImages = sessionImages
+        _selectedImage = State(initialValue: image)
+    }
     
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
             
-            GeometryReader { proxy in
-                Image(uiImage: image) // Assuming image is safe to unwrap or passed directly
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: proxy.size.width, height: proxy.size.height)
+            if !sessionImages.isEmpty {
+                TabView(selection: $selectedImage) {
+                    ForEach(sessionImages, id: \.self) { img in
+                        GeometryReader { proxy in
+                            Image(uiImage: img)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: proxy.size.width, height: proxy.size.height)
+                        }
+                        .tag(img as UIImage?)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .always))
+            } else {
+                GeometryReader { proxy in
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                }
             }
-            .ignoresSafeArea()
             
             // Interaction overlay
             VStack {
                 HStack {
-                    Button {
-                        dismiss()
-                    } label: {
+                    Button(action: { dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
-                        .font(.largeTitle)
-                        .foregroundStyle(.white)
-                        .padding()
-                        .shadow(radius: 5)
+                            .font(.largeTitle)
+                            .foregroundStyle(.white)
+                            .padding()
+                            .shadow(radius: 5)
                     }
                     Spacer()
                 }
                 Spacer()
             }
         }
+        .ignoresSafeArea()
     }
 }
 

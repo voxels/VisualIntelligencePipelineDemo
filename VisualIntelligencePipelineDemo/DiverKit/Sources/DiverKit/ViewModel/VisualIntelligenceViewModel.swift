@@ -62,9 +62,47 @@ public class VisualIntelligenceViewModel: ObservableObject {
     
     // Map Selection
     @Published public var placeCandidates: [EnrichmentData] = []
-    @Published public var selectedPlace: EnrichmentData?
-    @Published public var isLocationPinned: Bool = false // Feature: Persistent Location
+    
+    @Published public var selectedPlace: EnrichmentData? {
+        didSet {
+            if isLocationPinned {
+                savePinnedState()
+            }
+        }
+    }
+    
+    @AppStorage("diver.isLocationPinned") public var isLocationPinned: Bool = false {
+        didSet {
+            objectWillChange.send()
+            savePinnedState()
+            if !isLocationPinned {
+                // Clear persistence if unpinned
+                UserDefaults.standard.removeObject(forKey: "diver.pinnedLocation")
+            }
+        }
+    }
+    
     @Published public var showingPlaceSelection: Bool = false
+    
+    // Helper for persistence
+    private func savePinnedState() {
+        if isLocationPinned, let place = selectedPlace {
+            if let data = try? JSONEncoder().encode(place) {
+                UserDefaults.standard.set(data, forKey: "diver.pinnedLocation")
+                print("📍 VI ViewModel: Persisted pinned location: \(place.title ?? "Unknown")")
+            }
+        }
+    }
+    
+    private func restorePinnedState() {
+        // isLocationPinned is already restored by AppStorage
+        if isLocationPinned,
+           let data = UserDefaults.standard.data(forKey: "diver.pinnedLocation"),
+           let place = try? JSONDecoder().decode(EnrichmentData.self, from: data) {
+            self.selectedPlace = place
+            print("📍 VI ViewModel: Restored pinned location: \(place.title ?? "Unknown")")
+        }
+    }
     
     // Renaming
     @Published public var renamingPlace: EnrichmentData?
@@ -245,6 +283,9 @@ public class VisualIntelligenceViewModel: ObservableObject {
         Task {
             _ = await PhotosAssetLoader.shared.requestAuthorization()
         }
+        
+        // Restore pinned state
+        restorePinnedState()
     }
     
     // Off-main helper to process a frame safely without sending main-actor state
