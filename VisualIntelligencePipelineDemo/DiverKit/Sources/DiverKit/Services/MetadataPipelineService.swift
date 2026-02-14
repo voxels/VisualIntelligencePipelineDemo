@@ -476,9 +476,17 @@ public final class MetadataPipelineService {
                     queueCurrentItemTitle = input.text ?? input.url ?? "Pending item"
                     queueStatusMessage = "Processing pending item…"
                     
+                    // Recover descriptor from LocalInput's cached JSON (if available)
+                    // This ensures sessionID and purposes survive cancellation/crash recovery
+                    var recoveredDescriptor: DiverItemDescriptor? = nil
+                    if let json = input.descriptorJSON {
+                        recoveredDescriptor = try? JSONDecoder().decode(DiverItemDescriptor.self, from: json)
+                    }
+                    
                     // Re-run process. logic checks for existing items automatically.
                     _ = try await localPipeline.process(
                         input: input,
+                        descriptor: recoveredDescriptor,
                         enrichmentService: self.enrichmentService,
                         locationService: self.locationService,
                         foursquareService: self.foursquareService,
@@ -729,8 +737,13 @@ public final class MetadataPipelineService {
             url: descriptor.url,
             source: record.item.source,
             inputType: descriptor.type.rawValue,
-            rawPayload: payload
+            rawPayload: payload,
+            sessionID: descriptor.sessionID,
+            purposes: Array(descriptor.purposes)
         )
+        // Persist full descriptor for crash recovery — if the task is cancelled
+        // before process() completes, resumeSuspendedQueue can recover it.
+        localInput.descriptorJSON = try? JSONEncoder().encode(descriptor)
 
         modelContext.insert(localInput)
         let localPipeline = LocalPipelineService(modelContext: modelContext)

@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import DiverShared
 
 @Model
 public final class LocalInput: Identifiable {
@@ -10,6 +11,13 @@ public final class LocalInput: Identifiable {
     public var source: String?
     public var inputType: String = "web"
     public var rawPayload: Data?
+    
+    /// Session ID from the original descriptor — survives crash/cancellation recovery
+    public var sessionID: String?
+    /// Context tags (purposes) from the original descriptor
+    public var purposes: [String] = []
+    /// Full serialized DiverItemDescriptor for crash recovery
+    public var descriptorJSON: Data?
 
     public init(
         id: UUID = UUID(),
@@ -18,7 +26,10 @@ public final class LocalInput: Identifiable {
         text: String? = nil,
         source: String? = nil,
         inputType: String = "web",
-        rawPayload: Data? = nil
+        rawPayload: Data? = nil,
+        sessionID: String? = nil,
+        purposes: [String] = [],
+        descriptorJSON: Data? = nil
     ) {
         self.id = id
         self.createdAt = createdAt
@@ -27,6 +38,9 @@ public final class LocalInput: Identifiable {
         self.source = source
         self.inputType = inputType
         self.rawPayload = rawPayload
+        self.sessionID = sessionID
+        self.purposes = purposes
+        self.descriptorJSON = descriptorJSON
     }
 }
 

@@ -491,19 +491,46 @@ public final class IntelligenceProcessor: Sendable {
             Task {
                 print("🧠 IntelligenceProcessor: Starting Verification Round")
                 
-                // 1. Verify Semantics - Check for alternatives
-                let semanticResults = initialResults.compactMap { res -> (String, Float)? in
-                    if case .semantic(let label, let conf) = res { return (label, conf) }
-                    return nil
+                // 1. Build comprehensive context from ALL results for purpose suggestion
+                var contextParts: [String] = []
+                
+                for result in initialResults {
+                    switch result {
+                    case .semantic(let label, let conf):
+                        contextParts.append("Object: \(label) (confidence: \(String(format: "%.0f%%", conf * 100)))")
+                    case .text(let text, let url):
+                        let preview = String(text.prefix(200))
+                        contextParts.append("Captured Text: \(preview)")
+                        if let url { contextParts.append("Text Source URL: \(url.absoluteString)") }
+                    case .document(_, let text, let label, _):
+                        if let label { contextParts.append("Document Type: \(label)") }
+                        if let text {
+                            let preview = String(text.prefix(300))
+                            contextParts.append("Document Content: \(preview)")
+                        }
+                    case .richWeb(let url, let data):
+                        contextParts.append("Web Link: \(url.absoluteString)")
+                        if let title = data.title { contextParts.append("Page Title: \(title)") }
+                        if let desc = data.descriptionText { contextParts.append("Page Description: \(String(desc.prefix(200)))") }
+                    case .qr(let url):
+                        contextParts.append("QR Code URL: \(url.absoluteString)")
+                    case .product(let code, let type, _):
+                        contextParts.append("Product Code: \(code) (\(type.rawValue))")
+                    case .entertainment(let title, let type, _):
+                        contextParts.append("Entertainment: \(title) (\(type))")
+                    case .siftedSubject(_, let label):
+                        if let label { contextParts.append("Visual Subject: \(label)") }
+                    case .purpose:
+                        break // Skip existing purpose results
+                    }
                 }
                 
-                if !semanticResults.isEmpty {
-                    // Real implementation: Use ContextQuestionService to find related purposes/intents
-                    let labels = semanticResults.map { $0.0 }.joined(separator: ", ")
-                    
+                let richContext = contextParts.joined(separator: "\n")
+                
+                if !richContext.isEmpty {
                     if let service = await MainActor.run(body: { Services.shared.contextQuestionService }) {
                         do {
-                            let suggestions = try await service.suggestPurposes(from: labels)
+                            let suggestions = try await service.suggestPurposes(from: richContext)
                             if !suggestions.isEmpty {
                                 continuation.yield(.purpose(statements: suggestions))
                             }
