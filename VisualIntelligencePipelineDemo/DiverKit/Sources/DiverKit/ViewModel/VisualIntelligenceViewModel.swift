@@ -1970,7 +1970,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // Prefer the pre-rectified image from IntelligenceProcessor if available
         if let data = rectifiedImageData, let image = UIImage(data: data) {
             print("📐 handleDocumentSelection: Using pre-rectified image \(image.size), orientation=\(image.imageOrientation.rawValue)")
-            self.rectifiedDocument = image
+            // Normalize orientation — the JPEG from DocumentManager may carry EXIF rotation
+            self.rectifiedDocument = image.fixedOrientation()
             self.showingDocumentView = true
             return
         }
@@ -1979,13 +1980,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // Fallback: rectify from captured image (for cases without pre-rectified data)
         Task {
             guard let capturedImage = await MainActor.run(body: { self.capturedImage }) else { return }
-             // Use original image orientation - Vision's rectangle coordinates expect this
             #if canImport(UIKit)
             guard let cgImage = capturedImage.cgImage else { return }
-            // Use the Vision analysis orientation (NOT capturedImage.imageOrientation,
-            // which is always .up after normalization) so that rectangle coordinates
-            // from Vision are correctly mapped to the raw CGImage pixel space.
-            let orientation = self.capturedImageVisionOrientation
+            // capturedImage is already normalized to .up (pixels are upright),
+            // so pass .up — no additional rotation needed by DocumentManager.
+            // Vision rectangle coordinates are in display-space which matches
+            // the normalized pixel layout.
+            let orientation: CGImagePropertyOrientation = .up
             #elseif canImport(AppKit)
             guard let cgImage = capturedImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
             let orientation: CGImagePropertyOrientation = .up
@@ -1998,7 +1999,6 @@ public class VisualIntelligenceViewModel: ObservableObject {
             ) {
                 await MainActor.run {
                     #if canImport(UIKit)
-                    // CIPerspectiveCorrection outputs an upright image, so we must specify .up to avoid re-rotation
                     self.rectifiedDocument = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
                     #elseif canImport(AppKit)
                     self.rectifiedDocument = NSImage(cgImage: cgImage, size: .zero)
