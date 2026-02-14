@@ -5,45 +5,35 @@ import DiverShared
 
 /// Enrichment service using Apple's MapKit (MKLocalSearch)
 public final class MapKitEnrichmentService: ContextualEnrichmentService, @unchecked Sendable {
-    
+    let geocoder = CLGeocoder()
+
     public init() {}
     
     public func enrich(location: CLLocationCoordinate2D) async throws -> EnrichmentData? {
-        // Use CLGeocoder for reverse geocoding to get basic place info
-        let geocoder = CLGeocoder()
+        // Use CLGeocoder's async API for broad platform support
         let clLocation = CLLocation(latitude: location.latitude, longitude: location.longitude)
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            geocoder.reverseGeocodeLocation(clLocation) { placemarks, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                guard let placemark = placemarks?.first else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                
-                let placeContext = PlaceContext(
-                    name: placemark.name ?? "Unknown Location",
-                    categories: [placemark.category].compactMap { $0 }, // Helper extension below? Or just general category
-                    placeID: "mk-reverse-\(location.latitude)-\(location.longitude)",
-                    address: [placemark.thoroughfare, placemark.locality].compactMap { $0 }.joined(separator: ", "),
-                    latitude: location.latitude,
-                    longitude: location.longitude
-                )
-                
-                let data = EnrichmentData(
-                    title: placemark.name,
-                    descriptionText: placemark.formattedTitle, // e.g. Address
-                    categories: [placemark.category].compactMap { $0 },
-                    location: placemark.formattedTitle,
-                    placeContext: placeContext
-                )
-                continuation.resume(returning: data)
-            }
-        }
+
+        // Use the async/await reverseGeocode API; cancellation is automatically handled by Task cancellation
+        let placemarks = try await geocoder.reverseGeocodeLocation(clLocation)
+        guard let placemark = placemarks.first else { return nil }
+
+        let placeContext = PlaceContext(
+            name: placemark.name ?? "Unknown Location",
+            categories: [placemark.category].compactMap { $0 },
+            placeID: "mk-reverse-\(location.latitude)-\(location.longitude)",
+            address: [placemark.thoroughfare, placemark.locality].compactMap { $0 }.joined(separator: ", "),
+            latitude: location.latitude,
+            longitude: location.longitude
+        )
+
+        let data = EnrichmentData(
+            title: placemark.name,
+            descriptionText: placemark.formattedTitle,
+            categories: [placemark.category].compactMap { $0 },
+            location: placemark.formattedTitle,
+            placeContext: placeContext
+        )
+        return data
     }
     
     public func searchNearby(location: CLLocationCoordinate2D, limit: Int) async throws -> [EnrichmentData] {

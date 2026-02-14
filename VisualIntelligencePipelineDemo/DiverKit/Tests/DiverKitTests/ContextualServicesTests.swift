@@ -37,8 +37,33 @@ final class ContextualServicesTests: XCTestCase {
              XCTAssertEqual(tags, ["Testing", "Quality Assurance"])
         }
     }
+
+    func testLargeContextSummarization() async throws {
+        let service = ContextQuestionService()
+        
+        // Generate a large string > 12k chars
+        let largeDescription = String(repeating: "This is a long sentence repeated to test context limits. ", count: 500) // approx 27k chars
+        
+        let data = EnrichmentData(
+            title: "Large Context Test",
+            descriptionText: largeDescription,
+            categories: ["Testing"],
+            questions: []
+        )
+        
+        // This should NOT throw exceededContextWindowSize
+        let (summary, _, purpose, _) = try await service.processContext(from: data)
+        
+        XCTAssertNotNil(summary)
+        // Ensure we got a summary back (even if it's the fallback description prefix in mock mode)
+        XCTAssertFalse(summary?.isEmpty ?? true)
+        
+        // Verify purpose generation also survives
+        let suggestions = try await service.suggestPurposes(from: largeDescription)
+        // In mock mode it returns empty, but primarily we want to ensure it doesn't crash/throw
+        // If real model is present, it returns 3-5 purposes
+    }
     
-    func testDuckDuckGoEnrichmentServiceGeneratesQuestions() async throws {
         let service = DuckDuckGoEnrichmentService()
         let coords = CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060) // NYC for test
         

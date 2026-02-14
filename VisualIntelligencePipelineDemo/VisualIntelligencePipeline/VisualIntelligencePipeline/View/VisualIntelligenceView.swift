@@ -43,15 +43,19 @@ public struct VisualIntelligenceView: View {
                 if let scanID = navigationManager.scanSessionID {
                     viewModel.activeSessionID = scanID
                     print("🔄 Visual Intelligence: Resuming session \(scanID)")
-                } else {
-                    // If nil, defaults to new UUID in ViewModel init, or we can explicit reset
-                    // But ViewModel usually persists? If we want fresh every time, we should reset if nil
-                    // However, view model is StateObject, so it persists. We should probably reset if no ID passed.
-                    // For now, let's respect the ID if passed.
                 }
                 
-                viewModel.cameraManager.startSession()
-                viewModel.setupCameraBridge()
+                // Check for pending photo imports from sidebar
+                if !navigationManager.pendingImportItems.isEmpty {
+                    let items = navigationManager.pendingImportItems
+                    navigationManager.pendingImportItems = []
+                    viewModel.processImportedPhotos(items)
+                    // Camera NOT started — import mode
+                } else {
+                    viewModel.cameraManager.startSession()
+                    viewModel.setupCameraBridge()
+                }
+                
                 UIDevice.current.beginGeneratingDeviceOrientationNotifications()
                 NotificationCenter.default.addObserver(forName: UIDevice.orientationDidChangeNotification, object: nil, queue: .main) { _ in
                     let newOrientation = UIDevice.current.orientation
@@ -65,7 +69,6 @@ public struct VisualIntelligenceView: View {
                 
                 Task { @MainActor in
                     viewModel.checkPendingReprocess()
-                    // FEATURE: Resume Context if "Add to Context" was used
                     if let scanID = navigationManager.scanSessionID {
                         viewModel.locateContextOnLoad(subservientTo: scanID)
                         await viewModel.resumeSessionContext(scanID)
@@ -221,6 +224,7 @@ public struct VisualIntelligenceView: View {
 
 struct VisualIntelligenceReviewLayer: View {
     @ObservedObject var viewModel: VisualIntelligenceViewModel
+    @State private var currentIndex: Int = 0
     
     var body: some View {
         if let videoURL = viewModel.capturedVideoURL {
@@ -228,16 +232,50 @@ struct VisualIntelligenceReviewLayer: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if !viewModel.sessionImages.isEmpty {
-            TabView(selection: $viewModel.capturedImage) {
-                ForEach(viewModel.sessionImages, id: \.self) { image in
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .tag(image as UIImage?) // Tag for selection
+            // Horizontal carousel for session images
+            VStack(spacing: 0) {
+                GeometryReader { geometry in
+                    ScrollViewReader { proxy in
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            LazyHStack(spacing: 0) {
+                                ForEach(Array(viewModel.sessionImages.enumerated()), id: \.offset) { index, image in
+                                    Image(uiImage: image)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: geometry.size.width, height: geometry.size.height - 40)
+                                        .clipped()
+                                        .id(index)
+                                }
+                            }
+                            .scrollTargetLayout()
+                        }
+                        .scrollTargetBehavior(.paging)
+                        .scrollPosition(id: Binding(
+                            get: { currentIndex },
+                            set: { newValue in
+                                if let newValue {
+                                    currentIndex = newValue
+                                    // Sync selected image with carousel position
+                                    if newValue < viewModel.sessionImages.count {
+                                        viewModel.capturedImage = viewModel.sessionImages[newValue]
+                                    }
+                                }
+                            }
+                        ))
+                    }
                 }
+                
+                // Page indicator dots
+                HStack(spacing: 6) {
+                    ForEach(0..<viewModel.sessionImages.count, id: \.self) { index in
+                        Circle()
+                            .fill(index == currentIndex ? Color.white : Color.white.opacity(0.4))
+                            .frame(width: 7, height: 7)
+                    }
+                }
+                .padding(.bottom, 8)
             }
-            .tabViewStyle(.page(indexDisplayMode: .always))
+            .background(Color.black)
         } else if let capturedImage = viewModel.capturedImage {
             Image(uiImage: capturedImage)
                 .resizable()
@@ -348,32 +386,26 @@ struct VisualIntelligenceHUD: View {
                             .frame(width: 44, height: 44).glass(cornerRadius: 22)
                     }
                     
-                    // Intelligence Button (sparkles) - Visible, disabled until first analysis
-                    Button { showingIntelligenceView = true } label: {
-                        Image(systemName: "sparkles")
+                    // Re-Capture (small, left side)
+                    Button { withAnimation { viewModel.reCapture() } } label: {
+                        Image(systemName: "arrow.triangle.2.circlepath")
                             .font(.title3.bold())
-                            .foregroundStyle(viewModel.hasCompletedFirstAnalysis ? .white : .white.opacity(0.4))
+                            .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
                             .glass(cornerRadius: 22)
-                            .overlay(
-                                Group {
-                                    if viewModel.isAnalyzing {
-                                        ProgressView()
-                                            .scaleEffect(0.6)
-                                            .tint(.white)
-                                    }
-                                }
-                            )
                     }
-                    .disabled(!viewModel.hasCompletedFirstAnalysis)
                     
                     Spacer()
                     
-                    // Re-Capture
-                    Button { withAnimation { viewModel.reCapture() } } label: {
-                        Image(systemName: "arrow.triangle.2.circlepath").font(.title2).foregroundStyle(.white)
-                            .padding(20).glass(cornerRadius: 35)
+                    // Intelligence Button (sparkles) - Large, right side, disabled until first analysis
+                    Button { showingIntelligenceView = true } label: {
+                        Image(systemName: "sparkles")
+                            .font(.title2)
+                            .foregroundStyle(viewModel.hasCompletedFirstAnalysis ? .white : .white.opacity(0.4))
+                            .padding(20)
+                            .glass(cornerRadius: 35)
                     }
+                    .disabled(!viewModel.hasCompletedFirstAnalysis)
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
@@ -393,7 +425,7 @@ struct VisualIntelligenceHUD: View {
             }
             .rotationEffect(angleForOrientation(orientation))
             
-            PhotosPicker(selection: $viewModel.selectedPhotoItem, matching: .any(of: [.images, .videos])) {
+            PhotosPicker(selection: $viewModel.selectedPhotoItem, matching: .any(of: [.images, .videos]), photoLibrary: .shared()) {
                 Image(systemName: "photo.on.rectangle.angled")
                     .font(.title3).foregroundStyle(.white).padding(12).glass(cornerRadius: 25)
                     .rotationEffect(angleForOrientation(orientation))
@@ -442,8 +474,8 @@ extension VisualIntelligenceView {
     // Helper to bridge the new View callback to the existing logic
     func handleResultSelection(_ result: IntelligenceResult) {
         switch result {
-        case .document(let obs, _, _, _):
-            viewModel.handleDocumentSelection(obs)
+        case .document(let obs, _, _, let rectifiedData):
+            viewModel.handleDocumentSelection(obs, rectifiedImageData: rectifiedData)
         case .text(let text, let url):
             if let url {
                 UIApplication.shared.open(url)
@@ -1403,9 +1435,9 @@ struct IntelligenceResultsView: View {
                 buttons.append(("Open Link", "link", {
                     UIApplication.shared.open(url)
                 }))
-            case .document(let obs, _, _, _):
+            case .document(let obs, _, _, let rectifiedData):
                 buttons.append(("View Document", "doc.text", {
-                    viewModel.handleDocumentSelection(obs)
+                    viewModel.handleDocumentSelection(obs, rectifiedImageData: rectifiedData)
                 }))
             default:
                 break
@@ -1750,8 +1782,8 @@ struct IntelligenceResultsView: View {
     
     private func handleResultSelection(_ result: IntelligenceResult) {
         switch result {
-        case .document(let obs, let text, _, _):
-            viewModel.handleDocumentSelection(obs, text: text)
+        case .document(let obs, let text, _, let rectifiedData):
+            viewModel.handleDocumentSelection(obs, text: text, rectifiedImageData: rectifiedData)
         case .qr(let url):
             UIApplication.shared.open(url)
         case .richWeb(let url, _):

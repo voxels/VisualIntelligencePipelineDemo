@@ -2,7 +2,7 @@ import Foundation
 import DiverShared
 
 extension DiverQueueItem {
-    public static func items(intelligenceResults: [IntelligenceResult], capturedImage: Data? = nil, siftedImage: Data? = nil, attachments: [Data]? = nil, purpose: String? = nil, purposes: Set<String> = [], sessionID: String? = nil, contextImageURL: URL? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil) -> [DiverQueueItem] {
+    public static func items(intelligenceResults: [IntelligenceResult], capturedImage: Data? = nil, siftedImage: Data? = nil, attachments: [Data]? = nil, purpose: String? = nil, purposes: Set<String> = [], sessionID: String? = nil, contextImageURL: URL? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil, depthPayload: Data? = nil, attachmentDepthPayloads: [Data?]? = nil) -> [DiverQueueItem] {
 
         var items: [DiverQueueItem] = []
         
@@ -208,8 +208,19 @@ extension DiverQueueItem {
             descriptor: masterDescriptor,
             source: "visual_intelligence",
             payload: effectivePayload,
-            attachments: attachments
+            attachments: attachments,
+            depthPayload: depthPayload
         ))
+        
+        // Enqueue child items (web links, QR codes, products, entertainment, places)
+        // These carry the same sessionID as the master so they appear in the correct session.
+        for childDesc in childDescriptors {
+            items.append(DiverQueueItem(
+                action: "save",
+                descriptor: childDesc,
+                source: "visual_intelligence"
+            ))
+        }
         
         // Add additional images from attachments as independent child items
         // This ensures they are processed by the pipeline into their own ProcessedItems
@@ -241,7 +252,8 @@ extension DiverQueueItem {
                     action: "save",
                     descriptor: childDescriptor,
                     source: "visual_intelligence",
-                    payload: data
+                    payload: data,
+                    depthPayload: attachmentDepthPayloads?.indices.contains(index) == true ? attachmentDepthPayloads?[index] : nil
                 ))
             }
         }

@@ -19,7 +19,8 @@ public final class CameraManager: NSObject, ObservableObject {
     private let photoOutput = AVCapturePhotoOutput()
     
     public var onFrameCaptured: ((CVPixelBuffer) -> Void)?
-    public var onPhotoCaptured: ((Data) -> Void)?
+    /// Callback delivers (imageData, depthData?) atomically so depth is always paired with the correct photo
+    public var onPhotoCaptured: ((Data, Data?) -> Void)?
     
     public override init() {
         super.init()
@@ -77,7 +78,21 @@ public final class CameraManager: NSObject, ObservableObject {
             guard let self = self else { return }
             self.session.beginConfiguration()
             
-            guard let videoDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+            // Prefer depth-capable device (dual/triple/LiDAR), fall back to wide-angle
+            let videoDevice: AVCaptureDevice? = {
+                if let triple = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) {
+                    return triple
+                }
+                if let dualWide = AVCaptureDevice.default(.builtInDualWideCamera, for: .video, position: .back) {
+                    return dualWide
+                }
+                if let dual = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back) {
+                    return dual
+                }
+                return AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
+            }()
+            
+            guard let videoDevice = videoDevice,
                   let videoInput = try? AVCaptureDeviceInput(device: videoDevice) else {
                 return
             }
@@ -96,6 +111,14 @@ public final class CameraManager: NSObject, ObservableObject {
             if self.session.canAddOutput(self.photoOutput) {
                 self.session.addOutput(self.photoOutput)
                 self.photoOutput.isHighResolutionCaptureEnabled = true
+                
+                // Enable depth data delivery if supported
+                if self.photoOutput.isDepthDataDeliverySupported {
+                    self.photoOutput.isDepthDataDeliveryEnabled = true
+                    print("📐 Depth data delivery enabled")
+                } else {
+                    print("📐 Depth data delivery not supported on this device")
+                }
             }
             
             self.session.commitConfiguration()
@@ -120,13 +143,19 @@ public final class CameraManager: NSObject, ObservableObject {
             #endif
             
             if let data = data {
-                onPhotoCaptured?(data)
+                onPhotoCaptured?(data, nil)
             }
             return
         }
         
         let settings = AVCapturePhotoSettings()
         settings.isHighResolutionPhotoEnabled = true
+        
+        // Request depth data if available
+        if photoOutput.isDepthDataDeliverySupported {
+            settings.isDepthDataDeliveryEnabled = true
+        }
+        
         photoOutput.capturePhoto(with: settings, delegate: self)
     }
 }
@@ -145,6 +174,21 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
             return
         }
         guard let imageData = photo.fileDataRepresentation() else { return }
-        onPhotoCaptured?(imageData)
+        
+        // Extract depth data atomically with the photo
+        var depthPNG: Data? = nil
+        if let depthData = photo.depthData {
+            let depthMap = depthData.converting(toDepthDataType: kCVPixelFormatType_DepthFloat32).depthDataMap
+            let ciImage = CIImage(cvPixelBuffer: depthMap)
+            let context = CIContext()
+            let colorSpace = CGColorSpace(name: CGColorSpace.linearGray)!
+            depthPNG = context.pngRepresentation(of: ciImage, format: .Lf, colorSpace: colorSpace)
+            if depthPNG != nil {
+                print("📐 Depth map captured: \(depthPNG!.count) bytes")
+            }
+        }
+        
+        // Deliver both atomically
+        onPhotoCaptured?(imageData, depthPNG)
     }
 }

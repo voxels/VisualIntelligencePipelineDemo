@@ -199,21 +199,18 @@ public final class AestheticsScoringService: @unchecked Sendable {
     
     private func calculateSharpness(_ image: CGImage) async -> Float {
         // Use Vision to detect edges as a proxy for sharpness
-        return await withCheckedContinuation { continuation in
-            let request = VNDetectRectanglesRequest { request, error in
-                // More detected rectangles = sharper image (rough heuristic)
-                let count = request.results?.count ?? 0
-                let score = min(1.0, Float(count) / 10.0)
-                continuation.resume(returning: score)
-            }
-            request.minimumConfidence = 0.3
-            
-            let handler = VNImageRequestHandler(cgImage: image, options: [:])
-            do {
-                try handler.perform([request])
-            } catch {
-                continuation.resume(returning: 0.5)
-            }
+        // Note: VNImageRequestHandler.perform is synchronous, so we don't need a continuation
+        let request = VNDetectRectanglesRequest()
+        request.minimumConfidence = 0.3
+        
+        let handler = VNImageRequestHandler(cgImage: image, options: [:])
+        do {
+            try handler.perform([request])
+            // More detected rectangles = sharper image (rough heuristic)
+            let count = request.results?.count ?? 0
+            return min(1.0, Float(count) / 10.0)
+        } catch {
+            return 0.5
         }
     }
     

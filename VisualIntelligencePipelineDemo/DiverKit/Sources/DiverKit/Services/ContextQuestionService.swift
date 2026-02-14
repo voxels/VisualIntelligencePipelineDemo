@@ -209,7 +209,7 @@ public final class ContextQuestionService: Sendable {
         
         let session = LanguageModelSession(instructions: instructions)
         let response = try await session.respond(
-            to: input,
+            to: truncate(input, limit: 12000),
             generating: ContextAnalysis.self,
             options: GenerationOptions(sampling: .greedy)
         )
@@ -235,7 +235,7 @@ public final class ContextQuestionService: Sendable {
         Keep it concise (2-3 sentences).
         """
         let session = LanguageModelSession(instructions: instructions)
-        let response = try await session.respond(to: text)
+        let response = try await session.respond(to: await smartSummarize(text))
         
         // DATA SANITIZATION: Aggressively remove hallucinated "Home" references
         let cleanSummary = response.content
@@ -265,7 +265,7 @@ public final class ContextQuestionService: Sendable {
         """
         let session = LanguageModelSession(instructions: instructions)
         let response = try await session.respond(
-            to: context,
+            to: await smartSummarize(context),
             generating: PurposeSuggestions.self,
             options: GenerationOptions(sampling: .greedy)
         )
@@ -292,6 +292,41 @@ public final class ContextQuestionService: Sendable {
         return chunks
     }
     
+    private func truncate(_ text: String, limit: Int) -> String {
+        if text.count <= limit { return text }
+        return String(text.prefix(limit))
+    }
+    
+    /// intelligently reduces text size by summarizing chunks if too large
+    private func smartSummarize(_ text: String) async -> String {
+        let limit = 12000
+        if text.count <= limit { return text }
+        
+        // Split into chunks and summarize each
+        let chunks = chunkText(text, size: 4000, overlap: 200)
+        var summaries: [String] = []
+        
+        for chunk in chunks {
+            // We use a simplified summarizer here to avoid recursion hell
+            // Just truncate the chunk if it's somehow massive, but it won't be (4000 chars)
+             #if canImport(FoundationModels)
+             if #available(iOS 26.0, macOS 26.0, *) {
+                 if let summary = try? await runChunkSummary(chunk) {
+                     summaries.append(summary)
+                 } else {
+                     summaries.append(String(chunk.prefix(500)) + "...")
+                 }
+             } else {
+                 summaries.append(String(chunk.prefix(500)) + "...")
+             }
+             #else
+             summaries.append(String(chunk.prefix(500)) + "...")
+             #endif
+        }
+        
+        return summaries.joined(separator: "\n")
+    }
+
     /// Sanitizes input text for the on-device LLM to prevent `unsupportedLanguageOrLocale` errors.
     /// Strips non-ASCII characters and normalizes to US English compatible text.
     private func sanitizeForLLM(_ text: String) -> String {

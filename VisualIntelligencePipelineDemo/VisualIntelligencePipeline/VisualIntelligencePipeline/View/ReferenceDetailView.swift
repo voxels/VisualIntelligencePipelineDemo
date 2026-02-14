@@ -7,6 +7,7 @@ import SwiftData
 import LinkPresentation
 import WebKit
 import AVKit
+import ImageIO
 
 struct ReferenceDetailView: View {
     let item: ProcessedItem
@@ -34,21 +35,35 @@ struct ReferenceDetailContent: View {
     @State private var isEditingTitle = false
     @State private var editedTitle = ""
     
-    @Query private var allItems: [ProcessedItem]
-    @Query private var sessions: [DiverSession]
+    @Environment(\.modelContext) private var modelContext
     
     var session: DiverSession? {
-        sessions.first { $0.sessionID == item.sessionID }
+        guard let sessionID = item.sessionID else { return nil }
+        var descriptor = FetchDescriptor<DiverSession>(
+            predicate: #Predicate { $0.sessionID == sessionID }
+        )
+        descriptor.fetchLimit = 1
+        return try? modelContext.fetch(descriptor).first
     }
     
     var siblingContext: String {
         guard let sessionID = item.sessionID else { return "" }
-        let siblings = allItems.filter { $0.sessionID == sessionID }
+        var descriptor = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.sessionID == sessionID }
+        )
+        descriptor.fetchLimit = 20
+        let siblings = (try? modelContext.fetch(descriptor)) ?? []
         return siblings.prefix(20).map { "- \($0.title ?? "Item"): \($0.summary ?? "")" }.joined(separator: "\n")
     }
     
     
     var body: some View {
+        // Guard against deleted items - SwiftUI may re-render after swipe-delete
+        // before navigation pops. Accessing faulted properties on a detached
+        // SwiftData object (e.g. .questions) causes a fatal crash.
+        if item.modelContext == nil {
+            ContentUnavailableView("Item Deleted", systemImage: "trash", description: Text("This item has been removed."))
+        } else {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
@@ -77,45 +92,7 @@ struct ReferenceDetailContent: View {
                                 .padding(.bottom, 12)
                         }
                     } else {
-                        // Image Handling: Priority -> Rectified Document -> Raw Image -> Web Snapshot
-                        if let rectData = item.documentContext?.rectifiedPayload, let uiImage = UIImage(data: rectData) {
-                             Image(uiImage: uiImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .cornerRadius(12)
-                                .shadow(radius: 4)
-                                .padding(.bottom, 12)
-                                .glass(cornerRadius: 12)
-                        } else if let data = item.rawPayload, let uiImage = UIImage(data: data)?.fixedOrientation(){
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .cornerRadius(12)
-                                .shadow(radius: 4)
-                                .padding(.bottom, 12)
-                                .glass(cornerRadius: 12)
-                        } else if let snapshotPath = item.webContext?.snapshotURL {
-                             // Use AsyncImage for reliable file/url loading
-                             AsyncImage(url: URL(fileURLWithPath: snapshotPath)) { phase in
-                                 if let image = phase.image {
-                                     image
-                                         .resizable()
-                                         .aspectRatio(contentMode: .fit)
-                                         .cornerRadius(12)
-                                         .shadow(radius: 4)
-                                         .padding(.bottom, 12)
-                                         .glass(cornerRadius: 12)
-                                 } else if phase.error != nil {
-                                     Color.gray.opacity(0.1)
-                                         .frame(height: 200)
-                                         .overlay(Image(systemName: "photo.badge.exclamationmark"))
-                                         .cornerRadius(12)
-                                 } else {
-                                     ProgressView()
-                                         .frame(height: 200)
-                                 }
-                             }
-                        }
+                        AsyncItemImageView(item: item)
                     }
                     
                     // 2. Text Editor / Content
@@ -384,6 +361,9 @@ struct ReferenceDetailContent: View {
                     // Divider removed
                 }
                 
+                // EXIF Metadata Section (Camera, Exposure, etc.)
+                EXIFMetadataSection(item: item)
+                
                 // MARK: - New Enriched Data Sections
                 
                 // 1. Context Row (Weather + Activity)
@@ -646,6 +626,7 @@ struct ReferenceDetailContent: View {
                 }
             }
         }
+        } // else (item not deleted)
     }
     // Brace removed
     
@@ -1167,6 +1148,196 @@ extension View {
     }
 }
 
+// MARK: - EXIF Metadata Section
+
+struct EXIFMetadataSection: View {
+    let item: ProcessedItem
+    
+    private var exifData: EXIFInfo? {
+        guard let data = item.rawPayload else { return nil }
+        return EXIFInfo(from: data)
+    }
+    
+    var body: some View {
+        if let exif = exifData, exif.hasContent {
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: 6) {
+                    if let camera = exif.cameraModel {
+                        exifRow("Camera", value: camera, icon: "camera")
+                    }
+                    if let lens = exif.lensModel {
+                        exifRow("Lens", value: lens, icon: "circle.dashed")
+                    }
+                    
+                    if exif.focalLength != nil || exif.aperture != nil || exif.shutterSpeed != nil || exif.iso != nil {
+                        Divider()
+                        if let focal = exif.focalLength {
+                            exifRow("Focal Length", value: focal, icon: "scope")
+                        }
+                        if let aperture = exif.aperture {
+                            exifRow("Aperture", value: aperture, icon: "f.cursive")
+                        }
+                        if let shutter = exif.shutterSpeed {
+                            exifRow("Shutter", value: shutter, icon: "timer")
+                        }
+                        if let iso = exif.iso {
+                            exifRow("ISO", value: iso, icon: "gauge.with.dots.needle.33percent")
+                        }
+                    }
+                    
+                    if exif.dimensions != nil || exif.colorSpace != nil || exif.bitDepth != nil {
+                        Divider()
+                        if let dims = exif.dimensions {
+                            exifRow("Dimensions", value: dims, icon: "aspectratio")
+                        }
+                        if let colorSpace = exif.colorSpace {
+                            exifRow("Color Space", value: colorSpace, icon: "paintpalette")
+                        }
+                        if let depth = exif.bitDepth {
+                            exifRow("Bit Depth", value: depth, icon: "square.stack.3d.down.right")
+                        }
+                    }
+                    
+                    if exif.dateTaken != nil || exif.gpsCoordinate != nil {
+                        Divider()
+                        if let date = exif.dateTaken {
+                            exifRow("Date Taken", value: date, icon: "calendar")
+                        }
+                        if let gps = exif.gpsCoordinate {
+                            exifRow("GPS", value: gps, icon: "location")
+                        }
+                    }
+                    
+                    if let software = exif.software {
+                        Divider()
+                        exifRow("Software", value: software, icon: "app.badge")
+                    }
+                }
+                .padding(.top, 4)
+            } label: {
+                Label {
+                    Text("Image Metadata")
+                        .font(.title3)
+                        .bold()
+                } icon: {
+                    Image(systemName: "info.circle")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .detailCardStyle()
+        }
+    }
+    
+    private func exifRow(_ label: String, value: String, icon: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .frame(width: 16)
+                .foregroundStyle(.secondary)
+            Text(label)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .fontWeight(.medium)
+        }
+        .font(.caption)
+    }
+}
+
+private struct EXIFInfo {
+    let cameraModel: String?
+    let lensModel: String?
+    let focalLength: String?
+    let aperture: String?
+    let shutterSpeed: String?
+    let iso: String?
+    let dimensions: String?
+    let colorSpace: String?
+    let bitDepth: String?
+    let dateTaken: String?
+    let gpsCoordinate: String?
+    let software: String?
+    
+    var hasContent: Bool {
+        cameraModel != nil || lensModel != nil || focalLength != nil ||
+        aperture != nil || shutterSpeed != nil || iso != nil ||
+        dimensions != nil || dateTaken != nil
+    }
+    
+    init?(from data: Data) {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] else {
+            return nil
+        }
+        
+        let tiff = properties[kCGImagePropertyTIFFDictionary as String] as? [String: Any]
+        let exif = properties[kCGImagePropertyExifDictionary as String] as? [String: Any]
+        let gps = properties[kCGImagePropertyGPSDictionary as String] as? [String: Any]
+        
+        // Camera
+        let make = tiff?[kCGImagePropertyTIFFMake as String] as? String
+        let model = tiff?[kCGImagePropertyTIFFModel as String] as? String
+        if let model = model {
+            cameraModel = make != nil && !model.contains(make!) ? "\(make!) \(model)" : model
+        } else {
+            cameraModel = make
+        }
+        
+        lensModel = exif?[kCGImagePropertyExifLensModel as String] as? String
+        
+        if let fl = exif?[kCGImagePropertyExifFocalLength as String] as? Double {
+            let eq35 = exif?[kCGImagePropertyExifFocalLenIn35mmFilm as String] as? Int
+            focalLength = eq35 != nil ? "\(Int(fl))mm (≈\(eq35!)mm ff)" : "\(Int(fl))mm"
+        } else { focalLength = nil }
+        
+        if let fNum = exif?[kCGImagePropertyExifFNumber as String] as? Double {
+            aperture = String(format: "ƒ/%.1f", fNum)
+        } else { aperture = nil }
+        
+        if let exposure = exif?[kCGImagePropertyExifExposureTime as String] as? Double {
+            shutterSpeed = exposure >= 1 ? String(format: "%.1fs", exposure) : "1/\(Int(round(1.0 / exposure)))s"
+        } else { shutterSpeed = nil }
+        
+        if let isoValues = exif?[kCGImagePropertyExifISOSpeedRatings as String] as? [Int],
+           let first = isoValues.first {
+            iso = "ISO \(first)"
+        } else { iso = nil }
+        
+        if let w = properties[kCGImagePropertyPixelWidth as String] as? Int,
+           let h = properties[kCGImagePropertyPixelHeight as String] as? Int {
+            let mp = Double(w * h) / 1_000_000.0
+            dimensions = "\(w) × \(h) (\(String(format: "%.1f", mp)) MP)"
+        } else { dimensions = nil }
+        
+        colorSpace = properties[kCGImagePropertyColorModel as String] as? String
+        
+        if let d = properties[kCGImagePropertyDepth as String] as? Int {
+            bitDepth = "\(d)-bit"
+        } else { bitDepth = nil }
+        
+        if let dateStr = exif?[kCGImagePropertyExifDateTimeOriginal as String] as? String {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
+            if let date = formatter.date(from: dateStr) {
+                let display = DateFormatter()
+                display.dateStyle = .medium
+                display.timeStyle = .short
+                dateTaken = display.string(from: date)
+            } else { dateTaken = dateStr }
+        } else { dateTaken = nil }
+        
+        if let lat = gps?[kCGImagePropertyGPSLatitude as String] as? Double,
+           let lon = gps?[kCGImagePropertyGPSLongitude as String] as? Double {
+            let latRef = (gps?[kCGImagePropertyGPSLatitudeRef as String] as? String) ?? "N"
+            let lonRef = (gps?[kCGImagePropertyGPSLongitudeRef as String] as? String) ?? "E"
+            let latSign = latRef == "S" ? "-" : ""
+            let lonSign = lonRef == "W" ? "-" : ""
+            gpsCoordinate = "\(latSign)\(String(format: "%.6f", lat)), \(lonSign)\(String(format: "%.6f", lon))"
+        } else { gpsCoordinate = nil }
+        
+        software = tiff?[kCGImagePropertyTIFFSoftware as String] as? String
+    }
+}
+
 // MARK: - Weather Context
 struct WeatherContextView: View {
     let context: WeatherContext
@@ -1581,13 +1752,17 @@ struct CaptureSiblingsView: View {
     let masterID: String
     let currentID: String
     
-    // We must filter in the initializer or body if the dataset is small, or use a custom fetch.
-    // Given the constraints and likely small library size for this MVP, we will query all and filter.
-    @Query private var allItems: [ProcessedItem]
+    @Environment(\.modelContext) private var modelContext
     @State private var selectedSibling: ProcessedItem?
     
     var siblings: [ProcessedItem] {
-        allItems.filter { $0.masterCaptureID == masterID && $0.id != currentID }
+        let mid = masterID
+        let cid = currentID
+        var descriptor = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.masterCaptureID == mid && $0.id != cid }
+        )
+        descriptor.fetchLimit = 20
+        return (try? modelContext.fetch(descriptor)) ?? []
     }
     
     var body: some View {
@@ -2119,6 +2294,163 @@ struct TextEditorView: View {
         #if os(iOS)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         #endif
+    }
+}
+
+// MARK: - Async Image View
+struct AsyncItemImageView: View {
+    let item: ProcessedItem
+    @State private var image: UIImage?
+    @State private var isLoading = true
+    
+    var body: some View {
+        Group {
+            if let image = image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxHeight: 400) // Add constraint to prevent "too large" issues
+                    .cornerRadius(12)
+                    .shadow(radius: 4)
+                    .padding(.bottom, 12)
+                    .glass(cornerRadius: 12)
+                    .transition(.opacity)
+            } else if isLoading {
+                ZStack {
+                    Color.gray.opacity(0.1)
+                    ProgressView()
+                }
+                .frame(height: 300)
+                .frame(maxWidth: .infinity)
+                .cornerRadius(12)
+                .padding(.bottom, 12)
+            }
+        }
+        .task {
+            await loadImage()
+        }
+    }
+    
+    private func loadImage() async {
+        // Extract data on MainActor to avoid SwiftData concurrency issues
+        let rectData = item.documentContext?.rectifiedPayload
+        let rawData = item.rawPayload
+        let snapshotPath = item.webContext?.snapshotURL
+        let isDocument = item.entityType == "document"
+        
+        // Priority 1: For document-type items, rawPayload IS the rectified image
+        // (CIPerspectiveCorrection output from commitReviewSave). Use it directly
+        // to avoid double-rectification from pipeline re-detection.
+        // For non-documents, check documentContext.rectifiedPayload (reprocessed master captures).
+        if isDocument, let data = rawData {
+            if let decoded = await decodeImage(from: data) {
+                withAnimation {
+                    self.image = decoded
+                    self.isLoading = false
+                }
+                return
+            }
+        } else if let rectData {
+            if let decoded = await decodeImage(from: rectData) {
+                withAnimation {
+                    self.image = decoded
+                    self.isLoading = false
+                }
+                return
+            }
+        }
+        
+        // Priority 2: Raw Payload
+        if let data = rawData {
+            if let decoded = await decodeImage(from: data) {
+                withAnimation {
+                    self.image = decoded
+                    self.isLoading = false
+                }
+                return
+            }
+        }
+        
+        // Priority 3: Photos Asset (Imported)
+        if let assetID = item.photosAssetIdentifier {
+            if let data = await PhotosAssetLoader.shared.loadImageData(identifier: assetID),
+               let decoded = await decodeImage(from: data) {
+                withAnimation {
+                    self.image = decoded
+                    self.isLoading = false
+                }
+                return
+            }
+        }
+
+        // Priority 4: Payload Reference (Disk persistence)
+        if let payloadRef = item.payloadRef {
+            let fileURL = URL(fileURLWithPath: payloadRef)
+            if let data = try? Data(contentsOf: fileURL),
+               let decoded = await decodeImage(from: data) {
+                withAnimation {
+                    self.image = decoded
+                    self.isLoading = false
+                }
+                return
+            }
+        }
+        
+        // Priority 5: Web Snapshot or URL as File Path
+        if let path = snapshotPath {
+             let url = URL(fileURLWithPath: path)
+             if let data = try? Data(contentsOf: url),
+                let decoded = await decodeImage(from: data) {
+                 withAnimation {
+                     self.image = decoded
+                     self.isLoading = false
+                 }
+                 return
+             }
+        }
+        
+        // Check generic URL if it's a file path
+        if let urlString = item.url, 
+           urlString.hasPrefix("file://") || urlString.hasPrefix("/"),
+           let url = URL(string: urlString) {
+             let fileURL = url.scheme == nil ? URL(fileURLWithPath: urlString) : url
+             if let data = try? Data(contentsOf: fileURL),
+                let decoded = await decodeImage(from: data) {
+                 withAnimation {
+                     self.image = decoded
+                     self.isLoading = false
+                 }
+                 return
+             }
+        }
+        
+        // Check generic URL if it's a file path
+        if let urlString = item.url, 
+           (urlString.hasPrefix("file://") || urlString.hasPrefix("/")),
+           let url = URL(string: urlString) {
+             let fileURL = url.scheme == nil ? URL(fileURLWithPath: urlString) : url
+             if let data = try? Data(contentsOf: fileURL),
+                let decoded = await decodeImage(from: data) {
+                 withAnimation {
+                     self.image = decoded
+                     self.isLoading = false
+                 }
+                 return
+             }
+        }
+        
+        // No image found
+        withAnimation {
+            self.isLoading = false
+        }
+    }
+    
+    private func decodeImage(from data: Data) async -> UIImage? {
+        return await Task.detached(priority: .userInitiated) {
+            guard let initialImage = UIImage(data: data) else { return nil }
+            // Bake orientation into pixels — handles legacy data saved without normalization
+            return initialImage.fixedOrientation()
+        }.value
     }
 }
 

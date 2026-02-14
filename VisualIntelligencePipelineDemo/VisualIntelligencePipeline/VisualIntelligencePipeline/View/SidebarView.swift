@@ -174,6 +174,8 @@ struct SidebarView: View {
         }
         .onAppear {
             viewModel.setPipelineService(pipelineService)
+            // Clean up empty/abandoned sessions on appear
+            viewModel.removeEmptySessions(context: modelContext)
         }
         .sheet(item: $viewModel.itemToEditLocation) { item in
             EditLocationView(item: item)
@@ -185,22 +187,42 @@ struct SidebarView: View {
             EditSessionLocationView(session: session)
         }
         .overlay(alignment: .bottom) {
-            if viewModel.isMaintaining {
-                VStack(spacing: 8) {
-                    ProgressView(value: viewModel.maintenanceProgress)
-                        .progressViewStyle(.linear)
-                    Text("Rebuilding Library (\(Int(viewModel.maintenanceProgress * 100))%)...")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+            VStack(spacing: 8) {
+                if viewModel.isMaintaining {
+                    VStack(spacing: 8) {
+                        ProgressView(value: viewModel.maintenanceProgress)
+                            .progressViewStyle(.linear)
+                        Text("Rebuilding Library (\(Int(viewModel.maintenanceProgress * 100))%)...")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(10)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(8)
+                    .shadow(radius: 2)
+                    .padding(.horizontal)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-                .padding(10)
-                .background(.ultraThinMaterial)
-                .cornerRadius(8)
-                .shadow(radius: 2)
-                .padding()
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                
+                queueProgressOverlay
+            }
+            .padding(.bottom, 8)
+        }
+        .overlay {
+            if viewModel.isPerformingAction {
+                ZStack {
+                    Color.black.opacity(0.2)
+                        .ignoresSafeArea()
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .padding(24)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                }
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.15), value: viewModel.isPerformingAction)
             }
         }
+        .allowsHitTesting(!viewModel.isPerformingAction)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Menu {
@@ -248,20 +270,19 @@ struct SidebarView: View {
             isPresented: $viewModel.isImporting,
             selection: $selectedPhotos,
             maxSelectionCount: 20,
-            matching: .any(of: [.images, .videos])
+            matching: .any(of: [.images, .videos]),
+            photoLibrary: .shared()
         )
         .onChange(of: selectedPhotos) { oldValue, newValue in
             guard !newValue.isEmpty else { return }
-            let target = viewModel.importTargetSession
-            Task {
-                await viewModel.importSelectedPhotos(newValue, context: modelContext, targetSession: target)
-                selectedPhotos = []
-                
-                // Reset target session on main actor
-                await MainActor.run {
-                    viewModel.importTargetSession = nil
-                }
+            // Route through the Visual Intelligence review screen for full pipeline processing
+            navigationManager.pendingImportItems = newValue
+            if let target = viewModel.importTargetSession {
+                navigationManager.scanSessionID = target.sessionID
             }
+            navigationManager.isScanActive = true
+            selectedPhotos = []
+            viewModel.importTargetSession = nil
         }
         .alert("Create New Collection", isPresented: $showingCreateCollection) {
             TextField("Collection Name", text: $newCollectionName)
@@ -316,6 +337,33 @@ struct SidebarView: View {
             }
         } message: {
             Text("Enter a new title for this session")
+        }
+        .alert("Import Status", isPresented: Binding(
+            get: { viewModel.importError != nil },
+            set: { if !$0 { viewModel.importError = nil } }
+        )) {
+            Button("OK", role: .cancel) {
+                viewModel.importError = nil
+            }
+        } message: {
+            if let error = viewModel.importError {
+                Text(error)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var queueProgressOverlay: some View {
+        if pipelineService.isProcessingQueue {
+            QueueProgressView(
+                totalCount: pipelineService.queueTotalCount,
+                completedCount: pipelineService.queueCompletedCount,
+                currentItemTitle: pipelineService.queueCurrentItemTitle,
+                statusMessage: pipelineService.queueStatusMessage,
+                progress: pipelineService.queueProgress
+            )
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+            .animation(.spring(duration: 0.3), value: pipelineService.isProcessingQueue)
         }
     }
     
@@ -1359,6 +1407,22 @@ extension SidebarView {
                     }
                     return true
                 }
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button(role: .destructive) {
+                viewModel.deleteCollection(collection, context: modelContext)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+        .swipeActions(edge: .leading) {
+             Button {
+                 collectionToRename = collection
+                 newCollectionName = collection.name
+             } label: {
+                 Label("Rename", systemImage: "pencil")
+             }
+             .tint(.blue)
         }
     }
     

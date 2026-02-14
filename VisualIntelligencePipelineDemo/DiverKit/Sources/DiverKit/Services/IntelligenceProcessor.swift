@@ -232,59 +232,75 @@ public final class IntelligenceProcessor: Sendable {
         var cgImage: CGImage?
         VTCreateCGImageFromCVPixelBuffer(cvPixelBuffer, options: nil, imageOut: &cgImage)
         
-        return try await executePipeline(mode: mode, sourceImage: cgImage) {
+        return try await executePipeline(mode: mode, sourceImage: cgImage, orientation: orientation) {
             VNImageRequestHandler(cvPixelBuffer: cvPixelBuffer, orientation: orientation, options: [:])
         }
     }
     
     private func performRequests(cgImage: CGImage, orientation: CGImagePropertyOrientation, mode: AnalysisMode) async throws -> [IntelligenceResult] {
-        return try await executePipeline(mode: mode, sourceImage: cgImage) {
+        return try await executePipeline(mode: mode, sourceImage: cgImage, orientation: orientation) {
             VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
         }
     }
     
-    private func executePipeline(mode: AnalysisMode, sourceImage: CGImage? = nil, handlerFactory: () -> VNImageRequestHandler) async throws -> [IntelligenceResult] {
+    private func executePipeline(mode: AnalysisMode, sourceImage: CGImage? = nil, orientation: CGImagePropertyOrientation = .up, handlerFactory: () -> VNImageRequestHandler) async throws -> [IntelligenceResult] {
          if mode != .liveSifting {
             print("🧠 IntelligenceProcessor: Starting Pipeline (Mode: \(mode))")
          }
          var finalResults: [IntelligenceResult] = []
          
-         // 1. First Pass: Sifting + Barcodes (Always Run)
-         // We combine these as they are both "Live" capable and essential for Express Capture
+         // Build the request list based on mode
          let siftingRequest = VNGenerateForegroundInstanceMaskRequest()
          let barcodeRequest = VNDetectBarcodesRequest()
          
-         // Run First Pass
-         let liveHandler = handlerFactory()
-         try liveHandler.perform([siftingRequest, barcodeRequest])
+         var allRequests: [VNRequest] = [siftingRequest, barcodeRequest]
          
-         // Process Sifting Results
-         var subjectBounds: CGRect?
-         if let observation = siftingRequest.results?.first {
-             finalResults.append(.siftedSubject(observation, label: nil))
-             if mode == .fullAnalysis {
-                 subjectBounds = calculateBounds(from: observation)
-             }
+         // For full analysis, add all requests upfront so they run in ONE parallel perform() call.
+         // We dropped the ROI optimization (where classification focused on the sifted subject region)
+         // in exchange for running all requests concurrently — net faster.
+         var textRequest: VNRecognizeTextRequest?
+         var classificationRequest: VNClassifyImageRequest?
+         var documentRequest: VNDetectDocumentSegmentationRequest?
+         
+         if mode == .fullAnalysis {
+             print("🧠 IntelligenceProcessor: Starting Full Analysis (Single Pass)")
+             let tr = VNRecognizeTextRequest()
+             tr.recognitionLevel = .accurate
+             textRequest = tr
+             
+             let cr = VNClassifyImageRequest()
+             classificationRequest = cr
+             
+             let dr = VNDetectDocumentSegmentationRequest()
+             documentRequest = dr
+             
+             allRequests.append(contentsOf: [tr, cr, dr])
          }
          
-         // Process Barcode Results (Common to both modes)
+         // Run ALL requests in a single perform() call — Vision parallelizes internally
+         let handler = handlerFactory()
+         try handler.perform(allRequests)
+         
+         // --- Process Sifting Results ---
+         if let observation = siftingRequest.results?.first {
+             finalResults.append(.siftedSubject(observation, label: nil))
+         }
+         
+         // --- Process Barcode Results ---
          if let observations = barcodeRequest.results, !observations.isEmpty {
              print("🔍 IntelligenceProcessor: Found \(observations.count) barcodes")
              
-             // 1. Handle QR Codes: Respect Layout Direction
+             // Handle QR Codes: Respect Layout Direction
              let qrObservations = observations.filter { $0.symbology == .qr }
              
-             // Determine Layout Direction
              let languageCode = Locale.current.language.languageCode?.identifier ?? "en"
              let direction = Locale.characterDirection(forLanguage: languageCode)
              let isRTL = direction == .rightToLeft
              
              let sortedQRs: [VNBarcodeObservation]
              if isRTL {
-                 // RTL: Start from Right -> Pick largest X
                  sortedQRs = qrObservations.sorted { $0.boundingBox.origin.x > $1.boundingBox.origin.x }
              } else {
-                 // LTR: Start from Left -> Pick smallest X
                  sortedQRs = qrObservations.sorted { $0.boundingBox.origin.x < $1.boundingBox.origin.x }
              }
              
@@ -294,18 +310,16 @@ public final class IntelligenceProcessor: Sendable {
                     if let url = URL(string: payload), payload.contains("://") || payload.lowercased().hasPrefix("http") {
                         finalResults.append(.qr(url))
                     } else if !payload.isEmpty {
-                        // Support non-URL QR codes (e.g. WiFi, Text)
                         finalResults.append(.text(payload, nil))
                     }
                  }
              }
              
-             // 2. Handle Product Codes
+             // Handle Product Codes
              for observation in observations where observation.symbology != .qr {
-                 // Filter out false positives: require confidence and minimum code length
                  guard let code = observation.payloadStringValue,
                        !code.isEmpty,
-                       code.count >= 6, // Minimum valid barcode length
+                       code.count >= 6,
                        observation.confidence > 0.5 else {
                      print("   - Skipping low-confidence or invalid barcode: \(observation.payloadStringValue ?? "nil") (confidence: \(observation.confidence))")
                      continue
@@ -320,65 +334,30 @@ public final class IntelligenceProcessor: Sendable {
                  }()
                  
                  print("   - Barcode Found: \(code) (\(observation.symbology.rawValue), confidence: \(observation.confidence))")
-                 let assets: [URL] = [] 
-                 
-                 finalResults.append(.product(code: code, type: type, mediaAssets: assets))
+                 finalResults.append(.product(code: code, type: type, mediaAssets: []))
              }
          }
          
-         // 2. Return early if Live Mode
+         // Return early if Live Mode
          if mode == .liveSifting {
              return finalResults
          }
          
-         // 3. Full Analysis Configuration (Second Pass)
-         print("🧠 IntelligenceProcessor: Starting Full Analysis Pass")
+         // --- Process Full Analysis Results ---
          
-         let textRequest = VNRecognizeTextRequest()
-         textRequest.recognitionLevel = .accurate
-         
-         let classificationRequest = VNClassifyImageRequest()
-         let documentRequest = VNDetectDocumentSegmentationRequest()
-         
-         // Apply ROI if Subject Found (Disabled for Barcode scan safety, but relevant for classification)
-         if let roi = subjectBounds, roi.width > 0.05 && roi.height > 0.05 {
-             print("🎯 Subject ROI Detected: \(roi) (Focusing Classification Only)")
-             // Expand slightly to ensure we capture edges
-             let paddedRoi = roi.insetBy(dx: -0.05, dy: -0.05).intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
-             
-             classificationRequest.regionOfInterest = paddedRoi // Focus classification on subject
-         } else {
-             print("🌍 No Subject Sifted - Analyzing Full Scene")
+         // Collect OCR text
+         var ocrTextLines: [String] = []
+         if let observations = textRequest?.results {
+             for observation in observations {
+                 if let topCandidate = observation.topCandidates(1).first {
+                     ocrTextLines.append(topCandidate.string)
+                 }
+             }
          }
          
-          
-          // 4. Run Metadata Requests on FRESH Handler
-          let metadataHandler = handlerFactory()
-          do {
-              try metadataHandler.perform([textRequest, classificationRequest, documentRequest])
-          } catch {
-              print("❌ IntelligenceProcessor: Vision request failed: \(error)")
-          }
-          
-          // 5. Process Metadata Results
-           // (Barcodes already processed)
-          
-           // Collect all OCR text
-          // Collect all OCR text
-          var ocrTextLines: [String] = []
-          if let observations = textRequest.results {
-              for observation in observations {
-                  if let topCandidate = observation.topCandidates(1).first {
-                      ocrTextLines.append(topCandidate.string)
-                  }
-              }
-          }
-          
-          // Document results handled above with text aggregation
-          // MOVED SEMANTIC ANALYSIS to before document creation to provide labels
-          
+         // Semantic classification
          var semanticLabels: [String] = []
-         if let observations = classificationRequest.results {
+         if let observations = classificationRequest?.results {
              let topObservations = observations.prefix(5).filter { $0.confidence > 0.4 }
              semanticLabels = topObservations.map { $0.identifier.lowercased() }
              
@@ -390,49 +369,38 @@ public final class IntelligenceProcessor: Sendable {
               if let bestLabel = topObservations.first?.identifier,
                  let index = finalResults.firstIndex(where: { if case .siftedSubject = $0 { return true } else { return false } }),
                  case .siftedSubject(let obs, _) = finalResults[index] {
-                  // Replace with labeled version
                   finalResults[index] = .siftedSubject(obs, label: bestLabel)
                   print("🏷️ Assigned Label '\(bestLabel)' to Sifted Subject")
               }
           }
           
-          if let results = documentRequest.results, !results.isEmpty {
-               // Aggregation: Add document results WITH text label AND semantic label
+          // Document detection
+          if let results = documentRequest?.results, !results.isEmpty {
                let bestLabel = ocrTextLines.sorted { $0.count > $1.count }.first
-               // Pick most relevant semantic label for document (e.g. menu, receipt) - naïve approach: first one
                let docType = semanticLabels.first
                
                for observation in results {
-                   // Rectify Image
                    var rectifiedData: Data? = nil
                    if let source = sourceImage {
                        let docManager = DocumentManager()
-                       rectifiedData = docManager.rectifyImage(source, using: observation)
+                       rectifiedData = docManager.rectifyImage(source, using: observation, orientation: orientation)
                    }
                    
                    finalResults.append(.document(observation, text: bestLabel, label: docType, rectifiedImage: rectifiedData))
                }
                
-               // ALSO add all OCR text lines as .text results so they're captured in transcription
-               
-               // ALSO add all OCR text lines as .text results so they're captured in transcription
                for line in ocrTextLines where line.count > 10 {
                    let url = extractURL(from: line)
                    finalResults.append(.text(line, url))
                }
           } else {
-              // No document detected, check for loose text
               for line in ocrTextLines {
                   let url = extractURL(from: line)
-                  // Only show loose text if it's a URL or substantial text
-                  // We removed the "finalResults.isEmpty" check to ensure LLM gets context even if a subject is found.
-                  if url != nil || line.count > 10 {
+                  if url != nil || line.count > 3 {
                       finalResults.append(.text(line, url))
                   }
               }
           }
-          
-          // Document results handled above with text aggregation
           
          if !ocrTextLines.isEmpty {
             let labels = semanticLabels.joined(separator: " ")
@@ -448,10 +416,7 @@ public final class IntelligenceProcessor: Sendable {
                         return .movie
                      }()
                      
-                     // Removed mock assets
-                     let mockAssets: [URL] = []
-                     
-                     finalResults.insert(.entertainment(title: title, type: type, assets: mockAssets), at: 0)
+                     finalResults.insert(.entertainment(title: title, type: type, assets: []), at: 0)
                 }
             }
         }

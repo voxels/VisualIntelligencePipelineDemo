@@ -13,6 +13,27 @@ import UIKit
 #endif
 import ImageIO
 
+/// A `Transferable`-conforming wrapper for picker images.
+/// Handles JPEG, PNG, HEIC, and TIFF content types that the picker may provide.
+struct TransferableImage: Transferable {
+    let data: Data
+    
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(importedContentType: .jpeg) { data in
+            TransferableImage(data: data)
+        }
+        DataRepresentation(importedContentType: .png) { data in
+            TransferableImage(data: data)
+        }
+        DataRepresentation(importedContentType: .heic) { data in
+            TransferableImage(data: data)
+        }
+        DataRepresentation(importedContentType: .tiff) { data in
+            TransferableImage(data: data)
+        }
+    }
+}
+
 /// Service for importing photos and videos from the user's library.
 /// Handles batch processing, metadata extraction, clustering, and persistence.
 @MainActor
@@ -45,23 +66,28 @@ public final class PhotoLibraryImportService {
         let collection = DiverCollection(name: collectionName)
         modelContext.insert(collection)
         
-        // 2. Extract metadata from items IN BATCHES to avoid memory pressure
-        var importedAssets: [ImportedAsset] = []
-        let batchSize = 10
-        
-        for batchStart in stride(from: 0, to: items.count, by: batchSize) {
-            let batchEnd = min(batchStart + batchSize, items.count)
-            let batch = Array(items[batchStart..<batchEnd])
+        // 2. Extract metadata from items OFF the main thread to keep UI responsive
+        let capturedItems = items
+        let importedAssets: [ImportedAsset] = await Task.detached(priority: .userInitiated) {
+            var assets: [ImportedAsset] = []
+            let batchSize = 10
             
-            // Process batch sequentially - memory released after each await
-            for item in batch {
-                if let asset = await extractAssetMetadataOnly(from: item) {
-                    importedAssets.append(asset)
+            for batchStart in stride(from: 0, to: capturedItems.count, by: batchSize) {
+                let batchEnd = min(batchStart + batchSize, capturedItems.count)
+                let batch = Array(capturedItems[batchStart..<batchEnd])
+                
+                // Process batch sequentially - memory released after each await
+                for item in batch {
+                    if let asset = await self.extractAssetMetadataOnly(from: item) {
+                        assets.append(asset)
+                    }
                 }
+                
+                print("📥 Processed batch \(batchStart/batchSize + 1)/\((capturedItems.count + batchSize - 1)/batchSize)")
             }
             
-            print("📥 Processed batch \(batchStart/batchSize + 1)/\((items.count + batchSize - 1)/batchSize)")
-        }
+            return assets
+        }.value
         
         print("📥 Extracted \(importedAssets.count) assets from \(items.count) items")
         
@@ -328,8 +354,18 @@ public final class PhotoLibraryImportService {
     
     private func saveThumbnailToDisk(image: CGImage, id: String) -> String? {
         #if canImport(UIKit)
-        let uiImage = UIImage(cgImage: image)
-        return saveThumbnailToDisk(image: uiImage, id: id)
+        // Draw into an opaque context to strip alpha channel —
+        // JPEG doesn't support alpha and keeping it doubles decode memory.
+        let size = CGSize(width: image.width, height: image.height)
+        let renderer = UIGraphicsImageRenderer(size: size, format: {
+            let fmt = UIGraphicsImageRendererFormat()
+            fmt.opaque = true
+            return fmt
+        }())
+        let opaqueImage = renderer.image { ctx in
+            ctx.cgContext.draw(image, in: CGRect(origin: .zero, size: size))
+        }
+        return saveThumbnailToDisk(image: opaqueImage, id: id)
         #else
         return nil
         #endif
@@ -382,7 +418,8 @@ public final class PhotoLibraryImportService {
     
     /// Extract metadata ONLY from a PhotosPickerItem - does NOT load full image data
     /// Uses PHAsset for reliable creation date and location (works for both photos and videos)
-    private func extractAssetMetadataOnly(from item: PhotosPickerItem) async -> ImportedAsset? {
+    /// Runs off the main actor to keep UI responsive.
+    private nonisolated func extractAssetMetadataOnly(from item: PhotosPickerItem) async -> ImportedAsset? {
         // Detect media type from content types (no data loading needed)
         let isVideo = item.supportedContentTypes.contains { $0.conforms(to: .movie) }
         let isScreenshot = item.supportedContentTypes.contains { 
@@ -400,7 +437,7 @@ public final class PhotoLibraryImportService {
         var location: CLLocationCoordinate2D?
         var originalFilename: String?
         
-        // Fetch PHAsset using the identifier
+        // Fetch PHAsset using the identifier (includes /L0/001 heuristic)
         if let phAsset = fetchPHAsset(identifier: itemIdentifier) {
             creationDate = phAsset.creationDate
             if let assetLocation = phAsset.location?.coordinate {
@@ -416,13 +453,7 @@ public final class PhotoLibraryImportService {
             
             do {
                 if let data = try await item.loadTransferable(type: Data.self) {
-                    // Update the asset data so we can persist it
-                    // ImportedAsset is immutable-ish but we create it at the end.
-                    // We need to pass this 'data' to the return struct.
-                    
                     // Attempt to read EXIF/Metadata from the data
-                    // Note: For video, extracting metadata from Data is harder without AVAsset, but creationDate might be current date.
-                    
                     if !isVideo {
                         if let source = CGImageSourceCreateWithData(data as CFData, nil),
                            let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] {
@@ -449,6 +480,7 @@ public final class PhotoLibraryImportService {
                     }
                     
                     // Return with DATA populated
+                    print("✅ Eager loaded \(data.count) bytes for \(itemIdentifier)")
                     return ImportedAsset(
                         id: UUID().uuidString,
                         data: data,
@@ -466,12 +498,11 @@ public final class PhotoLibraryImportService {
             }
         }
         
-        // Return asset with minimal data (or empty if we have PHAsset but didn't load data here)
-        // If PHAsset appeared: we return empty data (deferred).
-        // If PHAsset missing & Eager load failed: we return empty data (will fail downstream but we tried).
+        // Return asset with minimal data - deferred loading via photosItemIdentifier
+        // ALWAYS return an asset (never nil) so downstream can use deferred PHAsset loading
         return ImportedAsset(
             id: UUID().uuidString,
-            data: Data(), // Empty data - deferred loading if PHAsset found, or failed if not.
+            data: Data(), // Empty data - deferred loading from PHAsset downstream
             isVideo: isVideo,
             isScreenshot: isScreenshot,
             isScreenRecording: isScreenRecording,
@@ -483,9 +514,24 @@ public final class PhotoLibraryImportService {
     }
     
     /// Fetch PHAsset from Photos library using its local identifier
-    private func fetchPHAsset(identifier: String) -> PHAsset? {
+    private nonisolated func fetchPHAsset(identifier: String) -> PHAsset? {
+        // 1. Try exact match
         let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
-        return fetchResult.firstObject
+        if let asset = fetchResult.firstObject {
+            return asset
+        }
+        
+        // 2. Try appending standard suffix if missing (sometimes Picker returns raw UUID)
+        if !identifier.contains("/") {
+            let standardID = identifier + "/L0/001"
+            let retryResult = PHAsset.fetchAssets(withLocalIdentifiers: [standardID], options: nil)
+            if let asset = retryResult.firstObject {
+                print("🔄 PhotoLibraryImportService: Found PHAsset using suffix heuristic: \(standardID)")
+                return asset
+            }
+        }
+        
+        return nil
     }
     
     /// Extract thumbnail for a single session's first asset - loads data on-demand

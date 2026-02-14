@@ -28,8 +28,18 @@ public final class PhotosAssetLoader {
         }
         
         // Fetch the asset
-        let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
-        guard let asset = fetchResult.firstObject else {
+        var asset = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil).firstObject
+        
+        // Fallback: Try appending standard suffix if missing (heuristics for raw pickle IDs)
+        if asset == nil && !identifier.contains("/") {
+            let standardID = identifier + "/L0/001"
+            asset = PHAsset.fetchAssets(withLocalIdentifiers: [standardID], options: nil).firstObject
+            if asset != nil {
+                print("🔄 PhotosAssetLoader: Resolved asset using suffix heuristic: \(standardID)")
+            }
+        }
+        
+        guard let asset = asset else {
             print("⚠️ PhotosAssetLoader: Asset not found for identifier: \(identifier)")
             return nil
         }
@@ -104,14 +114,38 @@ public final class PhotosAssetLoader {
             options.isNetworkAccessAllowed = true
             
             #if canImport(UIKit)
+            var resumed = false
             PHImageManager.default().requestImage(
                 for: asset,
                 targetSize: size,
                 contentMode: .aspectFill,
                 options: options
-            ) { image, _ in
-                let data = image?.jpegData(compressionQuality: 0.8)
-                continuation.resume(returning: data)
+            ) { image, info in
+                guard !resumed else { return }
+                
+                let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
+                let error = info?[PHImageErrorKey] as? Error
+                let isCancelled = (info?[PHImageCancelledKey] as? Bool) ?? false
+                
+                if let image = image, !isDegraded {
+                    let data = image.jpegData(compressionQuality: 0.8)
+                    resumed = true
+                    continuation.resume(returning: data)
+                } else if error != nil || isCancelled {
+                    resumed = true
+                    continuation.resume(returning: nil)
+                } else {
+                    // Fallback for degraded or nil image without error
+                    // If it is NOT degraded but image is nil, it's a failure.
+                    // If it IS degraded, we wait for the next callback... UNLESS this is the last one?
+                    // PHImageManager guarantees a final callback.
+                    // But if we get (nil, nil) and !isDegraded... fail safe:
+                    if !isDegraded && image == nil {
+                         print("⚠️ PhotosAssetLoader: Thumbnail load failed (nil image, no error)")
+                         resumed = true
+                         continuation.resume(returning: nil)
+                    }
+                }
             }
             #else
             continuation.resume(returning: nil)

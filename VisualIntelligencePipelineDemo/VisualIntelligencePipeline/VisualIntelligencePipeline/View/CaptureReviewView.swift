@@ -7,6 +7,7 @@ struct CaptureReviewView: View {
     @ObservedObject var viewModel: VisualIntelligenceViewModel
     
     @State private var showingShareSheet = false
+    @State private var isSaving = false
     
     var body: some View {
         ZStack {
@@ -120,6 +121,7 @@ struct CaptureReviewView: View {
                             .foregroundStyle(.white)
                             .frame(width: 72, height: 64)
                     }
+                    .disabled(isSaving)
                     
                     Divider()
                         .frame(height: 30)
@@ -127,17 +129,24 @@ struct CaptureReviewView: View {
                     
                     // Primary Save -> Diver
                     Button {
+                        isSaving = true
                         hapticFeedback(.heavy)
                         viewModel.commitReviewSave()
                         // Close after a brief success delay/feedback
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            isSaving = false
                             viewModel.reset()
                         }
                     } label: {
                         HStack(spacing: 12) {
-                            Image(systemName: "sparkles.tv.fill")
-                                .font(.system(size: 24))
-                            Text("Save to Visual Intelligence")
+                            if isSaving {
+                                ProgressView()
+                                    .tint(.white)
+                            } else {
+                                Image(systemName: "sparkles.tv.fill")
+                                    .font(.system(size: 24))
+                            }
+                            Text(isSaving ? "Saving..." : "Save to Visual Intelligence")
                                 .fontWeight(.bold)
                         }
                         .foregroundStyle(.white)
@@ -145,9 +154,10 @@ struct CaptureReviewView: View {
                         .frame(height: 64)
                         .background(
                             LinearGradient(colors: [.blue, .purple], startPoint: .leading, endPoint: .trailing)
-                                .opacity(0.8)
+                                .opacity(isSaving ? 0.5 : 0.8)
                         )
                     }
+                    .disabled(isSaving)
                 }
                 .background(.ultraThinMaterial)
                 .clipShape(Capsule())

@@ -12,6 +12,8 @@ public struct DiverQueueItem: Codable, Hashable, Sendable {
     
     /// PHAsset identifier for photo library imports - allows deferred data loading
     public let photosAssetIdentifier: String?
+    /// Depth map data from LiDAR/dual camera capture
+    public let depthPayload: Data?
     
     // Convenience for backward compatibility or easy access
     public var purposes: Set<String> { descriptor.purposes }
@@ -25,7 +27,8 @@ public struct DiverQueueItem: Codable, Hashable, Sendable {
         payload: Data? = nil,
         payloadURL: URL? = nil,
         attachments: [Data]? = nil,
-        photosAssetIdentifier: String? = nil
+        photosAssetIdentifier: String? = nil,
+        depthPayload: Data? = nil
     ) {
         self.id = id
         self.action = action
@@ -36,6 +39,7 @@ public struct DiverQueueItem: Codable, Hashable, Sendable {
         self.payloadURL = payloadURL
         self.attachments = attachments
         self.photosAssetIdentifier = photosAssetIdentifier
+        self.depthPayload = depthPayload
     }
     
 

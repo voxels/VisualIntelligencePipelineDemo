@@ -65,7 +65,7 @@ final class DiverQueueProcessingService {
         // Enforce background context for heavy lifting via Task.detached
         // DiverQueueRecord is Sendable, so we can pass it directly.
         
-        try await Task.detached(priority: .userInitiated) { [weak self] in
+        try await Task.detached(priority: .utility) { [weak self] in
             guard let self = self else { return }
             
             switch record.item.action {
@@ -96,9 +96,7 @@ final class DiverQueueProcessingService {
                              if let best = bestFrame {
                                  #if canImport(UIKit)
                                  let cgImage = best.image
-                                 thumbnailData = await MainActor.run {
-                                     UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.8)
-                                 }
+                                 thumbnailData = UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.8)
                                  #endif
                              }
                              
@@ -119,9 +117,21 @@ final class DiverQueueProcessingService {
                     }
                 } else if let assetID = record.item.photosAssetIdentifier {
                     // 0.5. Hybrid Input: Photos Asset (Deferred Loading)
-                    let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetID], options: nil)
-                    if let asset = fetchResult.firstObject {
-                        print("🔄 Processing Service: Loading PHAsset \(assetID) type=\(asset.mediaType.rawValue)...")
+                    var fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetID], options: nil)
+                    var asset = fetchResult.firstObject
+                    
+                    // Fallback: Try appending standard suffix if missing (heuristics for raw pickle IDs)
+                    if asset == nil && !assetID.contains("/") {
+                        let standardID = assetID + "/L0/001"
+                        let retryValues = PHAsset.fetchAssets(withLocalIdentifiers: [standardID], options: nil)
+                        if let found = retryValues.firstObject {
+                            print("🔄 Processing Service: Resolved asset using suffix heuristic: \(standardID)")
+                            asset = found
+                        }
+                    }
+
+                    if let asset = asset {
+                        print("🔄 Processing Service: Loading PHAsset \(asset.localIdentifier) type=\(asset.mediaType.rawValue)...")
                         
                         if asset.mediaType == .video {
                             // --- VIDEO HANDLING ---
@@ -173,9 +183,7 @@ final class DiverQueueProcessingService {
                                        let best = frames.first {
                                         let cgImage = best.image
                                         #if canImport(UIKit)
-                                        thumbnailData = await MainActor.run {
-                                            UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.8)
-                                        }
+                                        thumbnailData = UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.8)
                                         #endif
                                         print("✅ Processing Service: Extracted aesthetic thumbnail (score: \(best.score))")
                                     }
@@ -187,9 +195,7 @@ final class DiverQueueProcessingService {
                                          generator.appliesPreferredTrackTransform = true
                                          if let cgImage = try? generator.copyCGImage(at: .zero, actualTime: nil) {
                                              #if canImport(UIKit)
-                                             thumbnailData = await MainActor.run {
-                                                UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.8)
-                                             }
+                                             thumbnailData = UIImage(cgImage: cgImage).jpegData(compressionQuality: 0.8)
                                              #endif
                                          }
                                     }
@@ -215,35 +221,44 @@ final class DiverQueueProcessingService {
                              options.deliveryMode = .highQualityFormat
                              options.isSynchronous = false 
                              
-                             let imageData: Data? = await withCheckedContinuation { continuation in
-                                 var resumed = false
-                                 manager.requestImageDataAndOrientation(for: asset, options: options) { data, dataUTI, orientation, info in
-                                     guard !resumed else { return }
-                                     let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
-                                     let error = info?[PHImageErrorKey] as? Error
-                                     let isCancelled = (info?[PHImageCancelledKey] as? Bool) ?? false
+                            let imageData: Data? = await withCheckedContinuation { continuation in
+                                var resumed = false
+                                manager.requestImageDataAndOrientation(for: asset, options: options) { data, dataUTI, orientation, info in
+                                    guard !resumed else { return }
+                                    let isDegraded = (info?[PHImageResultIsDegradedKey] as? Bool) ?? false
+                                    let error = info?[PHImageErrorKey] as? Error
+                                    let isCancelled = (info?[PHImageCancelledKey] as? Bool) ?? false
 
-                                     if let data = data, !isDegraded {
-                                         if let ciImage = CIImage(data: data) {
-                                             let appliedOrientation = Int32(orientation.rawValue)
-                                             let fixedImage = ciImage.oriented(forExifOrientation: appliedOrientation)
-                                             let context = CIContext()
-                                             if let colorSpace = fixedImage.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB),
-                                                let jpegData = context.jpegRepresentation(of: fixedImage, colorSpace: colorSpace, options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.9]) {
-                                                 resumed = true
-                                                 continuation.resume(returning: jpegData)
-                                                 return
-                                             }
-                                         }
-                                         resumed = true
-                                         continuation.resume(returning: data)
-                                     } else if error != nil || isCancelled {
-                                         print("❌ PHImageManager failed: \(String(describing: error))")
-                                         resumed = true
-                                         continuation.resume(returning: nil)
-                                     }
-                                 }
-                             }
+                                    if let data = data, !isDegraded {
+                                        if let ciImage = CIImage(data: data) {
+                                            let appliedOrientation = Int32(orientation.rawValue)
+                                            let fixedImage = ciImage.oriented(forExifOrientation: appliedOrientation)
+                                            let context = CIContext()
+                                            if let colorSpace = fixedImage.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB),
+                                               let jpegData = context.jpegRepresentation(of: fixedImage, colorSpace: colorSpace, options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.9]) {
+                                                resumed = true
+                                                continuation.resume(returning: jpegData)
+                                                return
+                                            }
+                                        }
+                                        resumed = true
+                                        continuation.resume(returning: data)
+                                    } else if error != nil || isCancelled {
+                                        print("❌ PHImageManager failed: \(String(describing: error))")
+                                        resumed = true
+                                        continuation.resume(returning: nil)
+                                    } else {
+                                        // CRITICAL Fix: Handle the case where data is nil but no error is reported (or intermediate callback)
+                                        // If this is the final callback (implied by !isDegraded check failing above without data?), 
+                                        // or if we just fell through.
+                                        // Actually, if data is nil, we should probably fail.
+                                        // But requestImageDataAndOrientation might call back with nil data and nil error in rare cases.
+                                        print("⚠️ PHImageManager returned nil data and nil error. Leaking continuation prevented.")
+                                        resumed = true
+                                        continuation.resume(returning: nil)
+                                    }
+                                }
+                            }
                              
                              if let data = imageData {
                                  if let updated = try? self.persistPayload(data, for: descriptor, fileExtension: "jpg") {
@@ -368,7 +383,8 @@ final class DiverQueueProcessingService {
             descriptionText: newDesc,
             styleTags: Array(mergedTags).sorted(), // Flatten into styleTags for now as categories might be specific
             categories: descriptor.categories, // Keep original categories or merge? Let's keep original + new in styleTags
-            location: enrichment.location ?? descriptor.location,
+            // FIX: If user pinned a location (placeID exists), preserve it. Otherwise accept enrichment.
+            location: descriptor.placeID != nil ? descriptor.location : (enrichment.location ?? descriptor.location),
             price: enrichment.price ?? descriptor.price,
             createdAt: descriptor.createdAt,
             type: descriptor.type,
@@ -377,6 +393,7 @@ final class DiverQueueProcessingService {
             wrappedLink: descriptor.wrappedLink,
             masterCaptureID: descriptor.masterCaptureID, // FIX: Pass masterCaptureID to persist hierarchy
             photosAssetIdentifier: descriptor.photosAssetIdentifier,
+            sessionID: descriptor.sessionID, // FIX: Preserve sessionID
             purposes: descriptor.purposes, // Preserve existing purposes
             processingLog: descriptor.processingLog + ["[\(Date().formatted())] Enriched with Link Metadata"]
         )

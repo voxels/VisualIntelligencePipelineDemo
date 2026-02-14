@@ -8,8 +8,16 @@ import AVFoundation
 import UIKit
 #endif
 
+#if os(iOS)
+/// Thread-safe holder for UIBackgroundTaskIdentifier to safely share across isolation boundaries.
+@MainActor
+private final class BackgroundTaskHolder: Sendable {
+    nonisolated(unsafe) var taskID: UIBackgroundTaskIdentifier = .invalid
+}
+#endif
 
 @MainActor
+@Observable
 public final class MetadataPipelineService {
     private let queueStore: DiverQueueStore
     private let modelContext: ModelContext
@@ -22,7 +30,21 @@ public final class MetadataPipelineService {
     public var indexingService: KnowledgeGraphIndexingService?
     public var contextService: ContextQuestionService?
     
+    // MARK: - Queue Progress (observed by QueueProgressView)
+    public var isProcessingQueue: Bool = false
+    private var resetTask: Task<Void, Never>?
+    public var queueTotalCount: Int = 0
+    public var queueCompletedCount: Int = 0
+    public var queueCurrentItemTitle: String? = nil
+    /// Granular phase description, e.g. "Loading image…", "Analyzing content…"
+    public var queueStatusMessage: String? = nil
+    public var queueProgress: Double {
+        guard queueTotalCount > 0 else { return 0 }
+        return Double(queueCompletedCount) / Double(queueTotalCount)
+    }
+    
     private var currentTask: Task<Void, Never>?
+    private var queueGeneration: Int = 0
 
     public init(
         queueStore: DiverQueueStore,
@@ -45,91 +67,157 @@ public final class MetadataPipelineService {
         self.indexingService = indexingService
         self.contextService = contextService
     }
+    
+    /// Cancels all in-flight processing. Call when the app enters background or terminates.
+    public func cancelProcessing() {
+        currentTask?.cancel()
+        currentTask = nil
+        resetTask?.cancel()
+        resetTask = nil
+        isProcessingQueue = false
+        queueTotalCount = 0
+        queueCompletedCount = 0
+        queueCurrentItemTitle = nil
+        queueStatusMessage = nil
+        print("🛑 [MetadataPipeline] Processing cancelled (app backgrounded)")
+    }
 
     public func processPendingQueue() async throws {
-        // Cancel any existing task
+        // Cancel any existing task and any pending reset
         currentTask?.cancel()
+        resetTask?.cancel()
         
-        let task = Task(priority: .userInitiated) {
+        // Increment generation so cancelled tasks don't reset our progress
+        queueGeneration += 1
+        let myGeneration = queueGeneration
+        
+        // Register background task on main actor BEFORE entering detached context
+        #if os(iOS)
+        print("🔄 [MetadataPipeline] Starting processPendingQueue (detached, utility priority)")
+        // Use a reference type to allow the expiration handler to end the task
+        let bgTaskHolder = BackgroundTaskHolder()
+        bgTaskHolder.taskID = UIApplication.shared.beginBackgroundTask(withName: "DiverMetadataPipeline") {
+            UIApplication.shared.endBackgroundTask(bgTaskHolder.taskID)
+            bgTaskHolder.taskID = .invalid
+        }
+        #endif
+        
+        let task = Task.detached(priority: .utility) { [self] in
             #if os(iOS)
-            var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
-            print("🔄 [MetadataPipeline] Starting processPendingQueue (userInitiated priority)")
-            backgroundTaskID = UIApplication.shared.beginBackgroundTask(withName: "DiverMetadataPipeline") {
-                UIApplication.shared.endBackgroundTask(backgroundTaskID)
-                backgroundTaskID = .invalid
-            }
             defer {
-                if backgroundTaskID != .invalid {
-                    UIApplication.shared.endBackgroundTask(backgroundTaskID)
+                let finalID = bgTaskHolder.taskID
+                if finalID != .invalid {
+                    Task { @MainActor in
+                        UIApplication.shared.endBackgroundTask(finalID)
+                    }
                 }
             }
             #endif
 
+            // Show progress immediately — individual phases will add to the counts
+            await MainActor.run {
+                self.isProcessingQueue = true
+                self.queueTotalCount = 0
+                self.queueCompletedCount = 0
+                self.queueCurrentItemTitle = nil
+                self.queueStatusMessage = "Checking queue…"
+            }
+            // Yield so SwiftUI can render the overlay before heavy work begins
+            await Task.yield()
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms to ensure UI renders
+
             do {
                 // 1. Resume any stuck items from previous sessions (DB persistence)
+                // Hops to @MainActor for SwiftData operations
                 DiverLogger.queue.debug("Checking for stuck items or pending database transactions...")
-                try await resumeSuspendedQueue()
+                try await self.resumeSuspendedQueue()
                 if Task.isCancelled { 
                     DiverLogger.queue.debug("Queue processing cancelled after resumeSuspendedQueue")
+                    // Only reset progress if no newer task has taken over
+                    await MainActor.run {
+                        if self.queueGeneration == myGeneration {
+                            self.resetQueueProgress()
+                        }
+                    }
                     return 
                 }
 
-                let records = try queueStore.pendingEntries()
-                if records.isEmpty {
-                    print("📂 [MetadataPipeline] No pending files in DiverQueueStore.")
-                    DiverLogger.queue.debug("No pending files found in DiverQueueStore.")
-                    return
-                } else {
+                // 2. Process disk queue records (shared links from DiverQueueStore)
+                let records = try await MainActor.run { try self.queueStore.pendingEntries() }
+                if !records.isEmpty {
                     print("🔄 [MetadataPipeline] Processing \(records.count) entries from disk...")
                     DiverLogger.queue.info("Processing \(records.count) pending queue entries from disk")
+                    
+                    await MainActor.run {
+                        self.queueTotalCount += records.count
+                    }
+
+                    var successCount = 0
+                    var errorCount = 0
+
+                    for record in records {
+                        if Task.isCancelled { break }
+                        
+                        let itemTitle = record.item.descriptor.title
+                        await MainActor.run {
+                            self.queueCurrentItemTitle = itemTitle
+                            self.queueStatusMessage = "Processing shared link…"
+                        }
+                        
+                        do {
+                            print("📦 [MetadataPipeline] Starting: \(record.item.id)")
+                            try await self.handle(record: record)
+                            try await self.saveWithRetry()
+                            try await MainActor.run { try self.queueStore.remove(record) }
+                            successCount += 1
+                            await MainActor.run { self.queueCompletedCount += 1 }
+                            print("✅ [MetadataPipeline] Finished: \(record.item.id)")
+                            DiverLogger.queue.debug("Successfully processed and persisted queue item: \(record.item.id)")
+                        } catch {
+                            errorCount += 1
+                            print("❌ [MetadataPipeline] Failed \(record.fileURL.lastPathComponent): \(error)")
+                            DiverLogger.queue.logError(error, context: "Error processing record \(record.fileURL.lastPathComponent)")
+                            try? await self.handleFailure(record: record, error: error)
+                            try? await self.saveWithRetry()
+                            try? await MainActor.run { try self.queueStore.remove(record) }
+                            await MainActor.run { self.queueCompletedCount += 1 }
+                            continue
+                        }
+                    }
+                    
+                    print("🏁 [MetadataPipeline] Disk queue complete. Success: \(successCount), Failed: \(errorCount)")
+                    DiverLogger.queue.info("Queue processing complete - success: \(successCount), failed: \(errorCount), total: \(records.count)")
+                    
+                    if successCount > 0 {
+                        await self.generatePendingSessionSummaries()
+                        await self.generatePendingCollectionSummaries()
+                    }
+                } else {
+                    print("📂 [MetadataPipeline] No pending files in DiverQueueStore.")
+                    DiverLogger.queue.debug("No pending files found in DiverQueueStore.")
                 }
-
-                var successCount = 0
-                var errorCount = 0
-
-                for record in records {
-                    if Task.isCancelled { break }
-                    do {
-                        print("📦 [MetadataPipeline] Starting: \(record.item.id)")
-                        try await self.handle(record: record)
-                        
-                        // CRITICAL: Save to DB BEFORE removing from disk queue to prevent data loss on crash/error
-                        try await self.saveWithRetry()
-                        
-                        try queueStore.remove(record)
-                        successCount += 1
-                        print("✅ [MetadataPipeline] Finished: \(record.item.id)")
-                        DiverLogger.queue.debug("Successfully processed and persisted queue item: \(record.item.id)")
-                    } catch {
-                        errorCount += 1
-                        print("❌ [MetadataPipeline] Failed \(record.fileURL.lastPathComponent): \(error)")
-                        DiverLogger.queue.logError(error, context: "Error processing record \(record.fileURL.lastPathComponent)")
-                        
-                        try? await handleFailure(record: record, error: error)
-                        // Even on failure, if handleFailure succeeded in updating DB, we should save and remove
-                        try? await self.saveWithRetry()
-                        try? queueStore.remove(record)
-                        continue
+                
+                // Reset progress after all phases complete
+                await MainActor.run {
+                    if self.queueGeneration == myGeneration {
+                        self.resetQueueProgress()
                     }
                 }
                 
-                print("🏁 [MetadataPipeline] Complete. Success: \(successCount), Failed: \(errorCount)")
-                DiverLogger.queue.info("Queue processing complete - success: \(successCount), failed: \(errorCount), total: \(records.count)")
-                
-                // Generate summaries for sessions and collections that had items processed
-                if successCount > 0 {
-                    await self.generatePendingSessionSummaries()
-                    await self.generatePendingCollectionSummaries()
+                await MainActor.run {
+                    WidgetCenter.shared.reloadAllTimelines()
                 }
-                
-                WidgetCenter.shared.reloadAllTimelines()
             } catch {
                 DiverLogger.queue.error("Queue processing failed: \(error)")
+                await MainActor.run {
+                    if self.queueGeneration == myGeneration {
+                        self.resetQueueProgress()
+                    }
+                }
             }
         }
         
         self.currentTask = task
-        _ = await task.result
     }
 
     /// Helper to save with retry logic for 'database is busy' errors
@@ -362,6 +450,10 @@ public final class MetadataPipelineService {
         if !pendingInputs.isEmpty {
             DiverLogger.pipeline.info("Resuming \(pendingInputs.count) pending transactions from database")
             
+            // Add to running total
+            queueTotalCount += pendingInputs.count
+            queueStatusMessage = "Resuming interrupted items…"
+            
             let localPipeline = LocalPipelineService(modelContext: modelContext)
             
             for input in pendingInputs {
@@ -377,8 +469,12 @@ public final class MetadataPipelineService {
                         DiverLogger.pipeline.debug("Skipping already-completed input \(inputId) - ProcessedItem \(existingReady.id) is ready")
                         // Clean up the orphaned LocalInput
                         modelContext.delete(input)
+                        queueTotalCount -= 1 // Already done, don't count
                         continue
                     }
+                    
+                    queueCurrentItemTitle = input.text ?? input.url ?? "Pending item"
+                    queueStatusMessage = "Processing pending item…"
                     
                     // Re-run process. logic checks for existing items automatically.
                     _ = try await localPipeline.process(
@@ -391,9 +487,10 @@ public final class MetadataPipelineService {
                         indexingService: self.indexingService,
                         contextService: self.contextService
                     )
+                    queueCompletedCount += 1
                 } catch {
                     DiverLogger.pipeline.error("Failed to resume input \(input.id): \(error)")
-                    // If it fails repeatedly, it stays in the database as a pending input
+                    queueCompletedCount += 1
                 }
             }
             try modelContext.save()
@@ -407,9 +504,10 @@ public final class MetadataPipelineService {
     }
     
     /// Process queued items that have no corresponding LocalInput (e.g., stalled items reset earlier)
+    /// Excludes photoLibraryImport items which are handled by processImportedPHAssetItems.
     private func processQueuedOrphanItems() async {
         let queuedFetch = FetchDescriptor<ProcessedItem>(
-            predicate: #Predicate { $0.statusRaw == "queued" },
+            predicate: #Predicate { $0.statusRaw == "queued" && $0.source != "photoLibraryImport" },
             sortBy: [SortDescriptor(\.createdAt)]
         )
         
@@ -419,6 +517,9 @@ public final class MetadataPipelineService {
         
         DiverLogger.pipeline.info("Processing \(queuedItems.count) queued items without LocalInput")
         
+        // Add to running total (parent already set isProcessingQueue = true)
+        queueTotalCount += queuedItems.count
+        
         for item in queuedItems {
             if Task.isCancelled { break }
             
@@ -427,8 +528,12 @@ public final class MetadataPipelineService {
             let urlFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.url == itemURL })
             if let _ = try? modelContext.fetch(urlFetch).first {
                 // LocalInput exists, will be processed by step 2
+                queueTotalCount -= 1 // Don't count items handled elsewhere
                 continue
             }
+            
+            queueCurrentItemTitle = item.title ?? item.filename ?? "Processing item"
+            queueStatusMessage = "Processing queued item…"
             
             // No LocalInput? Process this orphaned item directly
             do {
@@ -440,6 +545,8 @@ public final class MetadataPipelineService {
                 item.processingLog.append("\(Date().formatted()): Failed to resume - \(error.localizedDescription)")
                 try? modelContext.save()
             }
+            
+            queueCompletedCount += 1
         }
     }
     
@@ -459,39 +566,67 @@ public final class MetadataPipelineService {
             return
         }
         
-        print("📸 [MetadataPipeline] Processing \(queuedItems.count) imported PHAsset items...")
+        print("📸 [MetadataPipeline] Processing \(queuedItems.count) imported PHAsset items (concurrent prefetch)...")
         DiverLogger.pipeline.info("Processing \(queuedItems.count) imported PHAsset items")
         
         var successCount = 0
         var errorCount = 0
         
-        // Process ONE item at a time for memory safety
-        for item in queuedItems {
+        // Add to running total (parent already set isProcessingQueue = true)
+        queueTotalCount += queuedItems.count
+        
+        // Prefetch pattern: load next item's data while current item processes.
+        // This overlaps PHAsset I/O with Vision + LLM computation.
+        var prefetchTask: Task<Data?, Never>? = nil
+        
+        for (index, item) in queuedItems.enumerated() {
             if Task.isCancelled { break }
             
             guard let assetIdentifier = item.photosAssetIdentifier else {
-                // No asset identifier - mark as failed
                 item.status = .failed
                 item.processingLog.append("\(Date().formatted()): No photosAssetIdentifier found")
                 errorCount += 1
+                queueCompletedCount += 1
                 continue
             }
             
-            // Load image data from PHAsset using shared loader
-            // This handles both images and videos (extracting best frame)
-            guard let imageData = await PhotosAssetLoader.shared.loadBestFrame(identifier: assetIdentifier) else {
+            // Start prefetching the NEXT item's data while we process this one
+            let nextItem = (index + 1 < queuedItems.count) ? queuedItems[index + 1] : nil
+            let nextPrefetch: Task<Data?, Never>?
+            if let nextAssetID = nextItem?.photosAssetIdentifier {
+                nextPrefetch = Task.detached(priority: .utility) {
+                    await PhotosAssetLoader.shared.loadBestFrame(identifier: nextAssetID)
+                }
+            } else {
+                nextPrefetch = nil
+            }
+            
+            queueCurrentItemTitle = item.title ?? item.filename ?? "Photo Import"
+            queueStatusMessage = "Loading image data…"
+            
+            // Use prefetched data if available (from previous iteration), otherwise load now
+            let imageData: Data?
+            if let prefetched = prefetchTask {
+                imageData = await prefetched.value
+            } else {
+                imageData = await PhotosAssetLoader.shared.loadBestFrame(identifier: assetIdentifier)
+            }
+            prefetchTask = nextPrefetch
+            
+            guard let imageData else {
                 item.status = .failed
                 item.processingLog.append("\(Date().formatted()): Failed to load data from PHAsset")
                 errorCount += 1
+                queueCompletedCount += 1
                 continue
             }
             
             do {
                 item.status = .processing
                 item.processingLog.append("\(Date().formatted()): Processing PHAsset import")
+                queueStatusMessage = "Analyzing content…"
                 try? modelContext.save()
                 
-                // Create LocalInput from the loaded data - use item's original date
                 let localInput = LocalInput(
                     createdAt: item.createdAt,
                     url: nil,
@@ -520,12 +655,12 @@ public final class MetadataPipelineService {
                     purposes: []
                 )
                 
-                // Pass nil for locationService to prevent GPS override - use photo's original location
+                queueStatusMessage = "Running pipeline…"
                 _ = try await localPipeline.process(
                     input: localInput,
                     descriptor: descriptor,
                     enrichmentService: self.enrichmentService,
-                    locationService: nil, // Don't override with current GPS
+                    locationService: nil,
                     foursquareService: self.foursquareService,
                     duckDuckGoService: self.duckDuckGoService,
                     weatherService: self.weatherService,
@@ -535,21 +670,37 @@ public final class MetadataPipelineService {
                 
                 try? modelContext.save()
                 successCount += 1
+                queueCompletedCount += 1
                 print("✅ [MetadataPipeline] Processed PHAsset: \(item.id)")
                 
             } catch {
                 item.status = .failed
                 item.processingLog.append("\(Date().formatted()): Processing failed - \(error.localizedDescription)")
                 errorCount += 1
+                queueCompletedCount += 1
                 print("❌ [MetadataPipeline] Failed PHAsset: \(item.id) - \(error)")
             }
-            
-            // Memory cleanup: pause briefly to allow ARC to reclaim
-            try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 second
         }
         
         try? modelContext.save()
         print("📸 [MetadataPipeline] PHAsset processing complete. Success: \(successCount), Failed: \(errorCount)")
+    }
+    
+    /// Clears queue progress state after a brief delay so the "complete" state is visible.
+    /// MUST be called from MainActor or wrapped in MainActor.run.
+    @MainActor
+    private func resetQueueProgress() {
+        queueCurrentItemTitle = nil
+        queueStatusMessage = "Complete"
+        resetTask?.cancel()
+        resetTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5s
+            guard !Task.isCancelled else { return }
+            self?.isProcessingQueue = false
+            self?.queueTotalCount = 0
+            self?.queueCompletedCount = 0
+            self?.queueStatusMessage = nil
+        }
     }
 
 
@@ -588,7 +739,7 @@ public final class MetadataPipelineService {
         // The descriptor already contains the photo's original location
         let useLocationService = record.item.source != "photoLibraryImport" ? locationService : nil
         
-        _ = try await localPipeline.process(
+        let processedItem = try await localPipeline.process(
             input: localInput,
             descriptor: descriptor,
             enrichmentService: enrichmentService,
@@ -599,6 +750,13 @@ public final class MetadataPipelineService {
             indexingService: indexingService,
             contextService: contextService
         )
+        
+        // Assign depth payload from queue item (captured atomically with photo)
+        // No extra save() here — the context is saved by the caller to avoid WAL contention
+        if let depthData = record.item.depthPayload {
+            processedItem.depthPayload = depthData
+            print("📐 Depth map assigned to ProcessedItem: \(depthData.count) bytes")
+        }
 
         DiverLogger.storage.debug("Saved LocalInput to SwiftData - inputId: \(localInput.id.uuidString)")
     }

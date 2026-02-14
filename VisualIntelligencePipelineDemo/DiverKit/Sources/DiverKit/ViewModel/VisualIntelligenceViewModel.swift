@@ -43,9 +43,33 @@ public class VisualIntelligenceViewModel: ObservableObject {
     @Published public var siftedImage: PlatformImage?
     @Published public var siftedBoundingBox: CGRect?
     @Published public var capturedImage: PlatformImage?
+    @Published public var sessionDepthData: [Data?] = [] // Depth maps parallel to sessionImages
     @Published public var capturedVideoURL: URL? // For video reprocessing
     @Published public var sessionImages: [PlatformImage] = [] // For multi-image capture
     @Published public var activeSessionID: String = UUID().uuidString // Session Persistence
+    
+    // MARK: - Orientation-Safe Image Setters
+    // All image assignments must go through these to guarantee normalized orientation.
+    
+    /// Sets `capturedImage` with orientation baked into pixels (normalized to .up).
+    /// Vision analysis should still use the original image's cgImage + imageOrientation.
+    func setCapturedImage(_ image: PlatformImage?) {
+        #if canImport(UIKit)
+        self.capturedImage = image?.fixedOrientation()
+        #else
+        self.capturedImage = image
+        #endif
+    }
+    
+    /// Appends an image to `sessionImages` with orientation normalized.
+    func appendSessionImage(_ image: PlatformImage, depthData: Data? = nil) {
+        #if canImport(UIKit)
+        self.sessionImages.append(image.fixedOrientation())
+        #else
+        self.sessionImages.append(image)
+        #endif
+        self.sessionDepthData.append(depthData)
+    }
     public var accumulatedContexts: [String] = [] // For sequential context history
     @Published public var isReviewing: Bool = false
     @Published public var peelAmount: CGFloat = 0
@@ -260,6 +284,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
 
     @Published public var cameraManager = CameraManager()
     @Published public var currentOrientation: CGImagePropertyOrientation = .up
+    /// Stores the EXIF orientation that was active when Vision analyzed the captured image.
+    /// Needed because `capturedImage` is normalized to `.up` for display, but Vision
+    /// coordinates (e.g. VNRectangleObservation) are in the original orientation's coordinate system.
+    public var capturedImageVisionOrientation: CGImagePropertyOrientation = .up
     private var processor = IntelligenceProcessor()
     private var linkGenerator: DiverLinkGenerator?
     private let webViewService = WebViewLinkEnrichmentService() // New Service
@@ -312,8 +340,74 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         print("🔄 VI ViewModel: Found pending reprocess context for session \(context.sessionID)")
         
-        // 2. Data Type Detection (Image vs Video)
-        let isVideo = self.isDataVideo(context.imageData)
+        // 1. Set Session & Metadata FIRST — CRITICAL: Pin location from the item's
+        // existing data so locateContextOnLoad skips fresh GPS lookup.
+        // This MUST run before any early returns.
+        self.activeSessionID = context.sessionID
+        self.sessionTitle = context.sessionTitle  // Preserve user's custom title
+        self.currentCapturePlaceID = context.placeID
+        
+        var reprocessLat: Double?
+        var reprocessLon: Double?
+        if let loc = context.location {
+            let parts = loc.split(separator: ",")
+            if parts.count == 2, let lat = Double(parts[0]), let lon = Double(parts[1]) {
+                self.currentCaptureCoordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                reprocessLat = lat
+                reprocessLon = lon
+            }
+        }
+        
+        // Build selectedPlace from item context to prevent location override
+        if let placeName = context.placeName, let lat = reprocessLat, let lon = reprocessLon {
+            let itemPlace = EnrichmentData(
+                title: placeName,
+                descriptionText: "From original capture",
+                categories: ["Reprocess"],
+                location: context.location ?? placeName,
+                placeContext: PlaceContext(
+                    name: placeName,
+                    categories: [],
+                    placeID: context.placeID,
+                    latitude: lat,
+                    longitude: lon
+                )
+            )
+            self.selectPlace(itemPlace)
+            self.isLocationPinned = true
+            print("📍 [Reprocess] Pinned location from item: \(placeName)")
+        } else if let lat = reprocessLat, let lon = reprocessLon {
+            let coordPlace = EnrichmentData(
+                title: context.location ?? "Original Location",
+                descriptionText: "From original capture",
+                categories: ["Reprocess"],
+                location: context.location ?? "\(lat),\(lon)",
+                placeContext: PlaceContext(
+                    name: "Original Location",
+                    categories: [],
+                    latitude: lat,
+                    longitude: lon
+                )
+            )
+            self.selectPlace(coordPlace)
+            self.isLocationPinned = true
+            print("📍 [Reprocess] Pinned coordinates from item: \(lat),\(lon)")
+        } else {
+            // No location data on item — allow fresh lookup
+            if !isLocationPinned {
+                self.selectedPlace = nil
+            }
+        }
+        
+        // 2. Load Media (Image vs Video)
+        // Use mediaType from the item's model to determine type.
+        // Only fall back to byte-sniffing when mediaType is unknown.
+        let isVideo: Bool = {
+            if let mediaType = context.mediaType {
+                return mediaType == "video"
+            }
+            return self.isDataVideo(context.imageData)
+        }()
         
         if isVideo {
             print("🎥 VI ViewModel: Detected Video Data for session \(context.sessionID)")
@@ -328,34 +422,30 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 generator.appliesPreferredTrackTransform = true
                 if let cgImage = try? generator.copyCGImage(at: .zero, actualTime: nil) {
                     #if canImport(UIKit)
-                    self.capturedImage = PlatformImage(cgImage: cgImage)
+                    self.setCapturedImage(PlatformImage(cgImage: cgImage))
                     #elseif canImport(AppKit)
                     let size = NSSize(width: cgImage.width, height: cgImage.height)
-                    self.capturedImage = PlatformImage(cgImage: cgImage, size: size)
+                    self.setCapturedImage(PlatformImage(cgImage: cgImage, size: size))
                     #endif
                     self.siftedImage = self.capturedImage
                 }
             } catch {
                 print("❌ VI ViewModel: Failed to prepare video for reprocessing: \(error)")
             }
-            return
         } else {
             // Image Path
             #if canImport(UIKit)
             if let image = UIImage(data: context.imageData) {
-                self.capturedImage = image
-                self.siftedImage = image 
+                self.setCapturedImage(image)
+                self.siftedImage = self.capturedImage
             } else {
-                // ... (Existing fallback logic) ...
-                 // Fallback: Try CIImage or CGImageSource debug
                  print("❌ VI ViewModel: UIImage(data:) failed for session \(context.sessionID). Size: \(context.imageData.count) bytes. Trying fallbacks...")
                  
-                 // Attempt CGImageSource directly for robustness
                  if let source = CGImageSourceCreateWithData(context.imageData as CFData, nil),
                     let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) {
                      let image = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
-                     self.capturedImage = image
-                     self.siftedImage = image
+                     self.setCapturedImage(image)
+                     self.siftedImage = self.capturedImage
                      print("✅ VI ViewModel: Recovered image via CGImageSource.")
                  } else {
                      print("❌ VI ViewModel: All image recovery attempts failed.")
@@ -364,26 +454,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
             #endif
         }
         
-        // 2. Set Session & Metadata
-        self.activeSessionID = context.sessionID
-        self.sessionTitle = context.sessionTitle  // Preserve user's custom title
-        self.currentCapturePlaceID = context.placeID
-        if let loc = context.location {
-            let parts = loc.split(separator: ",")
-            if parts.count == 2, let lat = Double(parts[0]), let lon = Double(parts[1]) {
-                self.currentCaptureCoordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-            }
-        }
-        
-        // Only clear if not pinned
-        if !isLocationPinned {
-            self.selectedPlace = nil
-        }
-        
-        // 4. Enter Review Mode
+        // 3. Enter Review Mode
         self.isReviewing = true
         
-        // 5. Trigger Analysis immediately
+        // 4. Trigger Analysis immediately
         if let image = self.capturedImage {
             self.analyzeReprocessImage(image)
         } else {
@@ -392,7 +466,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             self.isAnalyzing = false
         }
         
-        // 6. Clear context so we don't loop
+        // 5. Clear context so we don't loop
         Services.shared.pendingReprocessContext = nil
     }
     
@@ -763,7 +837,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             }
         }
 
-            cameraManager.onPhotoCaptured = { [weak self] imageData in
+            cameraManager.onPhotoCaptured = { [weak self] imageData, depthData in
                 // Cancel previous analysis to prevent race conditions
                 self?.currentAnalysisTask?.cancel()
                 
@@ -791,13 +865,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
                     }
                     
                     print("📸 Camera: Photo captured, analyzing full frame using subject priority...")
-                    self.capturedImage = image
+                    self.setCapturedImage(image)
                     
                     await MainActor.run {
                         self.pipelineStatus = .sifting
                     }
-                    if let img = image {
-                        self.sessionImages.append(img)
+                    if let img = self.capturedImage {
+                        self.appendSessionImage(img, depthData: depthData)
                         // Save to Photo Library as Backup
                         self.saveImageToPhotoLibrary(img)
                     }
@@ -806,6 +880,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                     let cgImage = image?.cgImage
                     // Use the actual image orientation, not the device's current orientation
                     let visionOrientation = image?.imageOrientation.cgImagePropertyOrientation ?? self.currentOrientation
+                    self.capturedImageVisionOrientation = visionOrientation
                     #elseif canImport(AppKit)
                     let cgImage = image?.cgImage(forProposedRect: nil, context: nil, hints: nil)
                     let visionOrientation: CGImagePropertyOrientation = .up // NSImage typically normalizes or we assume up
@@ -1186,14 +1261,22 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 }
                     
                     // Analyze for interactive results
-                    // For photo library, we usually assume .up logic unless meta says otherwise
-                    print("🧠 Starting Intelligence Processing in .fullAnalysis mode...")
-                    let newResults = try await self.processor.process(image: cgImage, orientation: .up, mode: .fullAnalysis)
+                    // Use the actual image orientation — identical to the camera capture path (line 856).
+                    // .cgImage returns raw (unrotated) pixels; Vision needs the orientation hint
+                    // to produce coordinates in the correctly-oriented space.
+                    #if canImport(UIKit)
+                    let visionOrientation = (image as? UIImage)?.imageOrientation.cgImagePropertyOrientation ?? .up
+                    self.capturedImageVisionOrientation = visionOrientation
+                    #else
+                    let visionOrientation: CGImagePropertyOrientation = .up
+                    #endif
+                    print("🧠 Starting Intelligence Processing in .fullAnalysis mode (orientation=\(visionOrientation.rawValue))...")
+                    let newResults = try await self.processor.process(image: cgImage, orientation: visionOrientation, mode: .fullAnalysis)
                     
                     await MainActor.run {
                         print("🖼 Photo Picker: Analysis complete, transitioning to Reviewing state")
                         self.results = newResults
-                        self.capturedImage = image
+                        self.setCapturedImage(image)
                         
                         // Extract sifted image if found
                         if let sifted = newResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
@@ -1254,6 +1337,137 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 await MainActor.run {
                     self.isAnalyzing = false
                 }
+            }
+        }
+    }
+    
+    // MARK: - Batch Photo Import (from Sidebar)
+    
+    /// Loads all selected photos into sessionImages as a single capture session,
+    /// runs Vision analysis on each, merges results, and enters review mode.
+    public func processImportedPhotos(_ items: [PhotosPickerItem]) {
+        guard !items.isEmpty else { return }
+        
+        print("📥 Processing \(items.count) imported photos as single session...")
+        
+        // Reset state for new import session
+        self.activeSessionID = UUID().uuidString
+        self.sessionImages = []
+        self.sessionDepthData = []
+        self.results = []
+        self.accumulatedContexts = []
+        self.siftedBoundingBox = nil
+        self.capturedImage = nil
+        self.isReviewing = true // Show loading state immediately
+        self.isAnalyzing = true
+        self.pipelineStatus = .sifting
+        
+        Task {
+            var allResults: [IntelligenceResult] = []
+            var loadedCount = 0
+            
+            for (index, item) in items.enumerated() {
+                print("📸 Loading import \(index + 1)/\(items.count)...")
+                
+                do {
+                    var finalCGImage: CGImage?
+                    var finalImage: PlatformImage?
+                    
+                    // 1. Try Video first
+                    if let movie = try? await item.loadTransferable(type: Movie.self) {
+                        if let (cgImage, location, date) = await processVideoData(movie.url) {
+                            finalCGImage = cgImage
+                            await MainActor.run {
+                                if let loc = location { self.capturedMediaLocation = loc }
+                                if let d = date { self.capturedMediaDate = d }
+                            }
+                            #if canImport(UIKit)
+                            finalImage = UIImage(cgImage: cgImage)
+                            #endif
+                        }
+                    }
+                    
+                    // 2. Fallback to Data (Images)
+                    if finalCGImage == nil {
+                        guard let data = try await item.loadTransferable(type: Data.self) else {
+                            print("⚠️ Skipping import \(index + 1) - failed to load data")
+                            continue
+                        }
+                        
+                        #if canImport(UIKit)
+                        if let image = UIImage(data: data) {
+                            finalImage = image
+                            finalCGImage = image.cgImage
+                            
+                            // Extract date from EXIF
+                            if let source = CGImageSourceCreateWithData(data as CFData, nil),
+                               let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] {
+                                var dateString: String?
+                                if let exif = props["{Exif}"] as? [String: Any] {
+                                    dateString = exif["DateTimeOriginal"] as? String
+                                }
+                                if dateString == nil, let tiff = props["{TIFF}"] as? [String: Any] {
+                                    dateString = tiff["DateTime"] as? String
+                                }
+                                if let ds = dateString {
+                                    let formatter = DateFormatter()
+                                    formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
+                                    if let date = formatter.date(from: ds) {
+                                        await MainActor.run {
+                                            // Only set date from first image (session date)
+                                            if self.capturedMediaDate == nil {
+                                                self.capturedMediaDate = date
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        #endif
+                    }
+                    
+                    guard let cgImage = finalCGImage, let image = finalImage else {
+                        print("⚠️ Skipping import \(index + 1) - could not create image")
+                        continue
+                    }
+                    
+                    loadedCount += 1
+                    
+                    await MainActor.run {
+                        // Apply fixedOrientation before adding to session to bake in EXIF rotation
+                        
+                        self.appendSessionImage(image)
+                        
+                        // Set first image as the primary captured image
+                        if self.capturedImage == nil {
+                            self.setCapturedImage(image)
+                        }
+                    }
+                    
+                    // Run Vision analysis on this image
+                    #if canImport(UIKit)
+                    let visionOrientation = (image as? UIImage)?.imageOrientation.cgImagePropertyOrientation ?? .up
+                    self.capturedImageVisionOrientation = visionOrientation
+                    #else
+                    let visionOrientation: CGImagePropertyOrientation = .up
+                    #endif
+                    
+                    print("🧠 Analyzing import \(index + 1)/\(items.count) (orientation=\(visionOrientation.rawValue))...")
+                    let imageResults = try await self.processor.process(image: cgImage, orientation: visionOrientation, mode: .fullAnalysis)
+                    allResults.append(contentsOf: imageResults)
+                    
+                } catch {
+                    print("⚠️ Failed to process import \(index + 1): \(error)")
+                }
+            }
+            
+            // Merge all results and enter review mode
+            await MainActor.run {
+                print("📥 Import complete: \(loadedCount)/\(items.count) loaded, \(allResults.count) results")
+                self.results = allResults
+                self.pipelineStatus = .complete
+                self.isAnalyzing = false
+                self.isReviewing = true
             }
         }
     }
@@ -1341,11 +1555,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
             #if canImport(UIKit)
-            // Vision's masked image is already in the correct orientation (pixels are upright relative to subject)
-            // So we should NOT re-apply the orientation, otherwise we get double rotation.
-            let tempImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
-            // Normalize to actually render the pixels correctly
-            let uiImage = tempImage.normalizedOrientation()
+            // generateMaskedImage() returns pixels in the raw sensor coordinate space
+            // (e.g. landscape for rear camera in portrait mode). We must apply the
+            // camera orientation to rotate the mask upright, matching the main image.
+            let uiOrientation = uiImageOrientation(from: orientation)
+            let orientedImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: uiOrientation)
+            // Bake the orientation into actual pixels
+            let uiImage = orientedImage.normalizedOrientation()
             return (uiImage, bounds)
             #elseif canImport(AppKit)
             return (NSImage(cgImage: cgImage, size: .zero), bounds)
@@ -1553,6 +1769,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         let sessionImgs = self.sessionImages
         let sessionID = self.activeSessionID
+        let allDepthData = self.sessionDepthData // Parallel to sessionImages
+        let primaryDepth = allDepthData.first ?? nil // Depth for the primary/master image
         
         if imageToSave == nil && results.isEmpty {
              self.isSaving = false
@@ -1603,13 +1821,18 @@ public class VisualIntelligenceViewModel: ObservableObject {
             self.sessionTitle = calculatedTitle
         }
         
-        Task.detached(priority: .userInitiated) { () -> Void in
+        Task.detached(priority: .utility) { () -> Void in
             #if canImport(UIKit)
-            let capturedData = imageToSave?.jpegData(compressionQuality: 0.8)
+            // Fix orientation (bake it in) before saving to data, as jpegData strips EXIF orientation tags
+            let normalizedImage = imageToSave?.fixedOrientation()
+            let capturedData = normalizedImage?.jpegData(compressionQuality: 0.8)
+            
             // Normalize sifted image orientation before saving (apply rotation to pixel data)
             let normalizedSifted = siftedImg?.normalizedOrientation()
             let siftedData = normalizedSifted?.pngData()
-            let attachmentData = sessionImgs.compactMap { $0.jpegData(compressionQuality: 0.8) }
+            
+            // Also normalize attachment images
+            let attachmentData = sessionImgs.compactMap { $0.fixedOrientation().jpegData(compressionQuality: 0.8) }
             #elseif canImport(AppKit)
             let capturedData = imageToSave?.tiffRepresentation
             let siftedData = siftedImg?.tiffRepresentation
@@ -1688,7 +1911,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             
             // 3. Create Intelligent Queue Items (Master + Children)
             do {
-                let queueItems = DiverQueueItem.items(intelligenceResults: currentResults, capturedImage: capturedData, siftedImage: siftedData, attachments: attachmentData, purposes: purposes, sessionID: sessionID, contextImageURL: contextImageURL, placeID: capturePlaceID, latitude: captureCoordinate?.latitude, longitude: captureCoordinate?.longitude, locationName: selectedPlaceTitle)
+                let queueItems = DiverQueueItem.items(intelligenceResults: currentResults, capturedImage: capturedData, siftedImage: siftedData, attachments: attachmentData, purposes: purposes, sessionID: sessionID, contextImageURL: contextImageURL, placeID: capturePlaceID, latitude: captureCoordinate?.latitude, longitude: captureCoordinate?.longitude, locationName: selectedPlaceTitle, depthPayload: primaryDepth, attachmentDepthPayloads: allDepthData)
                 
                 for item in queueItems {
                     try queueStore.enqueue(item)
@@ -1741,24 +1964,31 @@ public class VisualIntelligenceViewModel: ObservableObject {
     
     // MARK: - Document Handling
     
-    public func handleDocumentSelection(_ observation: VNRectangleObservation, text: String? = nil) {
+    public func handleDocumentSelection(_ observation: VNRectangleObservation, text: String? = nil, rectifiedImageData: Data? = nil) {
         self.rectifiedDocumentText = text
+        
+        // Prefer the pre-rectified image from IntelligenceProcessor if available
+        if let data = rectifiedImageData, let image = UIImage(data: data) {
+            print("📐 handleDocumentSelection: Using pre-rectified image \(image.size), orientation=\(image.imageOrientation.rawValue)")
+            self.rectifiedDocument = image
+            self.showingDocumentView = true
+            return
+        }
+        print("📐 handleDocumentSelection: No pre-rectified data, using fallback rectification")
+        
+        // Fallback: rectify from captured image (for cases without pre-rectified data)
         Task {
             guard let capturedImage = await MainActor.run(body: { self.capturedImage }) else { return }
              // Use original image orientation - Vision's rectangle coordinates expect this
             #if canImport(UIKit)
             guard let cgImage = capturedImage.cgImage else { return }
-            let originalOrientation = capturedImage.imageOrientation
+            // Use the Vision analysis orientation (NOT capturedImage.imageOrientation,
+            // which is always .up after normalization) so that rectangle coordinates
+            // from Vision are correctly mapped to the raw CGImage pixel space.
+            let orientation = self.capturedImageVisionOrientation
             #elseif canImport(AppKit)
             guard let cgImage = capturedImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
-            let originalOrientation: CGImagePropertyOrientation = .up
-            #endif
-            
-            // Offload rectification
-            #if canImport(UIKit)
-            let orientation = originalOrientation.cgImagePropertyOrientation
-            #else
-            let orientation = originalOrientation
+            let orientation: CGImagePropertyOrientation = .up
             #endif
             
             if let cgImage = await performRectification(
@@ -1785,46 +2015,24 @@ public class VisualIntelligenceViewModel: ObservableObject {
         image: UnsafeSendable<CGImage>,
         orientation: CGImagePropertyOrientation
     ) async -> CGImage? {
-        let ciImage = CIImage(cgImage: image.value).oriented(orientation)
+        // Delegate to DocumentManager which uses CGContext-based rotation (proven reliable)
+        let docManager = DocumentManager()
+        guard let jpegData = docManager.rectifyImage(
+            image.value,
+            using: observation.value,
+            orientation: orientation
+        ) else { return nil }
         
-        // Convert Vision normalized coordinates to Image coordinates
-        // Vision's observation is relative to the ORIENTED image
-        let orientedExtent = ciImage.extent
-        let width = orientedExtent.width
-        let height = orientedExtent.height
-        
-        func scale(_ point: CGPoint) -> CGPoint {
-            return CGPoint(x: point.x * width, y: point.y * height)
-        }
-        
-        let bottomLeft = scale(observation.value.bottomLeft)
-        let bottomRight = scale(observation.value.bottomRight)
-        let topLeft = scale(observation.value.topLeft)
-        let topRight = scale(observation.value.topRight)
-        
-        // Calculate estimated physical dimensions
-        let topWidth = hypot(topRight.x - topLeft.x, topRight.y - topLeft.y)
-        let bottomWidth = hypot(bottomRight.x - bottomLeft.x, bottomRight.y - bottomLeft.y)
-        let _ = (topWidth + bottomWidth) / 2.0
-        
-        let leftHeight = hypot(topLeft.x - bottomLeft.x, topLeft.y - bottomLeft.y)
-        let rightHeight = hypot(topRight.x - bottomRight.x, topRight.y - bottomRight.y)
-        let _ = (leftHeight + rightHeight) / 2.0
-        
-        // Apply CIPerspectiveCorrection
-        let filter = CIFilter(name: "CIPerspectiveCorrection")!
-        filter.setValue(ciImage, forKey: kCIInputImageKey)
-        filter.setValue(CIVector(cgPoint: topLeft), forKey: "inputTopLeft")
-        filter.setValue(CIVector(cgPoint: topRight), forKey: "inputTopRight")
-        filter.setValue(CIVector(cgPoint: bottomRight), forKey: "inputBottomRight")
-        filter.setValue(CIVector(cgPoint: bottomLeft), forKey: "inputBottomLeft")
-        
-        guard let correctedImage = filter.outputImage else { return nil }
-        
-        // CIPerspectiveCorrection outputs the corrected image at the correct dimensions
-        // No additional scaling needed - just render it
-        let context = CIContext(options: [.useSoftwareRenderer: false])
-        return context.createCGImage(correctedImage, from: correctedImage.extent)
+        // Extract the CGImage from the JPEG
+        #if canImport(UIKit)
+        return UIImage(data: jpegData)?.cgImage
+        #elseif canImport(AppKit)
+        guard let nsImage = NSImage(data: jpegData),
+              let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+        return cgImage
+        #else
+        return nil
+        #endif
     }
     
     public func saveDocument(title: String? = nil, tags: [String] = []) {
@@ -2127,6 +2335,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         showingPlaceSelection = false
         rectifiedDocument = nil
         rectifiedDocumentText = nil
+        capturedImageVisionOrientation = .up
         showingDocumentView = false
         
         // Reset internal state

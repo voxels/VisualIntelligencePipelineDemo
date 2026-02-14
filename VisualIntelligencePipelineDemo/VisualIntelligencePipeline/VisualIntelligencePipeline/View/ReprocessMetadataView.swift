@@ -96,8 +96,21 @@ struct ReprocessMetadataView: View {
                 sessionTitle = item.title ?? "Untitled Session"
                 sessionSummary = item.summary ?? ""
                 
-                // If no rawPayload but has photosAssetIdentifier, load from Photos
-                if item.rawPayload == nil, let assetId = item.photosAssetIdentifier {
+                // Load from Photos if:
+                // 1. No rawPayload at all, OR
+                // 2. rawPayload contains video data but item is a photo (Live Photo case)
+                let needsPhotosLoad: Bool = {
+                    if item.rawPayload == nil { return true }
+                    if let data = item.rawPayload, item.mediaType != "video" {
+                        // Check for video bytes (ftyp/moov header)
+                        guard data.count >= 12 else { return false }
+                        let header = data.prefix(12).map { String(format: "%02hhx", $0) }.joined()
+                        return header.contains("66747970") || header.contains("6d6f6f76")
+                    }
+                    return false
+                }()
+                
+                if needsPhotosLoad, let assetId = item.photosAssetIdentifier {
                     isLoadingImage = true
                     Task {
                         let data = await PhotosAssetLoader.shared.loadImageData(identifier: assetId)
@@ -111,9 +124,17 @@ struct ReprocessMetadataView: View {
         }
     }
     
-    /// Effective image data: rawPayload or loaded from Photos
+    /// Effective image data: rawPayload or loaded from Photos.
+    /// CRITICAL: For Live Photos, rawPayload may contain MOV video data.
+    /// If the item is a photo but rawPayload has video bytes, skip it and use Photos.
     private var effectiveImageData: Data? {
         if let data = item.rawPayload, !isJSON(data) {
+            // Guard: If item is a photo but payload starts with ftyp (video),
+            // it's a Live Photo's video component — skip and load still from Photos.
+            let isPhotoType = item.mediaType != "video"
+            if isPhotoType && isVideoData(data) {
+                return loadedImageData
+            }
             return data
         }
         return loadedImageData
@@ -124,6 +145,12 @@ struct ReprocessMetadataView: View {
             return UIImage(data: data)
         }
         return nil
+    }
+    
+    private func isVideoData(_ data: Data) -> Bool {
+        guard data.count >= 12 else { return false }
+        let header = data.prefix(12).map { String(format: "%02hhx", $0) }.joined()
+        return header.contains("66747970") || header.contains("6d6f6f76") // ftyp or moov
     }
     
     private func isJSON(_ data: Data?) -> Bool {
@@ -151,7 +178,8 @@ struct ReprocessMetadataView: View {
             sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
             location: item.location,
             placeID: item.placeContext?.placeID,
-            placeName: item.placeContext?.name
+            placeName: item.placeContext?.name,
+            mediaType: item.mediaType
         )
         
         Task { @MainActor in

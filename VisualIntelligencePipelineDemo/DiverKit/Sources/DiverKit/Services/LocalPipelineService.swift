@@ -16,7 +16,8 @@ public final class LocalPipelineService {
         self.modelContext = modelContext
         
         // Reconcile relationships for backward compatibility (SwiftData Transition)
-        Task {
+        // Use detached task to avoid blocking main thread during app launch
+        Task.detached(priority: .utility) { [self] in
             await self.reconcileRelationships()
         }
     }
@@ -108,8 +109,9 @@ public final class LocalPipelineService {
             if existing.inputId == nil {
                 existing.inputId = input.id.uuidString
             }
-            if existing.url == nil {
-                existing.url = input.url
+            if existing.url == nil || existing.url?.isEmpty == true {
+                let candidateURL = input.url?.trimmingCharacters(in: .whitespacesAndNewlines)
+                existing.url = (candidateURL?.isEmpty == true) ? nil : candidateURL
             }
             if existing.title == nil || existing.title?.isEmpty == true || (descriptor?.title != nil && existing.title != descriptor?.title) {
                 existing.title = resolvedTitle
@@ -261,9 +263,10 @@ public final class LocalPipelineService {
                  // 3. QR Code Detection (Fallback if NO URL or if URL is just a placeholder/local file)
                  // User Request: "if i photograph a sign and a qr code is found, the title should be the name of the page"
                  // Check if existing URL is nil OR starts with file scheme
-                 let hasValidWebURL = existing.url != nil && 
-                                      !existing.url!.lowercased().hasPrefix("file://") &&
-                                      !existing.url!.lowercased().hasPrefix("diver-")
+                 let trimmedURL = existing.url?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                 let hasValidWebURL = !trimmedURL.isEmpty && 
+                                      !trimmedURL.lowercased().hasPrefix("file://") &&
+                                      !trimmedURL.lowercased().hasPrefix("diver-")
                  
                  // CRITICAL: Check for data OR valid asset identifier for import support
                  if !hasValidWebURL {
@@ -484,7 +487,8 @@ public final class LocalPipelineService {
                 duckDuckGoService: duckDuckGoService,
                 weatherService: weatherService,
                 contactService: contactService,
-                itemSource: existing.source
+                itemSource: existing.source,
+                initialHomeLoc: self.cachedHomeLocation
             )
             
             for result in results {
@@ -681,7 +685,8 @@ public final class LocalPipelineService {
             duckDuckGoService: duckDuckGoService,
             weatherService: weatherService,
             contactService: contactService,
-            itemSource: input.source
+            itemSource: input.source,
+            initialHomeLoc: cachedHomeLocation
         )
         
         for result in results {
@@ -1242,7 +1247,8 @@ public final class LocalPipelineService {
         DiverLogger.pipeline.info("Linked item \(item.id) to parent activity '\(purpose)'")
     }
 
-    private func extractLocationFromVideo(data: Data, identifier: String? = nil) async -> CLLocation? {
+    /// Extracts GPS location from video metadata. `nonisolated` — uses PHAsset/AVFoundation only, no SwiftData.
+    nonisolated private func extractLocationFromVideo(data: Data, identifier: String? = nil) async -> CLLocation? {
         // 1. Prefer PHAsset if available (Better metadata access, no temp file needed)
         if let identifier = identifier {
             DiverLogger.pipeline.debug("Attempting to extract location from PHAsset: \(identifier)")
@@ -1302,7 +1308,7 @@ public final class LocalPipelineService {
         return nil
     }
     
-    private func readLocationFromAVAsset(_ asset: AVAsset) async -> CLLocation? {
+    nonisolated private func readLocationFromAVAsset(_ asset: AVAsset) async -> CLLocation? {
         // Try Common Key first
         let commonItems = try? await asset.load(.commonMetadata)
         if let locationItem = commonItems?.first(where: { $0.commonKey == .commonKeyLocation }),
@@ -1320,7 +1326,7 @@ public final class LocalPipelineService {
         return nil
     }
     
-    private func parseISO6709(_ string: String) -> CLLocation? {
+    nonisolated private func parseISO6709(_ string: String) -> CLLocation? {
         // Format: +27.5916+086.5640+8850/
         // Pattern: ([+-]\d+\.?\d*)([+-]\d+\.?\d*)
         let pattern = "([+-]\\d+\\.?\\d*)([+-]\\d+\\.?\\d*)"
@@ -1345,29 +1351,43 @@ public final class LocalPipelineService {
     private func analyzeVisualContent(data: Data, existing: ProcessedItem, accumulatedContext: inout String, enrichmentService: LinkEnrichmentService?) async {
         guard !data.isEmpty else { return }
         
-        let processor = IntelligenceProcessor()
-        
-        // Use EXIF orientation if available, otherwise default to Up
-        var orientation: CGImagePropertyOrientation = .up
-        if let source = CGImageSourceCreateWithData(data as CFData, nil),
-           let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
-           let exifOrientation = properties[kCGImagePropertyOrientation as String] as? UInt32 {
-            orientation = CGImagePropertyOrientation(rawValue: exifOrientation) ?? .up
+        // Items already typed as "document" were rectified + text-extracted by the camera capture pipeline.
+        // Re-running full analysis would double-rectify the already-corrected image.
+        if existing.entityType == "document" {
+            DiverLogger.pipeline.debug("⏭️ Skipping visual analysis for pre-rectified document item: \(existing.id)")
+            return
         }
         
-        // Create CGImage
-        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-              let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return }
-        
-        print("🔍 [LocalPipeline] Analyzing Visual Content: \(data.count) bytes, \(cgImage.width)x\(cgImage.height), Orientation: \(orientation.rawValue)")
-        
+        // Run CPU-heavy Vision processing OFF the main thread.
+        // IntelligenceProcessor is Sendable and does no SwiftData work.
+        let results: [IntelligenceResult]
         do {
-            // UNIFIED: Use IntelligenceProcessor for EVERYTHING (Sifting, Barcodes, Text, Classification)
-            let results = try await processor.process(image: cgImage, orientation: orientation, mode: .fullAnalysis)
+            let capturedData = data
+            results = try await Task.detached(priority: .userInitiated) {
+                let processor = IntelligenceProcessor()
+                
+                // Use EXIF orientation if available, otherwise default to Up
+                var orientation: CGImagePropertyOrientation = .up
+                if let source = CGImageSourceCreateWithData(capturedData as CFData, nil),
+                   let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
+                   let exifOrientation = properties[kCGImagePropertyOrientation as String] as? UInt32 {
+                    orientation = CGImagePropertyOrientation(rawValue: exifOrientation) ?? .up
+                }
+                
+                // Create CGImage
+                guard let source = CGImageSourceCreateWithData(capturedData as CFData, nil),
+                      let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return [IntelligenceResult]() }
+                
+                print("🔍 [LocalPipeline] Analyzing Visual Content: \(capturedData.count) bytes, \(cgImage.width)x\(cgImage.height), Orientation: \(orientation.rawValue)")
+                
+                // UNIFIED: Use IntelligenceProcessor for EVERYTHING (Sifting, Barcodes, Text, Classification)
+                return try await processor.process(image: cgImage, orientation: orientation, mode: .fullAnalysis)
+            }.value
             
+            guard !results.isEmpty else { return }
             DiverLogger.pipeline.info("📸 [LocalPipeline] IntelligenceProcessor returned \(results.count) results")
             
-            // Integrate Results
+            // Integrate results ON main actor (writes to ProcessedItem / SwiftData)
             await integrateIntelligenceResults(results, to: existing, accumulatedContext: &accumulatedContext, enrichmentService: enrichmentService)
             
         } catch {
@@ -1409,10 +1429,17 @@ public final class LocalPipelineService {
                     item.url = url.absoluteString 
                     accumulatedContext += "\nOCR Link: \(url.absoluteString)"
                 }
-                // Only log significant text
-                if text.count > 10 {
+                // Accumulate ALL OCR text into transcription (not just documents)
+                if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    if item.transcription == nil {
+                        item.transcription = text
+                    } else {
+                        item.transcription! += "\n" + text
+                    }
+                }
+                // Log and add to context for LLM
+                if text.count > 3 {
                     contextLog += "• OCR: \(text.prefix(50))...\n"
-                    // Add to accumulated context for LLM
                     accumulatedContext += "\nDetected Text: \(text)"
                 }
                 
@@ -1718,7 +1745,16 @@ public final class LocalPipelineService {
         if let lat = descriptor.latitude { session.latitude = lat }
         if let lng = descriptor.longitude { session.longitude = lng }
         if let pid = descriptor.placeID { session.placeID = pid }
-        if let loc = descriptor.location { session.locationName = loc }
+        if let loc = descriptor.location {
+            // Only set locationName if it's a human-readable name, not coordinates
+            let isCoordinates = loc.contains(",") && loc.split(separator: ",").allSatisfy { Double($0.trimmingCharacters(in: .whitespaces)) != nil }
+            if !isCoordinates {
+                session.locationName = loc
+            } else if session.locationName == nil {
+                // Fallback: coordinates only if no name exists yet
+                session.locationName = loc
+            }
+        }
         
         // Update timestamp to now to reflect latest activity
         session.updatedAt = Date()
@@ -1898,7 +1934,9 @@ public final class LocalPipelineService {
         var liveEventContext: String?
     }
 
-    private func performParallelEnrichment(
+    /// Runs all enrichment tasks (geocoding, weather, link, Foursquare, DuckDuckGo) in parallel.
+    /// `nonisolated` so enrichment runs on the cooperative thread pool, not the main thread.
+    nonisolated private func performParallelEnrichment(
         resolvedId: String,
         descriptor: DiverItemDescriptor?,
         rawPayload: Data?,
@@ -1911,7 +1949,8 @@ public final class LocalPipelineService {
         duckDuckGoService: ContextualEnrichmentService?,
         weatherService: WeatherEnrichmentService?,
         contactService: ContactServiceProvider?,
-        itemSource: String? = nil  // Set to "photoLibraryImport" to skip weather API
+        itemSource: String? = nil,  // Set to "photoLibraryImport" to skip weather API
+        initialHomeLoc: CLLocation? = nil  // Passed in to avoid accessing @MainActor property
     ) async -> [ParallelEnrichmentResult] {
         
         await withTaskGroup(of: ParallelEnrichmentResult?.self) { group in
@@ -1927,7 +1966,7 @@ public final class LocalPipelineService {
                  return nil
             }
 
-            let initialHomeLoc = self.cachedHomeLocation
+            let initialHomeLoc = initialHomeLoc
             // 2. Foursquare + DuckDuckGo Chain
             group.addTask {
                 guard let location = finalLocation else { return nil }
@@ -2000,7 +2039,8 @@ public final class LocalPipelineService {
                     if homeLoc == nil {
                         homeLoc = try? await contactService.getHomeLocation()
                         if let homeLoc {
-                            await MainActor.run { self.cachedHomeLocation = homeLoc }
+                            // Cache on main actor for next call
+                            Task { @MainActor [weak self] in self?.cachedHomeLocation = homeLoc }
                         }
                     }
                     
@@ -2171,7 +2211,8 @@ public final class LocalPipelineService {
         }
     }
     
-    private func searchLiveEvents(place: String, service: ContextualEnrichmentService) async -> String? {
+    /// Searches for live events at a place. `nonisolated` — pure network I/O, no SwiftData.
+    nonisolated private func searchLiveEvents(place: String, service: ContextualEnrichmentService) async -> String? {
         let date = Date().formatted(date: .abbreviated, time: .omitted)
         let query = "\(place) events \(date)"
         
@@ -2348,7 +2389,7 @@ public final class LocalPipelineService {
                 if let last = sorted.last { session.updatedAt = last.updatedAt }
                 
                 if let locItem = sorted.first(where: { $0.location != nil }) {
-                    session.locationName = locItem.location
+                    session.locationName = locItem.placeContext?.name ?? locItem.location
                     session.placeID = locItem.placeContext?.placeID
                 } else if let actItem = sorted.first(where: { $0.activityContext != nil || !$0.purposes.isEmpty }) {
                     // Fallback to Semantic Activity / Purpose
@@ -2457,7 +2498,8 @@ public final class LocalPipelineService {
     }
 
     /// Helper to wrap an operation with a timeout
-    private func withTimeout<T: Sendable>(seconds: TimeInterval, operation: @escaping @Sendable () async throws -> T) async throws -> T {
+    /// Wraps an async operation with a timeout. `nonisolated` — pure task group logic.
+    nonisolated private func withTimeout<T: Sendable>(seconds: TimeInterval, operation: @escaping @Sendable () async throws -> T) async throws -> T {
         try await withThrowingTaskGroup(of: T.self) { group in
             group.addTask {
                 try await operation()
@@ -2535,7 +2577,7 @@ public final class LocalPipelineService {
                 session.latitude = lat
                 session.longitude = lon
                 session.placeID = item.placeID
-                session.locationName = item.location
+                session.locationName = item.placeContext?.name ?? item.location
             }
         }
         

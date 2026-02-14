@@ -201,15 +201,12 @@ struct VisualIntelligencePipelineApp: App {
                             sharedWithYouManager = SharedWithYouManager(queueStore: queueStore, pipelineService: metadataPipelineService, isEnabled: true)
                         }
                     }
-                }
-                .onAppear {
+                    
+                    // Handle pending messages
                     handlePendingMessagesLaunch()
-                }
-                .onAppear {
-                    // Process queue when app launches
-                    Task {
-                        try? await metadataPipelineService.processPendingQueue()
-                    }
+                    
+                    // Note: processPendingQueue is NOT called here — 
+                    // .onChange(.active) fires on first launch and handles it.
                 }
                 .onOpenURL { url in
                     handleDeepLink(url)
@@ -225,6 +222,11 @@ struct VisualIntelligencePipelineApp: App {
                 .onReceive(NotificationCenter.default.publisher(for: Notification.Name("com.secretatomics.dailyContextUpdated"))) { _ in
                     WidgetCenter.shared.reloadAllTimelines()
                 }
+                #if os(iOS)
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.willTerminateNotification)) { _ in
+                    metadataPipelineService.cancelProcessing()
+                }
+                #endif
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .background {

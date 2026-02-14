@@ -16,7 +16,9 @@ public final class ProcessedItemViewModel: ObservableObject {
     
     public func toggleFavorite(for item: ProcessedItem) {
         item.isFavorite.toggle()
-        try? modelContext.save()
+        Task { @MainActor in
+            try? modelContext.save()
+        }
     }
     
     public func reprocessItem(_ item: ProcessedItem) {
@@ -27,7 +29,9 @@ public final class ProcessedItemViewModel: ObservableObject {
     
     public func deleteItem(_ item: ProcessedItem) {
         modelContext.delete(item)
-        try? modelContext.save()
+        Task { @MainActor in
+            try? modelContext.save()
+        }
     }
     
     public func shareItem(_ item: ProcessedItem) {

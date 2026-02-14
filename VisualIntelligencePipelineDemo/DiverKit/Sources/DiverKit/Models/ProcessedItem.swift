@@ -13,7 +13,10 @@ public final class ProcessedItem: Identifiable, DiverObject {
     public var modality: String?
     public var tags: [String] = []
     public var createdAt: Date = Date()
+    @Attribute(.externalStorage)
     public var rawPayload: Data?
+    @Attribute(.externalStorage)
+    public var depthPayload: Data?
 
     // Phase 1 additions
     // Phase 1 additions
@@ -66,6 +69,7 @@ public final class ProcessedItem: Identifiable, DiverObject {
     public var activityContextData: Data?
     public var placeContextData: Data?
     public var webContextData: Data?
+    @Attribute(.externalStorage)
     public var documentContextData: Data?
     public var qrContextData: Data?
     public var questions: [String] = [] 

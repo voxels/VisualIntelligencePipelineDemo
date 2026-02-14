@@ -36,6 +36,8 @@ public final class SidebarViewModel: ObservableObject {
     @Published public var showingDeleteConfirmation = false
     @Published public var showingCombineCollectionSheet = false
     @Published public var combineCollectionName = ""
+    @Published public var importError: String? // For user-facing import notifications
+    @Published public var isPerformingAction = false // Immediate feedback for blocking operations
     
     // Semantic search results (IDs of items matching via knowledge graph)
     @Published public var semanticMatchIDs: Set<String> = []
@@ -144,6 +146,41 @@ public final class SidebarViewModel: ObservableObject {
         !searchText.isEmpty
     }
     
+    /// Remove sessions that have no items (empty/abandoned)
+    public func removeEmptySessions(context: ModelContext) {
+        // Fetch all sessions
+        let descriptor = FetchDescriptor<DiverSession>()
+        do {
+            let sessions = try context.fetch(descriptor)
+            var deletedCount = 0
+            
+            for session in sessions {
+                // Check if session has any items
+                if let items = session.items, items.isEmpty {
+                     // Check if it's new (created in last 5 seconds) to avoid deleting active capture sessions
+                     // that haven't saved items yet
+                     if abs(session.createdAt.timeIntervalSinceNow) > 5.0 {
+                         context.delete(session)
+                         deletedCount += 1
+                     }
+                } else if session.items == nil {
+                     // Also delete if items array is nil (shouldn't happen with default [] but safety check)
+                     if abs(session.createdAt.timeIntervalSinceNow) > 5.0 {
+                         context.delete(session)
+                         deletedCount += 1
+                     }
+                }
+            }
+            
+            if deletedCount > 0 {
+                try context.save()
+                print("🧹 Removed \(deletedCount) empty sessions")
+            }
+        } catch {
+            print("❌ Failed to clean up empty sessions: \(error)")
+        }
+    }
+    
     public func refresh() async {
         guard let service = pipelineService else { return }
         do {
@@ -196,8 +233,10 @@ public final class SidebarViewModel: ObservableObject {
     // MARK: - Session Management
     
     public func deleteSession(_ session: SessionMetadata, context: ModelContext) {
+        isPerformingAction = true
         context.delete(session)
         try? context.save()
+        isPerformingAction = false
     }
     
     public func toggleFavorite(for session: SessionMetadata, context: ModelContext) {
@@ -412,15 +451,22 @@ public final class SidebarViewModel: ObservableObject {
     }
     
     public func deleteItem(_ item: ProcessedItem, context: ModelContext) {
+        let itemId = item.id
         context.delete(item)
-        try? context.save()
-        print("🗑️ Deleted item \(item.id)")
+        print("🗑️ Deleted item \(itemId)")
+        // Defer save to avoid blocking the main thread
+        Task { @MainActor in
+            try? context.save()
+        }
     }
     
     public func deleteCollection(_ collection: DiverCollection, context: ModelContext) {
+        let name = collection.name
         context.delete(collection)
-        try? context.save()
-        print("🗑️ Deleted collection '\(collection.name)'")
+        print("🗑️ Deleted collection '\(name)'")
+        Task { @MainActor in
+            try? context.save()
+        }
     }
     
     public func processItemNow(_ item: ProcessedItem) {
@@ -437,8 +483,10 @@ public final class SidebarViewModel: ObservableObject {
     public func cancelProcessing(_ item: ProcessedItem, context: ModelContext) {
         item.status = .failed
         item.processingLog.append("\(Date().formatted()): Cancelled by user")
-        try? context.save()
         print("🚫 Cancelled processing for: \(item.displayTitle)")
+        Task { @MainActor in
+            try? context.save()
+        }
     }
     
     public func analyzeSession(_ session: SessionMetadata, context: ModelContext) {
@@ -542,6 +590,7 @@ public final class SidebarViewModel: ObservableObject {
     /// Delete all items for selected sessions
     public func deleteSelectedSessions(context: ModelContext) {
         guard !selectedSessions.isEmpty else { return }
+        isPerformingAction = true
         
         for sessionID in selectedSessions {
             let itemFetch = FetchDescriptor<ProcessedItem>(
@@ -572,6 +621,8 @@ public final class SidebarViewModel: ObservableObject {
         } catch {
             print("❌ Failed to save after deletion: \(error)")
         }
+        
+        isPerformingAction = false
         
         // Clear selection
         selectedSessions.removeAll()
@@ -1061,8 +1112,15 @@ public final class SidebarViewModel: ObservableObject {
             if let target = targetSession {
                  // Import into EXISTING session
                  print("📥 Importing \(items.count) items into existing session: \(target.displayTitle)")
-                 let _ = try await importService.importItems(items, into: target)
-                 print("✅ Added \(items.count) photos to session: \(target.displayTitle)")
+                 let importedItems = try await importService.importItems(items, into: target)
+                 // Check count
+                 if importedItems.count < items.count {
+                     await MainActor.run {
+                         self.importError = "Imported \(importedItems.count) of \(items.count) items. Some items were skipped."
+                     }
+                 } else {
+                     print("✅ Added \(items.count) photos to session: \(target.displayTitle)")
+                 }
             } else {
                 // Default: Create NEW collection
                 // Generate a collection name based on current date
@@ -1072,13 +1130,33 @@ public final class SidebarViewModel: ObservableObject {
                 let collectionName = "Import \(dateFormatter.string(from: Date()))"
                 
                 let collection = try await importService.importItems(items, collectionName: collectionName)
-                print("✅ Imported \(items.count) photos into collection: \(collection.name)")
+                
+                // Count actual items across all sessions in the collection, not just session count
+                // (Multiple photos can cluster into a single session)
+                var importedCount = 0
+                for sessionID in collection.sessionIDs {
+                    let sid = sessionID
+                    let itemFetch = FetchDescriptor<ProcessedItem>(
+                        predicate: #Predicate { $0.sessionID == sid }
+                    )
+                    importedCount += (try? context.fetch(itemFetch).count) ?? 0
+                }
+                if importedCount < items.count {
+                    await MainActor.run {
+                        self.importError = "Imported \(importedCount) of \(items.count) items. Some items may have been skipped or failed to load."
+                    }
+                } else {
+                     print("✅ Imported \(items.count) photos into collection: \(collection.name)")
+                }
             }
             
             // Process the imported items through the pipeline
             try? await pipelineService?.processPendingQueue()
         } catch {
             print("❌ Failed to import photos: \(error)")
+            await MainActor.run {
+                self.importError = "Failed to import photos: \(error.localizedDescription)"
+            }
         }
     }
     

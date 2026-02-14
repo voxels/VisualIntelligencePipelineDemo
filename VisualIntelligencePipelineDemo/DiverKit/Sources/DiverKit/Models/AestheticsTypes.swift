@@ -1,6 +1,8 @@
 import Foundation
 import CoreMedia
 import Vision
+import SwiftUI
+import CoreLocation
 
 /// Represents a video frame with its aesthetic score and feature print for similarity comparison.
 public struct Frame {
@@ -74,4 +76,3 @@ public struct ImportedAsset: Identifiable, Sendable {
     }
 }
 
-import CoreLocation

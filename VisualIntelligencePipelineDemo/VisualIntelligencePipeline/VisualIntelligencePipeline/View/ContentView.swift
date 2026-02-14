@@ -161,12 +161,6 @@ struct SessionItemsView: View {
                             .font(.body)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
-                    } else if let session = session {
-                         // Placeholder if summary is regenerating
-                         Text("Analyzing session...")
-                             .font(.caption)
-                             .foregroundStyle(.secondary)
-                             .italic()
                     }
                 }
                 .padding(.top, 8)
@@ -236,7 +230,9 @@ struct SessionItemsView: View {
     
     private func deleteItem(_ item: ProcessedItem) {
         modelContext.delete(item)
-        try? modelContext.save()
+        Task { @MainActor in
+            try? modelContext.save()
+        }
     }
     
     private func deleteSession(_ session: DiverSession) {
@@ -246,7 +242,9 @@ struct SessionItemsView: View {
         }
         // Delete the session itself
         modelContext.delete(session)
-        try? modelContext.save()
+        Task { @MainActor in
+            try? modelContext.save()
+        }
     }
     
     private func analyzeSession(_ session: DiverSession) {
@@ -324,7 +322,9 @@ struct ItemRowContainer: View {
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button(role: .destructive) {
                 modelContext.delete(item)
-                try? modelContext.save()
+                Task { @MainActor in
+                    try? modelContext.save()
+                }
             } label: {
                 Label("Delete", systemImage: "trash")
             }
@@ -338,7 +338,9 @@ struct ItemRowContainer: View {
         .contextMenu {
             Button {
                 item.isFavorite.toggle()
-                try? modelContext.save()
+                Task { @MainActor in
+                    try? modelContext.save()
+                }
             } label: {
                 Label(
                     item.isFavorite ? "Unfavorite" : "Favorite",

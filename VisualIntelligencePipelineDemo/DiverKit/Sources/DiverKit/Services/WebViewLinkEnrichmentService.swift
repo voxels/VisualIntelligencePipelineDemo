@@ -12,39 +12,45 @@ public final class WebViewLinkEnrichmentService: NSObject, LinkEnrichmentService
     
     // Configurable timeout
     public var timeout: TimeInterval = 10.0
-    
-    // Shared process pool to reduce WebContent process launch latency (Cold Start)
-    // This keeps the underlying process warm even if WebViews are destroyed.
-    private static let sharedProcessPool = WKProcessPool()
-    
+        
     public override init() {
         super.init()
     }
-    
+        
     public func enrich(url: URL) async throws -> EnrichmentData? {
-        return try await withCheckedThrowingContinuation { continuation in
-            let config = WKWebViewConfiguration()
-            config.processPool = Self.sharedProcessPool
-            // Optimize for data extraction, not rendering?
-            // config.suppressesIncrementalRendering = true // Maybe?
-            
-            let requestWebView = WKWebView(frame: .zero, configuration: config)
-            
-            let loader = WebSocketMetadataLoader(
-                webView: requestWebView, 
-                url: url, 
-                timeout: timeout, 
-                continuation: continuation
-            )
-            
-            // Clean up when done
-            loader.onCompletion = { [weak self, weak loader] in
-                guard let self = self, let loader = loader else { return }
-                self.activeLoaders.remove(loader)
+        let config = WKWebViewConfiguration()
+        let requestWebView = WKWebView(frame: .zero, configuration: config)
+        
+        // Create loader first so we can capture it in onCancel
+        let loader = WebSocketMetadataLoader(
+            webView: requestWebView,
+            url: url,
+            timeout: timeout
+        )
+        
+        self.activeLoaders.insert(loader)
+        
+        // Cleanup closure
+        let cleanup = { [weak self, weak loader] in
+            guard let self = self, let loader = loader else { return }
+            self.activeLoaders.remove(loader)
+        }
+        
+        return try await withTaskCancellationHandler {
+            return try await withCheckedThrowingContinuation { continuation in
+                loader.assignContinuation(continuation)
+                loader.onCompletion = cleanup
+                
+                if Task.isCancelled {
+                    loader.cancel()
+                } else {
+                    loader.start()
+                }
             }
-            
-            self.activeLoaders.insert(loader)
-            loader.start()
+        } onCancel: {
+            Task { @MainActor in
+                loader.cancel()
+            }
         }
     }
 }
@@ -57,17 +63,43 @@ private class WebSocketMetadataLoader: NSObject, WKNavigationDelegate {
     private let url: URL
     private let timeout: TimeInterval
     private var continuation: CheckedContinuation<EnrichmentData?, Error>?
-    // private var timer: Timer? // Removed in favor of Task.sleep
+    private var isFinished = false
+    private var pendingResult: Result<EnrichmentData?, Error>?
     
     var onCompletion: (() -> Void)?
     
-    init(webView: WKWebView, url: URL, timeout: TimeInterval, continuation: CheckedContinuation<EnrichmentData?, Error>) {
+    init(webView: WKWebView, url: URL, timeout: TimeInterval) {
         self.webView = webView
         self.url = url
         self.timeout = timeout
-        self.continuation = continuation
         super.init()
         self.webView?.navigationDelegate = self
+    }
+    
+    deinit {
+        if let continuation = continuation {
+            print("⚠️ WebSocketMetadataLoader deinit: Resuming leaked continuation with CancellationError")
+            continuation.resume(throwing: CancellationError())
+        }
+    }
+    
+    func assignContinuation(_ continuation: CheckedContinuation<EnrichmentData?, Error>) {
+        self.continuation = continuation
+        // If we already finished (e.g. cancelled before continuation was assigned), resume immediately
+        if let result = pendingResult {
+            switch result {
+            case .success(let data):
+                continuation.resume(returning: data)
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+            self.continuation = nil
+            pendingResult = nil
+        }
+    }
+    
+    func cancel() {
+        finish(with: nil, error: CancellationError())
     }
     
     func start() {
@@ -77,10 +109,10 @@ private class WebSocketMetadataLoader: NSObject, WKNavigationDelegate {
             do {
                 try await Task.sleep(nanoseconds: UInt64(self.timeout * 1_000_000_000))
                 await MainActor.run { [weak self] in
-                    // Only error out if we haven't finished yet (continuation not nil)
-                    if self?.continuation != nil {
-                        print("⚠️ WebViewLinkEnrichment: Timeout after \(self?.timeout ?? 0)s")
-                        self?.finish(with: nil, error: URLError(.timedOut))
+                    // Only error out if we haven't finished yet
+                    if let self = self, !self.isFinished {
+                        print("⚠️ WebViewLinkEnrichment: Timeout after \(self.timeout)s")
+                        self.finish(with: nil, error: URLError(.timedOut))
                     }
                 }
             } catch {
@@ -92,16 +124,28 @@ private class WebSocketMetadataLoader: NSObject, WKNavigationDelegate {
         webView?.load(request)
     }
     
-    private func finish(with data: EnrichmentData?, error: Error?) {
-        // No timer to invalidate
+    fileprivate func finish(with data: EnrichmentData?, error: Error?) {
+        guard !isFinished else { return }
+        isFinished = true
+        
+        let result: Result<EnrichmentData?, Error>
+        if let error = error {
+            result = .failure(error)
+        } else {
+            result = .success(data)
+        }
         
         if let continuation = continuation {
-            if let error = error {
-                continuation.resume(throwing: error)
-            } else {
-                continuation.resume(returning: data)
+            switch result {
+            case .success(let d):
+                continuation.resume(returning: d)
+            case .failure(let e):
+                continuation.resume(throwing: e)
             }
             self.continuation = nil
+        } else {
+            // Continuation not yet assigned - store result for when it is
+            pendingResult = result
         }
         
         // Break retain cycles
@@ -251,3 +295,4 @@ extension NSImage {
     }
 }
 #endif
+
