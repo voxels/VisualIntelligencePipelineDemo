@@ -16,68 +16,40 @@ import AppKit
 public struct DocumentManager: Sendable {
     public init() {}
     
-    /// Physically rotates a CGImage's pixels according to the given EXIF orientation
-    /// using CGContext. This is the most reliable approach — it creates a new bitmap
-    /// with the correct dimensions and draws the source image with the appropriate
-    /// affine transform, guaranteeing the output pixels are in the correct orientation.
+    /// Physically rotates a CGImage's pixels according to the given EXIF orientation.
+    /// Uses UIImage's built-in orientation drawing (via UIGraphicsImageRenderer)
+    /// which correctly handles all 8 EXIF orientations.
     private func normalizeOrientation(of image: CGImage, orientation: CGImagePropertyOrientation) -> CGImage? {
         guard orientation != .up else { return image }
         
-        let srcW = CGFloat(image.width)
-        let srcH = CGFloat(image.height)
-        
-        // Determine output dimensions and transform based on EXIF orientation
-        let (dstW, dstH): (CGFloat, CGFloat)
-        var transform = CGAffineTransform.identity
-        
+        #if canImport(UIKit)
+        // Convert CGImagePropertyOrientation → UIImage.Orientation
+        let uiOrientation: UIImage.Orientation
         switch orientation {
-        case .up:
-            return image
-        case .upMirrored:
-            dstW = srcW; dstH = srcH
-            transform = CGAffineTransform(scaleX: -1, y: 1).translatedBy(x: -srcW, y: 0)
-        case .down:
-            dstW = srcW; dstH = srcH
-            transform = CGAffineTransform(translationX: srcW, y: srcH).rotated(by: .pi)
-        case .downMirrored:
-            dstW = srcW; dstH = srcH
-            transform = CGAffineTransform(scaleX: 1, y: -1).translatedBy(x: 0, y: -srcH)
-        case .left:
-            dstW = srcH; dstH = srcW
-            transform = CGAffineTransform(translationX: 0, y: srcW).rotated(by: -.pi / 2)
-        case .leftMirrored:
-            dstW = srcH; dstH = srcW
-            transform = CGAffineTransform(translationX: srcH, y: srcW).scaledBy(x: -1, y: 1).rotated(by: -.pi / 2)
-        case .right:
-            dstW = srcH; dstH = srcW
-            transform = CGAffineTransform(translationX: srcH, y: 0).rotated(by: .pi / 2)
-        case .rightMirrored:
-            dstW = srcH; dstH = srcW
-            transform = CGAffineTransform(translationX: 0, y: 0).scaledBy(x: -1, y: 1).rotated(by: .pi / 2)
-        @unknown default:
-            return image
+        case .up:            uiOrientation = .up
+        case .upMirrored:    uiOrientation = .upMirrored
+        case .down:          uiOrientation = .down
+        case .downMirrored:  uiOrientation = .downMirrored
+        case .left:          uiOrientation = .left
+        case .leftMirrored:  uiOrientation = .leftMirrored
+        case .right:         uiOrientation = .right
+        case .rightMirrored: uiOrientation = .rightMirrored
+        @unknown default:    uiOrientation = .up
         }
         
-        guard let colorSpace = image.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB),
-              let ctx = CGContext(
-                  data: nil,
-                  width: Int(dstW),
-                  height: Int(dstH),
-                  bitsPerComponent: image.bitsPerComponent,
-                  bytesPerRow: 0,
-                  space: colorSpace,
-                  bitmapInfo: image.alphaInfo == .none
-                      ? CGImageAlphaInfo.noneSkipLast.rawValue
-                      : image.bitmapInfo.rawValue
-              ) else {
-            print("📐 DocumentManager: Failed to create CGContext for orientation normalization")
-            return nil
+        // Create UIImage with the specified orientation, then draw it
+        // into a renderer — UIKit's draw(in:) correctly applies the
+        // orientation transform, producing upright pixels.
+        let uiImage = UIImage(cgImage: image, scale: 1.0, orientation: uiOrientation)
+        let renderer = UIGraphicsImageRenderer(size: uiImage.size)
+        let normalized = renderer.image { _ in
+            uiImage.draw(in: CGRect(origin: .zero, size: uiImage.size))
         }
-        
-        ctx.concatenate(transform)
-        ctx.draw(image, in: CGRect(x: 0, y: 0, width: srcW, height: srcH))
-        
-        return ctx.makeImage()
+        return normalized.cgImage
+        #else
+        // macOS fallback — NSImage typically normalizes orientation
+        return image
+        #endif
     }
     
     /// Rectifies an image based on a detected rectangle observation.
