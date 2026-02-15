@@ -15,7 +15,6 @@ The workspace is organized into modular components:
 ### 1. Unified Sifting & Capture
 The **Visual Intelligence View** is the primary entry point, designed for rapid, context-aware capture.
 -   **Smart Shutter**: The camera interface continuously analyzes the scene in real-time.
-    -   **Subject Sifting**: Automatically identifies and lifts the primary subject (e.g., a coffee cup, a landmark) from the background, creating a high-fidelity cutout.
     -   **Multi-Modal Capture**: Simultaneously scans for **QR Codes**, **Text**, and **Barcodes** without changing modes.
 -   **Photo Library Import**: Users can import photos, which are processed with the same full-fidelity intelligence pipeline as live captures.
 
