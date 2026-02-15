@@ -10,10 +10,6 @@ Point your camera at anything — a product on a shelf, a restaurant sign, a doc
 
 ## ✨ Key Features
 
-### Visual Intelligence Sifting
-
-Visual Intelligence Pipeline uses Apple's Vision framework to automatically detect and isolate subjects in your captures. Whether it's a product, a person, or text on a sign, subjects are "sifted" out from the background, producing clean cutouts with proper alpha channels — ready for sharing or further analysis.
-
 ### Contextual Enrichment Pipeline
 
 Every capture is automatically enriched with layers of real-world context:
