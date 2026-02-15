@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiverKit — Core — Developer Wiki</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-header"><h1>Visual Intelligence Pipeline</h1><div class="version">v1.0 Developer Wiki</div></div>
+  <div class="search-box"><input type="text" id="search" placeholder="Search types…" oninput="filterTypes(this.value)"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a class="sidebar-link" href="index.html">Home</a>
+    <a class="sidebar-link" href="architecture.html">Architecture</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Modules</div>
+    <a class="sidebar-link" href="divershared.html">DiverShared</a>
+    <a class="sidebar-link" href="diverkit-models.html">DiverKit — Models</a>
+    <a class="sidebar-link" href="diverkit-services.html">DiverKit — Services</a>
+    <a class="sidebar-link" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
+    <a class="sidebar-link active" href="diverkit-core.html">DiverKit — Core</a>
+    <a class="sidebar-link" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
+    <a class="sidebar-link" href="app-views.html">App — Views</a>
+    <a class="sidebar-link" href="app-services.html">App — Services</a>
+    <a class="sidebar-link" href="app-intents.html">App — Intents &amp; Widgets</a>
+  </div>
+</nav>
+<main class="main">
+  <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> DiverKit — Core</div>
+  <h1 class="page-title">DiverKit — Core</h1>
+  <p class="page-subtitle">Networking stack, JSON helpers, configuration, localization, icon service, toast management, and utilities.</p>
+  
+  <div class="section">
+  <h2 class="section-title">Networking</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="HTTP">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>HTTP</strong></div>
+  <div class="conformances">Static HTTP method definitions and request building</div>
+</li>
+<li class="type-item searchable" data-name="MultipartFormData">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>MultipartFormData</strong></div>
+  <div class="conformances">Multipart form data builder</div>
+</li>
+<li class="type-item searchable" data-name="MultipartFormField">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>MultipartFormField</strong></div>
+  <div class="conformances">Field types: text, file, data</div>
+</li>
+<li class="type-item searchable" data-name="MultipartFormDataConvertible">
+  <span class="badge badge-protocol">protocol</span>
+  <div class="name"><strong>MultipartFormDataConvertible</strong></div>
+  <div class="conformances">Convert types to multipart fields</div>
+</li>
+<li class="type-item searchable" data-name="QueryParameter">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>QueryParameter</strong></div>
+  <div class="conformances">URL query parameter encoding</div>
+</li>
+<li class="type-item searchable" data-name="RequestOptions">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>RequestOptions</strong></div>
+  <div class="conformances">Headers, timeout, retry config</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Data Types</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="JSONValue">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>JSONValue</strong></div>
+  <div class="conformances">Codable, Hashable, Sendable — dynamic JSON value type</div>
+</li>
+<li class="type-item searchable" data-name="APIErrorResponse">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>APIErrorResponse</strong></div>
+  <div class="conformances">Codable, Sendable — server error response</div>
+</li>
+<li class="type-item searchable" data-name="ClientError">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>ClientError</strong></div>
+  <div class="conformances">Error — network, decoding, auth failures</div>
+</li>
+<li class="type-item searchable" data-name="Nullable">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>Nullable</strong></div>
+  <div class="conformances">Codable wrapper for optional JSON fields</div>
+</li>
+<li class="type-item searchable" data-name="FormFile">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>FormFile</strong></div>
+  <div class="conformances">File upload metadata</div>
+</li>
+<li class="type-item searchable" data-name="LinkMetadata">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>LinkMetadata</strong></div>
+  <div class="conformances">Codable, Sendable — extracted link metadata (LinkUnpacker)</div>
+</li>
+<li class="type-item searchable" data-name="CalendarDate">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>CalendarDate</strong></div>
+  <div class="conformances">Codable, Hashable, Comparable — date without time</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Serialization</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="EncodableValue">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>EncodableValue</strong></div>
+  <div class="conformances">Type-erased Encodable wrapper</div>
+</li>
+<li class="type-item searchable" data-name="StringKey">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>StringKey</strong></div>
+  <div class="conformances">CodingKey — dynamic coding key</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Configuration</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="APIConfig">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>APIConfig</strong></div>
+  <div class="conformances">Static API endpoints, keys, base URLs</div>
+</li>
+<li class="type-item searchable" data-name="IconService">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>IconService</strong></div>
+  <div class="conformances">SF Symbol icon helpers</div>
+</li>
+<li class="type-item searchable" data-name="IconWeight">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>IconWeight</strong></div>
+  <div class="conformances">String — ultraLight, thin, light, regular, etc.</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Localization</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="LocalizationManager">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>LocalizationManager</strong></div>
+  <div class="conformances">ObservableObject — runtime language switching</div>
+</li>
+<li class="type-item searchable" data-name="AppLanguage">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>AppLanguage</strong></div>
+  <div class="conformances">String, CaseIterable — supported languages</div>
+</li>
+<li class="type-item searchable" data-name="LocalizedStringKey">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>LocalizedStringKey</strong></div>
+  <div class="conformances">All localized string keys</div>
+</li>
+<li class="type-item searchable" data-name="LocalizationExporter">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>LocalizationExporter</strong></div>
+  <div class="conformances">Export strings for translation</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Managers</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="ToastManager">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>ToastManager</strong></div>
+  <div class="conformances">ObservableObject — in-app toast notifications</div>
+</li>
+<li class="type-item searchable" data-name="ToastNotification">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ToastNotification</strong></div>
+  <div class="conformances">Identifiable, Equatable — toast data</div>
+</li>
+<li class="type-item searchable" data-name="ToastType">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>ToastType</strong></div>
+  <div class="conformances">success, error, info, warning</div>
+</li>
+<li class="type-item searchable" data-name="StoreHealthMonitor">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>StoreHealthMonitor</strong></div>
+  <div class="conformances">SwiftData container health checks</div>
+</li>
+<li class="type-item searchable" data-name="StoreHealthSnapshot">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>StoreHealthSnapshot</strong></div>
+  <div class="conformances">Sendable — container status report</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Utilities</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="DiverLogger">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>DiverLogger</strong></div>
+  <div class="conformances">Static structured logging with subsystems</div>
+</li>
+<li class="type-item searchable" data-name="DiverBundle">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>DiverBundle</strong></div>
+  <div class="conformances">Static bundle resource accessors</div>
+</li>
+<li class="type-item searchable" data-name="RichLinkSharer">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>RichLinkSharer</strong></div>
+  <div class="conformances">NSObject — share sheet with rich link previews</div>
+</li>
+<li class="type-item searchable" data-name="RichLinkActivitySource">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>RichLinkActivitySource</strong></div>
+  <div class="conformances">UIActivityItemSource — custom share content</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Transfer Types</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="ItemTransfer">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ItemTransfer</strong></div>
+  <div class="conformances">Codable, Transferable, Sendable — drag-and-drop item</div>
+</li>
+<li class="type-item searchable" data-name="SessionTransfer">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SessionTransfer</strong></div>
+  <div class="conformances">Codable, Transferable, Sendable — drag-and-drop session</div>
+</li>
+<li class="type-item searchable" data-name="DiverKitInfo">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>DiverKitInfo</strong></div>
+  <div class="conformances">Static version and build info</div>
+</li></ul>
+  
+</div>
+</main>
+</div>
+<script>
+function filterTypes(q) {
+  document.querySelectorAll('.searchable').forEach(el => {
+    el.style.display = (!q || el.dataset.name.toLowerCase().includes(q.toLowerCase())) ? 'flex' : 'none';
+  });
+}
+</script>
+</body>
+</html>

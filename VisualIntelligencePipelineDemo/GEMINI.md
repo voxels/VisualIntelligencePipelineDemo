@@ -2,100 +2,127 @@
 
 ## Project Overview
 
-This project, named "Diver," is a universal application for iOS and macOS designed for saving and organizing links from various applications like Safari, TikTok, YouTube, and more. It acts as a central repository for shared content, automatically extracting metadata like titles, descriptions, and thumbnails.
+This project, **Visual Intelligence Pipeline**, is an iOS application for capturing, organizing, and enriching visual information. It uses on-device machine learning, Apple's Vision framework, and Apple Intelligence (`SystemLanguageModel`) to transform captured images and unstructured data into structured, searchable insights. It also serves as a universal hub for saving and organizing links shared from Safari, TikTok, YouTube, and more.
 
-The project is structured as a multi-repository setup, with the main application in the `Diver` directory, and shared components in `DiverKit` and `DiverShared` Swift Packages.
+The project is modularized using Swift Package Manager:
+
+*   `VisualIntelligencePipeline/` — Main application target and UI.
+*   `DiverKit/` — Core logic: ML, pipeline orchestration, services, and view models.
+*   `DiverShared/` — Pure Swift shared data models and utilities.
+*   `LocalPackages/YahooSearch` — Local package for web search enrichment.
 
 **Key Technologies:**
 
-*   **Swift & SwiftUI:** The application is built using modern Swift and SwiftUI for the user interface.
-*   **Swift Package Manager:** Dependencies and project modules are managed using Swift Package Manager.
-*   **knowmaps:** The application appears to use a cloud service called "KnowMaps" for storing and caching the shared links.
-*   **XCTest:** The project includes a suite of unit and UI tests.
+*   **Swift & SwiftUI:** UI and application logic.
+*   **SwiftData + CloudKit:** Local-first persistence with cross-device sync.
+*   **Vision & CoreML:** Subject detection, sifting, aesthetics scoring, and ML embeddings.
 *   **Apple Intelligence:** Uses `SystemLanguageModel` for on-device context generation. Requires **iOS 26.0+**.
-
-**Architecture:**
-
-1.  **VisualIntelligencePipeline (Main Application):** The main application target, containing the UI and the application's entry point.
-2.  **DiverShared (Swift Package):** This package contains the shared data models, such as `DiverQueueItem` and `DiverItemDescriptor`, and the `DiverQueueStore` for persisting shared links to the filesystem.
-3.  **DiverKit (Swift Package):** This package provides authentication, networking, and other shared utilities for communicating with backend services, including what appears to be a "KnowMaps" API.
-4.  **VisualIntelligencePipeline (Demo App):** A standalone harness for testing the Visual Intelligence features (Camera, Sifting, Reprocessing) in isolation.
-5.  **Queue-based Processing:** The app uses a file-based queue to reliably process shared links. The `DiverQueueProcessingService` picks up items from the queue and stores them in the `KnowMapsCacheStore`.
+*   **MapKit & WeatherKit:** Location enrichment and environmental context.
+*   **Foursquare API:** Venue-level location enrichment via `LocationSearchAggregator`.
 
 ## Visual Intelligence Features
 
-The project includes a sophisticated "Visual Intelligence" capability:
-
-*   **Intelligent Sifting:** Uses Vision framework to detect subjects in images and "sift" them out from the background.
+*   **Intelligent Sifting:** Uses Vision framework to detect subjects in images and "sift" them out from the background with proper alpha channel handling.
 *   **Context Enrichment:** Enriches captured items with:
-    *   **Location:** Foursquare (Venues) and MapKit (Landmarks/Addresses) via `LocationSearchAggregator`.
+    *   **Location:** Foursquare (Venues) and MapKit (Landmarks/Addresses) via `LocationSearchAggregator`, with user-pinnable persistence.
     *   **Environmental:** WeatherKit (Current conditions).
-    *   **Web:** Metadata extraction for related links.
+    *   **Web:** DuckDuckGo enrichments, link metadata extraction, and rich link previews.
     *   **Aesthetics:** Quality scoring for images and video frames.
-    *   **Cutouts:** Lifted subject support with proper alpha channel handling.
-*   **Pipeline Services:**
-    *   **LocalPipelineService:** The core orchestrator. Handles ingestion, enrichment, and persistence.
-    *   **Reprocessing:** Supports silent background reprocessing of items (`reprocessPipeline`) to update metadata or apply new algorithms. Includes logic to **prevent duplicates** by reusing existing item IDs.
-    *   **Session Sync:** Automatically synchronizes location edits between `ProcessedItem` and its parent `DiverSession`.
+    *   **Music:** Apple Music and Spotify recognition for music-related captures.
+    *   **Documents:** Automatic perspective correction and saving of detected documents.
+*   **AI-Powered Understanding:** LLM-generated summaries, purpose identification, concept tagging, and daily focus briefs via `SystemLanguageModel`.
+*   **Session Management:** Captures are auto-grouped by location and time into `DiverSession`s with AI-generated summaries.
+
+### Pipeline Services
+
+*   **`LocalPipelineService`:** The core orchestrator. Handles ingestion, enrichment, and persistence.
+*   **`MetadataPipelineService`:** Converts queue items to `LocalInput` and orchestrates metadata extraction.
+*   **`IntelligenceProcessor`:** Runs on-device LLM prompts for concept extraction and summarization.
+*   **Reprocessing:** Supports silent background reprocessing (`reprocessPipeline`) to update metadata. Reuses existing item IDs to prevent duplicates.
+*   **Session Sync:** Automatically synchronizes location edits between `ProcessedItem` and its parent `DiverSession`.
 
 ## Building and Running
-
-This is a standard Xcode project. To build and run the application:
 
 1.  **Open the project in Xcode:**
     ```bash
     open VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj
     ```
-2.  **Select a target:** Choose the "VisualIntelligencePipeline" scheme.
-3.  **Run the application:** Click the "Run" button in Xcode or press `Cmd+R`.
+2.  **Select a target:** Choose the `VisualIntelligencePipeline` scheme.
+3.  **Run the application:** `Cmd+R`. Requires iOS 26.0+ for Apple Intelligence features.
 
 ### Testing
 
-To run the tests:
-
-1.  **Open the project in Xcode.**
-2.  **Select a test scheme:** Choose the "DiverTests" or "DiverUITests" scheme.
-3.  **Run the tests:** Press `Cmd+U`.
-
-Alternatively, you can run the tests from the command line using `xcodebuild`:
-
 ```bash
-xcodebuild -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj -scheme VisualIntelligencePipeline -destination 'platform=iOS Simulator,name=iPhone 17'
+# Build for iOS Simulator
+xcodebuild -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj \
+  -scheme VisualIntelligencePipeline \
+  -destination 'platform=iOS Simulator,name=iPhone 17' build
+
+# Run DiverKit package tests
+cd DiverKit && swift test
+
+# Run DiverShared package tests
+cd DiverShared && swift test
 ```
 
 ## Development Conventions
 
-*   **SwiftUI:** The UI is built with SwiftUI, and views are organized in the `VisualIntelligencePipeline/VisualIntelligencePipeline/View` directory.
-*   **Swift Packages:** Shared code is modularized into Swift Packages (`DiverKit`, `DiverShared`).
-*   **Asynchronous Operations:** The app uses `async/await` for asynchronous operations, especially for network requests and file I/O.
-*   **Dependency Injection:** Services like `KnowMapsServiceContainer` and `DiverQueueProcessingService` are initialized and passed to the relevant components.
+*   **SwiftUI:** Views are organized in `VisualIntelligencePipeline/VisualIntelligencePipeline/View/`.
+*   **View Models:** Located in `DiverKit/Sources/DiverKit/ViewModel/` — `VisualIntelligenceViewModel`, `SidebarViewModel`, `ReferenceDetailViewModel`, `ProcessedItemViewModel`.
+*   **Services:** Located in `DiverKit/Sources/DiverKit/Services/` — 33+ services covering camera, enrichment, pipeline, location, and more.
+*   **Swift Packages:** Shared code modularized into `DiverKit` and `DiverShared`.
+*   **Asynchronous Operations:** Uses `async/await` throughout for network requests, ML inference, and file I/O.
+*   **Dependency Injection:** Services like `KnowMapsServiceContainer` and `DiverQueueProcessingService` are injected at initialization.
 
 ## Critical Development Rules (Read Carefully)
 
-The following rules have been established based on past incidents and must be followed strictly:
-
 1.  **NEVER Compromise Data Integrity:**
-    *   **Schema Changes:** Do **NOT** rename Core Data entities (e.g., `SessionMetadata`) or perform destructive schema changes without a fully tested migration plan. The user's data is sacred. "Data loss" incidents are unacceptable.
-    *   **Recovery:** If widespread data inaccessibility occurs due to schema issues, prioritize implementing recovery mechanisms (like `regenerateMissingSessions`) over wiping data.
+    *   **Schema Changes:** Do **NOT** rename Core Data entities (e.g., `SessionMetadata`) or perform destructive schema changes without a fully tested migration plan.
+    *   **Recovery:** Prioritize recovery mechanisms over wiping data.
 
 2.  **Build Stability is Paramount:**
-    *   **Check Your Work:** After *any* refactoring (especially renaming types), you **MUST** verify that the project builds. Do not leave the user with a broken build state.
-    *   **Reference Consistency:** When renaming a type (e.g., `SessionMetadata` to `DiverSession`), ensure **ALL** references across the codebase (Views, ViewModels, Services) are updated immediately. A partial rename is a broken build.
+    *   After *any* refactoring (especially renaming types), verify the project builds.
+    *   When renaming a type, ensure **ALL** references across the codebase are updated immediately.
 
 3.  **Dependency Management (KnowMaps):**
-    *   **Staleness:** Be aware that local Swift Package dependencies (like `knowmaps`) can resolve to stale commits. If you encounter "inaccessible due to 'internal' protection level" errors for properties that *should* be public, it is likely a stale dependency cache.
-    *   **Workarounds:** While clean fixes are preferred, runtime reflection (using `Mirror`) is an acceptable *temporary* workaround to bypass strict access control/staleness issues to get the feature working immediately, provided it is documented.
+    *   Local Swift Package dependencies can resolve to stale commits. If you encounter "inaccessible due to 'internal' protection level" errors, it is likely a stale dependency cache.
+    *   Runtime reflection (using `Mirror`) is an acceptable *temporary* workaround when documented.
 
 4.  **UI & MapKit Stability:**
-    *   **Stable Identifiers:** Use `.id` (UUID) rather than `placeID` for identifying MapKit results in SwiftUI lists. MapKit IDs can be unstable or duplicated, causing selection bugs.
-    *   **Aspect Ratios:** Use aspect-ratio based layouts for images instead of fixed dimensions to support responsive sidebar resizing.
+    *   Use `.id` (UUID) rather than `placeID` for identifying MapKit results in SwiftUI lists.
+    *   Use aspect-ratio based layouts for images instead of fixed dimensions.
 
-## Terminology Updates
+5.  **Main Thread Safety:**
+    *   Keep long-running pipeline tasks off the main thread. Use `Task.detached` or background actors for heavy processing.
+    *   Provide immediate visual feedback on user actions even when underlying model updates are still in progress.
 
-*   **DiverSession:** The entity previously known as `SessionMetadata` is now referred to as `DiverSession` in the codebase.
-    *   **Technical Note:** For data compatibility and CloudKit sync reasons, the underlying class is still named `SessionMetadata`, but `DiverSession` is provided as a global typealias. Continue to use `DiverSession` in new code.
+## Terminology
 
-*   **View Models:**
-    *   **SidebarViewModel:** Centralizes all sidebar state, including session management, drag-and-drop, and library maintenance.
-    *   **ProcessedItemViewModel:** Manages logic for individual items, including reprocessing and deletion.
+*   **DiverSession:** Typealias for `SessionMetadata`. Use `DiverSession` in new code.
+*   **ProcessedItem:** The primary data model for enriched captures and links.
+*   **SidebarViewModel:** Centralizes sidebar state, session management, drag-and-drop, and library maintenance.
+*   **VisualIntelligenceViewModel:** Manages camera, detection, sifting, and capture review state.
 
+## Key Files
+
+### App & UI
+*   `VisualIntelligencePipelineApp.swift` — App entry point, service initialization
+*   `View/VisualIntelligenceView.swift` — Camera and capture UI
+*   `View/SidebarView.swift` — Main navigation sidebar
+*   `View/ReferenceDetailView.swift` — Item detail view
+*   `View/CaptureReviewView.swift` — Post-capture review
+*   `View/EditLocationView.swift` — Location editing
+
+### Core Services (DiverKit)
+*   `Services/LocalPipelineService.swift` — Core pipeline orchestrator
+*   `Services/MetadataPipelineService.swift` — Metadata extraction
+*   `Services/IntelligenceProcessor.swift` — On-device LLM processing
+*   `Services/LocationSearchAggregator.swift` — Unified Foursquare + MapKit search
+*   `Services/CameraManager.swift` — AVFoundation camera management
+*   `Storage/DiverDataStore.swift` — SwiftData container management
+
+### Models (DiverKit)
+*   `Models/ProcessedItem.swift` — Primary enriched item model
+*   `Models/DiverSession.swift` — Session grouping model
+*   `Models/DiverCollection.swift` — User-created collections
+*   `Models/UserConcept.swift` — Concept/tag model

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiverKit — Storage &amp; Auth — Developer Wiki</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-header"><h1>Visual Intelligence Pipeline</h1><div class="version">v1.0 Developer Wiki</div></div>
+  <div class="search-box"><input type="text" id="search" placeholder="Search types…" oninput="filterTypes(this.value)"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a class="sidebar-link" href="index.html">Home</a>
+    <a class="sidebar-link" href="architecture.html">Architecture</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Modules</div>
+    <a class="sidebar-link" href="divershared.html">DiverShared</a>
+    <a class="sidebar-link" href="diverkit-models.html">DiverKit — Models</a>
+    <a class="sidebar-link" href="diverkit-services.html">DiverKit — Services</a>
+    <a class="sidebar-link" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
+    <a class="sidebar-link" href="diverkit-core.html">DiverKit — Core</a>
+    <a class="sidebar-link active" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
+    <a class="sidebar-link" href="app-views.html">App — Views</a>
+    <a class="sidebar-link" href="app-services.html">App — Services</a>
+    <a class="sidebar-link" href="app-intents.html">App — Intents &amp; Widgets</a>
+  </div>
+</nav>
+<main class="main">
+  <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> DiverKit — Storage &amp; Auth</div>
+  <h1 class="page-title">DiverKit — Storage &amp; Auth</h1>
+  <p class="page-subtitle">SwiftData container management, keychain services, token validation, and data seeding.</p>
+  
+  <div class="section">
+  <h2 class="section-title">Storage</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="DiverDataStore">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>DiverDataStore</strong></div>
+  <div class="conformances">SwiftData ModelContainer — single entry point for all persistence</div>
+</li>
+<li class="type-item searchable" data-name="UnifiedDataManager">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>UnifiedDataManager</strong></div>
+  <div class="conformances">Wraps DiverDataStore for convenience</div>
+</li>
+<li class="type-item searchable" data-name="ReferencePayloadStore">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>ReferencePayloadStore</strong></div>
+  <div class="conformances">Compressed JSON blob storage for large payloads</div>
+</li>
+<li class="type-item searchable" data-name="StorageClient">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>StorageClient</strong></div>
+  <div class="conformances">File system storage helpers</div>
+</li>
+<li class="type-item searchable" data-name="DataSeeder">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>DataSeeder</strong></div>
+  <div class="conformances">Development-time sample data generation</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">DiverDataStore creates and manages the SwiftData ModelContainer with CloudKit backing. All models (ProcessedItem, DiverSession, DiverCollection, UserConcept) are registered here.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">Authentication</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="AuthenticationState">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>AuthenticationState</strong></div>
+  <div class="conformances">Sendable, Equatable — unauthenticated, authenticating, authenticated, failed</div>
+</li>
+<li class="type-item searchable" data-name="KeychainError">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>KeychainError</strong></div>
+  <div class="conformances">Error, Sendable — itemNotFound, duplicateItem, unexpectedData</div>
+</li>
+<li class="type-item searchable" data-name="KeychainService">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>KeychainService</strong></div>
+  <div class="conformances">Static Keychain read/write/delete</div>
+</li>
+<li class="type-item searchable" data-name="JWTClaims">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>JWTClaims</strong></div>
+  <div class="conformances">Codable, Sendable — JWT payload parsing</div>
+</li>
+<li class="type-item searchable" data-name="TokenValidator">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>TokenValidator</strong></div>
+  <div class="conformances">Static JWT expiration and refresh checks</div>
+</li>
+<li class="type-item searchable" data-name="TokenResponse">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>TokenResponse</strong></div>
+  <div class="conformances">Codable, Sendable — OAuth token response</div>
+</li></ul>
+  
+</div>
+</main>
+</div>
+<script>
+function filterTypes(q) {
+  document.querySelectorAll('.searchable').forEach(el => {
+    el.style.display = (!q || el.dataset.name.toLowerCase().includes(q.toLowerCase())) ? 'flex' : 'none';
+  });
+}
+</script>
+</body>
+</html>

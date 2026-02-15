@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App — Views — Developer Wiki</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-header"><h1>Visual Intelligence Pipeline</h1><div class="version">v1.0 Developer Wiki</div></div>
+  <div class="search-box"><input type="text" id="search" placeholder="Search types…" oninput="filterTypes(this.value)"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a class="sidebar-link" href="index.html">Home</a>
+    <a class="sidebar-link" href="architecture.html">Architecture</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Modules</div>
+    <a class="sidebar-link" href="divershared.html">DiverShared</a>
+    <a class="sidebar-link" href="diverkit-models.html">DiverKit — Models</a>
+    <a class="sidebar-link" href="diverkit-services.html">DiverKit — Services</a>
+    <a class="sidebar-link" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
+    <a class="sidebar-link" href="diverkit-core.html">DiverKit — Core</a>
+    <a class="sidebar-link" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
+    <a class="sidebar-link active" href="app-views.html">App — Views</a>
+    <a class="sidebar-link" href="app-services.html">App — Services</a>
+    <a class="sidebar-link" href="app-intents.html">App — Intents &amp; Widgets</a>
+  </div>
+</nav>
+<main class="main">
+  <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> App — Views</div>
+  <h1 class="page-title">App — Views</h1>
+  <p class="page-subtitle">25 SwiftUI views composing the camera, sidebar, detail, review, location editing, settings, and widget interfaces.</p>
+  <div class="stats-bar"><div class="stat"><div class="stat-value">25</div><div class="stat-label">Files</div></div><div class="stat"><div class="stat-value">14,659</div><div class="stat-label">Lines</div></div></div>
+  <div class="section">
+  <h2 class="section-title">Camera &amp; Capture</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="VisualIntelligenceView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>VisualIntelligenceView</strong></div>
+  <div class="conformances">View — 1,795 lines. Camera + overlays + review stack</div>
+</li>
+<li class="type-item searchable" data-name="VisualIntelligenceReviewLayer">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>VisualIntelligenceReviewLayer</strong></div>
+  <div class="conformances">View — review card overlay</div>
+</li>
+<li class="type-item searchable" data-name="VisualIntelligenceCameraLayer">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>VisualIntelligenceCameraLayer</strong></div>
+  <div class="conformances">View — camera preview layer</div>
+</li>
+<li class="type-item searchable" data-name="VisualIntelligenceHUD">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>VisualIntelligenceHUD</strong></div>
+  <div class="conformances">View — heads-up display overlay</div>
+</li>
+<li class="type-item searchable" data-name="CaptureReviewView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>CaptureReviewView</strong></div>
+  <div class="conformances">View — card-stack review interface</div>
+</li>
+<li class="type-item searchable" data-name="CameraPreviewView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>CameraPreviewView</strong></div>
+  <div class="conformances">UIViewRepresentable — AVCaptureSession preview</div>
+</li>
+<li class="type-item searchable" data-name="ResultsOverlayView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ResultsOverlayView</strong></div>
+  <div class="conformances">View — detection results overlay</div>
+</li>
+<li class="type-item searchable" data-name="SiftedOverlayView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SiftedOverlayView</strong></div>
+  <div class="conformances">View — sifted subject overlay</div>
+</li>
+<li class="type-item searchable" data-name="SessionLocationBar">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SessionLocationBar</strong></div>
+  <div class="conformances">View — pinned location bar</div>
+</li>
+<li class="type-item searchable" data-name="ContextChipBar">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ContextChipBar</strong></div>
+  <div class="conformances">View — context tag chips</div>
+</li>
+<li class="type-item searchable" data-name="PipelineStatusView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>PipelineStatusView</strong></div>
+  <div class="conformances">View — enrichment progress indicator</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">VisualIntelligenceView is the primary camera interface. It layers camera preview, detection overlays, sifted subjects, location bar, and the review stack.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">Sidebar &amp; Navigation</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="SidebarView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SidebarView</strong></div>
+  <div class="conformances">View — 1,444 lines. Sessions, collections, inbox, favorites</div>
+</li>
+<li class="type-item searchable" data-name="SessionRowLabel">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SessionRowLabel</strong></div>
+  <div class="conformances">View — session list row</div>
+</li>
+<li class="type-item searchable" data-name="ItemRow">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ItemRow</strong></div>
+  <div class="conformances">View — item list row</div>
+</li>
+<li class="type-item searchable" data-name="ItemRowWithActions">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ItemRowWithActions</strong></div>
+  <div class="conformances">View — item row with swipe actions</div>
+</li>
+<li class="type-item searchable" data-name="ThumbnailView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ThumbnailView</strong></div>
+  <div class="conformances">View — item thumbnail with fallback</div>
+</li>
+<li class="type-item searchable" data-name="ContentView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ContentView</strong></div>
+  <div class="conformances">View — root navigation split view</div>
+</li>
+<li class="type-item searchable" data-name="DetailPane">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>DetailPane</strong></div>
+  <div class="conformances">View — detail column content</div>
+</li>
+<li class="type-item searchable" data-name="SessionItemsView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SessionItemsView</strong></div>
+  <div class="conformances">View — items within a session</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Detail &amp; Editing</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="ReferenceDetailView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ReferenceDetailView</strong></div>
+  <div class="conformances">View — 2,486 lines. Full item detail</div>
+</li>
+<li class="type-item searchable" data-name="ReferenceDetailContent">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ReferenceDetailContent</strong></div>
+  <div class="conformances">View — detail card content</div>
+</li>
+<li class="type-item searchable" data-name="ReferenceCardWrapper">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ReferenceCardWrapper</strong></div>
+  <div class="conformances">View — card layout wrapper</div>
+</li>
+<li class="type-item searchable" data-name="ReferenceCardView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ReferenceCardView</strong></div>
+  <div class="conformances">View — individual enrichment card</div>
+</li>
+<li class="type-item searchable" data-name="StatusBadge">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>StatusBadge</strong></div>
+  <div class="conformances">View — processing status indicator</div>
+</li>
+<li class="type-item searchable" data-name="EditLocationView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>EditLocationView</strong></div>
+  <div class="conformances">View — 663 lines. MapKit location search + selection</div>
+</li>
+<li class="type-item searchable" data-name="LocationCandidateRow">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>LocationCandidateRow</strong></div>
+  <div class="conformances">View — search result row</div>
+</li>
+<li class="type-item searchable" data-name="EditSessionLocationView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>EditSessionLocationView</strong></div>
+  <div class="conformances">View — bulk session location edit</div>
+</li>
+<li class="type-item searchable" data-name="PlaceSelectionMapView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>PlaceSelectionMapView</strong></div>
+  <div class="conformances">View — map pin placement</div>
+</li>
+<li class="type-item searchable" data-name="ConceptListView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ConceptListView</strong></div>
+  <div class="conformances">View — concept tag list</div>
+</li>
+<li class="type-item searchable" data-name="ConceptWeightingSection">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ConceptWeightingSection</strong></div>
+  <div class="conformances">View — concept weight editor</div>
+</li>
+<li class="type-item searchable" data-name="ConceptWeightView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ConceptWeightView</strong></div>
+  <div class="conformances">View — individual weight slider</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Reprocessing</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="ReprocessingWizardView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ReprocessingWizardView</strong></div>
+  <div class="conformances">View — 459 lines. Multi-step reprocess wizard</div>
+</li>
+<li class="type-item searchable" data-name="ReprocessMetadataView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ReprocessMetadataView</strong></div>
+  <div class="conformances">View — metadata review before reprocess</div>
+</li>
+<li class="type-item searchable" data-name="ReviewItemRow">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ReviewItemRow</strong></div>
+  <div class="conformances">View — item in reprocess review list</div>
+</li>
+<li class="type-item searchable" data-name="ReviewApprovalState">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>ReviewApprovalState</strong></div>
+  <div class="conformances">approved, rejected, pending</div>
+</li>
+<li class="type-item searchable" data-name="ItemSnapshot">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ItemSnapshot</strong></div>
+  <div class="conformances">Frozen item state for review comparison</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Settings &amp; Utilities</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="SettingsView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SettingsView</strong></div>
+  <div class="conformances">View — 518 lines. App configuration and diagnostics</div>
+</li>
+<li class="type-item searchable" data-name="LogExport">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>LogExport</strong></div>
+  <div class="conformances">Codable — diagnostic log export data</div>
+</li>
+<li class="type-item searchable" data-name="LogExportShareSheet">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>LogExportShareSheet</strong></div>
+  <div class="conformances">UIViewControllerRepresentable — share log files</div>
+</li>
+<li class="type-item searchable" data-name="StorageInfoRow">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>StorageInfoRow</strong></div>
+  <div class="conformances">View — storage usage display</div>
+</li>
+<li class="type-item searchable" data-name="ShortcutGalleryView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ShortcutGalleryView</strong></div>
+  <div class="conformances">View — 619 lines. Shortcuts discovery</div>
+</li>
+<li class="type-item searchable" data-name="AppleMusicReferenceView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>AppleMusicReferenceView</strong></div>
+  <div class="conformances">View — Apple Music match display</div>
+</li>
+<li class="type-item searchable" data-name="SharedWithYouView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SharedWithYouView</strong></div>
+  <div class="conformances">View — Shared With You items</div>
+</li>
+<li class="type-item searchable" data-name="SharedHighlightRow">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SharedHighlightRow</strong></div>
+  <div class="conformances">View — individual shared highlight</div>
+</li>
+<li class="type-item searchable" data-name="QueueProgressView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>QueueProgressView</strong></div>
+  <div class="conformances">View — queue drain progress</div>
+</li>
+<li class="type-item searchable" data-name="LinkPreviewView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>LinkPreviewView</strong></div>
+  <div class="conformances">UIViewRepresentable — LPLinkView wrapper</div>
+</li>
+<li class="type-item searchable" data-name="RichWebView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>RichWebView</strong></div>
+  <div class="conformances">UIViewRepresentable — WKWebView wrapper</div>
+</li></ul>
+  
+</div>
+</main>
+</div>
+<script>
+function filterTypes(q) {
+  document.querySelectorAll('.searchable').forEach(el => {
+    el.style.display = (!q || el.dataset.name.toLowerCase().includes(q.toLowerCase())) ? 'flex' : 'none';
+  });
+}
+</script>
+</body>
+</html>

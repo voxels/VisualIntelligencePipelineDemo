@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App — Intents &amp; Widgets — Developer Wiki</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-header"><h1>Visual Intelligence Pipeline</h1><div class="version">v1.0 Developer Wiki</div></div>
+  <div class="search-box"><input type="text" id="search" placeholder="Search types…" oninput="filterTypes(this.value)"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a class="sidebar-link" href="index.html">Home</a>
+    <a class="sidebar-link" href="architecture.html">Architecture</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Modules</div>
+    <a class="sidebar-link" href="divershared.html">DiverShared</a>
+    <a class="sidebar-link" href="diverkit-models.html">DiverKit — Models</a>
+    <a class="sidebar-link" href="diverkit-services.html">DiverKit — Services</a>
+    <a class="sidebar-link" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
+    <a class="sidebar-link" href="diverkit-core.html">DiverKit — Core</a>
+    <a class="sidebar-link" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
+    <a class="sidebar-link" href="app-views.html">App — Views</a>
+    <a class="sidebar-link" href="app-services.html">App — Services</a>
+    <a class="sidebar-link active" href="app-intents.html">App — Intents &amp; Widgets</a>
+  </div>
+</nav>
+<main class="main">
+  <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> App — Intents &amp; Widgets</div>
+  <h1 class="page-title">App — Intents &amp; Widgets</h1>
+  <p class="page-subtitle">5 App Intents for Siri/Shortcuts, widget extension, entities, and shortcut templates.</p>
+  <div class="stats-bar"><div class="stat"><div class="stat-value">5</div><div class="stat-label">Intents</div></div><div class="stat"><div class="stat-value">20</div><div class="stat-label">Widget Files</div></div></div>
+  <div class="section">
+  <h2 class="section-title">App Intents</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="SaveLinkIntent">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SaveLinkIntent</strong></div>
+  <div class="conformances">AppIntent — save a URL to the library via Siri</div>
+</li>
+<li class="type-item searchable" data-name="ShareLinkIntent">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ShareLinkIntent</strong></div>
+  <div class="conformances">AppIntent — share an item via Siri</div>
+</li>
+<li class="type-item searchable" data-name="SearchLinksIntent">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SearchLinksIntent</strong></div>
+  <div class="conformances">AppIntent, WidgetConfigurationIntent — search the library</div>
+</li>
+<li class="type-item searchable" data-name="OpenLinkIntent">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>OpenLinkIntent</strong></div>
+  <div class="conformances">AppIntent — open a saved link</div>
+</li>
+<li class="type-item searchable" data-name="VisualIntelligenceIntent">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>VisualIntelligenceIntent</strong></div>
+  <div class="conformances">AppIntent — launch capture and analyze</div>
+</li>
+<li class="type-item searchable" data-name="OpenVisualIntelligenceIntent">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>OpenVisualIntelligenceIntent</strong></div>
+  <div class="conformances">AppIntent — open the camera view</div>
+</li>
+<li class="type-item searchable" data-name="OpenLinkError">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>OpenLinkError</strong></div>
+  <div class="conformances">Error — itemNotFound, invalidURL</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">Each intent is registered with Siri and available in Shortcuts. SearchLinksIntent also serves as a WidgetConfigurationIntent for interactive widgets.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">Entities</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="LinkEntity">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>LinkEntity</strong></div>
+  <div class="conformances">AppEntity, Identifiable, Hashable, Codable, Sendable</div>
+</li>
+<li class="type-item searchable" data-name="LinkEntityQuery">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>LinkEntityQuery</strong></div>
+  <div class="conformances">EntityQuery — search and lookup for LinkEntity</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">LinkEntity wraps ProcessedItem for the App Intents framework. LinkEntityQuery provides string-based search and ID-based lookup.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">Shortcut Provider</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="DiverShortcuts">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>DiverShortcuts</strong></div>
+  <div class="conformances">AppShortcutsProvider — pre-built shortcut templates</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Intent Views</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="SaveLinkSnippet">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SaveLinkSnippet</strong></div>
+  <div class="conformances">View — confirmation snippet after save</div>
+</li>
+<li class="type-item searchable" data-name="ShareLinkSnippet">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ShareLinkSnippet</strong></div>
+  <div class="conformances">View — share confirmation snippet</div>
+</li>
+<li class="type-item searchable" data-name="SearchLinkSnippet">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>SearchLinkSnippet</strong></div>
+  <div class="conformances">View — search results snippet</div>
+</li>
+<li class="type-item searchable" data-name="VisualIntelligenceSnippet">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>VisualIntelligenceSnippet</strong></div>
+  <div class="conformances">View — capture result snippet</div>
+</li>
+<li class="type-item searchable" data-name="IntentConfigurationView">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>IntentConfigurationView</strong></div>
+  <div class="conformances">View — widget configuration</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Intent Services</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="URLCompletenessAnalyzer">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>URLCompletenessAnalyzer</strong></div>
+  <div class="conformances">Validates and normalizes URLs from Siri input</div>
+</li>
+<li class="type-item searchable" data-name="ScreenshotProcessor">
+  <span class="badge badge-actor">actor</span>
+  <div class="name"><strong>ScreenshotProcessor</strong></div>
+  <div class="conformances">Screenshot capture and processing for intents</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Widget Extension</h2>
+  <ul class="type-list"></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">The VisualIntelligencePipelineWidget target (20 files, 2,622 lines) provides Home and Lock screen widgets showing recent captures, search, and quick actions. Uses WidgetKit with SearchLinksIntent for interactive configuration.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">Shortcut Gallery</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="ShortcutsManifest">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ShortcutsManifest</strong></div>
+  <div class="conformances">Codable — shortcut template catalog</div>
+</li>
+<li class="type-item searchable" data-name="WidgetTemplate">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>WidgetTemplate</strong></div>
+  <div class="conformances">Identifiable, Codable — widget configuration template</div>
+</li>
+<li class="type-item searchable" data-name="ShortcutTemplate">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ShortcutTemplate</strong></div>
+  <div class="conformances">Identifiable, Codable — shortcut recipe</div>
+</li>
+<li class="type-item searchable" data-name="ShortcutAction">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ShortcutAction</strong></div>
+  <div class="conformances">Codable — individual shortcut step</div>
+</li>
+<li class="type-item searchable" data-name="AdvancedWorkflow">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>AdvancedWorkflow</strong></div>
+  <div class="conformances">Identifiable, Codable — multi-step automation</div>
+</li></ul>
+  
+</div>
+</main>
+</div>
+<script>
+function filterTypes(q) {
+  document.querySelectorAll('.searchable').forEach(el => {
+    el.style.display = (!q || el.dataset.name.toLowerCase().includes(q.toLowerCase())) ? 'flex' : 'none';
+  });
+}
+</script>
+</body>
+</html>

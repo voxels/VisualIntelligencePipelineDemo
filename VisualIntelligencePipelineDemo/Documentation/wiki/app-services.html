@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App — Services — Developer Wiki</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-header"><h1>Visual Intelligence Pipeline</h1><div class="version">v1.0 Developer Wiki</div></div>
+  <div class="search-box"><input type="text" id="search" placeholder="Search types…" oninput="filterTypes(this.value)"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a class="sidebar-link" href="index.html">Home</a>
+    <a class="sidebar-link" href="architecture.html">Architecture</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Modules</div>
+    <a class="sidebar-link" href="divershared.html">DiverShared</a>
+    <a class="sidebar-link" href="diverkit-models.html">DiverKit — Models</a>
+    <a class="sidebar-link" href="diverkit-services.html">DiverKit — Services</a>
+    <a class="sidebar-link" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
+    <a class="sidebar-link" href="diverkit-core.html">DiverKit — Core</a>
+    <a class="sidebar-link" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
+    <a class="sidebar-link" href="app-views.html">App — Views</a>
+    <a class="sidebar-link active" href="app-services.html">App — Services</a>
+    <a class="sidebar-link" href="app-intents.html">App — Intents &amp; Widgets</a>
+  </div>
+</nav>
+<main class="main">
+  <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> App — Services</div>
+  <h1 class="page-title">App — Services</h1>
+  <p class="page-subtitle">App-level service wiring, dependency injection, and system integrations.</p>
+  <div class="stats-bar"><div class="stat"><div class="stat-value">7</div><div class="stat-label">Files</div></div></div>
+  <div class="section">
+  <h2 class="section-title">Dependency Injection</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="KnowMapsServiceContainer">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>KnowMapsServiceContainer</strong></div>
+  <div class="conformances">Consolidates ML, search, cache, and analytics services</div>
+</li>
+<li class="type-item searchable" data-name="KnowMapsAdapter">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>KnowMapsAdapter</strong></div>
+  <div class="conformances">Static mapping: ProcessedItem ↔ Know Maps ItemMetadata</div>
+</li>
+<li class="type-item searchable" data-name="KnowMapsCacheStore">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>KnowMapsCacheStore</strong></div>
+  <div class="conformances">In-memory cache for service results</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">KnowMapsServiceContainer is initialized at app launch and injected into view models and services. It owns the ML models, search indices, and analytics pipelines.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">Queue Processing</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="DiverQueueProcessingService">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>DiverQueueProcessingService</strong></div>
+  <div class="conformances">23K lines — drains file-based queue on app launch</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">Reads DiverQueueItem files from the app group container, validates HMAC signatures, and feeds items into the pipeline. Handles retry logic and failure cleanup.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">System Integration</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="SharedWithYouManager">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>SharedWithYouManager</strong></div>
+  <div class="conformances">NSObject, ObservableObject — Shared With You framework integration</div>
+</li>
+<li class="type-item searchable" data-name="NavigationManager">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>NavigationManager</strong></div>
+  <div class="conformances">ObservableObject — app-level navigation state</div>
+</li>
+<li class="type-item searchable" data-name="FoursquareLinkEnrichmentService">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>FoursquareLinkEnrichmentService</strong></div>
+  <div class="conformances">Foursquare URL enrichment (app-level)</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">App Entry Point</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="VisualIntelligencePipelineApp">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>VisualIntelligencePipelineApp</strong></div>
+  <div class="conformances">App — @main entry point, service initialization, scene setup</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">Initializes KnowMapsServiceContainer, DiverDataStore, and DiverQueueProcessingService. Sets up the SwiftUI scene with NavigationSplitView.</p>
+</div>
+</main>
+</div>
+<script>
+function filterTypes(q) {
+  document.querySelectorAll('.searchable').forEach(el => {
+    el.style.display = (!q || el.dataset.name.toLowerCase().includes(q.toLowerCase())) ? 'flex' : 'none';
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiverKit — ViewModels — Developer Wiki</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-header"><h1>Visual Intelligence Pipeline</h1><div class="version">v1.0 Developer Wiki</div></div>
+  <div class="search-box"><input type="text" id="search" placeholder="Search types…" oninput="filterTypes(this.value)"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a class="sidebar-link" href="index.html">Home</a>
+    <a class="sidebar-link" href="architecture.html">Architecture</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Modules</div>
+    <a class="sidebar-link" href="divershared.html">DiverShared</a>
+    <a class="sidebar-link" href="diverkit-models.html">DiverKit — Models</a>
+    <a class="sidebar-link" href="diverkit-services.html">DiverKit — Services</a>
+    <a class="sidebar-link active" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
+    <a class="sidebar-link" href="diverkit-core.html">DiverKit — Core</a>
+    <a class="sidebar-link" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
+    <a class="sidebar-link" href="app-views.html">App — Views</a>
+    <a class="sidebar-link" href="app-services.html">App — Services</a>
+    <a class="sidebar-link" href="app-intents.html">App — Intents &amp; Widgets</a>
+  </div>
+</nav>
+<main class="main">
+  <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> DiverKit — ViewModels</div>
+  <h1 class="page-title">DiverKit — ViewModels</h1>
+  <p class="page-subtitle">Four ObservableObject view models that bridge services to SwiftUI views.</p>
+  <div class="stats-bar"><div class="stat"><div class="stat-value">4</div><div class="stat-label">Files</div></div><div class="stat"><div class="stat-value">4,600+</div><div class="stat-label">Lines</div></div></div>
+  <div class="section">
+  <h2 class="section-title">VisualIntelligenceViewModel</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="VisualIntelligenceViewModel">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>VisualIntelligenceViewModel</strong></div>
+  <div class="conformances">ObservableObject — 2,884 lines</div>
+</li>
+<li class="type-item searchable" data-name="PlatformImage">
+  <span class="badge badge-typealias">typealias</span>
+  <div class="name"><strong>PlatformImage</strong></div>
+  <div class="conformances">→ UIImage (iOS) / NSImage (macOS)</div>
+</li>
+<li class="type-item searchable" data-name="PipelineStatus">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>PipelineStatus</strong></div>
+  <div class="conformances">idle, detecting, sifting, enriching, complete</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">The largest view model. Manages camera lifecycle, real-time subject detection, sifting, capture review stack, photo library import, location state, document detection, and context suggestions. Key public methods: <code>setupCameraBridge()</code>, <code>handleCapture()</code>, <code>commitReviewSave()</code>, <code>processImportedPhotos()</code>, <code>analyzeStaticImage()</code>, <code>saveDocument()</code>, <code>reprocessPipeline()</code>, <code>selectPlace()</code>, <code>addUserContext()</code>.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">SidebarViewModel</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="SidebarViewModel">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>SidebarViewModel</strong></div>
+  <div class="conformances">ObservableObject — 1,259 lines</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">Centralizes sidebar state: session list, collection management, inbox, favorites, drag-and-drop between sessions, search (keyword + semantic), and library maintenance (orphan cleanup, session merging). Key methods: <code>loadSessions()</code>, <code>moveItems()</code>, <code>deleteSession()</code>, <code>performSearch()</code>.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">ReferenceDetailViewModel</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="ReferenceDetailViewModel">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>ReferenceDetailViewModel</strong></div>
+  <div class="conformances">ObservableObject</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">Manages item detail view state: loading enrichment data, editing text/notes, triggering reprocessing, and managing location updates for a single ProcessedItem.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">ProcessedItemViewModel</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="ProcessedItemViewModel">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>ProcessedItemViewModel</strong></div>
+  <div class="conformances">ObservableObject</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">Lightweight view model for individual item operations: delete, reprocess, share, and concept weight management.</p>
+</div>
+</main>
+</div>
+<script>
+function filterTypes(q) {
+  document.querySelectorAll('.searchable').forEach(el => {
+    el.style.display = (!q || el.dataset.name.toLowerCase().includes(q.toLowerCase())) ? 'flex' : 'none';
+  });
+}
+</script>
+</body>
+</html>

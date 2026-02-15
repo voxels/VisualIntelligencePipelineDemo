@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture — Developer Wiki</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-header"><h1>Visual Intelligence Pipeline</h1><div class="version">v1.0 Developer Wiki</div></div>
+  <div class="search-box"><input type="text" id="search" placeholder="Search types…" oninput="filterTypes(this.value)"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a class="sidebar-link" href="index.html">Home</a>
+    <a class="sidebar-link active" href="architecture.html">Architecture</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Modules</div>
+    <a class="sidebar-link" href="divershared.html">DiverShared</a>
+    <a class="sidebar-link" href="diverkit-models.html">DiverKit — Models</a>
+    <a class="sidebar-link" href="diverkit-services.html">DiverKit — Services</a>
+    <a class="sidebar-link" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
+    <a class="sidebar-link" href="diverkit-core.html">DiverKit — Core</a>
+    <a class="sidebar-link" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
+    <a class="sidebar-link" href="app-views.html">App — Views</a>
+    <a class="sidebar-link" href="app-services.html">App — Services</a>
+    <a class="sidebar-link" href="app-intents.html">App — Intents &amp; Widgets</a>
+  </div>
+</nav>
+<main class="main">
+  <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> Architecture</div>
+  <h1 class="page-title">Architecture</h1>
+  <p class="page-subtitle">System design, data flow, and module dependency overview for Visual Intelligence Pipeline.</p>
+  <div class="stats-bar"><div class="stat"><div class="stat-value">49,890</div><div class="stat-label">Lines</div></div><div class="stat"><div class="stat-value">314</div><div class="stat-label">Files</div></div><div class="stat"><div class="stat-value">53</div><div class="stat-label">Commits</div></div><div class="stat"><div class="stat-value">36</div><div class="stat-label">Days</div></div></div>
+  
+<div class="section">
+  <h2 class="section-title">Module Dependencies</h2>
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:2.2;color:var(--text-secondary);">
+    <span style="color:var(--accent-green)">DiverShared</span> <span style="color:var(--text-muted)">(pure Swift, zero deps)</span><br>
+    &nbsp;&nbsp;&bull; AppGroupConfig, ContextSnapshot, DiverQueueStore, LinkWrapping, Validation<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;↑<br>
+    <span style="color:var(--accent-blue)">DiverKit</span> <span style="color:var(--text-muted)">(depends on DiverShared)</span><br>
+    &nbsp;&nbsp;&bull; Services (33), Models (14), ViewModels (4), Storage (5), Core, Auth, Schemas (56)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;↑<br>
+    <span style="color:var(--accent-purple)">VisualIntelligencePipeline</span> <span style="color:var(--text-muted)">(depends on DiverKit + DiverShared)</span><br>
+    &nbsp;&nbsp;&bull; Views (25), Services (7), AppIntents (5+), Widget (20 files), ActionExtension (5 files)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;↑<br>
+    <span style="color:var(--accent-cyan)">LocalPackages/YahooSearch</span> <span style="color:var(--text-muted)">(optional web search)</span>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Data Flow</h2>
+  <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);padding:24px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:2.4;color:var(--text-secondary);">
+    <strong style="color:var(--accent-cyan)">Input Sources</strong><br>
+    &nbsp;&nbsp;Camera → VisualIntelligenceViewModel.handleCapture()<br>
+    &nbsp;&nbsp;Photo Library → PhotoLibraryImportService.importAssets()<br>
+    &nbsp;&nbsp;Share Sheet → ActionExtension → DiverQueueStore.enqueue()<br>
+    &nbsp;&nbsp;Siri/Shortcuts → SaveLinkIntent.perform()<br><br>
+    <strong style="color:var(--accent-green)">Pipeline</strong><br>
+    &nbsp;&nbsp;Raw Input → LocalPipelineService.process()<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── LocationSearchAggregator (Foursquare + MapKit, parallel)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── WeatherEnrichmentService (WeatherKit)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── AestheticsScoringService (CoreML quality scoring)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── DuckDuckGoEnrichmentService (web intelligence)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── AppleMusicEnrichmentService (music matching)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── DocumentManager (perspective correction)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;└── IntelligenceProcessor (SystemLanguageModel: summaries, concepts, tags)<br><br>
+    <strong style="color:var(--accent-purple)">Persistence</strong><br>
+    &nbsp;&nbsp;ProcessedItem → SwiftData (DiverDataStore) → CloudKit sync<br>
+    &nbsp;&nbsp;SessionClusteringService → DiverSession grouping<br>
+    &nbsp;&nbsp;DailyContextService → Daily Focus summary
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Key Architectural Patterns</h2>
+  <ul class="type-list">
+    <li class="type-item">
+      <span class="badge badge-struct">pattern</span>
+      <div class="name"><strong>Local-First + CloudKit Sync</strong></div>
+      <div class="conformances">All data persisted to SwiftData first, synced via CloudKit transparently</div>
+    </li>
+    <li class="type-item">
+      <span class="badge badge-struct">pattern</span>
+      <div class="name"><strong>File-Based Queue</strong></div>
+      <div class="conformances">Extensions write JSON files to app group; main app drains on launch</div>
+    </li>
+    <li class="type-item">
+      <span class="badge badge-protocol">pattern</span>
+      <div class="name"><strong>Protocol-Based Enrichment</strong></div>
+      <div class="conformances">LinkEnrichmentService protocol enables pluggable enrichment sources</div>
+    </li>
+    <li class="type-item">
+      <span class="badge badge-actor">pattern</span>
+      <div class="name"><strong>Parallel Enrichment</strong></div>
+      <div class="conformances">ContextEnrichmentCoordinator fans out enrichment tasks via TaskGroup</div>
+    </li>
+    <li class="type-item">
+      <span class="badge badge-class">pattern</span>
+      <div class="name"><strong>Non-Destructive Reprocessing</strong></div>
+      <div class="conformances">Reprocessing reuses existing item IDs to prevent duplicates</div>
+    </li>
+    <li class="type-item">
+      <span class="badge badge-enum">pattern</span>
+      <div class="name"><strong>HMAC-Signed Links</strong></div>
+      <div class="conformances">DiverLinkWrapper signs URLs before storage; validated on ingestion</div>
+    </li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Technology Stack</h2>
+  <table class="members-table">
+    <tr><th>Layer</th><th>Technology</th></tr>
+    <tr><td>UI Framework</td><td>SwiftUI (iOS 26+, macOS 26+, visionOS 26+)</td></tr>
+    <tr><td>Persistence</td><td>SwiftData + CloudKit</td></tr>
+    <tr><td>Computer Vision</td><td>Vision framework (subject detection, text recognition, barcode scanning)</td></tr>
+    <tr><td>ML Inference</td><td>CoreML (MiniLM embeddings, aesthetics scoring, taxonomy)</td></tr>
+    <tr><td>Generative AI</td><td>Apple Intelligence — SystemLanguageModel (on-device)</td></tr>
+    <tr><td>Location</td><td>MapKit, CLGeocoder, Foursquare Places API</td></tr>
+    <tr><td>Weather</td><td>WeatherKit</td></tr>
+    <tr><td>Camera</td><td>AVFoundation (AVCaptureSession)</td></tr>
+    <tr><td>Music</td><td>MusicKit (Apple Music), Spotify Web API</td></tr>
+    <tr><td>Intents</td><td>AppIntents framework, WidgetKit</td></tr>
+    <tr><td>Networking</td><td>URLSession, WKWebView (metadata extraction)</td></tr>
+    <tr><td>Security</td><td>Keychain Services, HMAC-SHA256 (link signing)</td></tr>
+  </table>
+</div>
+
+</main>
+</div>
+<script>
+function filterTypes(q) {
+  document.querySelectorAll('.searchable').forEach(el => {
+    el.style.display = (!q || el.dataset.name.toLowerCase().includes(q.toLowerCase())) ? 'flex' : 'none';
+  });
+}
+</script>
+</body>
+</html>

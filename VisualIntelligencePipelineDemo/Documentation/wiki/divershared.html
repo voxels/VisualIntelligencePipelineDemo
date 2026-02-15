@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiverShared — Developer Wiki</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="layout">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1>Visual Intelligence Pipeline</h1>
+                <div class="version">v1.0 Developer Wiki</div>
+            </div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search types…"
+                    oninput="filterTypes(this.value)"></div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Overview</div>
+                <a class="sidebar-link" href="index.html">Home</a>
+                <a class="sidebar-link" href="architecture.html">Architecture</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Modules</div>
+                <a class="sidebar-link active" href="divershared.html">DiverShared</a>
+                <a class="sidebar-link" href="diverkit-models.html">DiverKit — Models</a>
+                <a class="sidebar-link" href="diverkit-services.html">DiverKit — Services</a>
+                <a class="sidebar-link" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
+                <a class="sidebar-link" href="diverkit-core.html">DiverKit — Core</a>
+                <a class="sidebar-link" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
+                <a class="sidebar-link" href="app-views.html">App — Views</a>
+                <a class="sidebar-link" href="app-services.html">App — Services</a>
+                <a class="sidebar-link" href="app-intents.html">App — Intents &amp; Widgets</a>
+            </div>
+        </nav>
+
+        <main class="main">
+            <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> DiverShared</div>
+            <h1 class="page-title">DiverShared</h1>
+            <p class="page-subtitle">Pure Swift shared types with zero dependencies. Used by the main app,
+                ActionExtension, and Widget extension. Contains queue management, link wrapping, context snapshots, and
+                app group configuration.</p>
+
+            <div class="stats-bar">
+                <div class="stat">
+                    <div class="stat-value">9</div>
+                    <div class="stat-label">Files</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">802</div>
+                    <div class="stat-label">Lines</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">24</div>
+                    <div class="stat-label">Types</div>
+                </div>
+            </div>
+
+            <!-- AppGroupConfig.swift -->
+            <div class="section">
+                <h2 class="section-title">AppGroupConfig.swift</h2>
+                <ul class="type-list">
+                    <li class="type-item searchable" data-name="AppGroupConfig">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>AppGroupConfig</strong></div>
+                        <div class="conformances">Sendable, Equatable</div>
+                    </li>
+                    <li class="type-item searchable" data-name="AppGroupError">
+                        <span class="badge badge-enum">enum</span>
+                        <div class="name"><strong>AppGroupError</strong></div>
+                        <div class="conformances">Error, LocalizedError</div>
+                    </li>
+                    <li class="type-item searchable" data-name="AppGroupContainer">
+                        <span class="badge badge-enum">enum</span>
+                        <div class="name"><strong>AppGroupContainer</strong></div>
+                        <div class="conformances">Static methods for containerURL, queueURL, cacheURL</div>
+                    </li>
+                </ul>
+                <p style="color:var(--text-secondary); font-size:13px; margin-top:12px;">Provides the shared app group
+                    identifier and convenience accessors for shared file containers used by extensions.</p>
+            </div>
+
+            <!-- ContextSnapshot.swift -->
+            <div class="section">
+                <h2 class="section-title">ContextSnapshot.swift</h2>
+                <ul class="type-list">
+                    <li class="type-item searchable" data-name="ContextSnapshot">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>ContextSnapshot</strong></div>
+                        <div class="conformances">Codable, Sendable</div>
+                    </li>
+                    <li class="type-item searchable" data-name="WeatherContext">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>WeatherContext</strong></div>
+                        <div class="conformances">Codable, Sendable — temperature, condition, humidity</div>
+                    </li>
+                    <li class="type-item searchable" data-name="ActivityContext">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>ActivityContext</strong></div>
+                        <div class="conformances">Codable, Sendable — activity type (deprecated)</div>
+                    </li>
+                    <li class="type-item searchable" data-name="PlaceContext">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>PlaceContext</strong></div>
+                        <div class="conformances">Codable, Sendable — venue name, address, coordinate, placeID</div>
+                    </li>
+                    <li class="type-item searchable" data-name="WebContext">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>WebContext</strong></div>
+                        <div class="conformances">Codable, Sendable — URL, title, description, image</div>
+                    </li>
+                    <li class="type-item searchable" data-name="DocumentContext">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>DocumentContext</strong></div>
+                        <div class="conformances">Codable, Sendable — detected document text and bounds</div>
+                    </li>
+                    <li class="type-item searchable" data-name="QRCodeContext">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>QRCodeContext</strong></div>
+                        <div class="conformances">Codable, Sendable — decoded payload string</div>
+                    </li>
+                </ul>
+                <p style="color:var(--text-secondary); font-size:13px; margin-top:12px;">Captures a snapshot of all
+                    contextual data at the moment of capture — weather, place, web metadata, documents, and QR codes.
+                    Serialized as JSON and stored with each ProcessedItem.</p>
+            </div>
+
+            <!-- DiverItemDescriptor.swift -->
+            <div class="section">
+                <h2 class="section-title">DiverItemDescriptor.swift</h2>
+                <ul class="type-list">
+                    <li class="type-item searchable" data-name="DiverListLabel">
+                        <span class="badge badge-enum">enum</span>
+                        <div class="name"><strong>DiverListLabel</strong></div>
+                        <div class="conformances">Static label constants for sidebar grouping</div>
+                    </li>
+                    <li class="type-item searchable" data-name="DiverItemType">
+                        <span class="badge badge-enum">enum</span>
+                        <div class="name"><strong>DiverItemType</strong></div>
+                        <div class="conformances">String, Codable, Sendable — image, video, link, document, audio</div>
+                    </li>
+                    <li class="type-item searchable" data-name="DiverItemDescriptor">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>DiverItemDescriptor</strong></div>
+                        <div class="conformances">Codable, Equatable, Hashable, Sendable — lightweight item reference
+                        </div>
+                    </li>
+                </ul>
+                <p style="color:var(--text-secondary); font-size:13px; margin-top:12px;">A lightweight descriptor for
+                    items in the queue, sidebar, and extension. Contains item type, ID, title, and optional metadata
+                    without loading the full ProcessedItem model.</p>
+            </div>
+
+            <!-- IntelligenceCapability.swift -->
+            <div class="section">
+                <h2 class="section-title">IntelligenceCapability.swift</h2>
+                <ul class="type-list">
+                    <li class="type-item searchable" data-name="IntelligenceCapability">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>IntelligenceCapability</strong></div>
+                        <div class="conformances">Static capability checks for Apple Intelligence availability</div>
+                    </li>
+                </ul>
+                <p style="color:var(--text-secondary); font-size:13px; margin-top:12px;">Runtime check for
+                    SystemLanguageModel availability. Used to gate LLM features on devices that support Apple
+                    Intelligence (iOS 26.0+).</p>
+            </div>
+
+            <!-- LinkWrapping.swift -->
+            <div class="section">
+                <h2 class="section-title">LinkWrapping.swift</h2>
+                <ul class="type-list">
+                    <li class="type-item searchable" data-name="DiverLinkPayload">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>DiverLinkPayload</strong></div>
+                        <div class="conformances">Codable, Equatable, Hashable, Sendable</div>
+                    </li>
+                    <li class="type-item searchable" data-name="DiverLink">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>DiverLink</strong></div>
+                        <div class="conformances">Equatable — parsed link with URL, payload, and signature</div>
+                    </li>
+                    <li class="type-item searchable" data-name="DiverLinkError">
+                        <span class="badge badge-enum">enum</span>
+                        <div class="name"><strong>DiverLinkError</strong></div>
+                        <div class="conformances">Error, Equatable — invalidURL, hmacMismatch, decodingFailed</div>
+                    </li>
+                    <li class="type-item searchable" data-name="DiverLinkWrapper">
+                        <span class="badge badge-enum">enum</span>
+                        <div class="name"><strong>DiverLinkWrapper</strong></div>
+                        <div class="conformances">Static wrap/unwrap with HMAC signing</div>
+                    </li>
+                </ul>
+                <p style="color:var(--text-secondary); font-size:13px; margin-top:12px;">HMAC-signed link wrapping
+                    format (v1). URLs shared via the extension are wrapped with a tamper-proof signature before being
+                    enqueued for processing.</p>
+            </div>
+
+            <!-- MessagesLaunchStore.swift -->
+            <div class="section">
+                <h2 class="section-title">MessagesLaunchStore.swift</h2>
+                <ul class="type-list">
+                    <li class="type-item searchable" data-name="MessagesLaunchRequest">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>MessagesLaunchRequest</strong></div>
+                        <div class="conformances">Codable, Sendable, Equatable</div>
+                    </li>
+                    <li class="type-item searchable" data-name="MessagesLaunchStore">
+                        <span class="badge badge-enum">enum</span>
+                        <div class="name"><strong>MessagesLaunchStore</strong></div>
+                        <div class="conformances">Static read/write for pending message launch payloads</div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- QueueStore.swift -->
+            <div class="section">
+                <h2 class="section-title">QueueStore.swift</h2>
+                <ul class="type-list">
+                    <li class="type-item searchable" data-name="DiverQueueItem">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>DiverQueueItem</strong></div>
+                        <div class="conformances">Codable, Hashable, Sendable — URL, type, context, signature</div>
+                    </li>
+                    <li class="type-item searchable" data-name="DiverQueueRecord">
+                        <span class="badge badge-struct">struct</span>
+                        <div class="name"><strong>DiverQueueRecord</strong></div>
+                        <div class="conformances">Hashable, Sendable — item + file URL on disk</div>
+                    </li>
+                </ul>
+                <p style="color:var(--text-secondary); font-size:13px; margin-top:12px;">File-based queue for reliable
+                    ingestion. Extensions write items to the app group container as JSON files; the main app drains the
+                    queue on launch via <code>DiverQueueProcessingService</code>.</p>
+            </div>
+
+            <!-- Validation.swift -->
+            <div class="section">
+                <h2 class="section-title">Validation.swift</h2>
+                <ul class="type-list">
+                    <li class="type-item searchable" data-name="Validation">
+                        <span class="badge badge-enum">enum</span>
+                        <div class="name"><strong>Validation</strong></div>
+                        <div class="conformances">Static URL validation, HMAC verification, input sanitization</div>
+                    </li>
+                </ul>
+            </div>
+
+        </main>
+    </div>
+    <script>
+        function filterTypes(q) {
+            document.querySelectorAll('.searchable').forEach(el => {
+                el.style.display = (!q || el.dataset.name.toLowerCase().includes(q.toLowerCase())) ? 'flex' : 'none';
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,57 +1,78 @@
-Visual Intelligence Pipeline
+# Visual Intelligence Pipeline
 
-Visual Intelligence Pipeline is a universal application for iOS designed for capturing, organizing, and enriching visual intelligence. It leverages on-device computer vision, generative AI, and a multi-stage enrichment pipeline to turn captured moments into structured, actionable data.
+**Visual Intelligence Pipeline** transforms the way you capture, organize, and understand the world around you. It combines real-time camera intelligence, rich contextual enrichment, and AI-powered semantic understanding into a single, elegant iOS experience. It also serves as a universal hub for saving and organizing links shared from Safari, TikTok, YouTube, and any app with a share sheet.
 
-## Project Structure
+Point your camera at anything — a product on a shelf, a restaurant sign, a document, a landmark — and Visual Intelligence instantly identifies it, enriches it with contextual metadata, and organizes it into an intelligent, searchable library.
 
-The workspace is organized into modular components:
+## Core Features
 
-- **Visual Intelligence (App)**: The main application target (iOS).
-- **DiverKit**: A Swift Package containing the core business logic, services (`LocalPipelineService`, `EnrichmentService`), and ViewModels (`VisualIntelligenceViewModel`).
-- **DiverShared**: A library for shared data models, persistence layers (`SwiftData`, `DiverQueueStore`), and utilities used across the App, Extensions, and Widgets.
+### Intelligent Sifting
+Uses Apple's Vision framework to automatically detect and isolate subjects in your captures. Subjects are "sifted" out from the background, producing clean cutouts with proper alpha channels — ready for sharing or further analysis.
 
-## User Experience Walkthrough
+### Deep Contextual Enrichment
+Every capture is automatically enriched with layers of real-world context:
+- **Location** — Foursquare venues and Apple MapKit landmarks via a unified `LocationSearchAggregator`, with user-pinnable location persistence.
+- **Weather** — Current environmental conditions via WeatherKit.
+- **Web Intelligence** — DuckDuckGo enrichments, link metadata extraction, and rich link previews.
+- **Aesthetics Scoring** — Quality scores for images and video frames.
+- **Document Detection** — Automatic perspective correction and saving of detected documents.
+- **Music Recognition** — Apple Music and Spotify identification for music-related captures.
 
-### 1. Unified Sifting & Capture
-The **Visual Intelligence View** is the primary entry point, designed for rapid, context-aware capture.
--   **Smart Shutter**: The camera interface continuously analyzes the scene in real-time.
-    -   **Subject Sifting**: Automatically identifies and lifts the primary subject (e.g., a coffee cup, a landmark) from the background, creating a high-fidelity cutout.
-    -   **Multi-Modal Capture**: Simultaneously scans for **QR Codes**, **Text**, and **Barcodes** without changing modes.
--   **Photo Library Import**: Users can import photos, which are processed with the same full-fidelity intelligence pipeline as live captures.
+### AI-Powered Understanding
+On-device Apple Intelligence (`SystemLanguageModel`) generates summaries, identifies purposes, and suggests intelligent concept tags. LLM prompts are enriched with weather, location, OCR text, and structured web data for deeply contextual results — all processed locally for maximum privacy.
 
-### 2. The Enrichment Pipeline
-Once an item is captured, it enters a background enrichment queue where multiple services layer context onto the visual data:
--   **Location Precision**: Fuses data from **Apple Maps** to pinpoint the exact venue (e.g., "Blue Bottle Coffee" vs just "5th Avenue").
--   **Environmental Awareness**: Tags the moment with **Weather** (e.g., "Sunny, 20°C").
--   **Semantic Analysis**: Uses on-device models to label objects (e.g., "Espresso", "Laptop") and extract text for indexing.
--   **Aesthetic Scoring**: Evaluates the visual quality of the image to surface the best shots in imported video summaries.
+### Smart Sessions
+Captures are automatically grouped by location and time into cohesive **sessions** with AI-generated summaries. Multiple captures at the same venue merge into a single session history. Sessions support bulk location editing, context resumption, and reprocessing.
 
-### 3. Review & Organize
-The **Review Stack** appears immediately after capture, allowing for quick curation before saving:
--   **The Stack**: Browse through your recent captures in a card-style interface.
--   **Review & Edit**: Tap any item to inspect its lifted subject, read extracted text, or see the initial location guess.
--   **Save to Session**: Commit your captures to a **Session**. Sessions are smart containers that group related moments (e.g., "Afternoon Hike", "Project Research").
+### Context Tags & Daily Focus
+Add custom context tags (e.g., "Gift for Mom," "Home renovation ideas") to any capture. A **Daily Focus** summary aggregates the day's activity into an AI-generated brief.
 
-### 4. Library & Sidebar
-The Sidebar provided a unified home for all your visual intelligence:
--   **Inbox & Sessions**: Recent captures are organized chronologically into Sessions.
--   **Smart Collections**: Create collections to group sessions by topic.
--   **Drag & Drop**: Effortlessly move items unique between sessions, or drag entire sessions into collections for organization.
--   **Favorites**: Pin your most important sessions for quick access.
+### Universal Link Organization
+Save links from Safari, YouTube, TikTok, or any app via the Share Sheet extension. Links are wrapped in a proprietary format (HMAC-signed, tamper-proof URLs) and processed through the enrichment pipeline for automatic metadata extraction.
 
-### 5. Silent Reprocessing & Data Refinement
-Your data is never static. Visual Intelligence allows for continuous improvement through both AI updates and manual curation.
--   **Manual Refinement**: You have full control to correct or enhance widely inferred data:
-    -   **Location Edit**: Fix incorrect venue matches by searching Apple Maps or pinning a "Home" context.
-    -   **Text & Notes**: Edit recognized text or add personal notes that persist alongside the visual data.
--   **Background Reprocessing**: The pipeline can re-run on saved items to apply newer models or deeper analysis.
--   **Non-Destructive Integrity**: Reprocessing is smart—it enhances missing metadata.
+### Siri, Shortcuts & Widgets
+Fully integrated with Apple's system — 5 App Intents (Save, Share, Search, Get Recent, Open), pre-built shortcut templates, and Home & Lock screen widgets.
 
+## Architecture
 
-## Automated Testing
+The project is modularized using Swift Package Manager:
 
-To run the full suite of unit and UI tests for the iOS target, execute the following command in Terminal:
+| Module | Purpose |
+|--------|---------|
+| `VisualIntelligencePipeline/` | Main application target and UI |
+| `DiverKit/` | Core logic — ML pipeline, services, view models, models, storage |
+| `DiverShared/` | Pure Swift shared data models and utilities |
+| `LocalPackages/YahooSearch` | Local package for web search enrichment |
+
+**Key Technologies:** Swift, SwiftUI, SwiftData + CloudKit, Vision, CoreML, MapKit, WeatherKit, Apple Intelligence
+
+## Getting Started
+
+1. Open `VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj` in Xcode.
+2. Select the `VisualIntelligencePipeline` scheme.
+3. Run on an iOS Simulator or Device (iOS 26.0+ required for Apple Intelligence).
+
+## Testing
 
 ```bash
-xcodebuild test -scheme VisualIntelligence -destination 'platform=iOS Simulator,name=iPhone 17'
+# Build for iOS Simulator
+xcodebuild -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj \
+  -scheme VisualIntelligencePipeline \
+  -destination 'platform=iOS Simulator,name=iPhone 17' build
+
+# Run DiverKit package tests
+cd DiverKit && swift test
+
+# Run DiverShared package tests
+cd DiverShared && swift test
 ```
+
+## Documentation
+
+- [App Summary](VisualIntelligencePipelineDemo/Documentation/APP_SUMMARY.md)
+- [Beta Review Notes](VisualIntelligencePipelineDemo/Documentation/BETA_REVIEW_NOTES.md)
+- [Changelog](VisualIntelligencePipelineDemo/changelog.md)
+
+## Copyright
+
+2026 Secret Atomics

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiverKit — Models — Developer Wiki</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <div class="sidebar-header"><h1>Visual Intelligence Pipeline</h1><div class="version">v1.0 Developer Wiki</div></div>
+  <div class="search-box"><input type="text" id="search" placeholder="Search types…" oninput="filterTypes(this.value)"></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Overview</div>
+    <a class="sidebar-link" href="index.html">Home</a>
+    <a class="sidebar-link" href="architecture.html">Architecture</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">Modules</div>
+    <a class="sidebar-link" href="divershared.html">DiverShared</a>
+    <a class="sidebar-link active" href="diverkit-models.html">DiverKit — Models</a>
+    <a class="sidebar-link" href="diverkit-services.html">DiverKit — Services</a>
+    <a class="sidebar-link" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
+    <a class="sidebar-link" href="diverkit-core.html">DiverKit — Core</a>
+    <a class="sidebar-link" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
+    <a class="sidebar-link" href="app-views.html">App — Views</a>
+    <a class="sidebar-link" href="app-services.html">App — Services</a>
+    <a class="sidebar-link" href="app-intents.html">App — Intents &amp; Widgets</a>
+  </div>
+</nav>
+<main class="main">
+  <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> DiverKit — Models</div>
+  <h1 class="page-title">DiverKit — Models</h1>
+  <p class="page-subtitle">Core data models for enriched items, sessions, collections, and pipeline types.</p>
+  <div class="stats-bar"><div class="stat"><div class="stat-value">14</div><div class="stat-label">Files</div></div><div class="stat"><div class="stat-value">14</div><div class="stat-label">Types</div></div></div>
+  <div class="section">
+  <h2 class="section-title">ProcessedItem.swift</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="MediaMetadata">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>MediaMetadata</strong></div>
+  <div class="conformances">Codable, Hashable, Sendable — image dimensions, orientation, format</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">The primary enriched item model. Stored in SwiftData, synced via CloudKit. Contains title, summary, concepts, context snapshot, media data, location, and session reference.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">DiverSession.swift</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="DiverSession">
+  <span class="badge badge-typealias">typealias</span>
+  <div class="name"><strong>DiverSession</strong></div>
+  <div class="conformances">Typealias for SessionMetadata — use DiverSession in new code</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">Session grouping model. Captures are auto-grouped by location and time. Sessions have AI-generated summaries and support bulk location editing.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">DiverCollection.swift</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="DiverCollection">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>DiverCollection</strong></div>
+  <div class="conformances">SwiftData @Model — user-created collections of sessions</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">User-created collections for organizing sessions by topic.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">UserConcept.swift</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="UserConcept">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>UserConcept</strong></div>
+  <div class="conformances">SwiftData @Model — concept tag with weight</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">Concept/tag model. Weights are incremented during reprocessing to track concept importance.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">DiverObject.swift</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="DiverObject">
+  <span class="badge badge-protocol">protocol</span>
+  <div class="name"><strong>DiverObject</strong></div>
+  <div class="conformances">Identifiable — common interface for displayable items</div>
+</li>
+<li class="type-item searchable" data-name="DiverObjectDTO">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>DiverObjectDTO</strong></div>
+  <div class="conformances">Identifiable, Sendable, Hashable — lightweight transfer object</div>
+</li>
+<li class="type-item searchable" data-name="DiverObjectType">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>DiverObjectType</strong></div>
+  <div class="conformances">String, Sendable, Codable — item, session, collection</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">LocalInput.swift</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="LocalInput">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>LocalInput</strong></div>
+  <div class="conformances">Raw input before pipeline processing — URL, type, context</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">AestheticsTypes.swift</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="Frame">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>Frame</strong></div>
+  <div class="conformances">Video frame with timestamp and quality score</div>
+</li>
+<li class="type-item searchable" data-name="ImportedAsset">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ImportedAsset</strong></div>
+  <div class="conformances">Identifiable, Sendable — photo/video import wrapper</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">DiverQueueItem+Intelligence.swift</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="DiverQueueItem+Intelligence">
+  <span class="badge badge-extension">extension</span>
+  <div class="name"><strong>DiverQueueItem+Intelligence</strong></div>
+  <div class="conformances">Intelligence metadata extensions on DiverQueueItem</div>
+</li></ul>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">Extends DiverQueueItem with computed properties for extracted concepts, summaries, and enrichment data.</p>
+</div>
+<div class="section">
+  <h2 class="section-title">SSEEvent.swift</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="BaseEventData">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>BaseEventData</strong></div>
+  <div class="conformances">Codable — SSE event base</div>
+</li>
+<li class="type-item searchable" data-name="LogEventData">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>LogEventData</strong></div>
+  <div class="conformances">Codable — pipeline log events</div>
+</li>
+<li class="type-item searchable" data-name="ItemEventData">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ItemEventData</strong></div>
+  <div class="conformances">Codable — item update events</div>
+</li>
+<li class="type-item searchable" data-name="TikTokMetadataEventData">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>TikTokMetadataEventData</strong></div>
+  <div class="conformances">Codable</div>
+</li>
+<li class="type-item searchable" data-name="ChatMessageEventData">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>ChatMessageEventData</strong></div>
+  <div class="conformances">Codable</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">TikTokMetadata.swift</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="TikTokContentType">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>TikTokContentType</strong></div>
+  <div class="conformances">String, Codable</div>
+</li>
+<li class="type-item searchable" data-name="StandardTikTokAuthor">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>StandardTikTokAuthor</strong></div>
+  <div class="conformances">Codable</div>
+</li>
+<li class="type-item searchable" data-name="StandardTikTokStats">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>StandardTikTokStats</strong></div>
+  <div class="conformances">Codable</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">TypeAliases.swift</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="User">
+  <span class="badge badge-typealias">typealias</span>
+  <div class="name"><strong>User</strong></div>
+  <div class="conformances">→ UserRead</div>
+</li>
+<li class="type-item searchable" data-name="Profile">
+  <span class="badge badge-typealias">typealias</span>
+  <div class="name"><strong>Profile</strong></div>
+  <div class="conformances">→ UserProfile</div>
+</li>
+<li class="type-item searchable" data-name="Item">
+  <span class="badge badge-typealias">typealias</span>
+  <div class="name"><strong>Item</strong></div>
+  <div class="conformances">→ ItemRead</div>
+</li>
+<li class="type-item searchable" data-name="Input">
+  <span class="badge badge-typealias">typealias</span>
+  <div class="name"><strong>Input</strong></div>
+  <div class="conformances">→ InputRead</div>
+</li>
+<li class="type-item searchable" data-name="Message">
+  <span class="badge badge-typealias">typealias</span>
+  <div class="name"><strong>Message</strong></div>
+  <div class="conformances">→ MessageRead</div>
+</li></ul>
+  
+</div>
+<div class="section">
+  <h2 class="section-title">Other Models</h2>
+  <ul class="type-list"><li class="type-item searchable" data-name="ProcessingStatus">
+  <span class="badge badge-enum">enum</span>
+  <div class="name"><strong>ProcessingStatus</strong></div>
+  <div class="conformances">String, Codable, Sendable — pending, processing, complete, failed</div>
+</li>
+<li class="type-item searchable" data-name="JobProgress">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>JobProgress</strong></div>
+  <div class="conformances">Observable job tracking with log entries</div>
+</li>
+<li class="type-item searchable" data-name="JSONCoding">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>JSONCoding</strong></div>
+  <div class="conformances">JSON encode/decode helpers</div>
+</li></ul>
+  
+</div>
+</main>
+</div>
+<script>
+function filterTypes(q) {
+  document.querySelectorAll('.searchable').forEach(el => {
+    el.style.display = (!q || el.dataset.name.toLowerCase().includes(q.toLowerCase())) ? 'flex' : 'none';
+  });
+}
+</script>
+</body>
+</html>
