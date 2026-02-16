@@ -130,51 +130,43 @@ public class ReferenceDetailViewModel: ObservableObject {
     }
     
     public func removePurpose(_ purpose: String, from item: ProcessedItem) {
-        Task { @MainActor in
-            if let index = item.purposes.firstIndex(of: purpose) {
-                withAnimation {
-                    item.purposes.remove(at: index)
-                }
+        // Mutate immediately for instant UI feedback
+        if let index = item.purposes.firstIndex(of: purpose) {
+            withAnimation {
+                item.purposes.remove(at: index)
+            }
+            // Defer save so the animation isn't blocked
+            Task { @MainActor in
                 try? item.modelContext?.save()
-                
-                // Auto-regenerate summary
-                if let service = Services.shared.localPipelineService {
-                    print("🔄 Regenerating summary after purpose removal...")
-                    await service.regenerateSummary(for: item)
-                }
             }
         }
     }
     
     public func removeSemanticTag(_ tag: String, from item: ProcessedItem) {
-        Task { @MainActor in
-            var changed = false
-            
-            if let idx = item.purposes.firstIndex(of: tag) {
-                item.purposes.remove(at: idx)
-                changed = true
-            }
-            if let idx = item.tags.firstIndex(of: tag) {
-                item.tags.remove(at: idx)
-                changed = true
-            }
-            if let idx = item.themes.firstIndex(of: tag) {
-                item.themes.remove(at: idx)
-                changed = true
-            }
-            if let idx = item.categories.firstIndex(of: tag) {
-                item.categories.remove(at: idx)
-                changed = true
-            }
-            
-            if changed {
+        // Mutate immediately for instant UI feedback
+        var changed = false
+        
+        if let idx = item.purposes.firstIndex(of: tag) {
+            item.purposes.remove(at: idx)
+            changed = true
+        }
+        if let idx = item.tags.firstIndex(of: tag) {
+            item.tags.remove(at: idx)
+            changed = true
+        }
+        if let idx = item.themes.firstIndex(of: tag) {
+            item.themes.remove(at: idx)
+            changed = true
+        }
+        if let idx = item.categories.firstIndex(of: tag) {
+            item.categories.remove(at: idx)
+            changed = true
+        }
+        
+        if changed {
+            // Defer save so the animation isn't blocked
+            Task { @MainActor in
                 try? item.modelContext?.save()
-                
-                // Auto-regenerate summary if tags changed
-                if let service = Services.shared.localPipelineService {
-                    print("🔄 Regenerating summary after semantic tag removal...")
-                    await service.regenerateSummary(for: item)
-                }
             }
         }
     }

@@ -1,41 +1,57 @@
 # Visual Intelligence Pipeline — Visual Intelligence for Your Everyday Life
 
-**Visual Intelligence Pipeline** is a universal iOS and macOS application that transforms the way you capture, organize, and understand the world around you. It combines real-time camera intelligence, rich contextual enrichment, and AI-powered semantic understanding into a single, elegant experience.
+**Visual Intelligence Pipeline** is a universal iOS application that transforms the way you capture, organize, and understand the world around you. It combines real-time camera intelligence, rich contextual enrichment, and AI-powered semantic understanding into a single, elegant experience. It also serves as a universal hub for saving and organizing links shared from Safari, TikTok, YouTube, and any app with a share sheet.
 
 ## 🎯 Core Concept
 
-Point your camera at anything — a product on a shelf, a restaurant sign, a document, a landmark — and Visual Intelligence Pipeline instantly identifies it, enriches it with contextual metadata, and organizes it into an intelligent, searchable library. It also serves as a universal hub for saving and organizing links shared from Safari, TikTok, YouTube, and any app with a share sheet.
+Point your camera at anything — a product on a shelf, a restaurant sign, a document, a landmark — and Visual Intelligence Pipeline instantly identifies it, enriches it with contextual metadata, and organizes it into an intelligent, searchable library.
 
 ---
 
 ## ✨ Key Features
 
-### Contextual Enrichment Pipeline
+### Intelligent Sifting
+
+Uses Apple's Vision framework (`VNGeneratePersonInstanceMaskRequest`) to automatically detect and isolate subjects in captures. Subjects are "sifted" out from the background, producing clean cutouts with proper alpha channels — ready for sharing or further analysis. A real-time glow overlay highlights detected subjects during the camera preview.
+
+### Deep Contextual Enrichment
 
 Every capture is automatically enriched with layers of real-world context:
 
-- **Location** — Foursquare venues and Apple MapKit landmarks/addresses via a unified `LocationSearchAggregator`, with user-pinnable location persistence.
+- **Location** — Foursquare venues and Apple MapKit landmarks/addresses via a unified `LocationSearchAggregator`, with user-pinnable location persistence and bidirectional session sync.
 - **Weather** — Current environmental conditions via WeatherKit, embedded directly into the capture's context.
 - **Web Intelligence** — Metadata extraction for related links, DuckDuckGo enrichments, and rich link previews.
-- **Aesthetics Scoring** — Quality scores for images and video frames so you always keep the best shots.
-- **Document Detection** — Automatic perspective correction and saving of detected documents.
-- **Apple Music & Spotify** — Recognition and linking of music-related captures.
+- **Aesthetics Scoring** — Image quality scores bundled into the Vision analysis pass via `VNCalculateImageAestheticsScoresRequest`, plus brightness, contrast, and sharpness analysis.
+- **Document Detection** — Automatic perspective correction via `VNDetectDocumentSegmentationRequest` and saving of detected documents as separate child items.
+- **Music Recognition** — Apple Music and Spotify identification for music-related captures.
 
 ### AI-Powered Semantic Understanding
 
-Visual Intelligence Pipeline uses Apple Intelligence (`SystemLanguageModel`) for on-device context generation — including summaries, purpose identification, and intelligent concept tagging. LLM prompts are enriched with weather, location tips, OCR/transcription text, and structured web data for deeply contextual results.
+#### Apple Intelligence (SystemLanguageModel)
+`ContextQuestionService` uses Apple's Foundation Models framework (`LanguageModelSession`) for on-device structured generation. Produces summaries, evidence-based statements, user intent identification, and descriptive tags. Supports context chaining for large inputs and structured output via the `@Generable` macro. Requires iOS 26.0+.
+
+#### FastVLM (Opt-In)
+`FastVLMEnrichmentService` runs Apple's FastVLM 0.5B model (~500MB) locally via MLX Swift for multimodal image understanding. Performs two-pass analysis: image description and context synthesis. Model is downloaded on-demand and managed with automatic memory pressure eviction.
 
 ### Intelligent Session Management
 
-Captures are automatically grouped by location and time into cohesive **sessions**. Multiple captures at the same Foursquare venue or MapKit landmark merge into a single session history, providing a holistic, AI-generated summary of each visit. Sessions support bulk location editing, context resumption, and reprocessing.
+Captures are automatically grouped by location and time into cohesive **sessions** via `SessionClusteringService`. Multiple captures at the same Foursquare venue or MapKit landmark merge into a single session history, providing a holistic, AI-generated summary of each visit. Session summaries aggregate all item metadata — transcription, themes, tags, categories, location, weather, web/document/QR context, FastVLM analysis, product metadata, and more. Sessions support bulk location editing, context resumption, and reprocessing.
+
+### Library Maintenance
+
+A built-in **Rebuild Library** tool (Settings > Rebuild Library) repairs orphaned items, recovers stuck processing states, consolidates fragmented sessions, reconciles relationships, and regenerates all session summaries — with live progress status.
 
 ### Universal Link Organization
 
-Beyond the camera, Visual Intelligence Pipeline is a central repository for any shared content. Save links from Safari, YouTube, TikTok, or any app via the Share Sheet extension. Links are wrapped in a proprietary format (HMAC-signed, tamper-proof URLs) and processed through the enrichment pipeline for automatic metadata extraction.
+Save links from Safari, YouTube, TikTok, or any app via the Share Sheet extension. Links are wrapped in a proprietary format (HMAC-signed, tamper-proof URLs via `DiverLinkWrapper`) and processed through the enrichment pipeline for automatic metadata extraction. Supports Universal Links (`https://secretatomics.com/...`) and custom scheme links (`secretatomics://...`) for deep linking and Shared with You integration.
 
 ### Context Tags & Daily Focus
 
 Add custom context tags (e.g., "Gift for Mom," "Home renovation ideas") to captures. A **Daily Focus** summary aggregates the day's activity into an AI-generated brief, keeping you oriented on what matters.
+
+### Shared with You
+
+Links shared via iMessage automatically surface in the app through Apple's Shared with You framework. `SharedWithYouManager` tracks highlights and provides attribution in the detail view.
 
 ### Siri, Shortcuts & Widgets
 
@@ -49,18 +65,20 @@ Fully integrated with Apple's system:
 
 ## 🏗️ Architecture Highlights
 
-- **Modular Swift Packages** — `DiverKit` (ML & pipeline orchestration), `DiverShared` (data models & utilities), and the main app target.
+- **Modular Swift Packages** — `DiverKit` (ML & pipeline orchestration, 35 services), `DiverShared` (data models & utilities), and the main app target.
 - **Local-First with Sync** — SwiftData persistence backed by CloudKit for seamless cross-device access.
-- **On-Device ML** — CoreML models (MiniLM embeddings, intent classification, taxonomy tagging) for semantic search, hybrid recommendation, and vector-based ranking — all running locally.
+- **On-Device ML** — All inference runs locally: Apple Vision framework (6 request types in a single pass), FastVLM 0.5B via MLX Swift, and Apple Intelligence via Foundation Models.
 - **Queue-Based Reliability** — A file-based queue ensures no shared link or capture is ever lost, even under extension time limits or interruptions.
+- **Structured Context Pipeline** — `PipelineContext` aggregates typed fields from each enrichment service (Vision, location, weather, web, knowledge graph) so that downstream ML consumers read structured data rather than parsing text.
 
 ---
 
 ## 📱 Platform & Requirements
 
-- **Platforms:** iOS 26+, macOS 26+, visionOS 26+
-- **Apple Intelligence:** Required for on-device LLM features
-- **Built with:** Swift, SwiftUI, SwiftData, Vision, MapKit, WeatherKit, CoreML
+- **Platforms:** iOS 26+
+- **Apple Intelligence:** Required for on-device LLM features (summaries, tags, purposes)
+- **FastVLM:** Optional, requires ~500MB download and sufficient device memory
+- **Built with:** Swift, SwiftUI, SwiftData, Vision, MapKit, WeatherKit, Foundation Models, MLX Swift
 
 ---
 

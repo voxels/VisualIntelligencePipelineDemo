@@ -581,14 +581,6 @@ public class VisualIntelligenceViewModel: ObservableObject {
                             placeContext: PlaceContext(name: name, categories: [], placeID: "mk-\(name)", address: address, latitude: currentLoc.coordinate.latitude, longitude: currentLoc.coordinate.longitude)
                         )
                         
-                        // D. Enrich with Foursquare
-                        if let fsq = Services.shared.foursquareService {
-                            if let enriched = try? await fsq.enrich(query: name, location: currentLoc.coordinate) {
-                                print("📍 Foursquare enriched MapKit place.")
-                                finalPlace = enriched
-                            }
-                        }
-                        
                         await MainActor.run {
                             if self.selectedPlace == nil {
                                 self.selectPlace(finalPlace)
@@ -667,90 +659,624 @@ public class VisualIntelligenceViewModel: ObservableObject {
         return nil 
     }
 
-    public func analyzeReprocessImage(_ image: PlatformImage) {
-        #if canImport(UIKit)
-        guard let cgImage = image.cgImage else { return }
-        #elseif canImport(AppKit)
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return }
-        #endif
-        
-        self.isAnalyzing = true
-        self.pipelineStatus = .sifting
-        
-        Task(priority: .utility) {
-            do {
-                // Saved payloads are normalized to .up
-                let newResults = try await self.processor.process(image: cgImage, orientation: .up, mode: .fullAnalysis)
+    // MARK: - Unified Capture Processing Pipeline
+    
+    /// Describes the source and configuration for a single capture analysis.
+    public enum CaptureInput {
+        /// Live camera capture. imageData is raw JPEG bytes, depthData from LiDAR.
+        case camera(imageData: Data, depthData: Data?)
+        /// Single photo picked from library.
+        case photoPickerItem(PhotosPickerItem)
+        /// Already-loaded image (reprocessing an existing saved item).
+        case reprocess(image: PlatformImage)
+    }
+    
+    /// Resolved media ready for the Vision pipeline.
+    private struct ResolvedMedia {
+        let cgImage: CGImage
+        let platformImage: PlatformImage
+        let visionOrientation: CGImagePropertyOrientation
+        let depthData: Data?
+        let shouldSaveToLibrary: Bool // Only true for camera captures
+        let shouldMergeResults: Bool  // True when adding to an existing review
+    }
+    
+    /// Resolves a `CaptureInput` into the concrete image data needed for analysis.
+    /// Handles UIImage creation, EXIF date/location extraction, and video frame extraction.
+    private func resolveMedia(from input: CaptureInput) async throws -> ResolvedMedia? {
+        switch input {
+        case .camera(let imageData, let depthData):
+            #if canImport(UIKit)
+            guard let image = UIImage(data: imageData) else {
+                print("⚠️ Camera: Captured image data is invalid/empty")
+                // Handle pending capture result (e.g. valid QR code from handleCapture)
+                if let pending = self.pendingCaptureResult {
+                    print("🚀 Express Capture: Saving pending result despite image fail...")
+                    self.results = [pending]
+                    self.pendingCaptureResult = nil
+                    self.commitReviewSave()
+                }
+                return nil
+            }
+            let visionOrientation = image.imageOrientation.cgImagePropertyOrientation
+            guard let cgImage = image.cgImage else { return nil }
+            return ResolvedMedia(
+                cgImage: cgImage,
+                platformImage: image,
+                visionOrientation: visionOrientation,
+                depthData: depthData,
+                shouldSaveToLibrary: true,
+                shouldMergeResults: self.isReviewing
+            )
+            #else
+            return nil
+            #endif
+            
+        case .photoPickerItem(let item):
+            var finalCGImage: CGImage?
+            var finalImage: PlatformImage?
+            
+            // 1. Try Video first (URL-based loading)
+            if let movie = try? await item.loadTransferable(type: Movie.self) {
+                print("🎥 Processing as Video/Movie (URL-based)...")
+                if let (cgImage, location, date) = await processVideoData(movie.url) {
+                    finalCGImage = cgImage
+                    await MainActor.run {
+                        if let loc = location {
+                            self.capturedMediaLocation = loc
+                            print("📍 Video Location captured: \(loc)")
+                        }
+                        if let d = date {
+                            self.capturedMediaDate = d
+                            print("📅 Video Date captured: \(d)")
+                        }
+                    }
+                    #if canImport(UIKit)
+                    finalImage = UIImage(cgImage: cgImage)
+                    #elseif canImport(AppKit)
+                    finalImage = NSImage(cgImage: cgImage, size: .zero)
+                    #endif
+                    print("✅ Extracted Best Frame from Video URL")
+                }
+            }
+            
+            // 2. Fallback to Data (for Images) if Video failed
+            if finalCGImage == nil {
+                print("📸 Attempting Data Load...")
+                guard let data = try await item.loadTransferable(type: Data.self) else {
+                    print("❌ Failed to load Data transferable")
+                    return nil
+                }
+                print("✅ Loaded \(data.count) bytes")
                 
-                await MainActor.run {
-                    self.results = newResults
-                    // self.capturedImage is already set
+                #if canImport(UIKit)
+                if let image = UIImage(data: data) {
+                    finalImage = image
+                    finalCGImage = image.cgImage
                     
-                    self.pipelineStatus = .reading
-                    
-                    // Sifted logic
-                    if let sifted = newResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
-                       case .siftedSubject(let observation, _) = sifted {
-                        Task {
-                            // Use captured image's orientation for proper sifted subject rotation
-                            let cgOrientation = await MainActor.run { () -> CGImagePropertyOrientation in
-                                #if canImport(UIKit)
-                                return self.capturedImage?.imageOrientation.cgImagePropertyOrientation ?? .up
-                                #else
-                                return .up
-                                #endif
-                            }
-                            if let (sImage, sBounds) = await self.extractSiftedImage(
-                                observation: UnsafeSendable(value: observation),
-                                frame: UnsafeSendable(value: cgImage),
-                                orientation: cgOrientation
-                            ) {
+                    // Extract EXIF date
+                    if let source = CGImageSourceCreateWithData(data as CFData, nil),
+                       let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] {
+                        var dateString: String?
+                        if let exif = props["{Exif}"] as? [String: Any] {
+                            dateString = exif["DateTimeOriginal"] as? String
+                        }
+                        if dateString == nil, let tiff = props["{TIFF}"] as? [String: Any] {
+                            dateString = tiff["DateTime"] as? String
+                        }
+                        if let ds = dateString {
+                            let formatter = DateFormatter()
+                            formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
+                            if let date = formatter.date(from: ds) {
                                 await MainActor.run {
-                                    self.siftedImage = sImage
-                                    self.siftedBoundingBox = sBounds
+                                    if self.capturedMediaDate == nil {
+                                        self.capturedMediaDate = date
+                                        print("📅 Image Date captured: \(date)")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                #elseif canImport(AppKit)
+                if let image = NSImage(data: data) {
+                    finalImage = image
+                    finalCGImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
+                }
+                #endif
+                
+                // 3. Last Resort Video (Data-based fallback)
+                if finalCGImage == nil {
+                    print("⚠️ Video URL load failed. Attempting Data fallback...")
+                    if let (cgImage, location, date) = await processVideoData(data) {
+                        finalCGImage = cgImage
+                        await MainActor.run {
+                            if let loc = location { self.capturedMediaLocation = loc }
+                            if let d = date { self.capturedMediaDate = d }
+                        }
+                        #if canImport(UIKit)
+                        finalImage = UIImage(cgImage: cgImage)
+                        #endif
+                    }
+                }
+            }
+            
+            guard let cgImage = finalCGImage, let image = finalImage else {
+                print("❌ Could not create CGImage from loaded content")
+                return nil
+            }
+            
+            #if canImport(UIKit)
+            let visionOrientation = (image as? UIImage)?.imageOrientation.cgImagePropertyOrientation ?? .up
+            #else
+            let visionOrientation: CGImagePropertyOrientation = .up
+            #endif
+            
+            return ResolvedMedia(
+                cgImage: cgImage,
+                platformImage: image,
+                visionOrientation: visionOrientation,
+                depthData: nil,
+                shouldSaveToLibrary: false,
+                shouldMergeResults: false
+            )
+            
+        case .reprocess(let image):
+            #if canImport(UIKit)
+            guard let cgImage = image.cgImage else { return nil }
+            #elseif canImport(AppKit)
+            guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+            #endif
+            // Saved payloads are normalized to .up
+            return ResolvedMedia(
+                cgImage: cgImage,
+                platformImage: image,
+                visionOrientation: .up,
+                depthData: nil,
+                shouldSaveToLibrary: false,
+                shouldMergeResults: false
+            )
+        }
+    }
+    
+    /// The single unified analysis pipeline. All capture entry points funnel through here.
+    ///
+    /// Pipeline stages:
+    /// 1. Resolve media → 2. Vision analysis → 3. Sifted extraction →
+    /// 4. Enrichment (location, web, products) → 5. Background verification → 6. Context suggestions
+    ///
+    /// Enrichment always runs. When `isLocationPinned` is true, `enrichContext` skips
+    /// location-based queries (MapKit nearby) but still runs web/product enrichment.
+    public func analyzeCapture(_ input: CaptureInput) {
+        // Cancel any previous analysis to prevent race conditions
+        currentAnalysisTask?.cancel()
+        
+        currentAnalysisTask = Task(priority: .utility) { @MainActor [weak self] in
+            guard let self = self else { return }
+            
+            // ── Stage 1: Resolve Media ──
+            guard let media = try? await self.resolveMedia(from: input) else {
+                print("❌ analyzeCapture: Failed to resolve media")
+                self.isAnalyzing = false
+                return
+            }
+            
+            let cgImage = media.cgImage
+            let image = media.platformImage
+            let visionOrientation = media.visionOrientation
+            
+            // ── Update UI State ──
+            print("📸 analyzeCapture: Starting pipeline...")
+            self.setCapturedImage(image)
+            self.capturedImageVisionOrientation = visionOrientation
+            self.pipelineStatus = .sifting
+            self.isAnalyzing = true
+            self.isReviewing = true
+            
+            self.appendSessionImage(image, depthData: media.depthData)
+            
+            if media.shouldSaveToLibrary {
+                self.saveImageToPhotoLibrary(image)
+            }
+            
+            do {
+                // ── Stage 2: Vision Analysis ──
+                #if canImport(UIKit)
+                print("🧠 Vision Orientation: \(visionOrientation.rawValue) (Raw: \((image as? UIImage)?.imageOrientation.rawValue ?? -1))")
+                #else
+                print("🧠 Vision Orientation: \(visionOrientation.rawValue)")
+                #endif
+                
+                let fullResults = try await self.processor.process(image: cgImage, orientation: visionOrientation, mode: .fullAnalysis)
+                print("✅ Raw Analysis Results: \(fullResults.map { $0.title })")
+                
+                var resultsWithPurpose = fullResults
+                
+                // ── Stage 3: Sifted Image Extraction ──
+                self.pipelineStatus = .reading
+                
+                if let sifted = fullResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
+                   case .siftedSubject(let observation, _) = sifted {
+                    Task {
+                        let cgOrientation = await MainActor.run { () -> CGImagePropertyOrientation in
+                            return self.capturedImageVisionOrientation
+                        }
+                        if let (sImage, sBounds) = await self.extractSiftedImage(
+                            observation: UnsafeSendable(value: observation),
+                            frame: UnsafeSendable(value: cgImage),
+                            orientation: cgOrientation
+                        ) {
+                            await MainActor.run {
+                                self.siftedImage = sImage
+                                self.siftedBoundingBox = sBounds
+                            }
+                        }
+                    }
+                }
+                
+                // ── Stage 4: Enrichment Pipeline ──
+                // Always runs. enrichContext() internally skips location queries when isLocationPinned.
+                if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
+                    print("🚀 Enrichment Pipeline: Starting...")
+                    
+                    await MainActor.run {
+                        // Skip "Finding Location..." if location is already pinned
+                        if !self.isLocationPinned && self.selectedPlace == nil {
+                            self.pipelineStatus = .enriching
+                        }
+                    }
+                    
+                    let currentHistory = self.accumulatedContexts
+                    
+                    // Location truthing: imported metadata > pinned > live GPS
+                    var currentLocation: CLLocation? = self.capturedMediaLocation
+                    if currentLocation == nil, let locService = Services.shared.locationService {
+                        currentLocation = await locService.getCurrentLocation()
+                    }
+                    
+                    // Update coordinate if no user selection yet
+                    let hasUserSelection = await MainActor.run { self.selectedPlace != nil }
+                    if let loc = currentLocation, !hasUserSelection {
+                        await MainActor.run {
+                            self.currentCaptureCoordinate = loc.coordinate
+                        }
+                    }
+                    
+                    // Enrichment (web, location, products) — respects isLocationPinned internally
+                    let (enriched, stepSummary, candidates) = await self.enrichContext(
+                        from: fullResults,
+                        accumulatedContext: currentHistory,
+                        locationOverride: currentLocation
+                    )
+                    
+                    // Home/Work enrichment
+                    var finalCandidates = candidates
+                    if let contactService = Services.shared.contactService {
+                        let home = try? await contactService.getHomeLocation()
+                        let work = try? await contactService.getWorkLocation()
+                        
+                        if let current = currentLocation {
+                            var personalPlaces: [EnrichmentData] = []
+                            
+                            if let homeLoc = home, homeLoc.distance(from: current) < 150 {
+                                personalPlaces.append(EnrichmentData(
+                                    title: "Home",
+                                    descriptionText: "Your Personal CustomContext",
+                                    categories: ["Personal", "Home"],
+                                    location: "Home",
+                                    placeContext: PlaceContext(name: "Home", categories: ["Personal"], latitude: homeLoc.coordinate.latitude, longitude: homeLoc.coordinate.longitude)
+                                ))
+                            }
+                            
+                            if let workLoc = work, workLoc.distance(from: current) < 150 {
+                                personalPlaces.append(EnrichmentData(
+                                    title: "Work",
+                                    descriptionText: "Your Workplace",
+                                    categories: ["Personal", "Work"],
+                                    location: "Work",
+                                    placeContext: PlaceContext(name: "Work", categories: ["Personal"], latitude: workLoc.coordinate.latitude, longitude: workLoc.coordinate.longitude)
+                                ))
+                            }
+                            
+                            if !personalPlaces.isEmpty {
+                                finalCandidates.insert(contentsOf: personalPlaces, at: 0)
+                                await MainActor.run {
+                                    if let first = personalPlaces.first {
+                                        self.selectPlace(first)
+                                    }
                                 }
                             }
                         }
                     }
                     
-                    self.isReviewing = true // Ensure we are in review mode
+                    // Visual text matching for smart place selection
+                    var candidatesToUpdate = finalCandidates
+                    let capturedText = fullResults.compactMap { result -> String? in
+                        if case .text(let text, _) = result { return text }
+                        return nil
+                    }.joined(separator: " ").lowercased()
+                    
+                    var bestMatch: EnrichmentData?
+                    if !capturedText.isEmpty {
+                        for candidate in candidatesToUpdate {
+                            if let title = candidate.title?.lowercased(), capturedText.contains(title) {
+                                print("🎯 Visual Intelligence: Found visual text match for place: \(title)")
+                                bestMatch = candidate
+                                break
+                            }
+                        }
+                    }
+                    
+                    await MainActor.run {
+                        // Preserve existing selection
+                        if let existingSelection = self.selectedPlace {
+                            if !candidatesToUpdate.contains(where: { $0.title == existingSelection.title }) {
+                                candidatesToUpdate.insert(existingSelection, at: 0)
+                            }
+                        }
+                        
+                        self.placeCandidates = candidatesToUpdate
+                        
+                        if self.selectedPlace == nil {
+                            self.selectedPlace = bestMatch ?? candidatesToUpdate.first
+                        }
+                        
+                        print("📍 Enrichment Complete. Selected: \(self.selectedPlace?.title ?? "None"). Status → Reasoning")
+                        self.pipelineStatus = .reasoning
+                        
+                        if let summary = stepSummary {
+                            self.accumulatedContexts.append("Capture \(self.accumulatedContexts.count + 1): " + summary)
+                        }
+                    }
+                    
+                    // Merge enriched results (keep originals, append new)
+                    var finalResults: [IntelligenceResult] = []
+                    for result in resultsWithPurpose {
+                        finalResults.append(result)
+                    }
+                    finalResults.append(contentsOf: enriched)
+                    resultsWithPurpose = finalResults
+                }
+                
+                // ── Merge pending capture result (camera express capture) ──
+                var shouldAutoSave = false
+                if let pending = self.pendingCaptureResult {
+                    resultsWithPurpose.insert(pending, at: 0)
+                    self.pendingCaptureResult = nil
+                    shouldAutoSave = true
+                }
+                
+                // ── Result assignment (merge vs replace) ──
+                if media.shouldMergeResults {
+                    let existing = self.results
+                    let newUnique = resultsWithPurpose.filter { newResult in
+                        !existing.contains(where: { $0.title == newResult.title && $0.subtitle == newResult.subtitle })
+                    }
+                    self.results = existing + newUnique
+                    print("✅ Multi-Photo: Merged \(newUnique.count) new results. Total: \(self.results.count)")
+                } else {
+                    self.results = resultsWithPurpose
+                }
+                
+                print("✅ Analysis Complete: Found \(resultsWithPurpose.count) results")
+                
+                await MainActor.run {
+                    self.pipelineStatus = .complete
                     self.isAnalyzing = false
                 }
                 
-                // Verification
+                if shouldAutoSave {
+                    print("🚀 Express Capture: Auto-saving...")
+                    self.commitReviewSave()
+                }
+                
+                // ── Stage 5: Background Verification → Stage 6: Context Suggestions ──
+                // Sequential: verification enriches self.results first, then context suggestions
+                // use the full result set for specific, OCR-informed suggestions.
+                print("🔍 Starting Background Verification...")
                 Task {
-                    for await result in self.processor.verify(initialResults: newResults, image: cgImage) {
+                    for await result in self.processor.verify(initialResults: self.results, image: cgImage) {
                         await MainActor.run {
                             if !self.results.contains(result) {
                                 withAnimation {
                                     self.results.append(result)
                                 }
+                                #if os(iOS)
+                                let generator = UIImpactFeedbackGenerator(style: .soft)
+                                generator.impactOccurred()
+                                #endif
                             }
                         }
                     }
-                    // Note: Context analysis Task (below) will set .reasoning → .complete
+                    
+                    // Stage 6: Now that verification is complete, generate context suggestions
+                    print("🤖 Auto-triggering Context Analysis (post-verification)...")
+                    await MainActor.run { self.pipelineStatus = .reasoning }
+                    await self.regenerateContextSuggestions(for: self.selectedPlace)
+                    await MainActor.run { self.pipelineStatus = .complete }
                 }
                 
-                // NEW: Automatically trigger "Analyze Context" after reprocessing
-                // Wait for verification loop to finish kicking off results, then trigger context
-                Task {
-                     // Add a small delay to allow UI to settle?
-                     try? await Task.sleep(nanoseconds: 500_000_000)
-                     await MainActor.run {
-                        print("🤖 Reprocessing: Auto-triggering Context Analysis...")
-                        Task {
-                             await MainActor.run { self.pipelineStatus = .reasoning }
-                             await self.regenerateContextSuggestions(for: self.selectedPlace)
-                             await MainActor.run { self.pipelineStatus = .complete }
+            } catch {
+                print("❌ Analysis Failed: \(error)")
+                await MainActor.run {
+                    self.isAnalyzing = false
+                    self.pipelineStatus = .failed
+                }
+            }
+        }
+    }
+    
+    /// Processes multiple imported photos as a single session.
+    /// Runs full enrichment on the first image, vision-only on the rest, then merges all results.
+    public func analyzeBatchCapture(_ items: [PhotosPickerItem]) {
+        guard !items.isEmpty else { return }
+        
+        print("📥 Batch capture: \(items.count) items")
+        
+        // Reset state for new batch session
+        self.activeSessionID = UUID().uuidString
+        self.sessionImages = []
+        self.sessionDepthData = []
+        self.results = []
+        self.accumulatedContexts = []
+        self.siftedBoundingBox = nil
+        self.capturedImage = nil
+        self.isReviewing = true
+        self.isAnalyzing = true
+        self.pipelineStatus = .sifting
+        
+        if items.count == 1 {
+            // Single item: use full pipeline (includes enrichment, sifting, etc.)
+            analyzeCapture(.photoPickerItem(items[0]))
+            return
+        }
+        
+        // Multi-item: full pipeline on first, vision-only on rest
+        Task {
+            // First item gets full pipeline (enrichment, verification, context)
+            let firstItem = items[0]
+            guard let firstMedia = try? await resolveMedia(from: .photoPickerItem(firstItem)) else {
+                print("❌ Batch: Failed to load first item")
+                self.isAnalyzing = false
+                return
+            }
+            
+            // Set up primary image
+            self.setCapturedImage(firstMedia.platformImage)
+            self.capturedImageVisionOrientation = firstMedia.visionOrientation
+            self.appendSessionImage(firstMedia.platformImage)
+            
+            var allResults: [IntelligenceResult] = []
+            
+            // Full analysis on first image
+            do {
+                let firstResults = try await self.processor.process(
+                    image: firstMedia.cgImage,
+                    orientation: firstMedia.visionOrientation,
+                    mode: .fullAnalysis
+                )
+                allResults.append(contentsOf: firstResults)
+                
+                // Extract sifted image from first
+                if let sifted = firstResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
+                   case .siftedSubject(let observation, _) = sifted {
+                    let cgOrientation = self.capturedImageVisionOrientation
+                    if let (sImage, sBounds) = await self.extractSiftedImage(
+                        observation: UnsafeSendable(value: observation),
+                        frame: UnsafeSendable(value: firstMedia.cgImage),
+                        orientation: cgOrientation
+                    ) {
+                        self.siftedImage = sImage
+                        self.siftedBoundingBox = sBounds
+                    }
+                }
+                
+                // Run enrichment on first image results
+                if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
+                    await MainActor.run {
+                        // Skip "Finding Location..." if location is already pinned
+                        if !self.isLocationPinned && self.selectedPlace == nil {
+                            self.pipelineStatus = .enriching
+                        }
+                    }
+                    
+                    var currentLocation: CLLocation? = self.capturedMediaLocation
+                    if currentLocation == nil, let locService = Services.shared.locationService {
+                        currentLocation = await locService.getCurrentLocation()
+                    }
+                    
+                    let hasUserSelection = await MainActor.run { self.selectedPlace != nil }
+                    if let loc = currentLocation, !hasUserSelection {
+                        await MainActor.run { self.currentCaptureCoordinate = loc.coordinate }
+                    }
+                    
+                    let (enriched, stepSummary, candidates) = await self.enrichContext(
+                        from: firstResults,
+                        accumulatedContext: self.accumulatedContexts,
+                        locationOverride: currentLocation
+                    )
+                    
+                    allResults.append(contentsOf: enriched)
+                    
+                    await MainActor.run {
+                        self.placeCandidates = candidates
+                        if self.selectedPlace == nil {
+                            self.selectedPlace = candidates.first
+                        }
+                        self.pipelineStatus = .reading
+                        
+                        if let summary = stepSummary {
+                            self.accumulatedContexts.append("Capture 1: " + summary)
+                        }
+                    }
+                }
+            } catch {
+                print("⚠️ Batch: First item analysis failed: \(error)")
+            }
+            
+            // Remaining items: vision-only
+            for (index, item) in items.dropFirst().enumerated() {
+                let itemIndex = index + 2
+                print("📸 Loading import \(itemIndex)/\(items.count)...")
+                
+                do {
+                    guard let media = try? await resolveMedia(from: .photoPickerItem(item)) else {
+                        print("⚠️ Skipping import \(itemIndex) - failed to load")
+                        continue
+                    }
+                    
+                    self.appendSessionImage(media.platformImage)
+                    
+                    #if canImport(UIKit)
+                    let visionOrientation = (media.platformImage as? UIImage)?.imageOrientation.cgImagePropertyOrientation ?? .up
+                    #else
+                    let visionOrientation: CGImagePropertyOrientation = .up
+                    #endif
+                    
+                    print("🧠 Analyzing import \(itemIndex)/\(items.count)...")
+                    let imageResults = try await self.processor.process(
+                        image: media.cgImage,
+                        orientation: visionOrientation,
+                        mode: .fullAnalysis
+                    )
+                    allResults.append(contentsOf: imageResults)
+                } catch {
+                    print("⚠️ Failed to process import \(itemIndex): \(error)")
+                }
+            }
+            
+            // Finalize
+            await MainActor.run {
+                print("📥 Batch complete: \(allResults.count) total results")
+                self.results = allResults
+                self.pipelineStatus = .complete
+                self.isAnalyzing = false
+                self.isReviewing = true
+            }
+            
+            // Background verification → context suggestions (sequential)
+            Task {
+                for await result in self.processor.verify(initialResults: allResults, image: firstMedia.cgImage) {
+                    await MainActor.run {
+                        if !self.results.contains(result) {
+                            withAnimation { self.results.append(result) }
                         }
                     }
                 }
                 
-            } catch {
-                print("❌ Reprocess Analysis Failed: \(error)")
-                await MainActor.run { self.isAnalyzing = false }
+                // Now that verification is complete, generate context suggestions
+                await MainActor.run { self.pipelineStatus = .reasoning }
+                await self.regenerateContextSuggestions(for: self.selectedPlace)
+                await MainActor.run { self.pipelineStatus = .complete }
             }
         }
+    }
+    
+    // MARK: - Legacy Entry Points (thin wrappers)
+    
+    /// Reprocesses an already-loaded image through the full pipeline.
+    public func analyzeReprocessImage(_ image: PlatformImage) {
+        analyzeCapture(.reprocess(image: image))
     }
 
     // MARK: - Setup
@@ -838,295 +1364,16 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }
 
             cameraManager.onPhotoCaptured = { [weak self] imageData, depthData in
-                // Cancel previous analysis to prevent race conditions
-                self?.currentAnalysisTask?.cancel()
-                
-                self?.currentAnalysisTask = Task(priority: .utility) { @MainActor [weak self] in
-                    #if canImport(UIKit)
-                    let image = UIImage(data: imageData)
-                    #elseif canImport(AppKit)
-                    let image = NSImage(data: imageData)
-                    #else
-                    let image: PlatformImage? = nil
-                    #endif
-                    
-                    guard let self = self else { return }
-                    
-                    // Prioritize pending result (e.g. valid QR code from handleCapture) if image fails
-                    if image == nil {
-                         print("⚠️ Camera: Captured image data is invlid/empty")
-                         if let pending = self.pendingCaptureResult {
-                             print("🚀 Express Capture: Saving pending result despite image fail...")
-                             self.results = [pending]
-                             self.pendingCaptureResult = nil
-                             self.commitReviewSave() // This might fail if commitReviewSave requires image?
-                         }
-                         return
-                    }
-                    
-                    print("📸 Camera: Photo captured, analyzing full frame using subject priority...")
-                    self.setCapturedImage(image)
-                    
-                    await MainActor.run {
-                        self.pipelineStatus = .sifting
-                    }
-                    if let img = self.capturedImage {
-                        self.appendSessionImage(img, depthData: depthData)
-                        // Save to Photo Library as Backup
-                        self.saveImageToPhotoLibrary(img)
-                    }
-                    
-                    #if canImport(UIKit)
-                    let cgImage = image?.cgImage
-                    // Use the actual image orientation, not the device's current orientation
-                    let visionOrientation = image?.imageOrientation.cgImagePropertyOrientation ?? self.currentOrientation
-                    self.capturedImageVisionOrientation = visionOrientation
-                    #elseif canImport(AppKit)
-                    let cgImage = image?.cgImage(forProposedRect: nil, context: nil, hints: nil)
-                    let visionOrientation: CGImagePropertyOrientation = .up // NSImage typically normalizes or we assume up
-                    #else
-                    let cgImage: CGImage? = nil
-                    let visionOrientation: CGImagePropertyOrientation = .up
-                    #endif
-                    
-                    if let cgImage = cgImage {
-                         // Capture Mode: Full Analysis (mode: .fullAnalysis)
-                         // We run Barcode + Text + Classification AND Check for Sifted ROI
-                         
-                    do {
-                        #if canImport(UIKit)
-                        print("📸 Vision Orientation: \(visionOrientation.rawValue) (Raw: \(image?.imageOrientation.rawValue ?? -1))")
-                        #else
-                        print("📸 Vision Orientation: \(visionOrientation.rawValue)")
-                        #endif
-                        
-                        let fullResults = try await self.processor.process(image: cgImage, orientation: visionOrientation, mode: .fullAnalysis)
-                        print("✅ Raw Analysis Results: \(fullResults.map { $0.title })")
-                        
-                        // Override the results with the HIGH FIDELITY capture results
-                        var resultsWithPurpose = fullResults
-                        
-                        // NEW: Concurrent Enrichment Pipeline
-                        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil {
-                            print("🚀 Enrichment Pipeline: Starting Concurrent Enrichment...")
-                            
-                            await MainActor.run { self.pipelineStatus = .enriching }
-                            
-                            // Capture history on MainActor before awaiting
-                            let currentHistory = self.accumulatedContexts
-                            
-                            // 1. Determine Location Truthing Strategy (Early)
-                            // Priority: Imported Metadata > Live GPS
-                            var currentLocation: CLLocation? = self.capturedMediaLocation
-                            
-                            if currentLocation == nil, let locService = Services.shared.locationService {
-                                 // Only fetch live location if we don't have explicit media metadata
-                                 currentLocation = await locService.getCurrentLocation()
-                            }
-                            
-                            // Update State immediately so UI reflects the "truth"
-                            // CRITICAL: Do NOT overwrite if user has already selected a place
-                            let hasUserSelection = await MainActor.run { self.selectedPlace != nil }
-                            if let loc = currentLocation, !hasUserSelection {
-                                 await MainActor.run {
-                                     self.currentCaptureCoordinate = loc.coordinate
-                                 }
-                            }
-                            
-                            // 2. Call Enrichment with Authoritative Location
-                            let (enriched, stepSummary, candidates) = await self.enrichContext(
-                                from: fullResults, 
-                                accumulatedContext: currentHistory,
-                                locationOverride: currentLocation
-                            )
-                            
-                            // Home/Work Enrichment
-                            var finalCandidates = candidates
-                            if let contactService = Services.shared.contactService {
-                                let home = try? await contactService.getHomeLocation()
-                                let work = try? await contactService.getWorkLocation()
-
-                                if let current = currentLocation {
-                                    var personalPlaces: [EnrichmentData] = []
-                                    
-                                    // Threshold: 150 meters
-                                    if let homeLoc = home, homeLoc.distance(from: current) < 150 {
-                                        personalPlaces.append(EnrichmentData(
-                                            title: "Home",
-                                            descriptionText: "Your Personal CustomContext",
-                                            categories: ["Personal", "Home"],
-                                            location: "Home",
-                                            placeContext: PlaceContext(name: "Home", categories: ["Personal"], latitude: homeLoc.coordinate.latitude, longitude: homeLoc.coordinate.longitude)
-                                        ))
-                                    }
-                                    
-                                    if let workLoc = work, workLoc.distance(from: current) < 150 {
-                                         personalPlaces.append(EnrichmentData(
-                                            title: "Work",
-                                            descriptionText: "Your Workplace",
-                                            categories: ["Personal", "Work"],
-                                            location: "Work",
-                                            placeContext: PlaceContext(name: "Work", categories: ["Personal"], latitude: workLoc.coordinate.latitude, longitude: workLoc.coordinate.longitude)
-                                        ))
-                                    }
-                                    
-                                    if !personalPlaces.isEmpty {
-                                        finalCandidates.insert(contentsOf: personalPlaces, at: 0)
-                                        await MainActor.run {
-                                            if let first = personalPlaces.first {
-                                                self.selectPlace(first)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            // 3. Smart Default Selection Priority:
-                            // 1. User Selected (Manual) - Handled by UI persistence or explicit selection
-                            // 2. Detected Place (Visual Match)
-                            // 3. First Suggested (Proximity/Home)
-
-                            var candidatesToUpdate = finalCandidates
-                            
-                            // Check for Visual Text Match
-                            // We look for candidate titles in the captured text
-                            let capturedText = fullResults.compactMap { result -> String? in
-                                if case .text(let text, _) = result { return text }
-                                return nil
-                            }.joined(separator: " ").lowercased()
-                            
-                            var bestMatch: EnrichmentData?
-                            if !capturedText.isEmpty {
-                                for candidate in candidatesToUpdate {
-                                    if let title = candidate.title?.lowercased(), capturedText.contains(title) {
-                                        print("🎯 Visual Intelligence: Found visual text match for place: \(title)")
-                                        bestMatch = candidate
-                                        break
-                                    }
-                                }
-                            }
-                            
-                            await MainActor.run {
-                                // Preserve existing selection if active
-                                if let existingSelection = self.selectedPlace {
-                                    if !candidatesToUpdate.contains(where: { $0.title == existingSelection.title }) {
-                                        candidatesToUpdate.insert(existingSelection, at: 0)
-                                    }
-                                }
-                                
-                                self.placeCandidates = candidatesToUpdate
-                                
-                                if self.selectedPlace == nil {
-                                     // Priority: Visual Match -> First Candidate (Home/Proximity)
-                                     self.selectedPlace = bestMatch ?? candidatesToUpdate.first
-                                }
-                                
-                                // FIX: Dialog Hang (First Principles)
-                                // We MUST transition out of .enriching here.
-                                // If we found a place, great. If not, we still stop "Locating..."
-                                print("📍 Enrichment Complete. Selected: \(self.selectedPlace?.title ?? "None"). Status -> Reasoning")
-                                self.pipelineStatus = .reasoning
-                                
-                                // Update MainActor state with new summary
-                                if let summary = stepSummary {
-                                    self.accumulatedContexts.append("Capture \(self.accumulatedContexts.count + 1): " + summary)
-                                }
-                            }
-                                
-                            // Verify State Consistency: Ensure we didn't regress to .enriching due to a race
-                            // (No-op here, rely on MainActor serialization)
-                                // We replace .qr/.text with .richWeb if found
-                                var finalResults: [IntelligenceResult] = []
-                                
-                                // Check if enrichment produced a rich web result
-                                let _ = enriched.contains { if case .richWeb = $0 { return true }; return false }
-                                
-                                // First, add all non-obsolete results
-                                for result in resultsWithPurpose {
-                                    // FIX: Do not suppress QR/Text even if Rich Web is present.
-                                    // User wants to see the raw QR code as a fallback/confirmation.
-                                    finalResults.append(result)
-                                }
-                            
-                            // Append new enriched results
-                            finalResults.append(contentsOf: enriched)
-                            resultsWithPurpose = finalResults
-                        }
-                        
-                        // Merge pending result (e.g. valid QR code that triggered the capture)
-                        var shouldAutoSave = false
-                        if let pending = self.pendingCaptureResult {
-                            resultsWithPurpose.insert(pending, at: 0)
-                            self.pendingCaptureResult = nil
-                            shouldAutoSave = true
-                        }
-                        
-                        // Multi-Photo Merge Logic
-                        if self.isReviewing {
-                            let existing = self.results
-                            // De-duplicate based on title + subtitle
-                            let newUnique = resultsWithPurpose.filter { newResult in
-                                !existing.contains(where: { $0.title == newResult.title && $0.subtitle == newResult.subtitle })
-                            }
-                            self.results = existing + newUnique
-                            print("✅ Multi-Photo: Merged \(newUnique.count) new results. Total: \(self.results.count)")
-                        } else {
-                            self.results = resultsWithPurpose
-                        }
-                        
-                        print("✅ Analysis Complete: Found \(fullResults.count) results")
-                        
-                        // Update UI state (hasCompletedFirstAnalysis is now derived from !results.isEmpty)
-                        await MainActor.run {
-                            self.pipelineStatus = .complete
-                        }
-                        
-                        if shouldAutoSave {
-                            print("🚀 Express Capture: Auto-saving...")
-                            self.commitReviewSave()
-                        }
-                        
-                        // Trigger Background Verification (Verification Round 2)
-                        // Note: We need a CGImage for verification. capturedImage is a PlatformImage.
-                        #if canImport(UIKit)
-                        let cgImg = self.capturedImage?.cgImage
-                        #elseif canImport(AppKit)
-                        let cgImg = self.capturedImage?.cgImage(forProposedRect: nil, context: nil, hints: nil)
-                        #endif
-                        
-                        if let cgImage = cgImg {
-                            print("🔍 Starting Background Verification (HandleCapture)...")
-                            Task {
-                                for await result in self.processor.verify(initialResults: self.results, image: cgImage) {
-                                    await MainActor.run {
-                                        if !self.results.contains(result) {
-                                             withAnimation {
-                                                 self.results.append(result)
-                                             }
-                                             #if os(iOS)
-                                             let generator = UIImpactFeedbackGenerator(style: .soft)
-                                             generator.impactOccurred()
-                                             #endif
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } catch {
-                        print("❌ Analysis Failed: \(error)")
-                    }
-                }
-                
-                self.isAnalyzing = false
-                // isReviewing is already true
+                guard let self = self else { return }
+                print("📸 Camera: Photo captured, delegating to unified pipeline...")
+                self.analyzeCapture(.camera(imageData: imageData, depthData: depthData))
             }
-        }
     }
     
     public func processSelectedPhoto() {
         guard let item = selectedPhotoItem else { return }
         
-        print("📸 Processing selected photo...")
+        print("📸 Processing selected photo via unified pipeline...")
         
         // Reset state for new selection (always new session for new photo selection)
         self.activeSessionID = UUID().uuidString
@@ -1135,341 +1382,20 @@ public class VisualIntelligenceViewModel: ObservableObject {
         self.accumulatedContexts = []
         self.siftedBoundingBox = nil
         self.capturedImage = nil
-        self.isReviewing = true // Switch to review mode immediately to show loading state
+        self.isReviewing = true
         self.activeObservation = nil
         
-        Task {
-            print("📸 Starting Import Task...")
-            
-            // Define cleanup in case of failure
-            // We use a local var to track success to avoid premature reset
-            var loadingSuccess = false
-            
-            defer {
-                if !loadingSuccess {
-                   Task { @MainActor in
-                       print("❌ Import Task Failed or Cancelled - Resetting UI")
-                       self.isReviewing = false
-                       self.showingSaveError = true
-                       self.saveErrorMessage = "Failed to load selected item. Please try again."
-                   }
-                }
-            }
-
-            do {
-                var finalCGImage: CGImage?
-                var finalImage: PlatformImage?
-                
-                // 1. Try Video first (Safe URL loading)
-                // We use a specific do-catch for transferable loading to diagnose issues
-                    if let movie = try? await item.loadTransferable(type: Movie.self) {
-                        print("🎥 Processing as Video/Movie (URL-based)...")
-                         if let (cgImage, location, date) = await processVideoData(movie.url) {
-                            finalCGImage = cgImage
-                            await MainActor.run {
-                                if let loc = location {
-                                     self.capturedMediaLocation = loc
-                                     print("📍 Video Location captured: \(loc)")
-                                }
-                                if let d = date {
-                                    self.capturedMediaDate = d
-                                    print("📅 Video Date captured: \(d)")
-                                }
-                            }
-                            
-                            #if canImport(UIKit)
-                            finalImage = UIImage(cgImage: cgImage)
-                            #elseif canImport(AppKit)
-                            finalImage = NSImage(cgImage: cgImage, size: .zero)
-                            #endif
-                            print("✅ Extracted Best Frame from Video URL")
-                        }
-                    }
-                
-                // 2. Fallback to Data (for Images) if Video failed or wasn't a video
-                if finalCGImage == nil {
-                     print("📸 Attempting Data Load...")
-                     guard let data = try await item.loadTransferable(type: Data.self) else {
-                         print("❌ Failed to load Data transferable")
-                         return // Defer triggers failure handling
-                     }
-                     print("✅ Loaded \(data.count) bytes")
-                     
-                     #if canImport(UIKit)
-                     // Try as Image
-                     if let image = UIImage(data: data) {
-                         finalImage = image
-                         finalCGImage = image.cgImage
-                         
-                         // Extract Image Creation Date
-                         if let source = CGImageSourceCreateWithData(data as CFData, nil),
-                            let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] {
-                             var dateString: String?
-                             if let exif = props["{Exif}"] as? [String: Any] {
-                                 dateString = exif["DateTimeOriginal"] as? String
-                             }
-                             if dateString == nil, let tiff = props["{TIFF}"] as? [String: Any] {
-                                 dateString = tiff["DateTime"] as? String
-                             }
-                             
-                             if let ds = dateString {
-                                 let formatter = DateFormatter()
-                                 formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
-                                 if let date = formatter.date(from: ds) {
-                                     await MainActor.run {
-                                         self.capturedMediaDate = date
-                                         print("📅 Image Date captured: \(date)")
-                                     }
-                                 }
-                             }
-                         }
-                     }
-                     #elseif canImport(AppKit)
-                     if let image = NSImage(data: data) {
-                         finalImage = image
-                         finalCGImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil)
-                     }
-                     #endif
-                     
-                     // 3. Last Resort Video (Data-based) - only small videos might survive this
-                     if finalCGImage == nil {
-                         print("⚠️ Video URL load failed. Attempting Data fallback (risky)...")
-                         if let (cgImage, location, date) = await processVideoData(data) {
-                             finalCGImage = cgImage
-                             await MainActor.run {
-                                 if let loc = location { self.capturedMediaLocation = loc }
-                                 if let d = date { self.capturedMediaDate = d }
-                             }
-                             #if canImport(UIKit)
-                             finalImage = UIImage(cgImage: cgImage)
-                             #endif
-                         }
-                     }
-                }
-                
-                guard let cgImage = finalCGImage else {
-                    print("❌ Could not create CGImage from loaded content")
-                    return
-                }
-                let image = finalImage 
-                
-                loadingSuccess = true // Mark success to prevent defer failure handling
-                
-                await MainActor.run { 
-                    self.isAnalyzing = true 
-                    self.pipelineStatus = .sifting
-                }
-                    
-                    // Analyze for interactive results
-                    // Use the actual image orientation — identical to the camera capture path (line 856).
-                    // .cgImage returns raw (unrotated) pixels; Vision needs the orientation hint
-                    // to produce coordinates in the correctly-oriented space.
-                    #if canImport(UIKit)
-                    let visionOrientation = (image as? UIImage)?.imageOrientation.cgImagePropertyOrientation ?? .up
-                    self.capturedImageVisionOrientation = visionOrientation
-                    #else
-                    let visionOrientation: CGImagePropertyOrientation = .up
-                    #endif
-                    print("🧠 Starting Intelligence Processing in .fullAnalysis mode (orientation=\(visionOrientation.rawValue))...")
-                    let newResults = try await self.processor.process(image: cgImage, orientation: visionOrientation, mode: .fullAnalysis)
-                    
-                    await MainActor.run {
-                        print("🖼 Photo Picker: Analysis complete, transitioning to Reviewing state")
-                        self.results = newResults
-                        self.setCapturedImage(image)
-                        
-                        // Extract sifted image if found
-                        if let sifted = newResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
-                           case .siftedSubject(let observation, _) = sifted {
-                            Task {
-                            // Use captured image's orientation for proper sifted subject rotation
-                                let cgOrientation = await MainActor.run { () -> CGImagePropertyOrientation in 
-                                    #if canImport(UIKit)
-                                    return self.capturedImage?.imageOrientation.cgImagePropertyOrientation ?? .up
-                                    #else
-                                    return .up
-                                    #endif
-                                }
-                                if let (sImage, sBounds) = await self.extractSiftedImage(
-                                    observation: UnsafeSendable(value: observation),
-                                    frame: UnsafeSendable(value: cgImage), // Overload used for CGImage
-                                    orientation: cgOrientation
-                                ) {
-                                    await MainActor.run {
-                                        self.siftedImage = sImage
-                                        self.siftedBoundingBox = sBounds
-                                        self.pipelineStatus = .reading // Complete sifting
-                                    }
-                                }
-                            }
-                        } else {
-                            // No sifted subject - update status immediately
-                            self.pipelineStatus = .reading
-                        }
-                        
-                        self.isReviewing = true
-                    }
-                    
-                    // Trigger Background Verification
-                    print("🔍 Starting Background Verification...")
-                    Task {
-                        for await result in self.processor.verify(initialResults: newResults, image: cgImage) {
-                            await MainActor.run {
-                                if !self.results.contains(result) {
-                                    withAnimation {
-                                        self.results.append(result)
-                                    }
-                                    #if os(iOS)
-                                    let generator = UIImpactFeedbackGenerator(style: .soft)
-                                    generator.impactOccurred()
-                                    #endif
-                                }
-                            }
-                        }
-                        // Verification complete - mark pipeline as complete
-                        await MainActor.run {
-                            self.pipelineStatus = .complete
-                            self.isAnalyzing = false
-                        }
-                    }
-            } catch {
-                print("❌ Failed to process selected photo: \(error)")
-                await MainActor.run {
-                    self.isAnalyzing = false
-                }
-            }
-        }
+        analyzeCapture(.photoPickerItem(item))
     }
     
     // MARK: - Batch Photo Import (from Sidebar)
     
     /// Loads all selected photos into sessionImages as a single capture session,
     /// runs Vision analysis on each, merges results, and enters review mode.
+    /// Loads all selected photos into sessionImages as a single capture session,
+    /// runs full enrichment on the first image, vision analysis on the rest, merges results.
     public func processImportedPhotos(_ items: [PhotosPickerItem]) {
-        guard !items.isEmpty else { return }
-        
-        print("📥 Processing \(items.count) imported photos as single session...")
-        
-        // Reset state for new import session
-        self.activeSessionID = UUID().uuidString
-        self.sessionImages = []
-        self.sessionDepthData = []
-        self.results = []
-        self.accumulatedContexts = []
-        self.siftedBoundingBox = nil
-        self.capturedImage = nil
-        self.isReviewing = true // Show loading state immediately
-        self.isAnalyzing = true
-        self.pipelineStatus = .sifting
-        
-        Task {
-            var allResults: [IntelligenceResult] = []
-            var loadedCount = 0
-            
-            for (index, item) in items.enumerated() {
-                print("📸 Loading import \(index + 1)/\(items.count)...")
-                
-                do {
-                    var finalCGImage: CGImage?
-                    var finalImage: PlatformImage?
-                    
-                    // 1. Try Video first
-                    if let movie = try? await item.loadTransferable(type: Movie.self) {
-                        if let (cgImage, location, date) = await processVideoData(movie.url) {
-                            finalCGImage = cgImage
-                            await MainActor.run {
-                                if let loc = location { self.capturedMediaLocation = loc }
-                                if let d = date { self.capturedMediaDate = d }
-                            }
-                            #if canImport(UIKit)
-                            finalImage = UIImage(cgImage: cgImage)
-                            #endif
-                        }
-                    }
-                    
-                    // 2. Fallback to Data (Images)
-                    if finalCGImage == nil {
-                        guard let data = try await item.loadTransferable(type: Data.self) else {
-                            print("⚠️ Skipping import \(index + 1) - failed to load data")
-                            continue
-                        }
-                        
-                        #if canImport(UIKit)
-                        if let image = UIImage(data: data) {
-                            finalImage = image
-                            finalCGImage = image.cgImage
-                            
-                            // Extract date from EXIF
-                            if let source = CGImageSourceCreateWithData(data as CFData, nil),
-                               let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any] {
-                                var dateString: String?
-                                if let exif = props["{Exif}"] as? [String: Any] {
-                                    dateString = exif["DateTimeOriginal"] as? String
-                                }
-                                if dateString == nil, let tiff = props["{TIFF}"] as? [String: Any] {
-                                    dateString = tiff["DateTime"] as? String
-                                }
-                                if let ds = dateString {
-                                    let formatter = DateFormatter()
-                                    formatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
-                                    if let date = formatter.date(from: ds) {
-                                        await MainActor.run {
-                                            // Only set date from first image (session date)
-                                            if self.capturedMediaDate == nil {
-                                                self.capturedMediaDate = date
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        #endif
-                    }
-                    
-                    guard let cgImage = finalCGImage, let image = finalImage else {
-                        print("⚠️ Skipping import \(index + 1) - could not create image")
-                        continue
-                    }
-                    
-                    loadedCount += 1
-                    
-                    await MainActor.run {
-                        // Apply fixedOrientation before adding to session to bake in EXIF rotation
-                        
-                        self.appendSessionImage(image)
-                        
-                        // Set first image as the primary captured image
-                        if self.capturedImage == nil {
-                            self.setCapturedImage(image)
-                        }
-                    }
-                    
-                    // Run Vision analysis on this image
-                    #if canImport(UIKit)
-                    let visionOrientation = (image as? UIImage)?.imageOrientation.cgImagePropertyOrientation ?? .up
-                    self.capturedImageVisionOrientation = visionOrientation
-                    #else
-                    let visionOrientation: CGImagePropertyOrientation = .up
-                    #endif
-                    
-                    print("🧠 Analyzing import \(index + 1)/\(items.count) (orientation=\(visionOrientation.rawValue))...")
-                    let imageResults = try await self.processor.process(image: cgImage, orientation: visionOrientation, mode: .fullAnalysis)
-                    allResults.append(contentsOf: imageResults)
-                    
-                } catch {
-                    print("⚠️ Failed to process import \(index + 1): \(error)")
-                }
-            }
-            
-            // Merge all results and enter review mode
-            await MainActor.run {
-                print("📥 Import complete: \(loadedCount)/\(items.count) loaded, \(allResults.count) results")
-                self.results = allResults
-                self.pipelineStatus = .complete
-                self.isAnalyzing = false
-                self.isReviewing = true
-            }
-        }
+        analyzeBatchCapture(items)
     }
     
     // MARK: - Background Processing
@@ -1491,18 +1417,12 @@ public class VisualIntelligenceViewModel: ObservableObject {
                  try handler.perform([request])
                  
                  if let result = request.results?.first {
-                    // Use captured image's orientation for proper sifted subject rotation
-                     let cgOrientation = await MainActor.run { () -> CGImagePropertyOrientation in
-                         #if canImport(UIKit)
-                         return self.capturedImage?.imageOrientation.cgImagePropertyOrientation ?? .up
-                         #else
-                         return .up
-                         #endif
-                     }
+                    // analyzeStaticImage is called with capturedImage.cgImage — already normalized
+                    // to .up by fixedOrientation/setCapturedImage. No rotation needed.
                     if let (sImage, sBounds) = await self.extractSiftedImage(
                         observation: UnsafeSendable(value: result),
                         frame: UnsafeSendable(value: cgImage),
-                        orientation: cgOrientation
+                        orientation: .up
                     ) {
                         await MainActor.run { [weak self] in
                             self?.siftedImage = sImage
@@ -1521,6 +1441,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
         frame: UnsafeSendable<CVPixelBuffer>,
         orientation: CGImagePropertyOrientation
     ) async -> (PlatformImage, CGRect)? {
+        // Pass orientation to the handler to match the processor's handler that created the observation.
+        // generateMaskedImage with an oriented handler returns already-oriented pixels.
         guard let result = try? await performExtraction(observation: observation.value, handler: VNImageRequestHandler(cvPixelBuffer: frame.value, orientation: orientation, options: [:]), orientation: orientation) else { return nil }
         return result
     }
@@ -1530,6 +1452,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
         frame: UnsafeSendable<CGImage>,
         orientation: CGImagePropertyOrientation
     ) async -> (PlatformImage, CGRect)? {
+        // Pass orientation to the handler to match the processor's handler that created the observation.
+        // generateMaskedImage with an oriented handler returns already-oriented pixels.
         guard let result = try? await performExtraction(observation: observation.value, handler: VNImageRequestHandler(cgImage: frame.value, orientation: orientation, options: [:]), orientation: orientation) else { return nil }
         return result
     }
@@ -1539,35 +1463,69 @@ public class VisualIntelligenceViewModel: ObservableObject {
         handler: VNImageRequestHandler,
         orientation: CGImagePropertyOrientation
     ) async throws -> (PlatformImage, CGRect)? {
-        // 1. Generate the cropped masked image
+        // 1. Generate the cropped masked image.
+        // The handler includes orientation, so generateMaskedImage returns already-oriented pixels.
         let maskBuffer = try observation.generateMaskedImage(
             ofInstances: observation.allInstances,
             from: handler,
             croppedToInstancesExtent: true
         )
         
-        // 2. Calculate the bounding box from the instanceMask buffer
-        // This is robust across OS versions that don't expose observation.boundingBox
-        let bounds = calculateBounds(from: observation)
+        // 2. Calculate the bounding box from the instanceMask buffer (sensor coordinates)
+        let sensorBounds = calculateBounds(from: observation)
+        
+        // 3. Transform the bounding box to match the oriented display coordinates
+        let bounds = transformBounds(sensorBounds, forOrientation: orientation)
         
         let ciImage = CIImage(cvPixelBuffer: maskBuffer)
         let context = CIContext(options: [.useSoftwareRenderer: false])
         
         if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
             #if canImport(UIKit)
-            // generateMaskedImage() returns pixels in the raw sensor coordinate space
-            // (e.g. landscape for rear camera in portrait mode). We must apply the
-            // camera orientation to rotate the mask upright, matching the main image.
-            let uiOrientation = uiImageOrientation(from: orientation)
-            let orientedImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: uiOrientation)
-            // Bake the orientation into actual pixels
-            let uiImage = orientedImage.normalizedOrientation()
+            // The mask pixels are already oriented by the handler — no rotation needed.
+            let uiImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
             return (uiImage, bounds)
             #elseif canImport(AppKit)
             return (NSImage(cgImage: cgImage, size: .zero), bounds)
             #endif
         }
         return nil
+    }
+    
+    /// Transforms a normalized bounding box from sensor coordinates to display coordinates
+    /// based on the EXIF orientation. Vision bounding boxes use bottom-left origin.
+    nonisolated private func transformBounds(_ box: CGRect, forOrientation orientation: CGImagePropertyOrientation) -> CGRect {
+        switch orientation {
+        case .up, .upMirrored:
+            // No rotation needed
+            return box
+        case .down, .downMirrored:
+            // 180° rotation: flip both axes
+            return CGRect(
+                x: 1.0 - box.maxX,
+                y: 1.0 - box.maxY,
+                width: box.width,
+                height: box.height
+            )
+        case .left, .leftMirrored:
+            // 90° counter-clockwise: sensor X → display Y, sensor Y → display X (inverted)
+            return CGRect(
+                x: box.minY,
+                y: box.minX,
+                width: box.height,
+                height: box.width
+            )
+        case .right, .rightMirrored:
+            // 90° clockwise: sensor X → display Y (inverted), sensor Y → display X
+            return CGRect(
+                x: 1.0 - box.maxY,
+                y: box.minX,
+                width: box.height,
+                height: box.width
+            )
+        @unknown default:
+            return box
+        }
     }
 
     nonisolated private func calculateBounds(from observation: VNInstanceMaskObservation) -> CGRect {
@@ -1769,6 +1727,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         let sessionImgs = self.sessionImages
         let sessionID = self.activeSessionID
+        print("💾 [DIAG] commitReviewSave: sessionID=\(sessionID), purposes=\(purposes), resultCount=\(currentResults.count)")
         let allDepthData = self.sessionDepthData // Parallel to sessionImages
         let primaryDepth = allDepthData.first ?? nil // Depth for the primary/master image
         
@@ -1914,6 +1873,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 let queueItems = DiverQueueItem.items(intelligenceResults: currentResults, capturedImage: capturedData, siftedImage: siftedData, attachments: attachmentData, purposes: purposes, sessionID: sessionID, contextImageURL: contextImageURL, placeID: capturePlaceID, latitude: captureCoordinate?.latitude, longitude: captureCoordinate?.longitude, locationName: selectedPlaceTitle, depthPayload: primaryDepth, attachmentDepthPayloads: allDepthData)
                 
                 for item in queueItems {
+                    print("💾 [DIAG] Enqueuing item id=\(item.descriptor.id), sessionID=\(item.descriptor.sessionID ?? "NIL"), purposes=\(item.descriptor.purposes)")
                     try queueStore.enqueue(item)
                 }
                 
@@ -2227,6 +2187,33 @@ public class VisualIntelligenceViewModel: ObservableObject {
             
             let explicitLocation = place?.title ?? place?.location
             
+            // Extract rich context from self.results to populate EnrichmentData
+            let webCtx: WebContext? = self.results.compactMap { result -> WebContext? in
+                if case .richWeb(_, let enrichData) = result { return enrichData.webContext }
+                return nil
+            }.first ?? place?.webContext
+            
+            let docCtx: DocumentContext? = self.results.compactMap { result -> DocumentContext? in
+                if case .document(_, let text, let label, _) = result {
+                    return DocumentContext(fileType: label ?? "Document", pageCount: nil, author: nil)
+                }
+                return nil
+            }.first
+            
+            let qrCtx: QRCodeContext? = self.results.compactMap { result -> QRCodeContext? in
+                if case .qr(let url) = result { return QRCodeContext(payload: url.absoluteString) }
+                return nil
+            }.first
+            
+            let srcURL: String? = self.results.compactMap { result -> String? in
+                if case .qr(let url) = result { return url.absoluteString }
+                if case .richWeb(let url, _) = result { return url.absoluteString }
+                if case .text(_, let url) = result, let u = url { return u.absoluteString }
+                return nil
+            }.first
+            
+            let visualCtx: String? = !visualLabels.isEmpty ? visualLabels.joined(separator: ", ") : nil
+            
             let data = EnrichmentData(
                 title: finalTitle,
                 descriptionText: finalDesc.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -2235,7 +2222,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 location: explicitLocation, 
                 price: place?.price,
                 rating: place?.rating,
-                questions: []
+                questions: [],
+                webContext: webCtx,
+                documentContext: docCtx,
+                placeContext: place?.placeContext,
+                qrContext: qrCtx,
+                visualContext: visualCtx,
+                sourceURL: srcURL
             )
             return (data, true)
         }
@@ -2338,6 +2331,12 @@ public class VisualIntelligenceViewModel: ObservableObject {
         capturedImageVisionOrientation = .up
         showingDocumentView = false
         
+        // Clean up temp video file to avoid disk accumulation
+        if let videoURL = capturedVideoURL {
+            try? FileManager.default.removeItem(at: videoURL)
+        }
+        capturedVideoURL = nil
+        
         // Reset internal state
         isAnalyzing = false
         isReviewing = false
@@ -2358,6 +2357,12 @@ public class VisualIntelligenceViewModel: ObservableObject {
         self.activeObservation = nil
         self.isReviewing = false
         self.pipelineStatus = .idle
+        
+        // Clean up temp video file from previous capture
+        if let videoURL = capturedVideoURL {
+            try? FileManager.default.removeItem(at: videoURL)
+        }
+        capturedVideoURL = nil
         
         // Do NOT reset session ID, pinned location, or place
     }
@@ -2466,7 +2471,6 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // Services
         let webService = self.webViewService
         let locService = Services.shared.locationService
-//        let fsService = Services.shared.foursquareService
         
         // --- PHASE 1: Data Extraction & Pre-computation ---
         // Identify critical entities that drive enrichment
@@ -2507,7 +2511,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }()
         
         async let placeEnrichment: EnrichmentSource? = {
-            // Optimization: If location is pinned or already selected, skip searching nearby Foursquare venues.
+            // Optimization: If location is pinned or already selected, skip searching nearby venues.
             let existingSelection = await MainActor.run { self.selectedPlace }
             let pinned = await MainActor.run { self.isLocationPinned }
             
@@ -2516,22 +2520,6 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 return .places([selection])
             }
 
-            // Use override if available (e.g. from Metadata), otherwise fetch live
-            let searchLocation: CLLocation?
-            if let override = locationOverride {
-                searchLocation = override
-            } else {
-                searchLocation = await locService?.getCurrentLocation()
-            }
-            
-//            guard let location = searchLocation else { return nil }
-            
-            // Refinement: If we have a product or web title, we could technically search for stores matching it?
-//            // For now, generic nearby search is safest.
-//            guard let fsService = fsService else { return nil }
-//            if let candidates = try? await fsService.searchNearby(location: location.coordinate, limit: 50), !candidates.isEmpty {
-//                return .places(candidates)
-//            }
             if let existing = existingSelection {
                 return .places([existing])
             }

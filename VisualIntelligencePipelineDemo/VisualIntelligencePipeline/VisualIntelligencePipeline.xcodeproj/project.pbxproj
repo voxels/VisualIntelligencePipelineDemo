@@ -58,7 +58,6 @@
 		1E03D03A2EFBFA3F0020DAA5 /* NavigationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0392EFBFA3F0020DAA5 /* NavigationManager.swift */; };
 		1E03D03C2EFC1A950020DAA5 /* pipeline_logs.json in Resources */ = {isa = PBXBuildFile; fileRef = D3F518C128886017CE831B4F /* pipeline_logs.json */; };
 		1E03D0412EFC20E20020DAA5 /* knowmaps in Frameworks */ = {isa = PBXBuildFile; productRef = 1E03D0402EFC20E20020DAA5 /* knowmaps */; };
-		1E03D0442EFC24CB0020DAA5 /* CaptureReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0422EFC24CB0020DAA5 /* CaptureReviewView.swift */; };
 		1E03D0492EFC3B670020DAA5 /* DiverAppAttributionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0472EFC3B670020DAA5 /* DiverAppAttributionView.swift */; };
 		1E6E585D2F156BE700CA4385 /* EditLocationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E6E585A2F156BE700CA4385 /* EditLocationView.swift */; };
 		1E6E585E2F156BE700CA4385 /* EditSessionLocationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E6E585B2F156BE700CA4385 /* EditSessionLocationView.swift */; };
@@ -192,7 +191,6 @@
 		1E03D02E2EFBD3F20020DAA5 /* ScreenshotProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotProcessor.swift; sourceTree = "<group>"; };
 		1E03D02F2EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLCompletenessAnalyzer.swift; sourceTree = "<group>"; };
 		1E03D0392EFBFA3F0020DAA5 /* NavigationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationManager.swift; sourceTree = "<group>"; };
-		1E03D0422EFC24CB0020DAA5 /* CaptureReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureReviewView.swift; sourceTree = "<group>"; };
 		1E03D0472EFC3B670020DAA5 /* DiverAppAttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiverAppAttributionView.swift; sourceTree = "<group>"; };
 		1E160AC535402EF1545DA24A /* DiverUITests_iOS.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiverUITests_iOS.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E6E585A2F156BE700CA4385 /* EditLocationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditLocationView.swift; sourceTree = "<group>"; };
@@ -507,7 +505,6 @@
 				1E9ED83F2F13E00B0022F6EA /* ReprocessMetadataView.swift */,
 				1E9ED8402F13E00B0022F6EA /* RichWebView.swift */,
 				1E9ED8372F13DFF60022F6EA /* AppleMusicReferenceView.swift */,
-				1E03D0422EFC24CB0020DAA5 /* CaptureReviewView.swift */,
 				7DEBECFBAC4353E5D8AE4A6E /* ContentView.swift */,
 				1E03D0472EFC3B670020DAA5 /* DiverAppAttributionView.swift */,
 				898F03197EF75CDFD351E084 /* ReferenceDetailView.swift */,
@@ -809,7 +806,6 @@
 				1E03CF702EFB20310020DAA5 /* SaveLinkSnippet.swift in Sources */,
 				1E03CF712EFB20310020DAA5 /* SearchLinksIntent.swift in Sources */,
 				1E03CF722EFB20310020DAA5 /* LinkEntity.swift in Sources */,
-				1E03D0442EFC24CB0020DAA5 /* CaptureReviewView.swift in Sources */,
 				1E03CF732EFB20310020DAA5 /* OpenLinkIntent.swift in Sources */,
 				1E03CF742EFB20310020DAA5 /* ShareLinkIntent.swift in Sources */,
 				1E03CF752EFB20310020DAA5 /* IntentConfigurationView.swift in Sources */,

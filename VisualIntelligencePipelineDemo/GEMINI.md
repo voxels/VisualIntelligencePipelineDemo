@@ -27,9 +27,10 @@ The project is modularized using Swift Package Manager:
     *   **Location:** Foursquare (Venues) and MapKit (Landmarks/Addresses) via `LocationSearchAggregator`, with user-pinnable persistence.
     *   **Environmental:** WeatherKit (Current conditions).
     *   **Web:** DuckDuckGo enrichments, link metadata extraction, and rich link previews.
-    *   **Aesthetics:** Quality scoring for images and video frames.
+    *   **Aesthetics:** Quality scoring bundled into the Vision analysis pass via `VNCalculateImageAestheticsScoresRequest`.
     *   **Music:** Apple Music and Spotify recognition for music-related captures.
     *   **Documents:** Automatic perspective correction and saving of detected documents.
+    *   **QR Codes:** Automatic detection and web enrichment of QR code URLs.
 *   **AI-Powered Understanding:** LLM-generated summaries, purpose identification, concept tagging, and daily focus briefs via `SystemLanguageModel`.
 *   **Session Management:** Captures are auto-grouped by location and time into `DiverSession`s with AI-generated summaries.
 
@@ -37,9 +38,17 @@ The project is modularized using Swift Package Manager:
 
 *   **`LocalPipelineService`:** The core orchestrator. Handles ingestion, enrichment, and persistence.
 *   **`MetadataPipelineService`:** Converts queue items to `LocalInput` and orchestrates metadata extraction.
-*   **`IntelligenceProcessor`:** Runs on-device LLM prompts for concept extraction and summarization.
+*   **`IntelligenceProcessor`:** Runs on-device LLM prompts for concept extraction and summarization. Also runs 6 Vision requests (OCR, QR, semantic, document, sifting, aesthetics) in a single pass via `executePipeline`.
 *   **Reprocessing:** Supports silent background reprocessing (`reprocessPipeline`) to update metadata. Reuses existing item IDs to prevent duplicates.
 *   **Session Sync:** Automatically synchronizes location edits between `ProcessedItem` and its parent `DiverSession`.
+*   **Enriched Session Summaries:** `generateAndSaveSessionSummary` aggregates all item metadata (transcription, themes, tags, categories, location, weather, web/document/QR context, FastVLM analysis, product metadata, questions, media type) for LLM summarization.
+*   **Library Maintenance (`maintainLibrary`):** A 6-step repair pipeline triggered from Settings > Rebuild Library:
+    1. Assign orphaned inbox items to sessions by `createdAt` timestamp proximity (30-min window)
+    2. Recover stuck items (reset processing → queued)
+    3. Regenerate missing session records
+    4. Consolidate fragmented sessions (5s/50m proximity)
+    5. Reconcile SwiftData relationships
+    6. Regenerate all session summaries (reverse chronological order)
 
 ## Building and Running
 
@@ -69,7 +78,7 @@ cd DiverShared && swift test
 
 *   **SwiftUI:** Views are organized in `VisualIntelligencePipeline/VisualIntelligencePipeline/View/`.
 *   **View Models:** Located in `DiverKit/Sources/DiverKit/ViewModel/` — `VisualIntelligenceViewModel`, `SidebarViewModel`, `ReferenceDetailViewModel`, `ProcessedItemViewModel`.
-*   **Services:** Located in `DiverKit/Sources/DiverKit/Services/` — 33+ services covering camera, enrichment, pipeline, location, and more.
+*   **Services:** Located in `DiverKit/Sources/DiverKit/Services/` — 35 services covering camera, enrichment, pipeline, location, and more.
 *   **Swift Packages:** Shared code modularized into `DiverKit` and `DiverShared`.
 *   **Asynchronous Operations:** Uses `async/await` throughout for network requests, ML inference, and file I/O.
 *   **Dependency Injection:** Services like `KnowMapsServiceContainer` and `DiverQueueProcessingService` are injected at initialization.
@@ -112,6 +121,7 @@ cd DiverShared && swift test
 *   `View/ReferenceDetailView.swift` — Item detail view
 *   `View/CaptureReviewView.swift` — Post-capture review
 *   `View/EditLocationView.swift` — Location editing
+*   `View/SettingsView.swift` — App settings and library maintenance UI
 
 ### Core Services (DiverKit)
 *   `Services/LocalPipelineService.swift` — Core pipeline orchestrator

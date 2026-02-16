@@ -45,7 +45,7 @@ public final class LocalPipelineService {
         // 3. Place Context (location enrichment)
         if let place = item.placeContext {
             if let name = place.name, !name.isEmpty {
-                context += "Foursquare: \(name)"
+                context += "Place: \(name)"
                 let categories = place.categories ?? []
                 if !categories.isEmpty {
                     context += " - \(categories.joined(separator: ", "))"
@@ -105,7 +105,7 @@ public final class LocalPipelineService {
         if let existing {
             DiverLogger.pipeline.debug("Updating existing ProcessedItem - id: \(resolvedId)")
             existing.status = .processing
-            try? modelContext.save() // Trigger live UI update to show 'Processing'
+            do { try modelContext.save() } catch { DiverLogger.pipeline.error("Save failed (status update): \(error)") }
 
             if existing.inputId == nil {
                 existing.inputId = input.id.uuidString
@@ -468,7 +468,7 @@ public final class LocalPipelineService {
                     DiverLogger.pipeline.warning("Item \(existing.id) failed too many times. Deleting.")
                     modelContext.delete(existing)
                     modelContext.delete(input)
-                    try? modelContext.save()
+                    do { try modelContext.save() } catch { DiverLogger.pipeline.error("Save failed (enrichment): \(error)") }
                     return existing // Returning detached item, but it's deleted
                 }
             }
@@ -594,20 +594,18 @@ public final class LocalPipelineService {
             isFavorite: descriptor?.isFavorite ?? false,
             purposes: descriptor?.purposes ?? []
         )
-
+        print("💾 [DIAG] ProcessedItem created: id=\(resolvedId), sessionID=\(processed.sessionID ?? "NIL"), purposes=\(processed.purposes)")
         
         // Insert immediately for live UI updates
         processed.status = ProcessingStatus.processing
         processed.processingLog.append("\(Date().formatted()): Starting new item pipeline.")
         print("🚀 [LocalPipeline] Starting pipeline for item: \(processed.id)")
         
-        // CRITICAL: Ensure session is assigned and synced IMMEDIATELY upon creation
-        // This guarantees the item appears in a session (even if just "Visual Capture") 
-        // and doesn't get lost in the "Inbox" / undefined state.
-        self.syncSession(for: processed)
+        // NOTE: syncSession is called AFTER enrichment (below) to use enriched location data.
+        // Do NOT call it here prematurely.
         
         modelContext.insert(processed)
-        try? modelContext.save()
+        do { try modelContext.save() } catch { DiverLogger.pipeline.error("Save failed (pipeline complete): \(error)") }
         
         var pipelineContext = PipelineContext()
         
@@ -777,7 +775,7 @@ public final class LocalPipelineService {
             }
         }
         // Trigger live UI update
-        try? modelContext.save()
+        do { try modelContext.save() } catch { DiverLogger.pipeline.error("Save failed (reprocess): \(error)") }
         
         // 4. QR Code Handling
         // If the descriptor says it's a QR code, or we detected one (future), save the context
@@ -832,12 +830,8 @@ public final class LocalPipelineService {
         }
         
 
-        // 5. LLM Analysis (Background "Second Pass")
-        // User Requirement: "verification pass should always be run in the background after running the first UI pass"
-        // We spawn a task to allow the function to return the 'ready' item immediately for UI display.
-        Task {
-            await performLLMAnalysis(for: processed, descriptor: descriptor, pipelineContext: pipelineContext)
-        }
+        // LLM "Second Pass" removed — performLLMAnalysis already runs at Stage 1 above.
+        // Running it again was pure duplication, doubling processing time.
 
         if !finalPurposes.isEmpty {
             processed.purposes = Array(finalPurposes).sorted()
@@ -856,7 +850,10 @@ public final class LocalPipelineService {
         // INTELLIGENT SESSION GROUPING
         // Re-assign Session ID based on Location to ensure all items at the same place are grouped (User Request).
         // Try to find an existing Session that matches this item's Place ID.
-        if let placeID = processed.placeContext?.placeID, !placeID.isEmpty {
+        // SKIP if the item already has a sessionID from the descriptor (user-assigned or prior pipeline run).
+        // Only group NEW items that have no pre-existing session assignment.
+        let hasPreAssignedSession = descriptor?.sessionID != nil
+        if !hasPreAssignedSession, let placeID = processed.placeContext?.placeID, !placeID.isEmpty {
              let desc = FetchDescriptor<SessionMetadata>(predicate: #Predicate<SessionMetadata> { $0.placeID == placeID })
              if let existingSession: SessionMetadata = try? modelContext.fetch(desc).first {
                  // Check if we are currently using a random/new session ID that differs from the persistent one
@@ -870,6 +867,7 @@ public final class LocalPipelineService {
         // Sync Session Data (Ensures Session exists and is updated with latest Item location)
         // Uses properties from 'processed' which may have been enriched or regrouped above.
         syncSession(for: processed)
+        print("💾 [DIAG] After syncSession: id=\(processed.id), sessionID=\(processed.sessionID ?? "NIL"), session=\(processed.session?.sessionID ?? "NIL")")
 
         // Extract high-level concepts from text content
         if processed.webContext?.textContent != nil {
@@ -897,20 +895,9 @@ public final class LocalPipelineService {
             }
         }
 
-        // Update Daily Narrative
-        if let dailyService = Services.shared.dailyContextService {
-            let summaryText = processed.summary ?? processed.title ?? "Processed Item"
-            dailyService.addContext(summaryText)
-            
-            // Log contribution and current narrative state
-            let timestamp = Date().formatted(date: .omitted, time: .standard)
-            let currentNarrative = dailyService.dailySummary // Will be previous state until async update finishes, but acceptable
-            processed.processingLog.append("\(timestamp): Added to Daily Narrative. Current Narrative Snapshot: \(currentNarrative)")
-        }
-
         // Mark as ready before returning
         processed.status = ProcessingStatus.ready
-        try? modelContext.save()
+        do { try modelContext.save() } catch { DiverLogger.pipeline.error("Save failed (batch reprocess): \(error)") }
 
         return processed
     }
@@ -1013,7 +1000,7 @@ public final class LocalPipelineService {
                     }
                 }
             }
-            try? modelContext.save()
+            do { try modelContext.save() } catch { DiverLogger.pipeline.error("Save failed (library maintain): \(error)") }
         }
 
         // Fetch items created after the cutoff
@@ -1318,14 +1305,21 @@ public final class LocalPipelineService {
         let parent: ProcessedItem
         if let existingParent = try modelContext.fetch(fetch).first {
             parent = existingParent
+            // Update sessionID if the parent doesn't have one yet
+            if parent.sessionID == nil, let sid = item.sessionID {
+                parent.sessionID = sid
+                syncSession(for: parent)
+            }
         } else {
             parent = ProcessedItem(
                 id: UUID().uuidString,
                 title: purpose,
                 entityType: "activity",
-                status: .ready
+                status: .ready,
+                sessionID: item.sessionID
             )
             modelContext.insert(parent)
+            syncSession(for: parent)
         }
         
         item.parentItem = parent
@@ -1431,7 +1425,8 @@ public final class LocalPipelineService {
 
     // MARK: - Intelligence Processor Integration
     // Unified "Vision Engine" - replaces duplicate internal logic
-    private let processor = IntelligenceProcessor()
+    // NOTE: IntelligenceProcessor is created inside Task.detached closures
+    // since it must cross actor boundaries. No stored instance needed.
     
     private func analyzeVisualContent(data: Data, existing: ProcessedItem, pipelineContext: inout PipelineContext, enrichmentService: LinkEnrichmentService?) async {
         guard !data.isEmpty else { return }
@@ -1451,17 +1446,15 @@ public final class LocalPipelineService {
             results = try await Task.detached(priority: .userInitiated) {
                 let processor = IntelligenceProcessor()
                 
-                // Use EXIF orientation if available, otherwise default to Up
+                // Single image source parse for both EXIF orientation and CGImage creation
+                guard let source = CGImageSourceCreateWithData(capturedData as CFData, nil),
+                      let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return [IntelligenceResult]() }
+                
                 var orientation: CGImagePropertyOrientation = .up
-                if let source = CGImageSourceCreateWithData(capturedData as CFData, nil),
-                   let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
+                if let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
                    let exifOrientation = properties[kCGImagePropertyOrientation as String] as? UInt32 {
                     orientation = CGImagePropertyOrientation(rawValue: exifOrientation) ?? .up
                 }
-                
-                // Create CGImage
-                guard let source = CGImageSourceCreateWithData(capturedData as CFData, nil),
-                      let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else { return [IntelligenceResult]() }
                 
                 print("🔍 [LocalPipeline] Analyzing Visual Content: \(capturedData.count) bytes, \(cgImage.width)x\(cgImage.height), Orientation: \(orientation.rawValue)")
                 
@@ -1502,10 +1495,26 @@ public final class LocalPipelineService {
                 if isPlaceholder {
                     item.url = url.absoluteString
                     
-                    // Trigger immediate enrichment for this URL
-                    if let enrichmentService, let url = URL(string: url.absoluteString) {
-                         // We don't await here to keep pipeline fast, or we could?
-                         // For now, let's just set the URL and let the next pass handle it
+                    // Enrich the QR URL with web scraping for richer context
+                    if let enrichmentService,
+                       let scheme = url.scheme?.lowercased(),
+                       scheme == "http" || scheme == "https" {
+                        DiverLogger.pipeline.info("🔗 QR URL detected in Vision pass: \(url.absoluteString) - enriching")
+                        if let enrichment = try? await self.withTimeout(seconds: 15, operation: {
+                            try await enrichmentService.enrich(url: url)
+                        }) {
+                            if item.title == nil || item.title?.isEmpty == true {
+                                item.title = enrichment.title
+                            }
+                            if item.summary == nil || item.summary?.isEmpty == true {
+                                item.summary = enrichment.descriptionText
+                            }
+                            item.webContext = enrichment.webContext
+                            
+                            if let textContent = enrichment.webContext?.textContent, !textContent.isEmpty {
+                                pipelineContext.documentContent = (pipelineContext.documentContent ?? "") + "\n" + String(textContent.prefix(2000))
+                            }
+                        }
                     }
                 }
                 
@@ -1592,6 +1601,11 @@ public final class LocalPipelineService {
                     }
                     item.documentContext = newContext
                 }
+                
+                
+            case .aesthetics(let score):
+                item.aestheticsScore = Double(score)
+                contextLog += "• Quality Score: \(String(format: "%.0f%%", score * 100))\n"
                 
             default: break
             }
@@ -2553,7 +2567,7 @@ public final class LocalPipelineService {
     }
 
     /// Assigns orphaned items (nil sessionID — "Inbox" items) to the nearest existing session
-    /// by timestamp proximity, or creates a new session if no match exists within the time window.
+    /// by timestamp AND location proximity, or creates a new session if no match exists.
     public func assignOrphanedItems() throws {
         let orphanFetch = FetchDescriptor<ProcessedItem>(
             predicate: #Predicate<ProcessedItem> { $0.sessionID == nil },
@@ -2571,28 +2585,47 @@ public final class LocalPipelineService {
         let sessionFetch = FetchDescriptor<SessionMetadata>(sortBy: [SortDescriptor(\.createdAt)])
         let sessions = try modelContext.fetch(sessionFetch)
         
-        // 30-minute proximity window
-        let proximityWindow: TimeInterval = 30 * 60
+        // Time windows
+        let timeWindowWithLocation: TimeInterval = 30 * 60   // 30 min when location matches
+        let timeWindowNoLocation: TimeInterval = 5 * 60       // 5 min when no location data
+        // ~500m in coordinate delta (rough approximation)
+        let locationThreshold: Double = 0.005
         
         var assignedCount = 0
         var createdCount = 0
         
         for orphan in orphans {
             let itemTime = orphan.createdAt
+            let itemLat = orphan.latitude
+            let itemLon = orphan.longitude
             
-            // Find the nearest session by createdAt timestamp
             var bestSession: SessionMetadata? = nil
             var bestDelta: TimeInterval = .greatestFiniteMagnitude
             
             for session in sessions {
-                let delta = abs(itemTime.timeIntervalSince(session.createdAt))
-                if delta < bestDelta {
-                    bestDelta = delta
-                    bestSession = session
+                let timeDelta = abs(itemTime.timeIntervalSince(session.createdAt))
+                
+                // Check location proximity if both have coordinates
+                if let iLat = itemLat, let iLon = itemLon,
+                   let sLat = session.latitude, let sLon = session.longitude {
+                    let coordDelta = abs(iLat - sLat) + abs(iLon - sLon)
+                    let isLocationClose = coordDelta < locationThreshold
+                    
+                    // Require location match + time within 30 min
+                    if isLocationClose && timeDelta <= timeWindowWithLocation && timeDelta < bestDelta {
+                        bestDelta = timeDelta
+                        bestSession = session
+                    }
+                } else {
+                    // No location data — use tighter 5-min window (time-only)
+                    if timeDelta <= timeWindowNoLocation && timeDelta < bestDelta {
+                        bestDelta = timeDelta
+                        bestSession = session
+                    }
                 }
             }
             
-            if let match = bestSession, bestDelta <= proximityWindow {
+            if let match = bestSession {
                 // Assign to existing session
                 orphan.sessionID = match.sessionID
                 orphan.session = match
@@ -2605,7 +2638,7 @@ public final class LocalPipelineService {
                 let newSession = DiverSession(sessionID: newSessionID, createdAt: orphan.createdAt)
                 newSession.title = orphan.title
                 newSession.locationName = orphan.placeContext?.name ?? orphan.location
-                if let lat = orphan.latitude, let lon = orphan.longitude {
+                if let lat = itemLat, let lon = itemLon {
                     newSession.latitude = lat
                     newSession.longitude = lon
                 }
@@ -2919,7 +2952,7 @@ public final class LocalPipelineService {
             }
         }
         
-        try? modelContext.save()
+        do { try modelContext.save() } catch { DiverLogger.pipeline.error("Save failed (session sync): \(error)") }
         DiverLogger.pipeline.info("✅ Relationship reconciliation complete.")
     }
 
@@ -2967,7 +3000,7 @@ public final class LocalPipelineService {
             }
         }
         
-        try? modelContext.save()
+        do { try modelContext.save() } catch { DiverLogger.pipeline.error("Save failed (thumbnail update): \(error)") }
         DiverLogger.pipeline.info("✅ Library Maintenance Complete.")
     }
 }

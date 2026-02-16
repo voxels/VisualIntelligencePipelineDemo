@@ -221,7 +221,7 @@ struct EditSessionLocationView: View {
                 Color.black.opacity(0.3).ignoresSafeArea()
                 ProgressView("Updating Session...")
                     .padding()
-                    .background(.regularMaterial)
+                    .glassEffect()
                     .cornerRadius(10)
             }
         }

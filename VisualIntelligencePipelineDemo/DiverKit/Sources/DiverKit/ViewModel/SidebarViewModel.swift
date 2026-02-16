@@ -236,27 +236,27 @@ public final class SidebarViewModel: ObservableObject {
     public func deleteSession(_ session: SessionMetadata, context: ModelContext) {
         isPerformingAction = true
         context.delete(session)
-        try? context.save()
+        do { try context.save() } catch { print("❌ Save failed (delete session): \(error)") }
         isPerformingAction = false
     }
     
     public func toggleFavorite(for session: SessionMetadata, context: ModelContext) {
         session.isFavorite.toggle()
-        try? context.save()
+        do { try context.save() } catch { print("❌ Save failed (toggle favorite session): \(error)") }
         print("⭐️ Toggled favorite for session: \(session.isFavorite)")
     }
     
     public func renameSession(_ session: SessionMetadata, title: String, context: ModelContext) {
         session.title = title
         session.updatedAt = Date()
-        try? context.save()
+        do { try context.save() } catch { print("❌ Save failed (rename session): \(error)") }
         print("✅ Renamed session to '\(title)'")
     }
     
     public func renameCollection(_ collection: DiverCollection, name: String, context: ModelContext) {
         collection.name = name
         collection.updatedAt = Date()
-        try? context.save()
+        do { try context.save() } catch { print("❌ Save failed (rename collection): \(error)") }
         print("✅ Renamed collection to '\(name)'")
     }
     
@@ -264,7 +264,7 @@ public final class SidebarViewModel: ObservableObject {
         if !collection.sessionIDs.contains(session.sessionID) {
             collection.sessionIDs.append(session.sessionID)
             collection.updatedAt = Date()
-            try? context.save()
+            do { try context.save() } catch { print("❌ Save failed (add session to collection): \(error)") }
             print("✅ Added session '\(session.displayTitle)' to collection '\(collection.name)'")
         }
     }
@@ -275,7 +275,7 @@ public final class SidebarViewModel: ObservableObject {
             sessionIDs: [session.sessionID]
         )
         context.insert(collection)
-        try? context.save()
+        do { try context.save() } catch { print("❌ Save failed (create collection): \(error)") }
         print("✅ Created collection '\(name)' with session '\(session.displayTitle)'")
     }
     
@@ -299,7 +299,7 @@ public final class SidebarViewModel: ObservableObject {
         collection.sessionIDs.append(newSession.sessionID)
         collection.updatedAt = Date()
         
-        try? context.save()
+        do { try context.save() } catch { print("❌ Save failed (create session with item): \(error)") }
         print("✅ Created session with item in collection '\(collection.name)'")
         return newSession
     }
@@ -403,13 +403,13 @@ public final class SidebarViewModel: ObservableObject {
         newItem.session = session
         
         context.insert(newItem)
-        try? context.save()
+        do { try context.save() } catch { print("❌ Save failed (duplicate item): \(error)") }
         print("✅ Duplicated item '\(item.displayTitle)' to session '\(session.displayTitle)'")
     }
     
     public func toggleFavorite(for item: ProcessedItem, context: ModelContext) {
         item.isFavorite.toggle()
-        try? context.save()
+        do { try context.save() } catch { print("❌ Save failed (toggle favorite item): \(error)") }
         print("⭐️ Toggled favorite for item: \(item.isFavorite)")
     }
     
@@ -447,7 +447,7 @@ public final class SidebarViewModel: ObservableObject {
         note.session = session
         note.sessionID = session.sessionID
         context.insert(note)
-        try? context.save()
+        do { try context.save() } catch { print("❌ Save failed (create note): \(error)") }
         return note
     }
     
@@ -455,19 +455,14 @@ public final class SidebarViewModel: ObservableObject {
         let itemId = item.id
         context.delete(item)
         print("🗑️ Deleted item \(itemId)")
-        // Defer save to avoid blocking the main thread
-        Task { @MainActor in
-            try? context.save()
-        }
+        do { try context.save() } catch { print("❌ Save failed (delete item): \(error)") }
     }
     
     public func deleteCollection(_ collection: DiverCollection, context: ModelContext) {
         let name = collection.name
         context.delete(collection)
         print("🗑️ Deleted collection '\(name)'")
-        Task { @MainActor in
-            try? context.save()
-        }
+        do { try context.save() } catch { print("❌ Save failed (delete collection): \(error)") }
     }
     
     public func processItemNow(_ item: ProcessedItem) {
@@ -485,9 +480,7 @@ public final class SidebarViewModel: ObservableObject {
         item.status = .failed
         item.processingLog.append("\(Date().formatted()): Cancelled by user")
         print("🚫 Cancelled processing for: \(item.displayTitle)")
-        Task { @MainActor in
-            try? context.save()
-        }
+        do { try context.save() } catch { print("❌ Save failed (cancel processing): \(error)") }
     }
     
     public func analyzeSession(_ session: SessionMetadata, context: ModelContext) {
@@ -661,7 +654,7 @@ public final class SidebarViewModel: ObservableObject {
     /// Update session timestamp to make it "Current"
     public func setSessionAsCurrent(_ session: DiverSession, context: ModelContext) {
         session.updatedAt = Date()
-        try? context.save()
+        do { try context.save() } catch { print("❌ Save failed (set session current): \(error)") }
         print("⏰ Set session '\(session.title ?? session.sessionID)' as Current")
     }
     
@@ -833,10 +826,12 @@ public final class SidebarViewModel: ObservableObject {
             let descriptor = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.id == itemID })
             if let item = try? context.fetch(descriptor).first {
                 item.session = session
+                item.sessionID = session.sessionID
                 item.updatedAt = Date()
             }
         }
-        try? context.save()
+        session.updatedAt = Date()
+        do { try context.save() } catch { print("❌ Save failed (move items): \(error)") }
     }
 
     public func moveSessionToCollection(sessionID: String, collectionID: String, context: ModelContext) {
@@ -1030,7 +1025,7 @@ public final class SidebarViewModel: ObservableObject {
                         let fetchMeta = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
                         if let meta = try? context.fetch(fetchMeta).first {
                             meta.summary = summary
-                            try? context.save()
+                            do { try context.save() } catch { print("❌ Save failed (persist group summary): \(error)") }
                             print("✅ Persisted group summary to session \(sessionID)")
                         }
                     }

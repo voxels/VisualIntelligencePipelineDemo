@@ -69,6 +69,14 @@ Camera/Import/ShareSheet → LocalPipelineService → SwiftData + CloudKit
 - **`LocationSearchAggregator`**: Unified Foursquare + MapKit parallel search with merged results
 - **Reprocessing**: Items can be reprocessed silently; existing IDs are reused to prevent duplicates
 - **Session Sync**: Location edits propagate between `ProcessedItem` and parent `DiverSession`
+- **Enriched Session Summaries**: `generateAndSaveSessionSummary` aggregates all item metadata (transcription, themes, tags, categories, location, weather, web/document/QR context, FastVLM analysis, product metadata, questions, media type) for LLM summarization
+- **Library Maintenance (`maintainLibrary`)**: 6-step repair pipeline (Settings > Rebuild Library):
+  1. Assign orphaned inbox items to sessions by `createdAt` timestamp proximity (30-min window)
+  2. Recover stuck items (reset processing → queued)
+  3. Regenerate missing session records
+  4. Consolidate fragmented sessions (5s/50m proximity)
+  5. Reconcile SwiftData relationships
+  6. Regenerate all session summaries (reverse chronological order, with live status updates)
 
 ## Key Implementation Files
 

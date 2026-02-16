@@ -69,7 +69,7 @@ struct ContentView: View {
             Spacer()
         }
         .padding(12)
-        .background(.ultraThinMaterial)
+        .glassEffect()
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
         .padding(.horizontal)
@@ -159,7 +159,7 @@ struct SessionItemsView: View {
                 if let session = sessionToRename, !newSessionTitle.isEmpty {
                     session.title = newSessionTitle
                     session.updatedAt = Date()
-                    try? modelContext.save()
+                    Task { @MainActor in try? modelContext.save() }
                 }
                 sessionToRename = nil
                 newSessionTitle = ""

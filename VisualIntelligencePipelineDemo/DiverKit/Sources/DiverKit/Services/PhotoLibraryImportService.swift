@@ -12,6 +12,7 @@ import AVFoundation
 import UIKit
 #endif
 import ImageIO
+import Vision
 
 /// A `Transferable`-conforming wrapper for picker images.
 /// Handles JPEG, PNG, HEIC, and TIFF content types that the picker may provide.
@@ -409,7 +410,7 @@ public final class PhotoLibraryImportService {
         if let session = try? modelContext.fetch(descriptor).first {
             session.thumbnailPaths = thumbnailPaths
             session.updatedAt = Date()
-            try? modelContext.save()
+            do { try modelContext.save() } catch { DiverLogger.pipeline.error("Save failed (session thumbnail update): \(error)") }
             print("✅ Updated session \(sessionID) with \(thumbnailPaths.count) thumbnails")
         }
     }
@@ -569,7 +570,10 @@ public final class PhotoLibraryImportService {
                     // Image: Score and create thumbnail
                     #if canImport(UIKit)
                     if let uiImage = UIImage(data: data), let cgImage = uiImage.cgImage {
-                        if let score = try? await aestheticsService.scoreImage(cgImage) {
+                        let aestheticsRequest = VNCalculateImageAestheticsScoresRequest()
+                        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+                        try? handler.perform([aestheticsRequest])
+                        if let score = aestheticsRequest.results?.first?.overallScore {
                             processedItem.aestheticsScore = Double(score)
                         }
                     }
@@ -581,7 +585,7 @@ public final class PhotoLibraryImportService {
                 }
                 
                 // Save the aesthetics score
-                try? modelContext.save()
+                do { try modelContext.save() } catch { DiverLogger.pipeline.error("Save failed (aesthetics score): \(error)") }
             }
         } catch {
             DiverLogger.pipeline.error("Failed to extract thumbnail for session: \(error)")

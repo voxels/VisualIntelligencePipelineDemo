@@ -4,41 +4,61 @@ import SwiftData
 public final class OpaqueLinkService {
     public init() {}
     
-    /// Generates a privacy-safe universal link for a saved item.
-    /// Example: secretatomics://item?id=8B12A34F
+    /// Generates an internal deep link for in-app navigation.
+    /// Format: secretatomics://open?id=<UUID>
     public func generateLink(for item: LocalInput) -> URL? {
-        let shortID = item.id.uuidString.replacingOccurrences(of: "-", with: "").prefix(12)
+        var components = URLComponents()
+        components.scheme = "secretatomics"
+        components.host = "open"
+        components.queryItems = [URLQueryItem(name: "id", value: item.id.uuidString)]
+        return components.url
+    }
+    
+    /// Generates a shareable universal link for external sharing (Messages, Shared with You, etc.).
+    /// Format: https://secretatomics.com/item?id=<UUID>
+    /// These links are routed by the Apple App Site Association file to the app.
+    public func generateShareableLink(for item: LocalInput) -> URL? {
         var components = URLComponents()
         components.scheme = "https"
         components.host = "secretatomics.com"
         components.path = "/item"
-        components.queryItems = [URLQueryItem(name: "id", value: String(shortID))]
+        components.queryItems = [URLQueryItem(name: "id", value: item.id.uuidString)]
+        return components.url
+    }
+    
+    /// Generates a shareable universal link from a ProcessedItem ID.
+    /// Format: https://secretatomics.com/item?id=<ID>
+    public static func shareableURL(for itemID: String) -> URL? {
+        var components = URLComponents()
+        components.scheme = "https"
+        components.host = "secretatomics.com"
+        components.path = "/item"
+        components.queryItems = [URLQueryItem(name: "id", value: itemID)]
         return components.url
     }
     
     /// Resolves an opaque link back to a LocalInput item in the shared store.
     public func resolve(url: URL, in context: ModelContext) throws -> LocalInput? {
-        let host = url.host?.lowercased()
-        let isHostScheme = url.scheme == "secretatomics" && url.host == "item"
-        let isSecretAtomicsHost = host == "secretatomics.com"
-            || host == "www.secretatomics.com"
-            || host == "secretatomics.com"
-        let isSecretAtomicsUniversalLink = url.scheme == "https" && isSecretAtomicsHost && (url.path == "/item" || url.path.hasPrefix("/item/"))
+        let isCustomScheme = url.scheme == "secretatomics" && (url.host == "open" || url.host == "item")
+        let isUniversalLink = url.scheme == "https"
+            && (url.host == "secretatomics.com" || url.host == "www.secretatomics.com")
+            && (url.path == "/item" || url.path.hasPrefix("/item/"))
         
-        guard isHostScheme || isSecretAtomicsUniversalLink else {
+        guard isCustomScheme || isUniversalLink else {
             return nil
         }
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              let shortID = components.queryItems?.first(where: { $0.name == "id" })?.value else {
+              let id = components.queryItems?.first(where: { $0.name == "id" })?.value else {
             return nil
         }
         
-        // Search for items where the prefix of their UUID matches the shortID
+        // Search for items by full UUID match
         let descriptor = FetchDescriptor<LocalInput>()
         let items = try context.fetch(descriptor)
         
         return items.first { item in
-            item.id.uuidString.replacingOccurrences(of: "-", with: "").hasPrefix(shortID)
+            item.id.uuidString == id
         }
     }
 }
+

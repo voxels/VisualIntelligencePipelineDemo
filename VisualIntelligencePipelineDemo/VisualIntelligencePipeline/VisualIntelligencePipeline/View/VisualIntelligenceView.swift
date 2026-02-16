@@ -43,6 +43,11 @@ public struct VisualIntelligenceView: View {
                 if let scanID = navigationManager.scanSessionID {
                     viewModel.activeSessionID = scanID
                     print("🔄 Visual Intelligence: Resuming session \(scanID)")
+                } else {
+                    // Fresh session — clear any stale context from a previous session
+                    viewModel.activeSessionID = UUID().uuidString
+                    viewModel.accumulatedContexts = []
+                    print("🆕 Visual Intelligence: Starting fresh session \(viewModel.activeSessionID)")
                 }
                 
                 // Check for pending photo imports from sidebar
@@ -231,7 +236,31 @@ struct VisualIntelligenceReviewLayer: View {
             VideoPlayer(player: AVPlayer(url: videoURL))
                 .aspectRatio(contentMode: .fit)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if !viewModel.sessionImages.isEmpty {
+        } else if let capturedImage = viewModel.capturedImage, viewModel.sessionImages.count == 1 {
+            ZStack {
+                Image(uiImage: capturedImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
+                Rectangle()
+                    .background(.ultraThinMaterial)
+                    .overlay(
+                        Group {
+                            if let sifted = viewModel.siftedImage {
+                                SiftedSubjectView(
+                                    siftedImage: sifted,
+                                    boundingBox: viewModel.siftedBoundingBox,
+                                    backingImageSize: viewModel.capturedImage?.size ?? .zero,
+                                    peelAmount: $viewModel.peelAmount
+                                )
+                            }
+                        }
+                            .allowsHitTesting(false)
+                    )
+                    .overlay(siftingGestureLayer)
+            }
+        } else if viewModel.sessionImages.count > 1 {
             // Horizontal carousel for session images
             VStack(spacing: 0) {
                 GeometryReader { geometry in
@@ -250,6 +279,7 @@ struct VisualIntelligenceReviewLayer: View {
                             .scrollTargetLayout()
                         }
                         .scrollTargetBehavior(.paging)
+                        .scrollIndicators(.visible)
                         .scrollPosition(id: Binding(
                             get: { currentIndex },
                             set: { newValue in
@@ -264,24 +294,8 @@ struct VisualIntelligenceReviewLayer: View {
                         ))
                     }
                 }
-                
-                // Page indicator dots
-                HStack(spacing: 6) {
-                    ForEach(0..<viewModel.sessionImages.count, id: \.self) { index in
-                        Circle()
-                            .fill(index == currentIndex ? Color.white : Color.white.opacity(0.4))
-                            .frame(width: 7, height: 7)
-                    }
-                }
-                .padding(.bottom, 8)
             }
             .background(Color.black)
-        } else if let capturedImage = viewModel.capturedImage {
-            Image(uiImage: capturedImage)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .clipped()
         } else {
             Color.black.ignoresSafeArea()
             VStack(spacing: 16) {
@@ -291,6 +305,50 @@ struct VisualIntelligenceReviewLayer: View {
                     .foregroundStyle(.white.opacity(0.7))
             }
         }
+    }
+    
+    // MARK: - Sifting Gesture Layer
+    
+    @ViewBuilder
+    private var siftingGestureLayer: some View {
+        Color.clear
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 10)
+                    .onChanged { value in
+                        let dragAmount = -value.translation.height
+                        if dragAmount > 10 {
+                            if viewModel.siftedImage == nil && !viewModel.isAnalyzing {
+                                if let image = viewModel.capturedImage {
+                                    viewModel.analyzeStaticImage(image)
+                                }
+                            }
+                            viewModel.updatePeelAmount(min(1.0, dragAmount / 250.0))
+                        }
+                    }
+                    .onEnded { value in
+                        let dragAmount = -value.translation.height
+                        if dragAmount > 150 {
+                            if let sifted = viewModel.siftedImage {
+                                viewModel.saveToPhotoLibrary(image: sifted)
+                            }
+                        }
+                        withAnimation { viewModel.updatePeelAmount(0) }
+                    }
+            )
+            .simultaneousGesture(
+                LongPressGesture(minimumDuration: 0.3)
+                    .onEnded { _ in
+                        if viewModel.siftedImage == nil && !viewModel.isAnalyzing {
+                            if let image = viewModel.capturedImage {
+                                viewModel.analyzeStaticImage(image)
+                            }
+                        }
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            viewModel.updatePeelAmount(0.15)
+                        }
+                    }
+            )
     }
 }
 
@@ -341,8 +399,7 @@ struct VisualIntelligenceHUD: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Capsule())
+                    .glassCapsule()
                     .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 4)
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.pipelineStatus)
@@ -359,10 +416,7 @@ struct VisualIntelligenceHUD: View {
                 HStack(spacing: 16) {
                     // Live Camera Thumbnail (Picture-in-Picture)
                     Button {
-                        // Resumes live camera mode
-                        withAnimation {
-                            viewModel.reCapture()
-                        }
+                        viewModel.reCapture()
                     } label: {
                         Group {
                             // Show live camera feed
@@ -379,12 +433,14 @@ struct VisualIntelligenceHUD: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .shadow(radius: 5)
                     }
+                        
                     
                     // Add Image (+)
                     Button { viewModel.cameraManager.capturePhoto() } label: {
                         Image(systemName: "plus").font(.title3.bold()).foregroundStyle(.white)
-                            .frame(width: 44, height: 44).glass(cornerRadius: 22)
+                            .frame(width: 44, height: 44)
                     }
+                    .glass(cornerRadius: 22)
                     
                     // Re-Capture (small, left side)
                     Button { withAnimation { viewModel.reCapture() } } label: {
@@ -392,8 +448,8 @@ struct VisualIntelligenceHUD: View {
                             .font(.title3.bold())
                             .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
-                            .glass(cornerRadius: 22)
                     }
+                    .glass(cornerRadius: 22)
                     
                     Spacer()
                     
@@ -403,8 +459,8 @@ struct VisualIntelligenceHUD: View {
                             .font(.title2)
                             .foregroundStyle(viewModel.hasCompletedFirstAnalysis ? .white : .white.opacity(0.4))
                             .padding(20)
-                            .glass(cornerRadius: 35)
                     }
+                    .glass(cornerRadius: 35)
                     .disabled(!viewModel.hasCompletedFirstAnalysis)
                 }
                 .padding(.horizontal, 20)
@@ -560,30 +616,22 @@ struct SessionLocationBar: View {
                     withAnimation {
                         viewModel.isLocationPinned.toggle()
                     }
-                    // Feedback
-                    #if os(iOS)
+                    // Feedbac
+#if os(iOS)
                     let style: UIImpactFeedbackGenerator.FeedbackStyle = viewModel.isLocationPinned ? .heavy : .light
                     UIImpactFeedbackGenerator(style: style).impactOccurred()
-                    #endif
+#endif
                 } label: {
                     Image(systemName: viewModel.isLocationPinned ? "pin.fill" : "pin")
                         .font(.body)
                         .foregroundStyle(viewModel.isLocationPinned ? .yellow : .white.opacity(0.5))
                         .padding(8)
-                        .background(
-                            Circle()
-                                .fill(.ultraThinMaterial)
-                        )
                 }
+                .glassCapsule()
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(
-            Capsule()
-                .fill(.black.opacity(0.4))
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
         .padding(.horizontal)
     }
 }
@@ -627,8 +675,7 @@ struct PipelineStatusView: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                .glassEffect()
         )
         .frame(maxWidth: 260)
     }
@@ -762,7 +809,7 @@ private struct ResultPill: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
+        .glassEffect()
         .clipShape(Capsule())
         .foregroundStyle(.white)
     }
@@ -788,10 +835,10 @@ struct ContextChipBar: View {
             // Header
             HStack {
                 Text("Context")
-                .font(.caption)
-                .fontWeight(.bold)
-                .textCase(.uppercase)
-                .foregroundStyle(.white.opacity(0.6))
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .textCase(.uppercase)
+                    .foregroundStyle(.white.opacity(0.6))
                 Spacer()
             }
             .padding(.horizontal)
@@ -828,7 +875,7 @@ struct ContextChipBar: View {
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 12)
-                            .background(.ultraThinMaterial)
+                            .glassEffect()
                             .clipShape(Capsule())
                             .overlay(
                                 Capsule()
@@ -850,7 +897,7 @@ struct ContextChipBar: View {
                                     Text(statement)
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 12)
-                                        .background(.ultraThinMaterial)
+                                        .glassEffect()
                                         .clipShape(Capsule())
                                         .overlay(
                                             Capsule()
@@ -908,9 +955,9 @@ struct ContextChipBar: View {
                 viewModel.refineContext(with: text)
             }
         }
-        #if os(iOS)
+#if os(iOS)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        #endif
+#endif
     }
 }
 
@@ -924,20 +971,20 @@ struct TopStatusPill: View {
         HStack(spacing: 12) {
             if isRecording {
                 Circle()
-                .fill(.red)
-                .frame(width: 8, height: 8)
+                    .fill(.red)
+                    .frame(width: 8, height: 8)
                 Text("Sifting...")
-                .fontWeight(.medium)
+                    .fontWeight(.medium)
             } else if let result = result {
                 Image(systemName: result.icon)
-                .font(.body)
+                    .font(.body)
                 Text(result.title)
-                .fontWeight(.medium)
+                    .fontWeight(.medium)
             } else {
                 Image(systemName: "sparkle.magnifyingglass")
-                .font(.body)
+                    .font(.body)
                 Text("Scanning")
-                .fontWeight(.medium)
+                    .fontWeight(.medium)
             }
         }
         .font(.subheadline)
@@ -948,10 +995,6 @@ struct TopStatusPill: View {
         .animation(.smooth, value: result?.title)
         .animation(.smooth, value: isRecording)
     }
-}
-
-extension VisualIntelligenceView {
-
 }
 
 struct DocumentDetailView: View {
@@ -1001,7 +1044,7 @@ struct DocumentDetailView: View {
                                 .foregroundStyle(.white.opacity(0.7))
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(.ultraThinMaterial, in: Capsule())
+                                .glassEffect()
                             }
                         }
                         .padding(.horizontal)
@@ -1033,7 +1076,7 @@ struct DocumentDetailView: View {
                                         .foregroundStyle(.white)
                                         .padding(.horizontal, 12)
                                         .padding(.vertical, 8)
-                                        .background(.ultraThinMaterial, in: Capsule())
+                                        .glassEffect()
                                 }
                                 .padding(.horizontal)
                             }
@@ -1061,27 +1104,6 @@ struct DocumentDetailView: View {
                 }
                 
                 ToolbarItemGroup(placement: .topBarTrailing) {
-                    if hasSaved {
-                        Label("Saved", systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                            .font(.subheadline.bold())
-                    } else {
-                        Button {
-                            // Sync edited text back to ViewModel before saving
-                            viewModel.rectifiedDocumentText = editableText
-                            viewModel.saveDocument()
-                            hasSaved = true
-                        } label: {
-                            if viewModel.isSavingDocument {
-                                ProgressView()
-                            } else {
-                                Text("Save to Visual Intelligence")
-                                    .fontWeight(.bold)
-                            }
-                        }
-                        .disabled(viewModel.isSavingDocument)
-                    }
-                    
                     ShareLink(item: Image(uiImage: image), preview: SharePreview("Scanned Document", image: Image(uiImage: image)))
                 }
             }
@@ -1270,7 +1292,7 @@ struct IntelligenceResultsView: View {
                                 buttonSection(title: "ACTIONS", buttons: actionButtons, columns: 2)
                             }
                             
-                            // Context Buttons Section  
+                            // Context Buttons Section
                             if !contextButtons.isEmpty {
                                 buttonSection(title: "CONTEXT", buttons: contextButtons, columns: 1, isContext: true)
                             }
@@ -1303,9 +1325,8 @@ struct IntelligenceResultsView: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(viewModel.isSaving ? Color.gray : Color.blue)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .shadow(color: .blue.opacity(0.4), radius: 8, x: 0, y: 4)
+                        .glassCapsule()
                     }
                     .disabled(viewModel.isSaving)
                     .padding(.horizontal, 20)
@@ -1595,8 +1616,8 @@ struct IntelligenceResultsView: View {
                                 )
                         } else {
                             // Action/Detected buttons: icon + text with selection state
-                            let isSelected = viewModel.selectedPurposes.contains(button.0) || 
-                                           viewModel.selectedPurposes.contains(where: { $0.contains(button.0) })
+                            let isSelected = viewModel.selectedPurposes.contains(button.0) ||
+                            viewModel.selectedPurposes.contains(where: { $0.contains(button.0) })
                             VStack(spacing: 8) {
                                 Image(systemName: button.1)
                                     .font(.title3)
@@ -1620,159 +1641,6 @@ struct IntelligenceResultsView: View {
                     }
                 }
             }
-        }
-    }
-    
-    // MARK: - Content Stack (broken out to help type-checker)
-    
-    @ViewBuilder
-    private var intelligenceContentStack: some View {
-        VStack(spacing: 20) {
-            // Pipeline Status
-            if viewModel.pipelineStatus != .idle && viewModel.pipelineStatus != .complete {
-                PipelineStatusView(status: viewModel.pipelineStatus)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal)
-            }
-            
-            // Save Chip
-            saveSection
-            
-            // Actions Section
-            if !actionResults.isEmpty {
-                actionsSection
-            }
-            
-            // Context Section
-            contextSection
-        }
-        .padding(.vertical, 16)
-    }
-    
-    // MARK: - Sections
-    
-    @ViewBuilder
-    private var saveSection: some View {
-        HStack {
-            Button {
-                onSave()
-            } label: {
-                HStack(spacing: 8) {
-                    if viewModel.isSaving {
-                        ProgressView().tint(.white)
-                    } else {
-                        Image(systemName: "square.and.arrow.down.fill").font(.body.bold())
-                        Text("Save Capture").fontWeight(.bold)
-                    }
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 14)
-                .background(viewModel.isSaving ? Color.gray : Color.blue)
-                .clipShape(Capsule())
-                .shadow(color: .blue.opacity(0.4), radius: 8, x: 0, y: 4)
-            }
-            .disabled(viewModel.isSaving)
-            
-            Spacer()
-        }
-        .padding(.horizontal)
-    }
-    
-    @ViewBuilder
-    private var actionsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("ACTIONS")
-                .font(.caption).fontWeight(.bold)
-                .foregroundStyle(.white.opacity(0.6))
-                .padding(.horizontal)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(actionResults, id: \.self) { result in
-                        Button {
-                            handleResultSelection(result)
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: result.icon)
-                                Text(result.title).fontWeight(.medium)
-                            }
-                            .font(.subheadline)
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                            .background(Color.green.opacity(0.3))
-                            .clipShape(Capsule())
-                            .overlay(Capsule().stroke(Color.green.opacity(0.5), lineWidth: 1))
-                        }
-                    }
-                }
-                .padding(.horizontal)
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var contextSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("CONTEXT")
-                .font(.caption).fontWeight(.bold)
-                .foregroundStyle(.white.opacity(0.6))
-                .padding(.horizontal)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    // Add Custom Button
-                    Button {
-                        isEnteringCustomContext = true
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "plus.circle.fill")
-                            Text("Add")
-                        }
-                        .font(.subheadline).fontWeight(.semibold)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(Color.blue)
-                        .clipShape(Capsule())
-                    }
-                    
-                    // Selected Contexts
-                    ForEach(Array(viewModel.selectedPurposes).sorted(), id: \.self) { context in
-                        contextChip(text: context, isSelected: true)
-                    }
-                    
-                    // AI Suggestions
-                    ForEach(purposeSuggestions, id: \.self) { statement in
-                        contextChip(text: statement, isSelected: false)
-                    }
-                }
-                .padding(.horizontal)
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private func contextChip(text: String, isSelected: Bool) -> some View {
-        Button {
-            toggleContext(text)
-        } label: {
-            HStack(spacing: 4) {
-                Text(text)
-                if isSelected {
-                    Image(systemName: "checkmark").font(.caption.bold())
-                }
-            }
-            .font(.subheadline)
-            .foregroundStyle(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(.ultraThinMaterial)
-            .clipShape(Capsule())
-            .overlay(
-                Capsule().stroke(isSelected ? Color.blue : Color.white.opacity(0.2), lineWidth: isSelected ? 2 : 1)
-            )
         }
     }
     
@@ -1807,9 +1675,9 @@ struct IntelligenceResultsView: View {
                 viewModel.refineContext(with: text)
             }
         }
-        #if os(iOS)
+#if os(iOS)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        #endif
+#endif
     }
     
     private func handleResultSelection(_ result: IntelligenceResult) {

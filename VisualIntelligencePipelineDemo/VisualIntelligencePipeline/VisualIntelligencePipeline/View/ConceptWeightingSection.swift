@@ -60,7 +60,7 @@ struct ConceptWeightingSection: View {
         item.tags.removeAll { $0 == concept.name }
         item.categories.removeAll { $0 == concept.name }
         item.themes.removeAll { $0 == concept.name }
-        try? modelContext.save()
+        Task { @MainActor in try? modelContext.save() }
     }
 
     var body: some View {
@@ -116,7 +116,7 @@ struct ConceptWeightingSection: View {
     }
     
     private func save() {
-        try? modelContext.save()
+        Task { @MainActor in try? modelContext.save() }
     }
     
     private func addConcept() {
@@ -126,7 +126,7 @@ struct ConceptWeightingSection: View {
         let concept = UserConcept(name: name, definition: "User added concept", weight: 1.0)
         modelContext.insert(concept)
         item.tags.append(name) // Link by adding to tags
-        try? modelContext.save()
+        Task { @MainActor in try? modelContext.save() }
         
         newConceptName = ""
         isAdding = false

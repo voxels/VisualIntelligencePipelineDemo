@@ -167,7 +167,7 @@ struct ReprocessMetadataView: View {
         // 0. Reset Purposes/Intent to force fresh generation
         item.purposes = []
         item.questions = []
-        try? modelContext.save()
+        Task { @MainActor in try? modelContext.save() }
         
         // 1. Set Shared Context - Preserve Session ID if possible to maintain continuity
         let sessionID = item.sessionID ?? UUID().uuidString

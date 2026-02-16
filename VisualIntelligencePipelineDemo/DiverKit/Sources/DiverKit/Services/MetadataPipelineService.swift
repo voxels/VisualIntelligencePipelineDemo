@@ -744,6 +744,7 @@ public final class MetadataPipelineService {
             sessionID: descriptor.sessionID,
             purposes: Array(descriptor.purposes)
         )
+        print("💾 [DIAG] handle(record:): descriptor.sessionID=\(descriptor.sessionID ?? "NIL"), localInput.sessionID=\(localInput.sessionID ?? "NIL"), purposes=\(descriptor.purposes)")
         // Persist full descriptor for crash recovery — if the task is cancelled
         // before process() completes, resumeSuspendedQueue can recover it.
         localInput.descriptorJSON = try? JSONEncoder().encode(descriptor)

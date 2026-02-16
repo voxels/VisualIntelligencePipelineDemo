@@ -94,6 +94,7 @@ public final class CameraManager: NSObject, ObservableObject {
             
             guard let videoDevice = videoDevice,
                   let videoInput = try? AVCaptureDeviceInput(device: videoDevice) else {
+                self.session.commitConfiguration()
                 return
             }
             
@@ -111,19 +112,46 @@ public final class CameraManager: NSObject, ObservableObject {
             if self.session.canAddOutput(self.photoOutput) {
                 self.session.addOutput(self.photoOutput)
                 self.photoOutput.isHighResolutionCaptureEnabled = true
-                
-                // Enable depth data delivery if supported
-                if self.photoOutput.isDepthDataDeliverySupported {
-                    self.photoOutput.isDepthDataDeliveryEnabled = true
-                    print("📐 Depth data delivery enabled")
-                } else {
-                    print("📐 Depth data delivery not supported on this device")
+            }
+            
+            // Select a device format that supports depth data.
+            // Use .inputPriority so we can set the format directly instead of relying on presets.
+            self.session.sessionPreset = .inputPriority
+            
+            // Find the best format: prefer highest-resolution photo format with depth support
+            let depthFormats = videoDevice.formats.filter { format in
+                !format.supportedDepthDataFormats.isEmpty
+            }
+            
+            if let bestFormat = depthFormats.last { // .last = highest resolution
+                do {
+                    try videoDevice.lockForConfiguration()
+                    videoDevice.activeFormat = bestFormat
+                    
+                    // Also set the depth format to the highest-resolution depth format
+                    if let bestDepthFormat = bestFormat.supportedDepthDataFormats.last {
+                        videoDevice.activeDepthDataFormat = bestDepthFormat
+                    }
+                    
+                    videoDevice.unlockForConfiguration()
+                    print("📐 Selected depth-capable format: \(bestFormat.formatDescription)")
+                } catch {
+                    print("📐 Failed to lock device for depth format: \(error)")
                 }
+            }
+            
+            // Enable depth data delivery if supported (should be true now with depth format)
+            if self.photoOutput.isDepthDataDeliverySupported {
+                self.photoOutput.isDepthDataDeliveryEnabled = true
+                print("📐 Depth data delivery enabled")
+            } else {
+                print("📐 Depth data delivery not supported (no depth-capable format found)")
             }
             
             self.session.commitConfiguration()
         }
     }
+    
     
     public func capturePhoto() {
         if isTesting {

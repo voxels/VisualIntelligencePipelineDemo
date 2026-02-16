@@ -379,6 +379,12 @@ struct VisualIntelligencePipelineApp: App {
             handleWrappedLink(url)
             return
         }
+        
+        // Handle https://secretatomics.com/item?id=... (Universal Links for items)
+        if url.host == "secretatomics.com", url.pathComponents.contains("item") {
+            handleOpenItem(url)
+            return
+        }
     }
     
     private func handleOpenItem(_ url: URL) {

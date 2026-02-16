@@ -197,7 +197,7 @@ struct SidebarView: View {
                             .foregroundStyle(.secondary)
                     }
                     .padding(10)
-                    .background(.ultraThinMaterial)
+                    .glassEffect()
                     .cornerRadius(8)
                     .shadow(radius: 2)
                     .padding(.horizontal)
@@ -216,7 +216,8 @@ struct SidebarView: View {
                     ProgressView()
                         .scaleEffect(1.5)
                         .padding(24)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                        .glass(cornerRadius:16)
+
                 }
                 .transition(.opacity)
                 .animation(.easeInOut(duration: 0.15), value: viewModel.isPerformingAction)
@@ -833,7 +834,7 @@ struct SidebarView: View {
                         ProgressView()
                             .scaleEffect(0.7)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(item.title ?? item.url ?? "Processing...")
+                            Text(item.title ?? item.displayLabel)
                                 .font(.subheadline)
                                 .lineLimit(1)
                             

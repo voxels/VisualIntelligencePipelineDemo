@@ -294,7 +294,7 @@ struct ReprocessingWizardView: View {
                 item.processingLog.append("\(Date().formatted()): No explicit review. Changes kept by default.")
             }
         }
-        try? modelContext.save()
+        Task { @MainActor in try? modelContext.save() }
         currentStep = .complete
     }
 }

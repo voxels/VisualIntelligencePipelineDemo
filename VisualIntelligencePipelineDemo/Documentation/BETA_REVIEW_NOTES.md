@@ -1,7 +1,7 @@
 # Visual Intelligence Pipeline — Beta Review Notes
 
-**Version:** 1.0 (Build 1)
-**Date:** February 15, 2026
+**Version:** 1.1 (Build 2)
+**Date:** February 16, 2026
 **Platform:** iOS 26.0+
 **Requires:** Device with Apple Intelligence support
 
@@ -91,7 +91,18 @@ This is the **first public beta**. Your feedback is critical to shaping the fina
 - Is metadata extraction accurate?
 - Do links appear in the library promptly?
 
-### 7. Reprocessing
+### 7. QR Code Enrichment
+
+- Capture an image containing a QR code.
+- Verify the QR URL is detected and enriched with web metadata (title, description).
+- Check that the enrichment data appears in the item's detail view.
+
+**What to look for:**
+- Is the QR code detected automatically?
+- Does the URL get web enrichment (not just the raw URL)?
+- Is metadata displayed in the detail card?
+
+### 8. Reprocessing
 
 - From the sidebar, long-press a saved item and select **Reprocess**.
 - Verify that metadata is updated without creating a duplicate entry.
@@ -102,7 +113,7 @@ This is the **first public beta**. Your feedback is critical to shaping the fina
 - Is the original item updated in place (no duplicates)?
 - Are existing edits (location, tags) preserved?
 
-### 8. Search
+### 9. Search
 
 - Use the search bar in the sidebar.
 - Try searching by keyword, location name, or concept.
@@ -122,6 +133,7 @@ This is the **first public beta**. Your feedback is critical to shaping the fina
 | Apple Intelligence features require iOS 26 with a supported device | Expected | On unsupported devices, AI summaries and concept tagging will be unavailable. |
 | First capture may take a few seconds to initialize the camera pipeline | Low | Subsequent captures are faster. |
 | Weather context may be unavailable without location permission | Low | Grant "While Using" location access for full enrichment. |
+| FastVLM model download (~500MB) required for multimodal analysis | Expected | Optional feature, app works fully without it. |
 
 ---
 

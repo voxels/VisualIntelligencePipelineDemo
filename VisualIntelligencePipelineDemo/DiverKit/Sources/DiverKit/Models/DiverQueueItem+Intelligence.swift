@@ -13,7 +13,7 @@ extension DiverQueueItem {
         var findingsSummary = ""
         
         // Items to create
-        var childDescriptors: [DiverItemDescriptor] = []
+        var childDescriptors: [(DiverItemDescriptor, Data?)] = []
         
         let tagBlocklist: Set<String> = ["monitor", "screen", "display", "computer", "paper", "document", "text", "visual_intelligence", "keyboard", "peripheral", "output device", "electronics", "technology"]
         
@@ -40,7 +40,7 @@ extension DiverQueueItem {
                     longitude: longitude,
                     purposes: purposes
                 )
-                childDescriptors.append(desc)
+                childDescriptors.append((desc, nil))
                 
             case .text(let text, let url):
                 fullText += text + "\n"
@@ -64,7 +64,7 @@ extension DiverQueueItem {
                         longitude: longitude,
                         purposes: purposes
                     )
-                    childDescriptors.append(desc)
+                    childDescriptors.append((desc, nil))
                 }
                 
             case .semantic(let label, let confidence):
@@ -96,7 +96,7 @@ extension DiverQueueItem {
                     longitude: longitude,
                     purposes: purposes
                 )
-                childDescriptors.append(desc)
+                childDescriptors.append((desc, nil))
                 
             case .product(let code, _, let mediaAssets):
                 findingsSummary += "• Found Product: \(code)\n"
@@ -118,14 +118,35 @@ extension DiverQueueItem {
                     longitude: longitude,
                     purposes: purposes
                 )
-                childDescriptors.append(desc)
+                childDescriptors.append((desc, nil))
                 
-            case .document(_, let text, let label, _):
+            case .document(_, let text, let label, let rectifiedImage):
                 if let text { fullText += text + "\n" }
                 if let label { semanticLabels.append(label) }
+                findingsSummary += "• Found Document: \(label ?? "Scanned Document")\n"
+                let docID = UUID().uuidString
+                let desc = DiverItemDescriptor(
+                    id: docID,
+                    url: "secretatomics://open-doc?id=\(docID)",
+                    title: label ?? "Scanned Document",
+                    descriptionText: text,
+                    styleTags: label.map { [$0] } ?? [],
+                    categories: ["document", "child"],
+                    location: locationName,
+                    type: .document,
+                    purpose: purpose,
+                    masterCaptureID: masterID,
+                    sessionID: sessionID,
+                    placeID: placeID,
+                    latitude: latitude,
+                    longitude: longitude,
+                    purposes: purposes
+                )
+                childDescriptors.append((desc, rectifiedImage))
                 
             case .purpose: break
             case .siftedSubject(_, _): break
+            case .aesthetics: break
             case .qr(let url):
                 findingsSummary += "• Found QR Code\n"
                 let id = DiverLinkWrapper.id(for: url)
@@ -146,7 +167,7 @@ extension DiverQueueItem {
                     longitude: longitude,
                     purposes: purposes
                 )
-                childDescriptors.append(desc)
+                childDescriptors.append((desc, nil))
             }
         }
         
@@ -171,7 +192,7 @@ extension DiverQueueItem {
                 longitude: longitude,
                 purposes: purposes
             )
-            childDescriptors.append(placeDesc)
+            childDescriptors.append((placeDesc, nil))
         }
         
         // MASTER ITEM
@@ -214,11 +235,12 @@ extension DiverQueueItem {
         
         // Enqueue child items (web links, QR codes, products, entertainment, places)
         // These carry the same sessionID as the master so they appear in the correct session.
-        for childDesc in childDescriptors {
+        for (childDesc, childPayload) in childDescriptors {
             items.append(DiverQueueItem(
                 action: "save",
                 descriptor: childDesc,
-                source: "visual_intelligence"
+                source: "visual_intelligence",
+                payload: childPayload
             ))
         }
         

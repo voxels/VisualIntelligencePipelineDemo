@@ -52,7 +52,7 @@ struct ConceptListView: View {
             for index in offsets {
                 modelContext.delete(concepts[index])
             }
-            try? modelContext.save()
         }
+        Task { @MainActor in try? modelContext.save() }
     }
 }

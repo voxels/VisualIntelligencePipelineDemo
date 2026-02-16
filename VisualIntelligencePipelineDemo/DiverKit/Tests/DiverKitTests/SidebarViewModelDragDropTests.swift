@@ -56,3 +56,26 @@ final class SidebarViewModelDragDropTests: XCTestCase {
         XCTAssertTrue(collection.sessionIDs.contains("s1"))
     }
 }
+
+extension SidebarViewModelDragDropTests {
+    func testMoveItemsBatchUpdatesSessionID() async throws {
+        // Given: Two sessions and an item in the first session
+        let session1 = DiverSession(sessionID: "s1", title: "Session 1")
+        let session2 = DiverSession(sessionID: "s2", title: "Session 2")
+        let item = ProcessedItem(id: "i1", title: "Item 1", sessionID: "s1")
+        item.session = session1
+        
+        modelContext.insert(session1)
+        modelContext.insert(session2)
+        modelContext.insert(item)
+        try modelContext.save()
+        
+        // When: We use the batch moveItems handler (used by drag-drop)
+        let transfers = [ItemTransfer(id: "i1")]
+        viewModel.moveItems(transfers, to: session2, context: modelContext)
+        
+        // Then: BOTH sessionID (string) and session (relationship) should be updated
+        XCTAssertEqual(item.sessionID, "s2", "sessionID string must be updated")
+        XCTAssertEqual(item.session?.sessionID, "s2", "session relationship must be updated")
+    }
+}

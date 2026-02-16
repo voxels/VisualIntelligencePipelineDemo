@@ -8,7 +8,7 @@
 *(Alternative: Your AI-Powered Visual Memory)*
 
 ## Promotional Text
-**Capture the world around you with unprecedented depth. Now with context tags, Daily Focus briefs, and music recognition.** (170 chars max)
+**Capture the world around you with unprecedented depth. Now with FastVLM vision-language model, consolidated Vision analysis, and QR code intelligence.** (170 chars max)
 
 ## Description
 
@@ -39,6 +39,7 @@ Hear something you love? Capture it to recognize the track via Apple Music or Sp
 *   **Context Tags & Daily Focus:** Add custom tags like "Gift for Mom" to any capture. A Daily Focus brief aggregates your activity into an AI-generated summary each day.
 *   **Universal Link Hub:** Save links from Safari, YouTube, TikTok, or any app via the Share Sheet. Links are automatically enriched with metadata, previews, and context.
 *   **Document Detection:** Automatically detects, corrects perspective, and saves documents found in your captures.
+*   **QR Code Intelligence:** QR codes are automatically detected and enriched with web metadata — titles, descriptions, and previews extracted from the target URL.
 *   **Siri, Shortcuts & Widgets:** Save, share, and search your library with voice commands, automation workflows, and at-a-glance Home & Lock screen widgets.
 *   **Privacy First:** Built with on-device intelligence at its core. Your visual data is processed locally, ensuring your personal research and memories stay private.
 

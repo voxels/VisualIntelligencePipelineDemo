@@ -1,7 +1,8 @@
-# Visual Intelligence Pipeline — v1.0 Analysis
+# Visual Intelligence Pipeline — v1.1 Analysis
 
-**Date:** 2026-02-15
-**Commit:** `984baf1` — 53 commits over 36 days (Jan 11 – Feb 15, 2026)
+**Date:** 2026-02-16
+**Revision:** Post-pipeline audit refresh
+**Development period:** 37 days (Jan 11 – Feb 16, 2026)
 
 ---
 
@@ -9,35 +10,34 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Swift files | 314 |
-| Total lines of code | 49,890 |
-| Test files | 41 |
-| Test lines | 3,649 |
-| Commits | 53 |
+| Total Swift files | 316 |
+| Total lines of code | ~50,800 |
+| Test files | 18 |
+| Test lines | 1,534 |
 | Contributors | 1 |
-| Development period | 36 days |
+| Development period | 37 days |
 
 ### Module Breakdown
 
 | Module | Files | Lines | Purpose |
 |--------|-------|-------|---------|
-| **DiverKit** | 179 | 26,324 | Core logic — services, models, view models, schemas, storage |
-| **App Target** | 48 | 14,659 | UI views, app-level services, AppIntents |
-| **Tests** | 41 | 3,649 | Unit and UI tests across all modules |
-| **Widget** | 20 | 2,622 | Home & Lock screen widgets |
-| **ActionExtension** | 5 | 886 | Share Sheet extension |
-| **DiverShared** | 9 | 802 | Pure Swift shared types |
+| **DiverKit** | 200 | 28,800 | Core logic — services, models, view models, storage, extensions |
+| **App Target** | 91 | 19,747 | UI views (24), AppIntents (21), ActionExtension (5), app-level services |
+| **DiverShared** | 16 | 1,239 | Pure Swift shared data models and utilities |
+| **Tests** | 18 | 1,534 | Unit tests for DiverKit |
+| **Widget** | 5 | 666 | Home & Lock screen widgets |
 | **LocalPackages** | 2 | 25 | YahooSearch stub |
 
 ### DiverKit Internal Breakdown
 
 | Category | Count |
 |----------|-------|
-| Services | 33 |
-| API Schemas | 56 |
+| Services | 35 |
 | Models | 14 |
 | View Models | 4 |
 | Storage | 5 |
+| Schemas | see `Schemas/` directory |
+| Other | Agents, Auth, Config, Extensions, Inputs, Items, Jobs, Managers, Media, Messages, References, Requests, Resources, Utilities, Views |
 
 ---
 
@@ -47,19 +47,20 @@ These files carry the most complexity and are the primary candidates for future 
 
 | File | Lines | Concern |
 |------|-------|---------|
-| `VisualIntelligenceViewModel.swift` | 2,884 | Camera, detection, sifting, capture review, import |
-| `LocalPipelineService.swift` | 2,732 | Pipeline orchestration, enrichment, persistence |
-| `ReferenceDetailView.swift` | 2,486 | Item detail view with multiple card layouts |
-| `VisualIntelligenceView.swift` | 1,795 | Camera UI, overlays, review stack |
-| `SidebarView.swift` | 1,444 | Navigation sidebar, sessions, collections, drag-and-drop |
-| `SidebarViewModel.swift` | 1,259 | Sidebar state, session management, library maintenance |
-| `MetadataPipelineService.swift` | 1,002 | Queue → LocalInput conversion, metadata extraction |
+| `LocalPipelineService.swift` | 3,041 | Pipeline orchestration, enrichment, persistence |
+| `VisualIntelligenceViewModel.swift` | 2,837 | Camera, detection, sifting, capture review, import |
+| `ReferenceDetailView.swift` | 2,496 | Item detail view with multiple card layouts |
+| `VisualIntelligenceView.swift` | 1,698 | Camera UI, overlays, review stack |
+| `SidebarView.swift` | 1,445 | Navigation sidebar, sessions, collections, drag-and-drop |
+| `SidebarViewModel.swift` | 1,208 | Sidebar state, session management, library maintenance |
+| `MetadataPipelineService.swift` | 1,007 | Queue → LocalInput conversion, metadata extraction |
 | `LocalizedStrings.swift` | 699 | Generated localization strings |
-| `PhotoLibraryImportService.swift` | 683 | Photo/video import with EXIF handling |
+| `PhotoLibraryImportService.swift` | 687 | Photo/video import with EXIF handling |
 | `EditLocationView.swift` | 663 | Location search, map selection, pinning |
+| `VisualIntelligencePipelineApp.swift` | 646 | App entry point, service initialization |
 
 > [!NOTE]
-> 5 files exceed 1,000 lines. The top 3 (`VisualIntelligenceViewModel`, `LocalPipelineService`, `ReferenceDetailView`) together represent 16% of the total codebase. These are prime candidates for extraction into smaller, focused components.
+> 6 files exceed 1,000 lines. The top 3 (`LocalPipelineService`, `VisualIntelligenceViewModel`, `ReferenceDetailView`) together represent ~16% of the total codebase. These are prime candidates for extraction into smaller, focused components.
 
 ---
 
@@ -73,8 +74,11 @@ The three-layer package architecture (`DiverShared` → `DiverKit` → `App`) en
 **Comprehensive Enrichment Pipeline**
 The enrichment architecture is the project's standout feature — 10+ enrichment services (Location, Weather, Web, Aesthetics, Music, Documents, DuckDuckGo, Foursquare, MapKit, Contacts) are composed through `LocalPipelineService`. Each service has a focused responsibility and can operate independently.
 
+**Bundled Vision Pass**
+As of v1.1, aesthetics scoring is bundled into the Vision analysis pass alongside OCR, QR detection, semantic classification, document segmentation, and sifting — all executed in a single `handler.perform()` call per image. This eliminates redundant image decoding and improves throughput.
+
 **On-Device Intelligence**
-All ML inference runs on-device via Apple Intelligence (`SystemLanguageModel`), Vision, and CoreML. No data leaves the device for processing. The `IntelligenceProcessor` (568 lines) handles LLM prompts with enriched context injection.
+All ML inference runs on-device via Apple Intelligence (`SystemLanguageModel`), Vision, and CoreML. No data leaves the device for processing. The `IntelligenceProcessor` handles LLM prompts with enriched context injection.
 
 **Reprocessing Without Duplication**
 The `reprocessPipeline` pattern reuses existing item IDs, preventing database duplicates. This allows silent background reprocessing as models improve without user-facing disruption.
@@ -85,45 +89,39 @@ The `reprocessPipeline` pattern reuses existing item IDs, preventing database du
 ### Areas for Improvement
 
 **Large File Concentration**
-The top 5 files contain ~11,360 lines (23% of the codebase). `VisualIntelligenceViewModel` at 2,884 lines handles camera management, subject detection, sifting, capture review, photo import, and location state — too many responsibilities for a single type.
+The top 6 files contain ~12,700 lines (25% of the codebase). `LocalPipelineService` at 3,041 lines is the single largest file, handling pipeline orchestration, enrichment, persistence, session management, and reprocessing — too many responsibilities for a single type.
 
 > [!WARNING]
-> `ReferenceDetailView.swift` (2,486 lines) is the largest SwiftUI view file. Complex views of this size risk Swift compiler timeouts and have historically caused build failures in this project (see conversation history). Consider extracting card types into separate view files.
+> `ReferenceDetailView.swift` (2,496 lines) is the largest SwiftUI view file. Complex views of this size risk Swift compiler timeouts and have historically caused build failures in this project. Consider extracting card types into separate view files.
 
 **Test Coverage**
-41 test files with 3,649 lines represent ~7.3% of the codebase by line count. Test coverage is broad (covering pipeline, models, intents, adapters, link enrichment, and view models) but shallow — most tests validate happy paths. Key gaps:
+18 test files with 1,534 lines represent ~3% of the codebase by line count. Test coverage is focused on DiverKit but remains shallow — most tests validate happy paths. Key gaps:
 
 | Area | Test Status |
 |------|-------------|
-| `LocalPipelineService` (2,732 lines) | 1 test file |
-| `VisualIntelligenceViewModel` (2,884 lines) | 1 test file |
-| `SidebarViewModel` (1,259 lines) | 1 drag-drop test file only |
-| Views (25 files) | No unit tests (UI tests only) |
+| `LocalPipelineService` (3,041 lines) | 1 test file |
+| `VisualIntelligenceViewModel` (2,837 lines) | Not directly tested |
+| `SidebarViewModel` (1,208 lines) | 1 drag-drop test file only |
+| Views (24 files) | No unit tests |
 | `IntelligenceProcessor` | 1 test file |
-
-**API Schemas Are 21% of DiverKit**
-56 auto-generated schema files represent a significant portion of DiverKit. These appear to be from a code-generated API client. While not a quality concern, they inflate the module size and could be isolated into a sub-package.
-
-**Graceful Degradation in Progress**
-A Feb 12 commit added graceful degradation for older devices, but this is recent. The codebase's hard dependency on iOS 26.0+ for `SystemLanguageModel` means the app cannot function on earlier OS versions. The `IntelligenceCapability` model in `DiverShared` suggests this is being addressed.
 
 ---
 
-## Feature Completeness at v1.0
-
-Based on `APP_SUMMARY.md`, `PRODUCT_PAGE.md`, and `changelog.md`:
+## Feature Completeness at v1.1
 
 | Feature | Status | Key Files |
 |---------|--------|-----------|
 | Camera & Subject Sifting | ✅ Complete | `VisualIntelligenceView`, `VisualIntelligenceViewModel`, `CameraManager` |
+| Vision Analysis (OCR, QR, Semantic, Document, Aesthetics) | ✅ Complete | `IntelligenceProcessor`, `AestheticsScoringService` |
 | Location Enrichment (MapKit + Foursquare) | ✅ Complete | `LocationSearchAggregator`, `MapKitEnrichmentService`, `FoursquareEnrichmentService` |
 | Location Pinning & Persistence | ✅ Complete | `SessionLocationBar`, `EditLocationView`, `EditSessionLocationView` |
 | Weather Enrichment | ✅ Complete | `WeatherEnrichmentService` |
-| Aesthetics Scoring | ✅ Complete | `AestheticsScoringService` |
 | Document Detection & Saving | ✅ Complete | `DocumentManager` |
 | Apple Music / Spotify | ✅ Complete | `AppleMusicEnrichmentService`, `SpotifyService` |
 | Web / DuckDuckGo Enrichment | ✅ Complete | `DuckDuckGoEnrichmentService`, `LinkEnrichmentService`, `WebViewLinkEnrichmentService` |
-| On-Device LLM (summaries, concepts, tags) | ✅ Complete | `IntelligenceProcessor` |
+| QR URL Enrichment | ✅ Complete | `LocalPipelineService.integrateIntelligenceResults` |
+| On-Device LLM (summaries, concepts, tags) | ✅ Complete | `IntelligenceProcessor`, `ContextQuestionService` |
+| FastVLM (opt-in multimodal vision) | ✅ Complete | `FastVLMEnrichmentService` |
 | Session Clustering | ✅ Complete | `SessionClusteringService` |
 | Daily Focus Briefs | ✅ Complete | `DailyContextService` |
 | Context Tags (Purposes) | ✅ Complete | `ContextChipBar`, persisted on `ProcessedItem` |
@@ -131,7 +129,7 @@ Based on `APP_SUMMARY.md`, `PRODUCT_PAGE.md`, and `changelog.md`:
 | Sidebar / Collections / Drag-Drop | ✅ Complete | `SidebarView`, `SidebarViewModel` |
 | Text Notes | ✅ Complete | `ReferenceDetailView` |
 | Share Sheet Extension | ✅ Complete | `ActionExtension/` |
-| App Intents (5) | ✅ Complete | `AppIntents/` (Save, Share, Search, GetRecent, Open) |
+| App Intents (21 files) | ✅ Complete | `AppIntents/` |
 | Widgets | ✅ Complete | `VisualIntelligencePipelineWidget/` |
 | Shortcut Gallery | ✅ Complete | `ShortcutGalleryView` |
 | Reprocessing | ✅ Complete | `ReprocessingWizardView`, `ReprocessMetadataView` |
@@ -140,9 +138,26 @@ Based on `APP_SUMMARY.md`, `PRODUCT_PAGE.md`, and `changelog.md`:
 
 ---
 
-## Code Quality Observations
+## Code Quality — v1.1 Audit Results
 
-### Positive Patterns
+On Feb 16, 2026, a comprehensive code quality audit was performed across the pipeline. The following issues were identified and fixed:
+
+### Fixes Applied
+
+| Category | Files | Count | Change |
+|----------|-------|-------|--------|
+| Silent saves (`try? save()`) | `LocalPipelineService`, `SidebarViewModel`, `PhotoLibraryImportService` | 26 | → `do { try } catch { log(error) }` |
+| Unnecessary `Task { @MainActor in }` | `SidebarViewModel` | 11 | Removed — class is already `@MainActor` |
+| Race condition | `SidebarViewModel.deleteSession` | 1 | `isPerformingAction` now resets after synchronous save |
+| Dead code | `LocalPipelineService` | 1 | Empty QR enrichment block removed |
+| Redundant allocation | `LocalPipelineService` | 1 | Unused stored `IntelligenceProcessor` removed |
+| Double image parse | `LocalPipelineService` | 1 | Consolidated `CGImageSourceCreateWithData` calls |
+| Stale label | `LocalPipelineService` | 1 | "Foursquare" → "Place" in LLM context builder |
+| Missing enrichment | `LocalPipelineService` | 1 | QR URLs now get web enrichment (was silently ignored) |
+| Temp file leak | `VisualIntelligenceViewModel` | 2 | Cleanup added in `resetState` and `reCapture` |
+| Aesthetics bundling | `AestheticsScoringService`, `IntelligenceProcessor` | — | Scoring moved into single Vision pass |
+
+### Positive Patterns (Unchanged from v1.0)
 
 - **Async/await throughout** — No completion-handler callback nesting. All services use structured concurrency.
 - **Dependency injection** — Services accept dependencies via initializer, enabling testability.
@@ -151,37 +166,17 @@ Based on `APP_SUMMARY.md`, `PRODUCT_PAGE.md`, and `changelog.md`:
 - **Consistent naming** — `*Service`, `*ViewModel`, `*View` suffixes are applied uniformly.
 - **Localization-ready** — `LocalizedStrings.swift` with 699 lines of localized content.
 
-### Concerns
+### Remaining Concerns
 
-- **God objects** — `VisualIntelligenceViewModel` and `LocalPipelineService` combine too many responsibilities. Risk of merge conflicts, compiler timeouts, and cognitive overload.
-- **View complexity** — `ReferenceDetailView` (2,486 lines) and `VisualIntelligenceView` (1,795 lines) may benefit from extraction into sub-views.
-- **Test depth** — Tests exist for most modules but are disproportionately small relative to the implementation (7.3% ratio). Edge cases, error paths, and integration scenarios need more coverage.
-- **Build artifacts in repo** — `.build/` directories and binary outputs appear in the git history, inflating repo size.
-
----
-
-## Development Velocity
-
-| Period | Focus | Commits |
-|--------|-------|---------|
-| Jan 11 | Initial project setup, core pipeline | 5 |
-| Jan 12 | Location, duplicate prevention, bug fixes | 10 |
-| Jan 13 | README updates, dependency revision | 7 |
-| Jan 27 | Session grouping, location pinning, UI polish | 1 |
-| Jan 30–31 | Semantic search, aesthetics scoring, upgrades | 2 |
-| Feb 2–4 | Text notes, document editing, location fixes | 6 |
-| Feb 11–12 | Widgets, session bugs, drag-and-drop, degradation | 8 |
-| Feb 13–14 | Tests, orientation fix, context tag persistence | 5 |
-| Feb 15 | Documentation cleanup | 2 |
-
-The project shows a classic front-loaded development pattern: heavy initial implementation in the first week, followed by iterative refinement, bug fixing, and polish. Feature work is effectively complete at v1.0; recent commits focus on stability and data integrity.
+- **God objects** — `LocalPipelineService` (3,041 lines) and `VisualIntelligenceViewModel` (2,837 lines) combine too many responsibilities. Risk of merge conflicts, compiler timeouts, and cognitive overload.
+- **View complexity** — `ReferenceDetailView` (2,496 lines) and `VisualIntelligenceView` (1,698 lines) may benefit from extraction into sub-views.
+- **Test depth** — Tests exist for DiverKit but are disproportionately small relative to the implementation (~3% ratio). Edge cases, error paths, and integration scenarios need more coverage.
 
 ---
 
-## Recommendations for v1.1
+## Recommendations for v1.2
 
-1. **Decompose large files** — Extract `VisualIntelligenceViewModel` into focused sub-view-models (camera, sifting, import, capture review). Break `ReferenceDetailView` into per-card-type views.
-2. **Increase test coverage** — Target the top 5 files (currently 11K lines with minimal test coverage). Add error-path tests for `LocalPipelineService` and `IntelligenceProcessor`.
-3. **Isolate API schemas** — Move the 56 auto-generated schema files into a separate `DiverAPI` package target to keep `DiverKit` focused on business logic.
-4. **Clean git history** — Add `.build/` directories to `.gitignore` and purge any binary artifacts from git history.
-5. **Document enrichment pipeline** — Create a visual diagram of the enrichment pipeline stages and service composition for onboarding new contributors.
+1. **Decompose large files** — Extract `LocalPipelineService` into focused sub-services (enrichment orchestrator, persistence manager, session manager). Break `VisualIntelligenceViewModel` into camera, sifting, import, and capture review sub-view-models. Split `ReferenceDetailView` into per-card-type views.
+2. **Increase test coverage** — Target the top 6 files (currently 12.7K lines with minimal test coverage). Add error-path tests for `LocalPipelineService` and `IntelligenceProcessor`.
+3. **Document enrichment pipeline** — Create a visual diagram of the enrichment pipeline stages and service composition for onboarding new contributors.
+4. **Formalize error handling** — The v1.1 audit replaced 26 silent saves with logging. Consider adding a centralized error reporting service for production monitoring.

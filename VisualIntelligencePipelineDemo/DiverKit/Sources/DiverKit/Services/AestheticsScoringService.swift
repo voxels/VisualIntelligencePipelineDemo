@@ -7,8 +7,9 @@ import CoreMedia
 import UIKit
 #endif
 
-/// Service for extracting aesthetically-scored frames from videos and scoring images.
-/// Uses Apple's Vision framework for image analysis.
+/// Service for extracting aesthetically-scored frames from videos.
+/// Uses Apple's Vision framework for ML-based aesthetic scoring,
+/// bundled with FeaturePrint generation in a single handler.perform() per frame.
 @available(iOS 17.0, macOS 14.0, *)
 public final class AestheticsScoringService: @unchecked Sendable {
     
@@ -20,26 +21,11 @@ public final class AestheticsScoringService: @unchecked Sendable {
     
     public init() {}
     
-    // MARK: - Image Scoring
-    
-    /// Calculate the aesthetic score for a single image using heuristics.
-    /// Based on brightness, contrast, and edge detection for sharpness.
-    /// - Returns: Score between 0.0 and 1.0
-    public func scoreImage(_ cgImage: CGImage) async throws -> Float {
-        // Use simple heuristics for aesthetic scoring
-        let brightness = calculateBrightness(cgImage)
-        let contrast = calculateContrast(cgImage)
-        let sharpness = await calculateSharpness(cgImage)
-        
-        // Combine metrics (weights can be tuned)
-        let score = (brightness * 0.3) + (contrast * 0.3) + (sharpness * 0.4)
-        return score
-    }
-    
     // MARK: - Video Frame Extraction
     
     /// Extract the best N frames from a video based on aesthetic scoring.
     /// Uses FeaturePrint to avoid selecting visually similar frames.
+    /// Aesthetics + FeaturePrint are bundled into a single Vision handler.perform() per frame.
     /// - Parameters:
     ///   - videoURL: URL to the video file
     ///   - count: Number of frames to extract (default 5)
@@ -66,8 +52,15 @@ public final class AestheticsScoringService: @unchecked Sendable {
             
             do {
                 let (cgImage, _) = try await generator.image(at: time)
-                let score = try await scoreImage(cgImage)
-                let featurePrint = generateFeaturePrint(for: cgImage)
+                
+                // Bundle aesthetics + feature print into a single Vision pass
+                let aestheticsRequest = VNCalculateImageAestheticsScoresRequest()
+                let featurePrintRequest = VNGenerateImageFeaturePrintRequest()
+                let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+                try handler.perform([aestheticsRequest, featurePrintRequest])
+                
+                let score = aestheticsRequest.results?.first?.overallScore ?? 0.0
+                let featurePrint = featurePrintRequest.results?.first as? VNFeaturePrintObservation
                 
                 candidates.append((time: time, image: cgImage, score: score, featurePrint: featurePrint))
             } catch {
@@ -115,110 +108,14 @@ public final class AestheticsScoringService: @unchecked Sendable {
         }
     }
     
-    // MARK: - Feature Print Generation
-    
-    /// Generate feature print synchronously to avoid Sendable issues
-    private nonisolated func generateFeaturePrint(for cgImage: CGImage) -> VNFeaturePrintObservation? {
-        let request = VNGenerateImageFeaturePrintRequest()
-        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-        
-        do {
-            try handler.perform([request])
-            return request.results?.first as? VNFeaturePrintObservation
-        } catch {
-            return nil
-        }
-    }
-    
-    // MARK: - Image Quality Metrics
-    
-    private func calculateBrightness(_ image: CGImage) -> Float {
-        // Simple brightness estimation based on average pixel luminance
-        guard let data = image.dataProvider?.data,
-              let bytes = CFDataGetBytePtr(data) else {
-            return 0.5
-        }
-        
-        let bytesPerPixel = image.bitsPerPixel / 8
-        let totalPixels = image.width * image.height
-        var totalBrightness: Double = 0
-        
-        // Sample every 100th pixel for performance
-        let step = max(1, totalPixels / 1000)
-        var sampledCount = 0
-        
-        for i in stride(from: 0, to: totalPixels * bytesPerPixel, by: step * bytesPerPixel) {
-            let r = Double(bytes[i])
-            let g = Double(bytes[i + 1])
-            let b = Double(bytes[i + 2])
-            
-            // Luminance formula
-            let luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
-            totalBrightness += luminance
-            sampledCount += 1
-        }
-        
-        let avgBrightness = totalBrightness / Double(max(1, sampledCount))
-        
-        // Ideal brightness around 0.5, penalize too dark or too bright
-        let score = 1.0 - abs(avgBrightness - 0.5) * 2
-        return Float(max(0, min(1, score)))
-    }
-    
-    private func calculateContrast(_ image: CGImage) -> Float {
-        // Estimate contrast based on standard deviation of luminance
-        guard let data = image.dataProvider?.data,
-              let bytes = CFDataGetBytePtr(data) else {
-            return 0.5
-        }
-        
-        let bytesPerPixel = image.bitsPerPixel / 8
-        let totalPixels = image.width * image.height
-        var luminances: [Double] = []
-        
-        // Sample every 100th pixel
-        let step = max(1, totalPixels / 1000)
-        
-        for i in stride(from: 0, to: totalPixels * bytesPerPixel, by: step * bytesPerPixel) {
-            let r = Double(bytes[i])
-            let g = Double(bytes[i + 1])
-            let b = Double(bytes[i + 2])
-            let luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0
-            luminances.append(luminance)
-        }
-        
-        guard !luminances.isEmpty else { return 0.5 }
-        
-        let mean = luminances.reduce(0, +) / Double(luminances.count)
-        let variance = luminances.map { pow($0 - mean, 2) }.reduce(0, +) / Double(luminances.count)
-        let stdDev = sqrt(variance)
-        
-        // Higher std dev = more contrast (normalize to 0-1)
-        return Float(min(1, stdDev * 4))
-    }
-    
-    private func calculateSharpness(_ image: CGImage) async -> Float {
-        // Use Vision to detect edges as a proxy for sharpness
-        // Note: VNImageRequestHandler.perform is synchronous, so we don't need a continuation
-        let request = VNDetectRectanglesRequest()
-        request.minimumConfidence = 0.3
-        
-        let handler = VNImageRequestHandler(cgImage: image, options: [:])
-        do {
-            try handler.perform([request])
-            // More detected rectangles = sharper image (rough heuristic)
-            let count = request.results?.count ?? 0
-            return min(1.0, Float(count) / 10.0)
-        } catch {
-            return 0.5
-        }
-    }
-    
     // MARK: - Photo Scoring
     
-    /// Score and return a thumbnail from a photo
+    /// Score and return a thumbnail from a photo using VNCalculateImageAestheticsScoresRequest.
     public func bestThumbnailFromImage(_ cgImage: CGImage) async throws -> Thumbnail {
-        let score = try await scoreImage(cgImage)
+        let request = VNCalculateImageAestheticsScoresRequest()
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        try handler.perform([request])
+        let score = request.results?.first?.overallScore ?? 0.0
         return Thumbnail(image: cgImage, frame: nil, score: score)
     }
 }

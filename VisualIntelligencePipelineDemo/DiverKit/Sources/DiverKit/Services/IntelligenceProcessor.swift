@@ -14,6 +14,7 @@ public enum IntelligenceResult {
     case product(code: String, type: ProductCodeType, mediaAssets: [URL] = [])
     case document(VNRectangleObservation, text: String?, label: String?, rectifiedImage: Data? = nil)
     case purpose(statements: [String])
+    case aesthetics(score: Float)
     
     case richWeb(url: URL, data: EnrichmentData)
     
@@ -62,8 +63,11 @@ extension IntelligenceResult: Hashable {
         case .purpose(let statements):
             hasher.combine(7)
             hasher.combine(statements)
-        case .richWeb(let url, let data):
+        case .aesthetics(let score):
             hasher.combine(8)
+            hasher.combine(score)
+        case .richWeb(let url, let data):
+            hasher.combine(9)
             hasher.combine(url)
             hasher.combine(data.title)
         }
@@ -79,6 +83,7 @@ extension IntelligenceResult: Hashable {
         case (.product(let c1, let t1, _), .product(let c2, let t2, _)): return c1 == c2 && t1 == t2
         case (.document(let o1, let t1, let l1, let r1), .document(let o2, let t2, let l2, let r2)): return o1 === o2 && t1 == t2 && l1 == l2 && r1 == r2
         case (.purpose(let s1), .purpose(let s2)): return s1 == s2
+        case (.aesthetics(let s1), .aesthetics(let s2)): return s1 == s2
         case (.richWeb(let u1, let d1), .richWeb(let u2, let d2)): return u1 == u2 && d1.title == d2.title
         default: return false
         }
@@ -103,6 +108,7 @@ extension IntelligenceResult {
             }
             return prefix + (label?.capitalized ?? "Scanned")
         case .purpose(let statements): return statements.first ?? "Purpose"
+        case .aesthetics: return "Quality Score"
         }
     }
     
@@ -127,6 +133,7 @@ extension IntelligenceResult {
                 return "+\(statements.count - 1) more"
             }
             return "Suggested Purpose"
+        case .aesthetics(let score): return String(format: "%.0f%%", score * 100)
         }
     }
     
@@ -154,6 +161,7 @@ extension IntelligenceResult {
         case .product: return "barcode.viewfinder"
         case .document: return "doc.text.below.ecg.fill" // More distinct document icon
         case .purpose: return "sparkles.rectangle.stack"
+        case .aesthetics: return "sparkle.magnifyingglass"
         }
     }
     
@@ -207,6 +215,7 @@ extension IntelligenceResult {
         case .purpose: return 7 // Questions appear last
         case .semantic: return 4
         case .siftedSubject: return 5
+        case .aesthetics: return 6
         }
     }
 }
@@ -252,8 +261,9 @@ public final class IntelligenceProcessor: Sendable {
          // Build the request list based on mode
          let siftingRequest = VNGenerateForegroundInstanceMaskRequest()
          let barcodeRequest = VNDetectBarcodesRequest()
+         let aestheticsRequest = VNCalculateImageAestheticsScoresRequest()
          
-         var allRequests: [VNRequest] = [siftingRequest, barcodeRequest]
+         var allRequests: [VNRequest] = [siftingRequest, barcodeRequest, aestheticsRequest]
          
          // For full analysis, add all requests upfront so they run in ONE parallel perform() call.
          // We dropped the ROI optimization (where classification focused on the sifted subject region)
@@ -280,6 +290,11 @@ public final class IntelligenceProcessor: Sendable {
          // Run ALL requests in a single perform() call — Vision parallelizes internally
          let handler = handlerFactory()
          try handler.perform(allRequests)
+         
+         // --- Process Aesthetics Score ---
+         if let aestheticResult = aestheticsRequest.results?.first {
+             finalResults.append(.aesthetics(score: aestheticResult.overallScore))
+         }
          
          // --- Process Sifting Results ---
          if let observation = siftingRequest.results?.first {
@@ -522,6 +537,8 @@ public final class IntelligenceProcessor: Sendable {
                         if let label { contextParts.append("Visual Subject: \(label)") }
                     case .purpose:
                         break // Skip existing purpose results
+                    case .aesthetics(let score):
+                        contextParts.append("Image Quality: \(String(format: "%.0f%%", score * 100))")
                     }
                 }
                 

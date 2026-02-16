@@ -232,7 +232,7 @@ struct EditLocationView: View {
                 Color.black.opacity(0.3).ignoresSafeArea()
                 ProgressView("Updating Context...")
                 .padding()
-                .background(.regularMaterial)
+                .glassEffect()
                 .cornerRadius(10)
             }
         }

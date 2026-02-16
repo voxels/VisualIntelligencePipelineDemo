@@ -37,16 +37,26 @@ struct ReferenceDetailContent: View {
     
     @Environment(\.modelContext) private var modelContext
     
+    @State private var cachedSession: DiverSession?
+    @State private var sessionLoaded = false
+    
     var session: DiverSession? {
+        if sessionLoaded { return cachedSession }
         guard let sessionID = item.sessionID else { return nil }
         var descriptor = FetchDescriptor<DiverSession>(
             predicate: #Predicate { $0.sessionID == sessionID }
         )
         descriptor.fetchLimit = 1
-        return try? modelContext.fetch(descriptor).first
+        let result = try? modelContext.fetch(descriptor).first
+        DispatchQueue.main.async {
+            cachedSession = result
+            sessionLoaded = true
+        }
+        return result
     }
     
-    var siblingContext: String {
+    
+    private func buildSiblingContext() -> String {
         guard let sessionID = item.sessionID else { return "" }
         var descriptor = FetchDescriptor<ProcessedItem>(
             predicate: #Predicate { $0.sessionID == sessionID }
@@ -111,7 +121,7 @@ struct ReferenceDetailContent: View {
                         TextField("Title", text: $editedTitle, onCommit: {
                             if !editedTitle.isEmpty {
                                 item.title = editedTitle
-                                try? item.modelContext?.save()
+                                Task { @MainActor in try? item.modelContext?.save() }
                             }
                             isEditingTitle = false
                         })
@@ -172,7 +182,7 @@ struct ReferenceDetailContent: View {
                     ToolbarItem(placement: .primaryAction) {
                         Button {
                             item.isFavorite.toggle()
-                            try? item.modelContext?.save()
+                            Task { @MainActor in try? item.modelContext?.save() }
                         } label: {
                             Label(item.isFavorite ? "Unfavorite" : "Favorite", systemImage: item.isFavorite ? "star.fill" : "star")
                                 .foregroundStyle(item.isFavorite ? .yellow : .primary)
@@ -231,7 +241,7 @@ struct ReferenceDetailContent: View {
                                             let newSession = DiverSession(sessionID: sessionID, title: tag.capitalized)
                                             context.insert(newSession)
                                         }
-                                        try? context.save()
+                                        Task { @MainActor in try? context.save() }
                                         
                                         // Feedback
                                         let generator = UIImpactFeedbackGenerator(style: .medium)
@@ -444,7 +454,7 @@ struct ReferenceDetailContent: View {
                                     }
                                     
                                     if updated {
-                                        try? item.modelContext?.save()
+                                        Task { @MainActor in try? item.modelContext?.save() }
                                     }
                                 }
                             }
@@ -486,7 +496,7 @@ struct ReferenceDetailContent: View {
                                 .controlSize(.small)
                         } else {
                             Button {
-                                viewModel.generatePurposes(for: item, siblingContext: siblingContext)
+                                viewModel.generatePurposes(for: item, siblingContext: buildSiblingContext())
                             } label: {
                                 Image(systemName: "sparkles")
                                     .symbolEffect(.bounce, value: viewModel.isGeneratingPurposes)
@@ -1361,7 +1371,7 @@ struct WeatherContextView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
-        .background(Material.regular)
+        .glassEffect()
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
@@ -1389,7 +1399,7 @@ struct ActivityContextView: View {
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
-        .background(Material.regular)
+        .glassEffect()
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     
@@ -1933,7 +1943,7 @@ struct PlaceDetailSheet: View {
                             } label: {
                                 Image(systemName: "location.fill")
                                     .padding(8)
-                                    .background(.thinMaterial)
+                                    .glassEffect()
                                     .clipShape(Circle())
                                     .padding(8)
                             }
@@ -2288,7 +2298,7 @@ struct TextEditorView: View {
     private func saveChanges() {
         item.transcription = editedText
         item.summary = editedText.isEmpty ? nil : String(editedText.prefix(200))
-        try? item.modelContext?.save()
+        Task { @MainActor in try? item.modelContext?.save() }
         hasUnsavedChanges = false
         
         #if os(iOS)
