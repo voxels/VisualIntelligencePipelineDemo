@@ -243,17 +243,15 @@ struct VisualIntelligencePipelineApp: App {
                     sharedWithYouManager?.refreshHighlights()
                 }
                 
-                // Process queue when app enters foreground
+                // Process queue when app enters foreground, then backfill daily context
                 Task {
                     try? await metadataPipelineService.processPendingQueue()
                     // Defer Data Diagnostics / Session Consolidation (User Request)
                     // await metadataPipelineService.runDataDiagnostics()
-                }
-
-                // Check for Daily Narrative Backfill
-                // If the app was closed and we missed adding items to the daily log, catch up now.
-                Task { @MainActor in
-                    if let service = Services.shared.dailyContextService, !service.hasContent {
+                    
+                    // Daily Narrative Backfill — runs AFTER queue drains so all items are ready
+                    await MainActor.run {
+                        guard let service = Services.shared.dailyContextService, !service.hasContent else { return }
                         print("📝 Daily Context is empty, checking for backfill items...")
                         let calendar = Calendar.current
                         let startOfDay = calendar.startOfDay(for: Date())

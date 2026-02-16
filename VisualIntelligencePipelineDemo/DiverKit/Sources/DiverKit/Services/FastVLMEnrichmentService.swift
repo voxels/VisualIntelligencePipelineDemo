@@ -103,6 +103,10 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
     /// Whether the model is busy (loading or analyzing) — guards memory pressure unloading
     private var isLoading = false
     
+    /// When true, suppresses memory-pressure unloading (e.g. during batch queue processing).
+    /// Only `.critical` pressure will force an unload while retained.
+    public var retainModel: Bool = false
+    
     /// GCD memory pressure source — auto-unloads model when OS signals pressure
     private var memoryPressureSource: DispatchSourceMemoryPressure?
     
@@ -122,6 +126,11 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
             guard let self else { return }
             guard !self.isLoading else {
                 print("⚠️ [FastVLMService] Memory pressure detected but model is busy — deferring unload")
+                return
+            }
+            let event = source.data
+            if self.retainModel && !event.contains(.critical) {
+                print("⚠️ [FastVLMService] Memory pressure detected but model retained for batch — deferring unload")
                 return
             }
             print("⚠️ [FastVLMService] Memory pressure detected — unloading model")

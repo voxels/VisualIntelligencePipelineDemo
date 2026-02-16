@@ -125,12 +125,13 @@ public final class MetadataPipelineService {
             }
             // Yield so SwiftUI can render the overlay before heavy work begins
             await Task.yield()
-            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms to ensure UI renders
+            try? await Task.sleep(nanoseconds: 200_000_000) // 200ms to ensure UI fully renders before pipeline work
 
             do {
                 // 1. Resume any stuck items from previous sessions (DB persistence)
                 // Hops to @MainActor for SwiftData operations
                 DiverLogger.queue.debug("Checking for stuck items or pending database transactions...")
+                await MainActor.run { self.fastVLMService?.retainModel = true }
                 try await self.resumeSuspendedQueue()
                 if Task.isCancelled { 
                     DiverLogger.queue.debug("Queue processing cancelled after resumeSuspendedQueue")
@@ -158,6 +159,7 @@ public final class MetadataPipelineService {
 
                     for record in records {
                         if Task.isCancelled { break }
+                        await Task.yield() // Let main actor service UI events between items
                         
                         let itemTitle = record.item.descriptor.title
                         await MainActor.run {
@@ -199,6 +201,7 @@ public final class MetadataPipelineService {
                 }
                 
                 // Reset progress after all phases complete
+                await MainActor.run { self.fastVLMService?.retainModel = false }
                 await MainActor.run {
                     if self.queueGeneration == myGeneration {
                         self.resetQueueProgress()
@@ -210,6 +213,7 @@ public final class MetadataPipelineService {
                 }
             } catch {
                 DiverLogger.queue.error("Queue processing failed: \(error)")
+                await MainActor.run { self.fastVLMService?.retainModel = false }
                 await MainActor.run {
                     if self.queueGeneration == myGeneration {
                         self.resetQueueProgress()
@@ -459,6 +463,8 @@ public final class MetadataPipelineService {
             
             for input in pendingInputs {
                 do {
+                    // Yield to main actor between items so UI remains responsive
+                    await Task.yield()
                     // CRITICAL FIX: Skip LocalInputs that already have a fully processed item
                     // This prevents reprocessing items that completed successfully but whose
                     // LocalInput deletion was interrupted (crash, timing issue)
@@ -532,6 +538,7 @@ public final class MetadataPipelineService {
         
         for item in queuedItems {
             if Task.isCancelled { break }
+            await Task.yield() // Let main actor service UI events between items
             
             // Check if there's already a LocalInput for this item
             let itemURL = item.url
