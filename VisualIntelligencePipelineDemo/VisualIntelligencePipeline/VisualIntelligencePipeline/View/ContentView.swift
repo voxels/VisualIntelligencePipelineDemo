@@ -169,7 +169,7 @@ struct SessionItemsView: View {
         }
         .alert("Delete Session?", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
+            Button("Delete Session", role: .destructive) {
                 if let session = session {
                     deleteSession(session)
                 }
@@ -316,7 +316,7 @@ struct ItemRowButton: View {
         .listRowBackground(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button(role: .destructive, action: onDelete) {
-                Label("Delete", systemImage: "trash")
+                Label("Delete Item", systemImage: "trash")
             }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: false) {
@@ -342,7 +342,7 @@ struct ItemRowButton: View {
             Divider()
             
             Button(role: .destructive, action: onDelete) {
-                Label("Delete", systemImage: "trash")
+                Label("Delete Item", systemImage: "trash")
             }
         }
     }
@@ -368,7 +368,7 @@ struct ItemRowContainer: View {
                     try? modelContext.save()
                 }
             } label: {
-                Label("Delete", systemImage: "trash")
+                Label("Delete Item", systemImage: "trash")
             }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: false) {

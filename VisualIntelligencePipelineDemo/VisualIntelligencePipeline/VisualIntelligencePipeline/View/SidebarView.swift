@@ -508,7 +508,7 @@ struct SidebarView: View {
                     Button(role: .destructive) {
                         viewModel.deleteSession(session, context: modelContext)
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        Label("Delete Session", systemImage: "trash")
                     }
                     
                     Button {
@@ -791,7 +791,7 @@ struct SidebarView: View {
                     Button(role: .destructive) {
                         viewModel.deleteItem(item, context: modelContext)
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        Label("Delete Item", systemImage: "trash")
                     }
                 }
                 .contextMenu {
@@ -1126,7 +1126,7 @@ struct ItemRowWithActions: View {
                 Button(role: .destructive) {
                     onDelete()
                 } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label("Delete Item", systemImage: "trash")
                 }
             }
             .swipeActions(edge: .leading, allowsFullSwipe: false) {
@@ -1156,7 +1156,7 @@ struct ItemRowWithActions: View {
                 Button(role: .destructive) {
                     onDelete()
                 } label: {
-                    Label("Delete", systemImage: "trash")
+                    Label("Delete Item", systemImage: "trash")
                 }
             }
     }
@@ -1412,7 +1412,7 @@ extension SidebarView {
             Button(role: .destructive) {
                 viewModel.deleteCollection(collection, context: modelContext)
             } label: {
-                Label("Delete", systemImage: "trash")
+                Label("Delete Collection", systemImage: "trash")
             }
         }
         .swipeActions(edge: .leading) {

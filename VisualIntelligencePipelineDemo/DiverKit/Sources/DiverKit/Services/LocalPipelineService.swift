@@ -2330,35 +2330,128 @@ public final class LocalPipelineService {
             let items = try modelContext.fetch(fetchItems)
             if items.isEmpty { return }
             
-            // Limit to last 20 items to avoid token limits and keep it relevant
-            let recentItems = items.sorted(by: { $0.createdAt < $1.createdAt }).suffix(20)
+            // Use all items sorted chronologically
+            let sortedItems = items.sorted(by: { $0.createdAt < $1.createdAt })
             
             var combinedText = ""
-            for item in recentItems {
-                combinedText += "Item: \(item.title ?? "Unknown")\n"
-                if let summary = item.summary { combinedText += "Description: \(summary)\n" }
-                if let activity = item.activityContext { combinedText += "Activity: \(activity.type) (\(activity.confidence))\n" }
-                if !item.purposes.isEmpty { combinedText += "Intents: \(item.purposes.joined(separator: ", "))\n" }
-                combinedText += "---\n"
+            for (index, item) in sortedItems.enumerated() {
+                combinedText += "--- Item \(index + 1) of \(sortedItems.count) ---\n"
+                combinedText += "Title: \(item.title ?? "Unknown")\n"
+                
+                if let summary = item.summary, !summary.isEmpty {
+                    combinedText += "Description: \(summary)\n"
+                }
+                
+                // OCR / Transcription (full text from capture)
+                if let transcription = item.transcription, !transcription.isEmpty {
+                    combinedText += "OCR Text: \(transcription)\n"
+                }
+                
+                // Themes and tags
+                if !item.themes.isEmpty {
+                    combinedText += "Themes: \(item.themes.joined(separator: ", "))\n"
+                }
+                if !item.tags.isEmpty {
+                    combinedText += "Tags: \(item.tags.joined(separator: ", "))\n"
+                }
+                if !item.categories.isEmpty {
+                    combinedText += "Categories: \(item.categories.joined(separator: ", "))\n"
+                }
+                
+                // Purposes / intents
+                if !item.purposes.isEmpty {
+                    combinedText += "Intents: \(item.purposes.joined(separator: ", "))\n"
+                }
+                
+                // Location context
+                if let place = item.placeContext {
+                    combinedText += "Place: \(place.name)"
+                    if let address = place.address, !address.isEmpty {
+                        combinedText += " (\(address))"
+                    }
+                    if !place.categories.isEmpty {
+                        combinedText += " [Categories: \(place.categories.joined(separator: ", "))]"
+                    }
+                    combinedText += "\n"
+                } else if let location = item.location, !location.isEmpty {
+                    combinedText += "Location: \(location)\n"
+                }
+                
+                // Weather
+                if let weather = item.weatherContext {
+                    combinedText += "Weather: \(weather.condition), \(weather.temperatureCelsius)°C\n"
+                }
+                
+                // Activity
+                if let activity = item.activityContext {
+                    combinedText += "Activity: \(activity.type) (confidence: \(activity.confidence))\n"
+                }
+                
+                // Web context
+                if let web = item.webContext {
+                    if let siteName = web.siteName, !siteName.isEmpty {
+                        combinedText += "Web Site: \(siteName)\n"
+                    }
+                    if let textContent = web.textContent, !textContent.isEmpty {
+                        combinedText += "Web Content: \(String(textContent.prefix(500)))\n"
+                    }
+                }
+                if let url = item.url, !url.isEmpty {
+                    combinedText += "URL: \(url)\n"
+                }
+                
+                // Document context
+                if let doc = item.documentContext {
+                    combinedText += "Document Type: \(doc.fileType)\n"
+                    if let pageCount = doc.pageCount {
+                        combinedText += "Page Count: \(pageCount)\n"
+                    }
+                    if let author = doc.author, !author.isEmpty {
+                        combinedText += "Document Author: \(author)\n"
+                    }
+                }
+                
+                // QR code
+                if let qr = item.qrContext {
+                    combinedText += "QR Code Payload: \(qr.payload)\n"
+                }
+                
+                // FastVLM analysis
+                if let vlm = item.fastVLMAnalysis {
+                    if let description = vlm.imageDescription, !description.isEmpty {
+                        combinedText += "Visual Analysis: \(description)\n"
+                    }
+                }
+                
+                // Product metadata
+                if let product = item.productMetadata, !product.isEmpty {
+                    combinedText += "Product Info: \(product)\n"
+                }
+                
+                // Questions
+                if !item.questions.isEmpty {
+                    combinedText += "Questions: \(item.questions.joined(separator: "; "))\n"
+                }
+                
+                // Media type
+                if let mediaType = item.mediaType, !mediaType.isEmpty {
+                    combinedText += "Media Type: \(mediaType)\n"
+                }
+                
+                combinedText += "\n"
             }
-            
-            // NUCLEAR OPTION: Scrub "Home" from the input text entirely to prevent LLM bias
-            // We replace "Home" with "Location" or remove it if it looks like "At Home"
-            // Case insensitive replace
-            let scrubbedText = combinedText.replacingOccurrences(of: "Home", with: "Location", options: .caseInsensitive)
-                                         .replacingOccurrences(of: "At Location", with: "At Unknown Location")
             
             let summary: String
             
-            // Fetch session metadata early for location context
+            // Fetch session metadata for location context
             let session = try modelContext.fetch(fetchMeta).first
             let locationName = session?.locationName ?? "Location"
             
             if ContextQuestionService.isAvailable {
                 let service = ContextQuestionService()
-                summary = try await service.summarizeText(scrubbedText)
+                summary = try await service.summarizeText(combinedText)
             } else {
-                 let titleList = recentItems
+                 let titleList = sortedItems
                      .compactMap { $0.title }
                      .filter { $0 != "Untitled" && $0 != "Visual Capture" && !$0.isEmpty }
                      .prefix(3)
@@ -2459,6 +2552,85 @@ public final class LocalPipelineService {
         DiverLogger.pipeline.info("🔍 DATA DIAGNOSTICS COMPLETE")
     }
 
+    /// Assigns orphaned items (nil sessionID — "Inbox" items) to the nearest existing session
+    /// by timestamp proximity, or creates a new session if no match exists within the time window.
+    public func assignOrphanedItems() throws {
+        let orphanFetch = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate<ProcessedItem> { $0.sessionID == nil },
+            sortBy: [SortDescriptor(\.createdAt)]
+        )
+        let orphans = try modelContext.fetch(orphanFetch)
+        guard !orphans.isEmpty else {
+            DiverLogger.pipeline.info("ℹ️ No orphaned inbox items found.")
+            return
+        }
+        
+        DiverLogger.pipeline.info("📬 Found \(orphans.count) orphaned inbox items. Attempting session assignment...")
+        
+        // Fetch all sessions sorted by creation time
+        let sessionFetch = FetchDescriptor<SessionMetadata>(sortBy: [SortDescriptor(\.createdAt)])
+        let sessions = try modelContext.fetch(sessionFetch)
+        
+        // 30-minute proximity window
+        let proximityWindow: TimeInterval = 30 * 60
+        
+        var assignedCount = 0
+        var createdCount = 0
+        
+        for orphan in orphans {
+            let itemTime = orphan.createdAt
+            
+            // Find the nearest session by timestamp
+            var bestSession: SessionMetadata? = nil
+            var bestDelta: TimeInterval = .greatestFiniteMagnitude
+            
+            for session in sessions {
+                let delta = abs(itemTime.timeIntervalSince(session.createdAt))
+                if delta < bestDelta {
+                    bestDelta = delta
+                    bestSession = session
+                }
+            }
+            
+            // Also check against session updatedAt (captures may arrive during an active session)
+            for session in sessions {
+                let delta = abs(itemTime.timeIntervalSince(session.updatedAt))
+                if delta < bestDelta {
+                    bestDelta = delta
+                    bestSession = session
+                }
+            }
+            
+            if let match = bestSession, bestDelta <= proximityWindow {
+                // Assign to existing session
+                orphan.sessionID = match.sessionID
+                orphan.session = match
+                match.updatedAt = Date()
+                assignedCount += 1
+                DiverLogger.pipeline.debug("📬 Assigned '\(orphan.title ?? orphan.id)' → session '\(match.title ?? match.sessionID)' (Δ\(Int(bestDelta))s)")
+            } else {
+                // No nearby session — create a new one
+                let newSessionID = UUID().uuidString
+                let newSession = DiverSession(sessionID: newSessionID, createdAt: orphan.createdAt)
+                newSession.title = orphan.title
+                newSession.locationName = orphan.placeContext?.name ?? orphan.location
+                if let lat = orphan.latitude, let lon = orphan.longitude {
+                    newSession.latitude = lat
+                    newSession.longitude = lon
+                }
+                modelContext.insert(newSession)
+                
+                orphan.sessionID = newSessionID
+                orphan.session = newSession
+                createdCount += 1
+                DiverLogger.pipeline.debug("📬 Created new session for orphan '\(orphan.title ?? orphan.id)'")
+            }
+        }
+        
+        try modelContext.save()
+        DiverLogger.pipeline.info("✅ Orphan assignment complete: \(assignedCount) assigned to existing sessions, \(createdCount) new sessions created.")
+    }
+    
     public func regenerateMissingSessions() throws {
         let itemDesc = FetchDescriptor<ProcessedItem>()
         let items = try modelContext.fetch(itemDesc)
@@ -2763,23 +2935,27 @@ public final class LocalPipelineService {
     public func maintainLibrary(progressHandler: ((Double) -> Void)? = nil) async throws {
         DiverLogger.pipeline.info("🧹 Starting Library Maintenance...")
         
-        // 1. Recover stuck items
+        // 1. Assign orphaned inbox items to sessions by timestamp proximity
+        try assignOrphanedItems()
+        progressHandler?(0.15)
+        
+        // 2. Recover stuck items
         try recoverStuckItems()
-        progressHandler?(0.2)
+        progressHandler?(0.30)
         
-        // 2. Regenerate missing sessions
+        // 3. Regenerate missing sessions
         try regenerateMissingSessions()
-        progressHandler?(0.4)
+        progressHandler?(0.45)
         
-        // 3. Consolidate fragmented sessions
+        // 4. Consolidate fragmented sessions
         try consolidateSessions()
-        progressHandler?(0.6)
+        progressHandler?(0.60)
         
-        // 4. Reconcile relationships
+        // 5. Reconcile relationships
         await reconcileRelationships()
-        progressHandler?(0.8)
+        progressHandler?(0.75)
         
-        // 5. Regenerate ALL session summaries
+        // 6. Regenerate ALL session summaries
         let sessionFetch = FetchDescriptor<SessionMetadata>()
         if let sessions = try? modelContext.fetch(sessionFetch) {
             DiverLogger.pipeline.info("📝 Regenerating summaries for \(sessions.count) sessions...")

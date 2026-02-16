@@ -980,62 +980,10 @@ public final class SidebarViewModel: ObservableObject {
     }
     
     public func generateSessionSummary(sessionID: String, context: ModelContext) {
-        let fetchItems = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.sessionID == sessionID })
-        let fetchMeta = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
-        
         Task {
-            do {
-                let items = try context.fetch(fetchItems)
-                if items.isEmpty { return }
-                
-                // Aggregate comprehensive context from all items
-                var combinedText = ""
-                
-                // Extract dominant environmental context from first item
-                if let firstItem = items.first {
-                    if let weather = firstItem.weatherContext {
-                        combinedText += "Environment: \(weather.condition), \(Int(weather.temperatureCelsius))°C\n"
-                    }
-                    if let activity = firstItem.activityContext {
-                        combinedText += "Activity Type: \(activity.type)\n"
-                    }
-                    if let place = firstItem.placeContext?.name {
-                        combinedText += "Primary Location: \(place)\n"
-                    }
-                }
-                combinedText += "---\n"
-                
-                // Aggregate content from each item
-                for item in items {
-                    combinedText += "Item: \(item.title ?? "Unknown")\n"
-                    if let summary = item.summary { combinedText += "Summary: \(summary)\n" }
-                    if !item.purposes.isEmpty { combinedText += "Intents: \(item.purposes.joined(separator: ", "))\n" }
-                    if !item.tags.isEmpty { combinedText += "Tags: \(item.tags.joined(separator: ", "))\n" }
-                    // Include transcription/OCR if available
-                    if let transcription = item.transcription, !transcription.isEmpty {
-                        combinedText += "OCR/Transcription: \(String(transcription.prefix(200)))\n"
-                    }
-                    // Include place tips if available
-                    if let tips = item.placeContext?.tips, !tips.isEmpty {
-                        combinedText += "Place Tips: \(tips.prefix(2).joined(separator: "; "))\n"
-                    }
-                    combinedText += "---\n"
-                }
-                
-                let service = ContextQuestionService()
-                let summary = try await service.summarizeText(combinedText)
-                
-                // Save to Metadata
-                await MainActor.run {
-                     if let meta = try? context.fetch(fetchMeta).first {
-                         meta.summary = summary
-                         try? context.save()
-                         print("✅ Generated summary for session \(sessionID): \(summary)")
-                     }
-                }
-            } catch {
-                print("❌ Failed to generate session summary: \(error)")
-            }
+            let pipeline = LocalPipelineService(modelContext: context)
+            await pipeline.generateAndSaveSessionSummary(sessionID: sessionID)
+            print("✅ Generated full-metadata summary for session \(sessionID)")
         }
     }
     

@@ -1239,6 +1239,19 @@ struct IntelligenceResultsView: View {
                                 .cornerRadius(12)
                                 .foregroundStyle(.white)
                                 .scrollContentBackground(.hidden)
+                            } else if viewModel.sessionImages.count > 1 {
+                                // Carousel of all session captures
+                                TabView {
+                                    ForEach(Array(viewModel.sessionImages.enumerated()), id: \.offset) { _, img in
+                                        Image(uiImage: img)
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .cornerRadius(12)
+                                            .shadow(color: .black.opacity(0.3), radius: 10)
+                                    }
+                                }
+                                .tabViewStyle(.page(indexDisplayMode: .automatic))
+                                .frame(height: 200)
                             } else if let image = viewModel.capturedImage {
                                 Image(uiImage: image)
                                     .resizable()
@@ -1320,17 +1333,36 @@ struct IntelligenceResultsView: View {
             }
         }
         .onAppear {
-            // Initialize text editor with document OCR text if available
+            // Initialize text editor with full transcript (OCR text + document text)
             if customContextText.isEmpty {
-                let documentText = viewModel.results.compactMap { result -> String? in
+                // 1. Collect all OCR text lines from .text results
+                let ocrLines = viewModel.results.compactMap { result -> String? in
+                    if case .text(let text, _) = result {
+                        return text
+                    }
+                    return nil
+                }
+                
+                // 2. Collect document-specific text
+                let documentLines = viewModel.results.compactMap { result -> String? in
                     if case .document(_, let text, _, _) = result {
                         return text
                     }
                     return nil
-                }.joined(separator: "\n\n")
+                }
                 
-                if !documentText.isEmpty {
-                    customContextText = documentText
+                // 3. Combine: OCR text first (full transcript), then any additional document text
+                var allText: [String] = []
+                if !ocrLines.isEmpty {
+                    allText.append(ocrLines.joined(separator: "\n"))
+                }
+                for docText in documentLines where !ocrLines.contains(docText) {
+                    allText.append(docText)
+                }
+                
+                let fullTranscript = allText.joined(separator: "\n\n")
+                if !fullTranscript.isEmpty {
+                    customContextText = fullTranscript
                 }
             }
         }
