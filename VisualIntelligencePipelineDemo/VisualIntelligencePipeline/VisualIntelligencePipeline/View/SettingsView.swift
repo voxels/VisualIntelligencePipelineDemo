@@ -103,12 +103,13 @@ struct SettingsView: View {
                     Button {
                         viewModel.rebuildLibrary(context: modelContext)
                     } label: {
-                        HStack {
+                        VStack(alignment: .leading, spacing: 4) {
                             Label("Rebuild Library", systemImage: "arrow.triangle.2.circlepath.icloud")
                             if viewModel.isMaintaining {
-                                Spacer()
-                                ProgressView()
-                                    .scaleEffect(0.8)
+                                Text(viewModel.maintenanceStatus)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .monospacedDigit()
                             }
                         }
                     }

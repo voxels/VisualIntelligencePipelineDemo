@@ -2580,21 +2580,12 @@ public final class LocalPipelineService {
         for orphan in orphans {
             let itemTime = orphan.createdAt
             
-            // Find the nearest session by timestamp
+            // Find the nearest session by createdAt timestamp
             var bestSession: SessionMetadata? = nil
             var bestDelta: TimeInterval = .greatestFiniteMagnitude
             
             for session in sessions {
                 let delta = abs(itemTime.timeIntervalSince(session.createdAt))
-                if delta < bestDelta {
-                    bestDelta = delta
-                    bestSession = session
-                }
-            }
-            
-            // Also check against session updatedAt (captures may arrive during an active session)
-            for session in sessions {
-                let delta = abs(itemTime.timeIntervalSince(session.updatedAt))
                 if delta < bestDelta {
                     bestDelta = delta
                     bestSession = session
@@ -2932,37 +2923,46 @@ public final class LocalPipelineService {
         DiverLogger.pipeline.info("✅ Relationship reconciliation complete.")
     }
 
-    public func maintainLibrary(progressHandler: ((Double) -> Void)? = nil) async throws {
+    public func maintainLibrary(progressHandler: ((Double) -> Void)? = nil, statusHandler: ((String) -> Void)? = nil) async throws {
         DiverLogger.pipeline.info("🧹 Starting Library Maintenance...")
         
         // 1. Assign orphaned inbox items to sessions by timestamp proximity
+        let orphanCount = (try? modelContext.fetch(FetchDescriptor<ProcessedItem>(predicate: #Predicate<ProcessedItem> { $0.sessionID == nil })).count) ?? 0
+        statusHandler?("Assigning \(orphanCount) orphans…")
         try assignOrphanedItems()
         progressHandler?(0.15)
         
         // 2. Recover stuck items
+        let stuckCount = (try? modelContext.fetch(FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.statusRaw == "processing" })).count) ?? 0
+        statusHandler?("Recovering \(stuckCount) stuck…")
         try recoverStuckItems()
         progressHandler?(0.30)
         
         // 3. Regenerate missing sessions
+        statusHandler?("Checking sessions…")
         try regenerateMissingSessions()
         progressHandler?(0.45)
         
         // 4. Consolidate fragmented sessions
+        statusHandler?("Consolidating…")
         try consolidateSessions()
         progressHandler?(0.60)
         
         // 5. Reconcile relationships
+        statusHandler?("Reconciling…")
         await reconcileRelationships()
         progressHandler?(0.75)
         
         // 6. Regenerate ALL session summaries
-        let sessionFetch = FetchDescriptor<SessionMetadata>()
+        let sessionFetch = FetchDescriptor<SessionMetadata>(sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
         if let sessions = try? modelContext.fetch(sessionFetch) {
             DiverLogger.pipeline.info("📝 Regenerating summaries for \(sessions.count) sessions...")
-            let total = Double(sessions.count)
+            let total = sessions.count
             for (index, session) in sessions.enumerated() {
+                let remaining = total - index
+                statusHandler?("Summaries \(index + 1)/\(total)")
                 await generateAndSaveSessionSummary(sessionID: session.sessionID)
-                let sessionProgress = 0.8 + (Double(index + 1) / total * 0.2)
+                let sessionProgress = 0.75 + (Double(index + 1) / Double(total) * 0.25)
                 progressHandler?(sessionProgress)
             }
         }

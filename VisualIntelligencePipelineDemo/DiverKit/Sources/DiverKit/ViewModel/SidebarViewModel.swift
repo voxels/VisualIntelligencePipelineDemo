@@ -18,6 +18,7 @@ import PhotosUI
 public final class SidebarViewModel: ObservableObject {
     @Published public var isMaintaining = false
     @Published public var maintenanceProgress: Double = 0
+    @Published public var maintenanceStatus: String = ""
     @Published public var searchText = ""
     @Published public var sortOrder: SortOrder = .dateDescending
     @Published public var showingSettings = false
@@ -897,12 +898,17 @@ public final class SidebarViewModel: ObservableObject {
         
         isMaintaining = true
         maintenanceProgress = 0
+        maintenanceStatus = "Starting…"
         
         Task {
             do {
                 try await pipeline.maintainLibrary { progress in
                     Task { @MainActor in
                         self.maintenanceProgress = progress
+                    }
+                } statusHandler: { status in
+                    Task { @MainActor in
+                        self.maintenanceStatus = status
                     }
                 }
                 
