@@ -118,7 +118,7 @@ public struct PipelineImportService {
         // Ensure the pipeline processes the new inputs immediately
         let queueDirectory = AppGroupContainer.queueDirectoryURL()!
         let queueStore = try! DiverQueueStore(directoryURL: queueDirectory)
-        let pipelineService = MetadataPipelineService(queueStore: queueStore, modelContext: modelContext)
+        let pipelineService = MetadataPipelineService(queueStore: queueStore, modelContainer: modelContext.container, mainContext: modelContext)
         try await pipelineService.refreshProcessedItems()
         
         UserDefaults.standard.set(true, forKey: "DiverPipelineImported")

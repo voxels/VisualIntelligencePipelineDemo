@@ -3,7 +3,7 @@ import SwiftData
 import DiverShared
 
 @Model
-public final class ProcessedItem: Identifiable, DiverObject {
+public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable {
     public var id: String = UUID().uuidString
     public var inputId: String?
     public var url: String?

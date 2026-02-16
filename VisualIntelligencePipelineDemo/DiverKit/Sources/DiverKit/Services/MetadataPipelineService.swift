@@ -16,17 +16,22 @@ private final class BackgroundTaskHolder: Sendable {
 }
 #endif
 
-@MainActor
 @Observable
-public final class MetadataPipelineService {
+public final class MetadataPipelineService: @unchecked Sendable {
     private let queueStore: DiverQueueStore
-    private let modelContext: ModelContext
+    private let modelContainer: ModelContainer
+    private let modelContext: ModelContext  // Main context — UI-driven operations only
+    /// Background context created per-batch inside processPendingQueue.
+    /// All background processing methods use this via `activeContext`.
+    private var bgContext: ModelContext?
+    /// Returns the background context if we're inside a batch, otherwise the main context.
+    private var activeContext: ModelContext {
+        bgContext ?? modelContext
+    }
 
     public var enrichmentService: LinkEnrichmentService?
     public var locationService: LocationProvider?
-    public var foursquareService: ContextualEnrichmentService?
-    public var duckDuckGoService: ContextualEnrichmentService?
-    public var weatherService: WeatherEnrichmentService?
+
     public var indexingService: KnowledgeGraphIndexingService?
     public var contextService: ContextQuestionService?
     public var fastVLMService: FastVLMEnrichmentService?
@@ -49,22 +54,20 @@ public final class MetadataPipelineService {
 
     public init(
         queueStore: DiverQueueStore,
-        modelContext: ModelContext,
+        modelContainer: ModelContainer,
+        mainContext: ModelContext,
         enrichmentService: LinkEnrichmentService? = nil,
         locationService: LocationProvider? = nil,
-        foursquareService: ContextualEnrichmentService? = nil,
-        duckDuckGoService: ContextualEnrichmentService? = nil,
-        weatherService: WeatherEnrichmentService? = nil,
+
         indexingService: KnowledgeGraphIndexingService? = nil,
         contextService: ContextQuestionService? = nil
     ) {
         self.queueStore = queueStore
-        self.modelContext = modelContext
+        self.modelContainer = modelContainer
+        self.modelContext = mainContext
         self.enrichmentService = enrichmentService
         self.locationService = locationService
-        self.foursquareService = foursquareService
-        self.duckDuckGoService = duckDuckGoService
-        self.weatherService = weatherService
+
         self.indexingService = indexingService
         self.contextService = contextService
     }
@@ -96,10 +99,13 @@ public final class MetadataPipelineService {
         #if os(iOS)
         print("🔄 [MetadataPipeline] Starting processPendingQueue (detached, utility priority)")
         // Use a reference type to allow the expiration handler to end the task
-        let bgTaskHolder = BackgroundTaskHolder()
-        bgTaskHolder.taskID = UIApplication.shared.beginBackgroundTask(withName: "DiverMetadataPipeline") {
-            UIApplication.shared.endBackgroundTask(bgTaskHolder.taskID)
-            bgTaskHolder.taskID = .invalid
+        let bgTaskHolder = await MainActor.run { () -> BackgroundTaskHolder in
+            let holder = BackgroundTaskHolder()
+            holder.taskID = UIApplication.shared.beginBackgroundTask(withName: "DiverMetadataPipeline") {
+                UIApplication.shared.endBackgroundTask(holder.taskID)
+                holder.taskID = .invalid
+            }
+            return holder
         }
         #endif
         
@@ -115,44 +121,40 @@ public final class MetadataPipelineService {
             }
             #endif
 
-            // Show progress immediately — individual phases will add to the counts
-            await MainActor.run {
-                self.isProcessingQueue = true
-                self.queueTotalCount = 0
-                self.queueCompletedCount = 0
-                self.queueCurrentItemTitle = nil
-                self.queueStatusMessage = "Checking queue…"
-            }
-            // Yield so SwiftUI can render the overlay before heavy work begins
-            await Task.yield()
-            try? await Task.sleep(nanoseconds: 200_000_000) // 200ms to ensure UI fully renders before pipeline work
+            // Create a background ModelContext so SwiftData operations
+            // don't serialize through the main queue and block the UI.
+            let bgCtx = ModelContext(self.modelContainer)
+            bgCtx.autosaveEnabled = false
+            self.bgContext = bgCtx
+            defer { self.bgContext = nil }
+
+            // Show progress immediately
+            self.isProcessingQueue = true
+            self.queueTotalCount = 0
+            self.queueCompletedCount = 0
+            self.queueCurrentItemTitle = nil
+            self.queueStatusMessage = "Checking queue…"
 
             do {
                 // 1. Resume any stuck items from previous sessions (DB persistence)
-                // Hops to @MainActor for SwiftData operations
                 DiverLogger.queue.debug("Checking for stuck items or pending database transactions...")
-                await MainActor.run { self.fastVLMService?.retainModel = true }
+                self.fastVLMService?.retainModel = true
                 try await self.resumeSuspendedQueue()
                 if Task.isCancelled { 
                     DiverLogger.queue.debug("Queue processing cancelled after resumeSuspendedQueue")
-                    // Only reset progress if no newer task has taken over
-                    await MainActor.run {
-                        if self.queueGeneration == myGeneration {
-                            self.resetQueueProgress()
-                        }
+                    if self.queueGeneration == myGeneration {
+                        self.resetQueueProgress()
                     }
                     return 
                 }
 
                 // 2. Process disk queue records (shared links from DiverQueueStore)
-                let records = try await MainActor.run { try self.queueStore.pendingEntries() }
+                let records = try self.queueStore.pendingEntries()
                 if !records.isEmpty {
                     print("🔄 [MetadataPipeline] Processing \(records.count) entries from disk...")
                     DiverLogger.queue.info("Processing \(records.count) pending queue entries from disk")
                     
-                    await MainActor.run {
-                        self.queueTotalCount += records.count
-                    }
+                    self.queueTotalCount += records.count
 
                     var successCount = 0
                     var errorCount = 0
@@ -162,18 +164,16 @@ public final class MetadataPipelineService {
                         await Task.yield() // Let main actor service UI events between items
                         
                         let itemTitle = record.item.descriptor.title
-                        await MainActor.run {
-                            self.queueCurrentItemTitle = itemTitle
-                            self.queueStatusMessage = "Processing shared link…"
-                        }
+                        self.queueCurrentItemTitle = itemTitle
+                        self.queueStatusMessage = "Processing shared link…"
                         
                         do {
                             print("📦 [MetadataPipeline] Starting: \(record.item.id)")
                             try await self.handle(record: record)
                             try await self.saveWithRetry()
-                            try await MainActor.run { try self.queueStore.remove(record) }
+                            try self.queueStore.remove(record)
                             successCount += 1
-                            await MainActor.run { self.queueCompletedCount += 1 }
+                            self.queueCompletedCount += 1
                             print("✅ [MetadataPipeline] Finished: \(record.item.id)")
                             DiverLogger.queue.debug("Successfully processed and persisted queue item: \(record.item.id)")
                         } catch {
@@ -182,8 +182,8 @@ public final class MetadataPipelineService {
                             DiverLogger.queue.logError(error, context: "Error processing record \(record.fileURL.lastPathComponent)")
                             try? await self.handleFailure(record: record, error: error)
                             try? await self.saveWithRetry()
-                            try? await MainActor.run { try self.queueStore.remove(record) }
-                            await MainActor.run { self.queueCompletedCount += 1 }
+                            try? self.queueStore.remove(record)
+                            self.queueCompletedCount += 1
                             continue
                         }
                     }
@@ -201,11 +201,9 @@ public final class MetadataPipelineService {
                 }
                 
                 // Reset progress after all phases complete
-                await MainActor.run { self.fastVLMService?.retainModel = false }
-                await MainActor.run {
-                    if self.queueGeneration == myGeneration {
-                        self.resetQueueProgress()
-                    }
+                self.fastVLMService?.retainModel = false
+                if self.queueGeneration == myGeneration {
+                    self.resetQueueProgress()
                 }
                 
                 await MainActor.run {
@@ -213,11 +211,9 @@ public final class MetadataPipelineService {
                 }
             } catch {
                 DiverLogger.queue.error("Queue processing failed: \(error)")
-                await MainActor.run { self.fastVLMService?.retainModel = false }
-                await MainActor.run {
-                    if self.queueGeneration == myGeneration {
-                        self.resetQueueProgress()
-                    }
+                self.fastVLMService?.retainModel = false
+                if self.queueGeneration == myGeneration {
+                    self.resetQueueProgress()
                 }
             }
         }
@@ -230,7 +226,7 @@ public final class MetadataPipelineService {
         var lastError: Error?
         for i in 0..<attempts {
             do {
-                try modelContext.save()
+                try activeContext.save()
                 return
             } catch {
                 lastError = error
@@ -258,7 +254,7 @@ public final class MetadataPipelineService {
             predicate: #Predicate { $0.id == itemID }
         )
         
-        guard let localItem = try modelContext.fetch(fetchDescriptor).first else {
+        guard let localItem = try activeContext.fetch(fetchDescriptor).first else {
             print("❌ processItemImmediately: Could not find item \(itemID) in pipeline context")
             throw NSError(domain: "MetadataPipelineService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Item not found"])
         }
@@ -266,7 +262,7 @@ public final class MetadataPipelineService {
         localItem.statusRaw = ProcessingStatus.processing.rawValue
         localItem.updatedAt = Date() // CRITICAL: Update timestamp to prevent zombie check from marking as stalled
         localItem.processingLog.append("\(Date().formatted()): Starting high-priority 'Process Now' workflow.")
-        try? modelContext.save()
+        try? activeContext.save()
         
         do {
             let localPipeline = LocalPipelineService(modelContext: modelContext)
@@ -307,12 +303,12 @@ public final class MetadataPipelineService {
             
             if let url = targetURL {
                 let urlFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.url == url })
-                input = try? modelContext.fetch(urlFetch).first
+                input = try? activeContext.fetch(urlFetch).first
             }
             
             if input == nil, let title = targetTitle {
                 let titleFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.text == title })
-                input = try? modelContext.fetch(titleFetch).first
+                input = try? activeContext.fetch(titleFetch).first
             }
             
             // CRITICAL: Clear all calculated data for fresh reprocessing
@@ -338,14 +334,14 @@ public final class MetadataPipelineService {
                 let sessionFetch = FetchDescriptor<DiverSession>(
                     predicate: #Predicate { $0.sessionID == sessionID }
                 )
-                if let session = try? modelContext.fetch(sessionFetch).first {
+                if let session = try? activeContext.fetch(sessionFetch).first {
                     session.summary = nil
                     session.updatedAt = Date()
                     localItem.processingLog.append("\(Date().formatted()): Cleared parent session summary for regeneration.")
                 }
             }
             
-            try? modelContext.save()
+            try? activeContext.save()
             
             // Create descriptor with the item's actual ID to ensure correct item is updated
             let descriptor = DiverItemDescriptor(
@@ -364,9 +360,7 @@ public final class MetadataPipelineService {
                     descriptor: descriptor,
                     enrichmentService: enrichmentService,
                     locationService: effectiveLocationService,
-                    foursquareService: foursquareService,
-                    duckDuckGoService: duckDuckGoService,
-                    weatherService: weatherService,
+
                     indexingService: indexingService,
                     contextService: contextService
                 )
@@ -390,15 +384,12 @@ public final class MetadataPipelineService {
                      rawPayload: imageData
                  )
                  
-                 modelContext.insert(fallbackInput)
+                 activeContext.insert(fallbackInput)
                  _ = try await localPipeline.process(
                     input: fallbackInput,
                     descriptor: descriptor,
                     enrichmentService: enrichmentService,
                     locationService: effectiveLocationService,
-                    foursquareService: foursquareService,
-                    duckDuckGoService: duckDuckGoService,
-                    weatherService: weatherService,
                     indexingService: indexingService,
                     contextService: contextService
                 )
@@ -408,14 +399,14 @@ public final class MetadataPipelineService {
             // CRITICAL: Set statusRaw directly (not through @Transient status) to ensure SwiftData persistence
             localItem.statusRaw = ProcessingStatus.ready.rawValue
             localItem.processingLog.append("\(Date().formatted()): Processing completed successfully.")
-            try modelContext.save()
+            try activeContext.save()
             
         } catch {
             // Handle errors - don't leave item stuck in processing state
             localItem.statusRaw = ProcessingStatus.failed.rawValue
             localItem.failureCount += 1
             localItem.processingLog.append("\(Date().formatted()): Processing failed - \(error.localizedDescription)")
-            try? modelContext.save()
+            try? activeContext.save()
             print("❌ processItemImmediately failed: \(error)")
             throw error
         }
@@ -434,7 +425,7 @@ public final class MetadataPipelineService {
         let processingFetch = FetchDescriptor<ProcessedItem>(
             predicate: #Predicate { $0.statusRaw == "processing" && $0.updatedAt < fiveMinutesAgo }
         )
-        let stuckItems = try modelContext.fetch(processingFetch)
+        let stuckItems = try activeContext.fetch(processingFetch)
         
         if !stuckItems.isEmpty {
             DiverLogger.pipeline.warning("Found \(stuckItems.count) stuck items in processing state for >5 mins. Resetting to queued.")
@@ -442,7 +433,7 @@ public final class MetadataPipelineService {
                 item.status = .queued
                 item.processingLog.append("\(Date().formatted()): Resumed from stalled state (timeout)")
             }
-            try modelContext.save()
+            try activeContext.save()
         }
         
         // 2. Process all persistent LocalInputs (Pending Work)
@@ -450,7 +441,7 @@ public final class MetadataPipelineService {
         let inputFetch = FetchDescriptor<LocalInput>(
             sortBy: [SortDescriptor(\.createdAt)]
         )
-        let pendingInputs = try modelContext.fetch(inputFetch)
+        let pendingInputs = try activeContext.fetch(inputFetch)
         
         if !pendingInputs.isEmpty {
             DiverLogger.pipeline.info("Resuming \(pendingInputs.count) pending transactions from database")
@@ -459,7 +450,7 @@ public final class MetadataPipelineService {
             queueTotalCount += pendingInputs.count
             queueStatusMessage = "Resuming interrupted items…"
             
-            let localPipeline = LocalPipelineService(modelContext: modelContext)
+            let localPipeline = LocalPipelineService(modelContext: activeContext)
             
             for input in pendingInputs {
                 do {
@@ -472,10 +463,10 @@ public final class MetadataPipelineService {
                     let checkFetch = FetchDescriptor<ProcessedItem>(
                         predicate: #Predicate { $0.inputId == inputId && $0.statusRaw == "ready" }
                     )
-                    if let existingReady = try? modelContext.fetch(checkFetch).first {
+                    if let existingReady = try? activeContext.fetch(checkFetch).first {
                         DiverLogger.pipeline.debug("Skipping already-completed input \(inputId) - ProcessedItem \(existingReady.id) is ready")
                         // Clean up the orphaned LocalInput
-                        modelContext.delete(input)
+                        activeContext.delete(input)
                         queueTotalCount -= 1 // Already done, don't count
                         continue
                     }
@@ -496,9 +487,7 @@ public final class MetadataPipelineService {
                         descriptor: recoveredDescriptor,
                         enrichmentService: self.enrichmentService,
                         locationService: self.locationService,
-                        foursquareService: self.foursquareService,
-                        duckDuckGoService: self.duckDuckGoService,
-                        weatherService: self.weatherService,
+
                         indexingService: self.indexingService,
                         contextService: self.contextService,
                         fastVLMService: self.fastVLMService
@@ -509,7 +498,7 @@ public final class MetadataPipelineService {
                     queueCompletedCount += 1
                 }
             }
-            try modelContext.save()
+            try activeContext.save()
         }
         
         // 3. Process queued ProcessedItems that have no LocalInput (orphaned items after crash/resume)
@@ -527,7 +516,7 @@ public final class MetadataPipelineService {
             sortBy: [SortDescriptor(\.createdAt)]
         )
         
-        guard let queuedItems = try? modelContext.fetch(queuedFetch), !queuedItems.isEmpty else {
+        guard let queuedItems = try? activeContext.fetch(queuedFetch), !queuedItems.isEmpty else {
             return
         }
         
@@ -543,7 +532,7 @@ public final class MetadataPipelineService {
             // Check if there's already a LocalInput for this item
             let itemURL = item.url
             let urlFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.url == itemURL })
-            if let _ = try? modelContext.fetch(urlFetch).first {
+            if let _ = try? activeContext.fetch(urlFetch).first {
                 // LocalInput exists, will be processed by step 2
                 queueTotalCount -= 1 // Don't count items handled elsewhere
                 continue
@@ -560,7 +549,7 @@ public final class MetadataPipelineService {
                 item.status = .failed
                 item.failureCount += 1
                 item.processingLog.append("\(Date().formatted()): Failed to resume - \(error.localizedDescription)")
-                try? modelContext.save()
+                try? activeContext.save()
             }
             
             queueCompletedCount += 1
@@ -579,7 +568,7 @@ public final class MetadataPipelineService {
             sortBy: [SortDescriptor(\.createdAt)]
         )
         
-        guard let queuedItems = try? modelContext.fetch(queuedFetch), !queuedItems.isEmpty else {
+        guard let queuedItems = try? activeContext.fetch(queuedFetch), !queuedItems.isEmpty else {
             return
         }
         
@@ -642,7 +631,7 @@ public final class MetadataPipelineService {
                 item.status = .processing
                 item.processingLog.append("\(Date().formatted()): Processing PHAsset import")
                 queueStatusMessage = "Analyzing content…"
-                try? modelContext.save()
+                try? activeContext.save()
                 
                 let localInput = LocalInput(
                     createdAt: item.createdAt,
@@ -652,9 +641,9 @@ public final class MetadataPipelineService {
                     rawPayload: imageData
                 )
                 
-                modelContext.insert(localInput)
+                activeContext.insert(localInput)
                 
-                let localPipeline = LocalPipelineService(modelContext: modelContext)
+                let localPipeline = LocalPipelineService(modelContext: activeContext)
                 let descriptor = DiverItemDescriptor(
                     id: item.id,
                     url: "",
@@ -678,15 +667,13 @@ public final class MetadataPipelineService {
                     descriptor: descriptor,
                     enrichmentService: self.enrichmentService,
                     locationService: nil,
-                    foursquareService: self.foursquareService,
-                    duckDuckGoService: self.duckDuckGoService,
-                    weatherService: self.weatherService,
+
                     indexingService: self.indexingService,
                     contextService: self.contextService,
                     fastVLMService: self.fastVLMService
                 )
                 
-                try? modelContext.save()
+                try? activeContext.save()
                 successCount += 1
                 queueCompletedCount += 1
                 print("✅ [MetadataPipeline] Processed PHAsset: \(item.id)")
@@ -700,18 +687,16 @@ public final class MetadataPipelineService {
             }
         }
         
-        try? modelContext.save()
+        try? activeContext.save()
         print("📸 [MetadataPipeline] PHAsset processing complete. Success: \(successCount), Failed: \(errorCount)")
     }
     
     /// Clears queue progress state after a brief delay so the "complete" state is visible.
-    /// MUST be called from MainActor or wrapped in MainActor.run.
-    @MainActor
     private func resetQueueProgress() {
         queueCurrentItemTitle = nil
         queueStatusMessage = "Complete"
         resetTask?.cancel()
-        resetTask = Task { @MainActor [weak self] in
+        resetTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5s
             guard !Task.isCancelled else { return }
             self?.isProcessingQueue = false
@@ -756,8 +741,8 @@ public final class MetadataPipelineService {
         // before process() completes, resumeSuspendedQueue can recover it.
         localInput.descriptorJSON = try? JSONEncoder().encode(descriptor)
 
-        modelContext.insert(localInput)
-        let localPipeline = LocalPipelineService(modelContext: modelContext)
+        activeContext.insert(localInput)
+        let localPipeline = LocalPipelineService(modelContext: activeContext)
         
         // For photo library imports, pass nil for locationService to prevent GPS override
         // The descriptor already contains the photo's original location
@@ -768,9 +753,7 @@ public final class MetadataPipelineService {
             descriptor: descriptor,
             enrichmentService: enrichmentService,
             locationService: useLocationService,
-            foursquareService: foursquareService,
-            duckDuckGoService: duckDuckGoService,
-            weatherService: weatherService,
+
             indexingService: indexingService,
             contextService: contextService,
             fastVLMService: fastVLMService
@@ -788,13 +771,11 @@ public final class MetadataPipelineService {
 
     public func refreshProcessedItems() async throws {
         DiverLogger.pipeline.info("Refreshing processed items")
-        let localPipeline = LocalPipelineService(modelContext: modelContext)
+        let localPipeline = LocalPipelineService(modelContext: activeContext)
         try await localPipeline.refreshProcessedItems(
             enrichmentService: enrichmentService,
             locationService: locationService,
-            foursquareService: foursquareService,
-            duckDuckGoService: duckDuckGoService,
-            weatherService: weatherService,
+
             indexingService: indexingService
         )
         WidgetCenter.shared.reloadAllTimelines()
@@ -809,13 +790,13 @@ public final class MetadataPipelineService {
             predicate: #Predicate { $0.id == id }
         )
         
-        if let existing = try? modelContext.fetch(fetch).first {
+        if let existing = try? activeContext.fetch(fetch).first {
             existing.failureCount += 1
             existing.processingLog.append("\(Date().formatted()): Failure (\(existing.failureCount)): \(error.localizedDescription)")
             
             if existing.failureCount > 2 {
                 DiverLogger.pipeline.warning("Item \(id) failed too many times. Deleting.")
-                modelContext.delete(existing)
+                activeContext.delete(existing)
             } else {
                 existing.status = .failed
             }
@@ -835,18 +816,18 @@ public final class MetadataPipelineService {
                 processingLog: ["\(Date().formatted()): Initial processing failure: \(error.localizedDescription)"], 
                 failureCount: 1
             )
-            modelContext.insert(failedItem)
+            activeContext.insert(failedItem)
             
             // CRITICAL: Ensure even failed items have a session so they aren't orphaned in UI
-            let localPipeline = LocalPipelineService(modelContext: modelContext)
-            localPipeline.syncSession(for: failedItem)
+            let localPipeline = LocalPipelineService(modelContext: activeContext)
+            await localPipeline.syncSession(for: failedItem)
             
             DiverLogger.pipeline.error("Created failed item \(id) due to: \(error)")
         }
-        try modelContext.save()
+        try activeContext.save()
     }
     public func runDataDiagnostics() async {
-        let localPipeline = LocalPipelineService(modelContext: modelContext)
+        let localPipeline = LocalPipelineService(modelContext: activeContext)
         await localPipeline.runDataDiagnostics()
     }
     
@@ -865,7 +846,7 @@ public final class MetadataPipelineService {
             let sessionDescriptor = FetchDescriptor<DiverSession>(
                 predicate: #Predicate { $0.summary == nil }
             )
-            let sessions = try modelContext.fetch(sessionDescriptor)
+            let sessions = try activeContext.fetch(sessionDescriptor)
             
             print("🔄 [MetadataPipeline] Found \(sessions.count) sessions needing summaries")
             
@@ -877,7 +858,7 @@ public final class MetadataPipelineService {
                     sortBy: [SortDescriptor(\.createdAt)]
                 )
                 
-                guard let items = try? modelContext.fetch(itemDescriptor), !items.isEmpty else {
+                guard let items = try? activeContext.fetch(itemDescriptor), !items.isEmpty else {
                     continue
                 }
                 
@@ -927,7 +908,7 @@ public final class MetadataPipelineService {
                 print("✅ [MetadataPipeline] Generated summary for session '\(session.sessionID)': \(llmSummary.prefix(100))...")
             }
             
-            try modelContext.save()
+            try activeContext.save()
             
         } catch {
             print("⚠️ [MetadataPipeline] Failed to generate session summaries: \(error)")
@@ -946,7 +927,7 @@ public final class MetadataPipelineService {
             let collectionDescriptor = FetchDescriptor<DiverCollection>(
                 predicate: #Predicate { $0.llmSummary == nil }
             )
-            let collections = try modelContext.fetch(collectionDescriptor)
+            let collections = try activeContext.fetch(collectionDescriptor)
             
             for collection in collections {
                 // Fetch items for this collection's sessions
@@ -956,7 +937,7 @@ public final class MetadataPipelineService {
                     let itemDescriptor = FetchDescriptor<ProcessedItem>(
                         predicate: #Predicate { $0.sessionID == sessionID }
                     )
-                    if let items = try? modelContext.fetch(itemDescriptor) {
+                    if let items = try? activeContext.fetch(itemDescriptor) {
                         allItems.append(contentsOf: items)
                     }
                 }
@@ -991,7 +972,7 @@ public final class MetadataPipelineService {
                 print("✅ [MetadataPipeline] Generated summary for collection '\(collection.name)'")
             }
             
-            try modelContext.save()
+            try activeContext.save()
             
         } catch {
             print("⚠️ [MetadataPipeline] Failed to generate collection summaries: \(error)")

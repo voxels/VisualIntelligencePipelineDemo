@@ -231,9 +231,6 @@ struct ReprocessingWizardView: View {
                     enrichmentService: WebViewLinkEnrichmentService(), // Use fresh instance for batch
                     // Assuming Services.shared has these properly set
                     locationService: services.locationService, // Passed for type signature, but reprocess logic passes nil internally
-                    foursquareService: services.foursquareService,
-                    duckDuckGoService: services.duckDuckGoService,
-                    weatherService: services.weatherService,
                     indexingService: services.knowledgeGraphService,
                     progressHandler: { p in
                         self.progress = p

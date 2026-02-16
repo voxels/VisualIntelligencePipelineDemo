@@ -72,7 +72,7 @@ These files carry the most complexity and are the primary candidates for future 
 The three-layer package architecture (`DiverShared` → `DiverKit` → `App`) enforces clear dependency direction. `DiverShared` has zero dependencies and contains only pure Swift types. `DiverKit` encapsulates all business logic. The app target is a thin shell focused on UI wiring and system integration.
 
 **Comprehensive Enrichment Pipeline**
-The enrichment architecture is the project's standout feature — 10+ enrichment services (Location, Weather, Web, Aesthetics, Music, Documents, DuckDuckGo, Foursquare, MapKit, Contacts) are composed through `LocalPipelineService`. Each service has a focused responsibility and can operate independently.
+The enrichment architecture is the project's standout feature — services (Location/MapKit, Web/Link, Aesthetics, Music, Documents, Contacts) are composed through `LocalPipelineService`. Each service has a focused responsibility and can operate independently. Weather, Foursquare, and DuckDuckGo location/product enrichment were removed in v1.1 to reduce per-item latency.
 
 **Bundled Vision Pass**
 As of v1.1, aesthetics scoring is bundled into the Vision analysis pass alongside OCR, QR detection, semantic classification, document segmentation, and sifting — all executed in a single `handler.perform()` call per image. This eliminates redundant image decoding and improves throughput.
@@ -113,12 +113,13 @@ The top 6 files contain ~12,700 lines (25% of the codebase). `LocalPipelineServi
 |---------|--------|-----------|
 | Camera & Subject Sifting | ✅ Complete | `VisualIntelligenceView`, `VisualIntelligenceViewModel`, `CameraManager` |
 | Vision Analysis (OCR, QR, Semantic, Document, Aesthetics) | ✅ Complete | `IntelligenceProcessor`, `AestheticsScoringService` |
-| Location Enrichment (MapKit + Foursquare) | ✅ Complete | `LocationSearchAggregator`, `MapKitEnrichmentService`, `FoursquareEnrichmentService` |
+| Location Enrichment (MapKit + Contacts) | ✅ Complete | `ReverseGeocodingService`, `MapKitEnrichmentService`, `ContactService` |
+| Location Editing (MapKit + Foursquare) | ✅ Complete | `LocationSearchAggregator`, `EditLocationView`, `PlaceSelectionMapView` |
 | Location Pinning & Persistence | ✅ Complete | `SessionLocationBar`, `EditLocationView`, `EditSessionLocationView` |
-| Weather Enrichment | ✅ Complete | `WeatherEnrichmentService` |
+| Weather Enrichment | ❌ Removed | Removed from pipeline — marginal value, added latency |
 | Document Detection & Saving | ✅ Complete | `DocumentManager` |
 | Apple Music / Spotify | ✅ Complete | `AppleMusicEnrichmentService`, `SpotifyService` |
-| Web / DuckDuckGo Enrichment | ✅ Complete | `DuckDuckGoEnrichmentService`, `LinkEnrichmentService`, `WebViewLinkEnrichmentService` |
+| Web / QR URL Enrichment | ✅ Complete | `LinkEnrichmentService`, `WebViewLinkEnrichmentService` |
 | QR URL Enrichment | ✅ Complete | `LocalPipelineService.integrateIntelligenceResults` |
 | On-Device LLM (summaries, concepts, tags) | ✅ Complete | `IntelligenceProcessor`, `ContextQuestionService` |
 | FastVLM (opt-in multimodal vision) | ✅ Complete | `FastVLMEnrichmentService` |

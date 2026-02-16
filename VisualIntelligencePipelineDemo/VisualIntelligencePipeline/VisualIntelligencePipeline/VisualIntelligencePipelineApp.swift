@@ -118,12 +118,10 @@ struct VisualIntelligencePipelineApp: App {
         
         self.metadataPipelineService = MetadataPipelineService(
             queueStore: queueStore,
-            modelContext: dataStore.mainContext,
+            modelContainer: dataStore.container,
+            mainContext: dataStore.mainContext,
             enrichmentService: compositeLinkService,
             locationService: locationService,
-            foursquareService: foursquareContextService,
-            duckDuckGoService: duckDuckGoContextService,
-            weatherService: weatherService,
             contextService: contextService
         )
         
@@ -133,6 +131,14 @@ struct VisualIntelligencePipelineApp: App {
         // Initialize LocalPipelineService (for foreground/UI operations like regeneration)
         let localPipeline = LocalPipelineService(modelContext: dataStore.mainContext)
         Services.shared.localPipelineService = localPipeline
+
+        // One-time relationship reconciliation at launch (no longer per-LocalPipelineService init)
+        let container = dataStore.container
+        Task.detached(priority: .utility) {
+            let bgCtx = ModelContext(container)
+            let reconciler = LocalPipelineService(modelContext: bgCtx)
+            await reconciler.reconcileRelationships()
+        }
 
         // Initialize KeychainService with app group
         self.keychainService = KeychainService(service: KeychainService.ServiceIdentifier.diver, accessGroup: AppGroupConfig.default.keychainAccessGroup)

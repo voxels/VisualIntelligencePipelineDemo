@@ -18,9 +18,8 @@ Uses Apple's Vision framework (`VNGeneratePersonInstanceMaskRequest`) to automat
 
 Every capture is automatically enriched with layers of real-world context:
 
-- **Location** — Foursquare venues and Apple MapKit landmarks/addresses via a unified `LocationSearchAggregator`, with user-pinnable location persistence and bidirectional session sync.
-- **Weather** — Current environmental conditions via WeatherKit, embedded directly into the capture's context.
-- **Web Intelligence** — Metadata extraction for related links, DuckDuckGo enrichments, and rich link previews.
+- **Location** — Apple MapKit reverse geocoding with contact detection ("Home", friend's addresses). Foursquare venue search available in the location editing UI for manual place selection.
+- **Web Intelligence** — Metadata extraction for web URLs and QR codes, with rich link previews.
 - **Aesthetics Scoring** — Image quality scores bundled into the Vision analysis pass via `VNCalculateImageAestheticsScoresRequest`, plus brightness, contrast, and sharpness analysis.
 - **Document Detection** — Automatic perspective correction via `VNDetectDocumentSegmentationRequest` and saving of detected documents as separate child items.
 - **Music Recognition** — Apple Music and Spotify identification for music-related captures.
@@ -35,7 +34,7 @@ Every capture is automatically enriched with layers of real-world context:
 
 ### Intelligent Session Management
 
-Captures are automatically grouped by location and time into cohesive **sessions** via `SessionClusteringService`. Multiple captures at the same Foursquare venue or MapKit landmark merge into a single session history, providing a holistic, AI-generated summary of each visit. Session summaries aggregate all item metadata — transcription, themes, tags, categories, location, weather, web/document/QR context, FastVLM analysis, product metadata, and more. Sessions support bulk location editing, context resumption, and reprocessing.
+Captures are automatically grouped by location and time into cohesive **sessions** via `SessionClusteringService`. Multiple captures at the same MapKit landmark merge into a single session history, providing a holistic, AI-generated summary of each visit. Session summaries aggregate all item metadata — transcription, themes, tags, categories, location, web/document/QR context, FastVLM analysis, product metadata, and more. Sessions support bulk location editing, context resumption, and reprocessing.
 
 ### Library Maintenance
 
@@ -69,7 +68,7 @@ Fully integrated with Apple's system:
 - **Local-First with Sync** — SwiftData persistence backed by CloudKit for seamless cross-device access.
 - **On-Device ML** — All inference runs locally: Apple Vision framework (6 request types in a single pass), FastVLM 0.5B via MLX Swift, and Apple Intelligence via Foundation Models.
 - **Queue-Based Reliability** — A file-based queue ensures no shared link or capture is ever lost, even under extension time limits or interruptions.
-- **Structured Context Pipeline** — `PipelineContext` aggregates typed fields from each enrichment service (Vision, location, weather, web, knowledge graph) so that downstream ML consumers read structured data rather than parsing text.
+- **Structured Context Pipeline** — `PipelineContext` aggregates typed fields from each enrichment service (Vision, location, web, knowledge graph) so that downstream ML consumers read structured data rather than parsing text.
 
 ---
 
@@ -78,7 +77,7 @@ Fully integrated with Apple's system:
 - **Platforms:** iOS 26+
 - **Apple Intelligence:** Required for on-device LLM features (summaries, tags, purposes)
 - **FastVLM:** Optional, requires ~500MB download and sufficient device memory
-- **Built with:** Swift, SwiftUI, SwiftData, Vision, MapKit, WeatherKit, Foundation Models, MLX Swift
+- **Built with:** Swift, SwiftUI, SwiftData, Vision, MapKit, Foundation Models, MLX Swift
 
 ---
 

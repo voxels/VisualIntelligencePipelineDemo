@@ -17,16 +17,15 @@ The project is modularized using Swift Package Manager:
 *   **SwiftData + CloudKit:** Local-first persistence with cross-device sync.
 *   **Vision & CoreML:** Subject detection, sifting, aesthetics scoring, and ML embeddings.
 *   **Apple Intelligence:** Uses `SystemLanguageModel` for on-device context generation. Requires **iOS 26.0+**.
-*   **MapKit & WeatherKit:** Location enrichment and environmental context.
-*   **Foursquare API:** Venue-level location enrichment via `LocationSearchAggregator`.
+*   **MapKit:** Reverse geocoding and location enrichment for captures.
+*   **Foursquare API:** Venue-level location search in editing UI via `LocationSearchAggregator` (not used in automatic pipeline processing).
 
 ## Visual Intelligence Features
 
 *   **Intelligent Sifting:** Uses Vision framework to detect subjects in images and "sift" them out from the background with proper alpha channel handling.
 *   **Context Enrichment:** Enriches captured items with:
-    *   **Location:** Foursquare (Venues) and MapKit (Landmarks/Addresses) via `LocationSearchAggregator`, with user-pinnable persistence.
-    *   **Environmental:** WeatherKit (Current conditions).
-    *   **Web:** DuckDuckGo enrichments, link metadata extraction, and rich link previews.
+    *   **Location:** MapKit reverse geocoding (Landmarks/Addresses) with contact detection (Home, friends), and user-pinnable persistence. Foursquare is available in the location editing UI for manual searches.
+    *   **Web:** Link metadata extraction and rich link previews for web URLs and QR codes.
     *   **Aesthetics:** Quality scoring bundled into the Vision analysis pass via `VNCalculateImageAestheticsScoresRequest`.
     *   **Music:** Apple Music and Spotify recognition for music-related captures.
     *   **Documents:** Automatic perspective correction and saving of detected documents.
@@ -41,7 +40,7 @@ The project is modularized using Swift Package Manager:
 *   **`IntelligenceProcessor`:** Runs on-device LLM prompts for concept extraction and summarization. Also runs 6 Vision requests (OCR, QR, semantic, document, sifting, aesthetics) in a single pass via `executePipeline`.
 *   **Reprocessing:** Supports silent background reprocessing (`reprocessPipeline`) to update metadata. Reuses existing item IDs to prevent duplicates.
 *   **Session Sync:** Automatically synchronizes location edits between `ProcessedItem` and its parent `DiverSession`.
-*   **Enriched Session Summaries:** `generateAndSaveSessionSummary` aggregates all item metadata (transcription, themes, tags, categories, location, weather, web/document/QR context, FastVLM analysis, product metadata, questions, media type) for LLM summarization.
+*   **Enriched Session Summaries:** `generateAndSaveSessionSummary` aggregates all item metadata (transcription, themes, tags, categories, location, web/document/QR context, FastVLM analysis, product metadata, questions, media type) for LLM summarization.
 *   **Library Maintenance (`maintainLibrary`):** A 6-step repair pipeline triggered from Settings > Rebuild Library:
     1. Assign orphaned inbox items to sessions by `createdAt` timestamp proximity (30-min window)
     2. Recover stuck items (reset processing → queued)
@@ -102,7 +101,7 @@ cd DiverShared && swift test
     *   Use aspect-ratio based layouts for images instead of fixed dimensions.
 
 5.  **Main Thread Safety:**
-    *   Keep long-running pipeline tasks off the main thread. Use `Task.detached` or background actors for heavy processing.
+    *   Keep long-running pipeline tasks off the main thread. Use `@PipelineActor` or `Task.detached` for heavy processing.
     *   Provide immediate visual feedback on user actions even when underlying model updates are still in progress.
 
 ## Terminology

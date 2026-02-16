@@ -7,19 +7,13 @@ import AVFoundation
 import Vision
 import Photos
 
-@MainActor
+@PipelineActor
 public final class LocalPipelineService {
-    private let modelContext: ModelContext
+    nonisolated(unsafe) private let modelContext: ModelContext
     private var cachedHomeLocation: CLLocation?
 
-    public init(modelContext: ModelContext) {
+    nonisolated public init(modelContext: ModelContext) {
         self.modelContext = modelContext
-        
-        // Reconcile relationships for backward compatibility (SwiftData Transition)
-        // Use detached task to avoid blocking main thread during app launch
-        Task.detached(priority: .utility) { [self] in
-            await self.reconcileRelationships()
-        }
     }
     
     // MARK: - Deterministic Context Builder
@@ -79,9 +73,7 @@ public final class LocalPipelineService {
         descriptor: DiverItemDescriptor? = nil,
         enrichmentService: LinkEnrichmentService? = nil,
         locationService: LocationProvider? = nil,
-        foursquareService: ContextualEnrichmentService? = nil,
-        duckDuckGoService: ContextualEnrichmentService? = nil,
-        weatherService: WeatherEnrichmentService? = nil,
+
         indexingService: KnowledgeGraphIndexingService? = nil,
         contextService: ContextQuestionService? = nil,
         fastVLMService: FastVLMEnrichmentService? = nil
@@ -311,91 +303,6 @@ public final class LocalPipelineService {
                 if let location = effectiveLocation {
                     let coords = location.coordinate
                     
-                    // 1. Contextual Place Lookup
-                    if let foursquareService {
-                        var matchedEnrichment: EnrichmentData?
-                        
-                        // IF User specified a place (Override active), try to match IT specifically
-                        if hasUserOverride, let overrideName = existing.placeContext?.name ?? existing.location {
-                             // Try search by name + location to verify/enrich the specific place
-                             matchedEnrichment = try await foursquareService.enrich(query: overrideName, location: coords)
-                             
-                              
-                              if matchedEnrichment == nil {
-                                  // User specified a place, but Foursquare didn't find it.
-                                  // DO NOT overwrite with a random nearby place.
-                                  // Keep the MapKit/Manual data.
-                                  DiverLogger.pipeline.debug("Retaining specific location override '\(overrideName)'; Foursquare verify failed.")
-                                  
-                                  // Fallback to coordinates for metadata only (weather etc), 
-                                  // BUT enforce preservation of identity
-                                  matchedEnrichment = try await foursquareService.enrich(location: coords)
-                              }
-                         } else {
-                              // Standard Auto-Enrichment (Best guess nearby)
-                              
-                              // User Request: "if i take a picture ofthe sign of a business it should show up... and match to the gps coordinate"
-                              // STRATEGY: Run a specific query-based search using the input text (OCR/Caption) first.
-                              // If that finds a match at this location, prefer it over the generic "nearest neighbor".
-                              var textBasedMatch: EnrichmentData? = nil
-                              let queryText = input.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                              
-                              // Heuristic: Only search if text is concise (likely a name/caption) and not a full LLM summary
-                              // "Visual Capture" is the default empty text, ignore it.
-                              if !queryText.isEmpty && queryText.count < 100 && queryText != "Visual Capture" {
-                                   textBasedMatch = try await foursquareService.enrich(query: queryText, location: coords)
-                                   if let match = textBasedMatch {
-                                        DiverLogger.pipeline.debug("Found Verified Text-Based Match: \(match.title ?? "Unknown")")
-                                   }
-                              }
-                              
-                              if let textMatch = textBasedMatch {
-                                  // Found it! Use the specific place from the sign.
-                                  matchedEnrichment = textMatch
-                              } else {
-                              /* 
-                               // DISABLE AUTOMATIC VENUE MATCHING (User Request)
-                               // Only perform text-based verification, never blind coordinate matching.
-                               
-                              // Fallback to generic proximity search
-                              matchedEnrichment = try await foursquareService.enrich(location: coords)
-                              */
-                              DiverLogger.pipeline.debug("Skipping generic venue matching (Disabled per user request).")
-                          }
-                          }
-                         
-                        if let fsEnrichment = matchedEnrichment {
-                            // Determine if we should preserve existing identity
-                            // If `hasUserOverride` matches `existing.placeContext` AND `fsEnrichment` is different/generic,
-                            // we should probably preserve.
-                            // Simplified: If manual override failed verification (matchedEnrichment was nil above), 
-                            // we fetched coords-based enrichment. We MUST preserve in that case.
-                            // If user didn't override, we overwrite.
-                            
-                            // Check ID types
-                            let currentID = existing.placeContext?.placeID ?? ""
-                            let isMapKitOverride = currentID.hasPrefix("mapkit-") || currentID.hasPrefix("mk-") || currentID == "home-location"
-                            
-                            // CRITICAL: Also preserve contact-set locations
-                            let isContactLocation = existing.placeContext?.contactIdentifier != nil
-                            
-                            // If we have a MapKit override, contact location, session override, or other user-set identity,
-                            // preserve the existing place name/ID during enrichment.
-                            // hasUserOverride is set when the session has a specific locationName (user edited it)
-                            
-                            let shouldPreserve = hasUserOverride || isMapKitOverride || isContactLocation
-                             
-                            applyEnrichment(fsEnrichment, to: existing, preservePlaceIdentity: shouldPreserve)
-                            pipelineContext.placeEnrichment = fsEnrichment
-                            
-                            if let venueName = fsEnrichment.title, let duckDuckGoService {
-                                if let ddgEnrichment = try await duckDuckGoService.enrich(query: venueName, location: coords) {
-                                    applyEnrichment(ddgEnrichment, to: existing, overwriteTitle: true)
-                                    pipelineContext.duckDuckGoEnrichment = ddgEnrichment
-                                }
-                            }
-                        }
-                    }
                 }
             if existing.modality == nil || existing.modality?.isEmpty == true {
                 existing.modality = resolvedModality
@@ -453,7 +360,7 @@ public final class LocalPipelineService {
             // Background LLM Re-analysis for Updates (Second Verification Pass)
             let finalLocation = effectiveLocation
             let isUserLocationFixed = hasUserOverride
-            let contactService = Services.shared.contactService
+            let contactService = await MainActor.run { Services.shared.contactService }
             let inputURLString = input.url
             var localPipelineContext = pipelineContext
             let interimResolvedId = resolvedId
@@ -483,11 +390,8 @@ public final class LocalPipelineService {
                 inputURLString: inputURLString,
                 enrichmentService: enrichmentService,
                 locationService: locationService,
-                foursquareService: foursquareService,
-                duckDuckGoService: duckDuckGoService,
-                weatherService: weatherService,
+
                 contactService: contactService,
-                itemSource: existing.source,
                 initialHomeLoc: self.cachedHomeLocation
             )
             
@@ -704,7 +608,7 @@ public final class LocalPipelineService {
         let finalLocation = currentLocation
         let isUserLocationFixed = hasUserOverride
         
-        let contactService = Services.shared.contactService
+        let contactService = await MainActor.run { Services.shared.contactService }
         let inputURLString = input.url
         
         let results = await performParallelEnrichment(
@@ -716,11 +620,7 @@ public final class LocalPipelineService {
             inputURLString: inputURLString,
             enrichmentService: enrichmentService,
             locationService: locationService,
-            foursquareService: foursquareService,
-            duckDuckGoService: duckDuckGoService,
-            weatherService: weatherService,
             contactService: contactService,
-            itemSource: input.source,
             initialHomeLoc: cachedHomeLocation
         )
         
@@ -888,12 +788,8 @@ public final class LocalPipelineService {
         // Fix looping/inbox bug: Delete input after processing
         modelContext.delete(input)
 
-        // Trigger Session Summary Update
-        if let sid = processed.sessionID {
-            Task {
-                await self.generateAndSaveSessionSummary(sessionID: sid)
-            }
-        }
+        // Session summary generation is deferred — caller batches session IDs
+        // to avoid redundant LLM calls when multiple items share a session.
 
         // Mark as ready before returning
         processed.status = ProcessingStatus.ready
@@ -906,9 +802,6 @@ public final class LocalPipelineService {
     public func refreshProcessedItems(
         enrichmentService: LinkEnrichmentService? = nil,
         locationService: LocationProvider? = nil,
-        foursquareService: ContextualEnrichmentService? = nil,
-        duckDuckGoService: ContextualEnrichmentService? = nil,
-        weatherService: WeatherEnrichmentService? = nil,
         indexingService: KnowledgeGraphIndexingService? = nil
     ) async throws {
         let inputs = try modelContext.fetch(FetchDescriptor<LocalInput>())
@@ -919,9 +812,6 @@ public final class LocalPipelineService {
                 input: input,
                 enrichmentService: enrichmentService,
                 locationService: locationService,
-                foursquareService: foursquareService,
-                duckDuckGoService: duckDuckGoService,
-                weatherService: weatherService,
                 indexingService: indexingService
             )
         }
@@ -949,13 +839,10 @@ public final class LocalPipelineService {
         cutoffDate: Date,
         enrichmentService: LinkEnrichmentService? = nil,
         locationService: LocationProvider? = nil,
-        foursquareService: ContextualEnrichmentService? = nil,
-        duckDuckGoService: ContextualEnrichmentService? = nil,
-        weatherService: WeatherEnrichmentService? = nil,
         indexingService: KnowledgeGraphIndexingService? = nil,
         fastVLMService: FastVLMEnrichmentService? = nil,
-        progressHandler: ((Double) -> Void)? = nil,
-        logHandler: ((String) -> Void)? = nil
+        progressHandler: (@Sendable (Double) -> Void)? = nil,
+        logHandler: (@Sendable (String) -> Void)? = nil
     ) async throws {
         // 1. Clear existing queue items (processing or queued) to avoid duplicates or stalls
         // We delete the ProcessedItem but ensure the LocalInput is preserved for the main loop if within date range,
@@ -1032,7 +919,7 @@ public final class LocalPipelineService {
                 let previousPlaceID = item.placeContext?.placeID
                 let previousPlaceName = item.placeContext?.name ?? item.location
                 
-                let task = Task(priority: .utility) { @MainActor in
+                let task = Task(priority: .utility) { @PipelineActor in
                     // Fetch fresh instance to ensure MainActor safety
                     guard let freshItem = self.modelContext.model(for: itemID) as? ProcessedItem else { return }
                     
@@ -1109,9 +996,6 @@ public final class LocalPipelineService {
                             descriptor: maintenanceDescriptor,
                             enrichmentService: enrichmentService,
                             locationService: nil, // Prevent using current GPS for historical items; rely on Session location
-                            foursquareService: foursquareService,
-                            duckDuckGoService: duckDuckGoService,
-                            weatherService: weatherService,
                             indexingService: indexingService,
                             fastVLMService: fastVLMService
                         )
@@ -2029,18 +1913,13 @@ public final class LocalPipelineService {
     
     private struct ParallelEnrichmentResult: Sendable {
         var link: EnrichmentData?
-        var foursquare: EnrichmentData?
-        var duckDuckGo: EnrichmentData?
+        var place: EnrichmentData?
         var coverImagePath: String?
-        var productConcepts: [String]?
-        var weather: WeatherContext?
         var activity: ActivityContext?
-        var liveEventContext: String?
     }
 
-    /// Runs all enrichment tasks (geocoding, weather, link, Foursquare, DuckDuckGo) in parallel.
-    /// `nonisolated` so enrichment runs on the cooperative thread pool, not the main thread.
-    nonisolated private func performParallelEnrichment(
+    /// Runs enrichment tasks (geocoding, link metadata, cover image) in parallel.
+    private func performParallelEnrichment(
         resolvedId: String,
         descriptor: DiverItemDescriptor?,
         rawPayload: Data?,
@@ -2049,12 +1928,8 @@ public final class LocalPipelineService {
         inputURLString: String?,
         enrichmentService: LinkEnrichmentService?,
         locationService: LocationProvider?,
-        foursquareService: ContextualEnrichmentService?,
-        duckDuckGoService: ContextualEnrichmentService?,
-        weatherService: WeatherEnrichmentService?,
         contactService: ContactServiceProvider?,
-        itemSource: String? = nil,  // Set to "photoLibraryImport" to skip weather API
-        initialHomeLoc: CLLocation? = nil  // Passed in to avoid accessing @MainActor property
+        initialHomeLoc: CLLocation? = nil
     ) async -> [ParallelEnrichmentResult] {
         
         await withTaskGroup(of: ParallelEnrichmentResult?.self) { group in
@@ -2105,131 +1980,14 @@ public final class LocalPipelineService {
                     )
                 }
                 
-                // 2. Foursquare Cross-Reference (Augmentation)
-                // User Request: "I want the foursquare place to be identified by cross searching for the correct foursquare id for a mapkit identified place location"
-                if let foursquareService {
-                    if let placeID = descriptor?.placeID, !placeID.isEmpty {
-                        // A. Explicit ID Override (Metadata Pipeline)
-                        let detailed = try? await self.withTimeout(seconds: 15) {
-                            try await foursquareService.fetchDetails(for: placeID)
-                        }
-                        if let d = detailed { fsEnrichment = d }
-                        
-                    } else if let mapKitName = fsEnrichment?.title, mapKitName != "Location" {
-                        // B. Cross-Search using MapKit Name
-                        // If we have a specific name from MapKit, find the Foursquare equivalent to get the ID/Details
-                        let match = try? await self.withTimeout(seconds: 15) {
-                             try await foursquareService.enrich(query: mapKitName, location: coords)
-                        }
-                        if let m = match {
-                            // Merge Foursquare data (ID, Photos, etc) but ideally preserve the MapKit Identity if we trust it more?
-                            // User request implies finding the "Correct Foursquare ID", suggests we want the Foursquare Identity once verified.
-                            fsEnrichment = m
-                        }
-                        
-                    }
-                    // User Request: Disable automatic generic Foursquare matching based on coordinates.
-                    // Only use Foursquare if we have a specific ID or a MapKit name to cross-reference.
-                }
-
-                // 3. Last Resort Fallback: Contact Detection (Home or Friends)
-                // Use cached contact locations to identify "Mom's House" or "Work" if standard Places fail.
-                let isGeneric = fsEnrichment == nil || fsEnrichment?.title == "Location"
-                if isGeneric, !isUserLocationFixed, let contactService = contactService {
-                    var matchFound = false
-                    
-                    // A. Check Home (Fastest)
-                    var homeLoc: CLLocation? = initialHomeLoc
-                    if homeLoc == nil {
-                        homeLoc = try? await contactService.getHomeLocation()
-                        if let homeLoc {
-                            // Cache on main actor for next call
-                            Task { @MainActor [weak self] in self?.cachedHomeLocation = homeLoc }
-                        }
-                    }
-                    
-                    if let homeLoc = homeLoc, location.distance(from: homeLoc) < 300 {
-                         let explicitLocationName = descriptor?.location
-                         let isHomeName = explicitLocationName?.lowercased() == "home"
-                         let isGenericOrEmpty = explicitLocationName == nil || explicitLocationName?.isEmpty == true
-                         if isHomeName || isGenericOrEmpty {
-                             let placeCtx = PlaceContext(name: "Home", categories: ["Home", "Personal"], placeID: "home-location", address: nil, rating: nil, isOpen: true)
-                             fsEnrichment = EnrichmentData(title: "Home", descriptionText: "User's Home Location", image: nil, categories: ["Home"], styleTags: ["Personal"], location: "Home", placeContext: placeCtx)
-                             matchFound = true
-                         }
-                    }
-                    
-                    // B. Check Nearby Contacts (Cached)
-                    if !matchFound {
-                        let nearby = await contactService.fetchContactsWithAddresses(sortedByDistanceFrom: location)
-                        if let bestMatch = nearby.first, let dist = bestMatch.distance, dist < 150 { // 150m radius
-                            let name = bestMatch.displayTitle // e.g., "John Doe's Home"
-                            let placeCtx = PlaceContext(
-                                name: name,
-                                categories: ["Contact", "Personal"],
-                                placeID: "contact-\(bestMatch.id)",
-                                address: bestMatch.formattedAddress,
-                                rating: nil,
-                                isOpen: nil
-                            )
-                            fsEnrichment = EnrichmentData(
-                                title: name,
-                                descriptionText: "Contact Location: \(bestMatch.contactName)",
-                                image: nil,
-                                categories: ["Contact", "Personal"],
-                                styleTags: ["Personal", "Contact"],
-                                location: name,
-                                placeContext: placeCtx
-                            )
-                            print("📍 LocalPipeline: Matched Contact Location: \(name) (\(Int(dist))m)")
-                        }
-                    }
-                }
-                
                 if let fsEnrichment {
-                    var result = ParallelEnrichmentResult(foursquare: fsEnrichment)
-                    if let venueName = fsEnrichment.title {
-                        if let ddgService = duckDuckGoService {
-                            if let ddgEnrichment = try? await self.withTimeout(seconds: 10, operation: {
-                                try await ddgService.enrich(query: venueName, location: coords)
-                            }) {
-                                result.duckDuckGo = ddgEnrichment
-                            }
-                            if let eventContext = try? await self.withTimeout(seconds: 10, operation: {
-                                await self.searchLiveEvents(place: venueName, service: ddgService)
-                            }) {
-                                result.liveEventContext = eventContext
-                            }
-                        }
-                    }
-                    return result
-                }
-                return nil
-            }
-            
-            // 3. Weather (Skip for historical photo library imports)
-            let sourceForWeather = itemSource
-            group.addTask {
-                // Skip WeatherKit API calls for historical imports - weather data isn't available for past dates
-                if sourceForWeather == "photoLibraryImport" {
-                    print("⏭️ Skipping WeatherKit for historical photo library import")
-                    return nil
-                }
-                
-                guard let location = finalLocation, let weatherService else { return nil }
-                
-                let weather = try? await self.withTimeout(seconds: 10, operation: {
-                    await weatherService.fetchWeather(for: location)
-                })
-                
-                if let weather = weather {
-                    return ParallelEnrichmentResult(weather: weather)
+                    return ParallelEnrichmentResult(place: fsEnrichment)
                 }
                 return nil
             }
             
             
-            // 5. Cover Image
+            // 3. Cover Image
             group.addTask {
                  let imageURL = descriptor?.coverImageURL
                  var imageData: Data?
@@ -2254,23 +2012,6 @@ public final class LocalPipelineService {
                  }
             }
             
-            // 6. Product Concepts & URL
-            let isProduct = descriptor?.type == .product
-            let productQuery = descriptor?.title
-            let ddgService = duckDuckGoService
-            group.addTask {
-                if isProduct, let query = productQuery, let service = ddgService {
-                    do {
-                         let data = try await self.withTimeout(seconds: 15, operation: {
-                             try await service.enrich(query: query, location: nil)
-                         })
-                         return ParallelEnrichmentResult(duckDuckGo: data)
-                    } catch {
-                        print("Failed to enrich product: \(error)")
-                    }
-                }
-                return nil
-            }
 
             var results: [ParallelEnrichmentResult] = []
             for await result in group {
@@ -2285,20 +2026,9 @@ public final class LocalPipelineService {
             applyEnrichment(linkData, to: item)
             pipelineContext.linkEnrichment = linkData
         }
-        if let fs = result.foursquare {
-            applyEnrichment(fs, to: item)
-            pipelineContext.placeEnrichment = fs
-        }
-        if let ddg = result.duckDuckGo {
-            applyEnrichment(ddg, to: item, overwriteTitle: true)
-            pipelineContext.duckDuckGoEnrichment = ddg
-        }
-        if let events = result.liveEventContext {
-            pipelineContext.liveEventContext = events
-        }
-        if let w = result.weather {
-            pipelineContext.weatherContext = w
-            item.weatherContext = w
+        if let place = result.place {
+            applyEnrichment(place, to: item)
+            pipelineContext.placeEnrichment = place
         }
         if let a = result.activity {
             pipelineContext.activityContext = a
@@ -2308,12 +2038,6 @@ public final class LocalPipelineService {
             pipelineContext.coverImagePath = path
             if item.webContext == nil { item.webContext = WebContext(snapshotURL: path) }
             else { item.webContext?.snapshotURL = path }
-        }
-        if let concepts = result.productConcepts {
-            pipelineContext.productConcepts = concepts
-            let currentTags = Set(item.tags)
-            let newTags = Set(concepts)
-            item.tags = Array(currentTags.union(newTags)).sorted()
         }
     }
     
@@ -2956,7 +2680,7 @@ public final class LocalPipelineService {
         DiverLogger.pipeline.info("✅ Relationship reconciliation complete.")
     }
 
-    public func maintainLibrary(progressHandler: ((Double) -> Void)? = nil, statusHandler: ((String) -> Void)? = nil) async throws {
+    public func maintainLibrary(progressHandler: (@Sendable (Double) -> Void)? = nil, statusHandler: (@Sendable (String) -> Void)? = nil) async throws {
         DiverLogger.pipeline.info("🧹 Starting Library Maintenance...")
         
         // 1. Assign orphaned inbox items to sessions by timestamp proximity
@@ -3007,16 +2731,10 @@ public final class LocalPipelineService {
 
 
 struct ParallelEnrichmentResult {
-    var foursquare: EnrichmentData?
-    var duckDuckGo: EnrichmentData?
-    var weather: WeatherContext?
+    var place: EnrichmentData?
     var activity: ActivityContext?
     var link: EnrichmentData?
     var coverImagePath: String?
-    var productConcepts: [String]?
-    var betterProductURL: URL?
-    var liveEventContext: String?
-    var productData: EnrichmentData?
 }
 
 

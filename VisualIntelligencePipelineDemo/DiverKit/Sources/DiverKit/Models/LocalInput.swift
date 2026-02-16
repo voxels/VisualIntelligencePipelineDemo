@@ -3,7 +3,7 @@ import SwiftData
 import DiverShared
 
 @Model
-public final class LocalInput: Identifiable {
+public final class LocalInput: Identifiable, @unchecked Sendable {
     public var id: UUID = UUID()
     public var createdAt: Date = Date.now
     public var url: String?
