@@ -18,7 +18,8 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/launchdarkly/swift-eventsource", from: "3.0.0"),
         .package(url: "https://github.com/Peter-Schorn/SpotifyAPI", from: "4.0.0"),
-        .package(path: "/Users/voxels/Documents/dev/visualintelligence/VisualIntelligencePipelineDemo/DiverShared")
+        .package(path: "/Users/voxels/Documents/dev/visualintelligence/VisualIntelligencePipelineDemo/DiverShared"),
+        .package(url: "https://github.com/ml-explore/mlx-swift-lm", from: "2.30.3")
     ],
     targets: [
         .target(
@@ -26,7 +27,9 @@ let package = Package(
             dependencies: [
                 .product(name: "LDSwiftEventSource", package: "swift-eventsource"),
                 .product(name: "SpotifyAPI", package: "SpotifyAPI"),
-                "DiverShared"
+                "DiverShared",
+                .product(name: "MLXLLM", package: "mlx-swift-lm"),
+                .product(name: "MLXVLM", package: "mlx-swift-lm")
             ],
             path: "Sources/DiverKit",
             exclude: [

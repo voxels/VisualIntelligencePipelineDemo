@@ -14,9 +14,19 @@ import ContactsUI
 import knowmaps
 import CloudKit
 
+// MARK: - Shared Download State (persists across view dismiss/re-open)
+@MainActor
+final class FastVLMDownloadManager: ObservableObject {
+    static let shared = FastVLMDownloadManager()
+    @Published var isDownloading = false
+    @Published var progress: Double = 0
+    private init() {}
+}
+
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.metadataPipelineService) private var pipelineService
     @EnvironmentObject private var sharedWithYouManager: SharedWithYouManager
     @ObservedObject var viewModel: SidebarViewModel
 
@@ -30,6 +40,8 @@ struct SettingsView: View {
     
     @State private var showingLogExporter = false
     @State private var exportedLogURL: URL?
+    
+    @StateObject private var fastVLMDownload = FastVLMDownloadManager.shared
     
     // Dependencies
     private let contactService = Services.shared.contactService
@@ -133,6 +145,89 @@ struct SettingsView: View {
                     .padding(.top, 4)
                 }
 
+                // FastVLM On-Device Intelligence
+                Section {
+                    Toggle("FastVLM Vision Enrichment", isOn: Binding(
+                        get: { FastVLMEnrichmentService.isEnabled },
+                        set: { newValue in
+                            FastVLMEnrichmentService.setEnabled(newValue)
+                            if newValue {
+                                if FastVLMEnrichmentService.isModelCached {
+                                    // Model already downloaded — wire immediately
+                                    pipelineService?.fastVLMService = FastVLMEnrichmentService()
+                                } else if !fastVLMDownload.isDownloading {
+                                    // Start download automatically (skip if already in progress)
+                                    fastVLMDownload.isDownloading = true
+                                    fastVLMDownload.progress = 0
+                                    Task {
+                                        // Keep download alive when app backgrounds
+                                        var bgTaskID: UIBackgroundTaskIdentifier = .invalid
+                                        bgTaskID = UIApplication.shared.beginBackgroundTask(withName: "FastVLMModelDownload") {
+                                            // Expiration handler — clean up if time runs out
+                                            UIApplication.shared.endBackgroundTask(bgTaskID)
+                                            bgTaskID = .invalid
+                                        }
+                                        
+                                        defer {
+                                            if bgTaskID != .invalid {
+                                                UIApplication.shared.endBackgroundTask(bgTaskID)
+                                            }
+                                        }
+                                        
+                                        do {
+                                            let service = FastVLMEnrichmentService()
+                                            try await service.ensureModelAvailable { progress in
+                                                Task { @MainActor in
+                                                    self.fastVLMDownload.progress = progress
+                                                }
+                                            }
+                                            fastVLMDownload.isDownloading = false
+                                            pipelineService?.fastVLMService = service
+                                            NotificationCenter.default.post(name: .fastVLMDownloadComplete, object: nil)
+                                        } catch {
+                                            fastVLMDownload.isDownloading = false
+                                            FastVLMEnrichmentService.setEnabled(false)
+                                            print("❌ FastVLM download failed: \(error)")
+                                        }
+                                    }
+                                }
+                            } else {
+                                pipelineService?.fastVLMService = nil
+                            }
+                        }
+                    ))
+                    .tint(.purple)
+                    .disabled(fastVLMDownload.isDownloading)
+                    
+                    if fastVLMDownload.isDownloading {
+                        HStack {
+                            ProgressView(value: fastVLMDownload.progress)
+                                .tint(.purple)
+                            Text("\(Int(fastVLMDownload.progress * 100))%")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
+                    } else if FastVLMEnrichmentService.isEnabled && FastVLMEnrichmentService.isModelCached {
+                        HStack {
+                            Label("Model Ready", systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                            Spacer()
+                            Button("Delete Model") {
+                                try? FastVLMEnrichmentService().deleteModel()
+                                pipelineService?.fastVLMService = nil
+                                FastVLMEnrichmentService.setEnabled(false)
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                        }
+                    }
+                } header: {
+                    Text("On-Device Intelligence")
+                } footer: {
+                    Text("Uses Apple FastVLM to analyze captured images directly on-device for richer descriptions. Requires ~500 MB of storage for the model.")
+                }
+
                 Section {
                     Button(role: .destructive) {
                         showingClearConfirmation = true
@@ -223,8 +318,11 @@ struct SettingsView: View {
             .onAppear {
                 loadCurrentContact()
             }
+
         }
     }
+
+
 
     private func deleteDatabase() {
         isClearing = true

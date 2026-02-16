@@ -83,7 +83,8 @@ public final class LocalPipelineService {
         duckDuckGoService: ContextualEnrichmentService? = nil,
         weatherService: WeatherEnrichmentService? = nil,
         indexingService: KnowledgeGraphIndexingService? = nil,
-        contextService: ContextQuestionService? = nil
+        contextService: ContextQuestionService? = nil,
+        fastVLMService: FastVLMEnrichmentService? = nil
     ) async throws -> ProcessedItem {
         let resolvedId = descriptor?.id ?? resolveId(for: input)
 
@@ -124,7 +125,7 @@ public final class LocalPipelineService {
             }
             
             // Apply standard URL enrichment if available
-            var accumulatedContext = ""
+            var pipelineContext = PipelineContext()
             
             if let urlString = input.url, let url = URL(string: urlString), let enrichmentService {
                 if url.scheme?.lowercased().hasPrefix("secretatomics") == false {
@@ -135,7 +136,7 @@ public final class LocalPipelineService {
                         
                         if let enrichment {
                             applyEnrichment(enrichment, to: existing)
-                            if let desc = enrichment.descriptionText { accumulatedContext += "\nLink Summary: \(desc)" }
+                            pipelineContext.linkEnrichment = enrichment
                         }
                     } catch {
                         DiverLogger.pipeline.warning("⚠️ Link enrichment failed or timed out for \(url): \(error)")
@@ -281,7 +282,7 @@ public final class LocalPipelineService {
                        if let data = analysisData, !isJSONData(data) {
                            // UNIFIED VISUAL ANALYSIS
                            // Replaces manual barcode scanning + separate runVisualIntelligenceAnalysis
-                           await analyzeVisualContent(data: data, existing: existing, accumulatedContext: &accumulatedContext, enrichmentService: enrichmentService)
+                           await analyzeVisualContent(data: data, existing: existing, pipelineContext: &pipelineContext, enrichmentService: enrichmentService)
                        }
                  }
                  
@@ -385,12 +386,12 @@ public final class LocalPipelineService {
                             let shouldPreserve = hasUserOverride || isMapKitOverride || isContactLocation
                              
                             applyEnrichment(fsEnrichment, to: existing, preservePlaceIdentity: shouldPreserve)
-                            accumulatedContext += "\nFoursquare: \(fsEnrichment.title ?? "Unknown") - \(fsEnrichment.categories.joined(separator: ", "))"
+                            pipelineContext.placeEnrichment = fsEnrichment
                             
                             if let venueName = fsEnrichment.title, let duckDuckGoService {
                                 if let ddgEnrichment = try await duckDuckGoService.enrich(query: venueName, location: coords) {
                                     applyEnrichment(ddgEnrichment, to: existing, overwriteTitle: true)
-                                    accumulatedContext += "\nDuckDuckGo: \(ddgEnrichment.title ?? "Unknown") - \(ddgEnrichment.descriptionText ?? "")"
+                                    pipelineContext.duckDuckGoEnrichment = ddgEnrichment
                                 }
                             }
                         }
@@ -454,7 +455,7 @@ public final class LocalPipelineService {
             let isUserLocationFixed = hasUserOverride
             let contactService = Services.shared.contactService
             let inputURLString = input.url
-            let interimAccumulatedContext = accumulatedContext
+            var localPipelineContext = pipelineContext
             let interimResolvedId = resolvedId
             
             // Trigger reprocessing with full enrichment
@@ -473,7 +474,6 @@ public final class LocalPipelineService {
             }
 
             // Perform enrichment and LLM analysis (awaited for proper progress tracking)
-            var localAccumulatedContext = interimAccumulatedContext
             let results = await self.performParallelEnrichment(
                 resolvedId: interimResolvedId,
                 descriptor: descriptor,
@@ -492,16 +492,53 @@ public final class LocalPipelineService {
             )
             
             for result in results {
-                self.processParallelResult(result, to: existing, accumulatedContext: &localAccumulatedContext)
+                self.processParallelResult(result, to: existing, pipelineContext: &localPipelineContext)
             }
             
-            // Merge in any stored item data not captured by enrichment (deterministic context)
-            let storedContext = buildDeterministicContext(from: existing, descriptor: descriptor)
-            if !storedContext.isEmpty {
-                localAccumulatedContext += "\n" + storedContext
-            }
+            // Two-Stage Intelligence Pipeline:
+            // Stage 1: SLM @Generable ContextAnalysis (fast, typed structured extraction)
+            // Stage 2: FastVLM (multimodal synthesis using image + structured context)
             
-            await performLLMAnalysis(for: existing, descriptor: descriptor, accumulatedContext: localAccumulatedContext)
+            // Stage 1: SLM produces typed intermediate — always run for structured extraction
+            await performLLMAnalysis(for: existing, descriptor: descriptor, pipelineContext: localPipelineContext)
+            
+            // Stage 2: FastVLM analysis (enriches/overrides SLM output with multimodal understanding)
+            if let fastVLMService, FastVLMEnrichmentService.isEnabled {
+                let image: CGImage? = {
+                    guard let imageData = rawPayload ?? existing.rawPayload else { return nil }
+                    return createCGImage(from: imageData)
+                }()
+                
+                if let analysis = try? await fastVLMService.analyze(
+                    image: image,
+                    enrichmentContext: localPipelineContext.enrichmentContextString,
+                    transcription: existing.transcription
+                ) {
+                    localPipelineContext.fastVLMAnalysis = analysis
+                    existing.fastVLMAnalysis = analysis
+                    existing.processingLog.append("\(Date().formatted()): FastVLM: structured analysis complete")
+                    
+                    // FastVLM overrides SLM output with richer multimodal analysis
+                    if let title = analysis.suggestedTitle, existing.title == nil || existing.title?.isEmpty == true {
+                        existing.title = title
+                    }
+                    if let summary = analysis.contextSummary {
+                        existing.summary = summary
+                    }
+                    if let purpose = analysis.suggestedPurpose {
+                        if !existing.purposes.contains(purpose) {
+                            existing.purposes.append(purpose)
+                        }
+                    }
+                    if !analysis.suggestedTags.isEmpty {
+                        let combinedTags = Set(existing.tags).union(Set(analysis.suggestedTags))
+                        existing.tags = Array(combinedTags).sorted()
+                    }
+                    if !analysis.statements.isEmpty {
+                        existing.questions = analysis.statements
+                    }
+                }
+            }
             
             // Extract high-level concepts (User Request: "reprocess button should run analyze context")
             if existing.webContext?.textContent != nil {
@@ -572,7 +609,7 @@ public final class LocalPipelineService {
         modelContext.insert(processed)
         try? modelContext.save()
         
-        var accumulatedContext = ""
+        var pipelineContext = PipelineContext()
         
         // 1.5 Barcode/QR Detection (Parity with Update Path)
         var analysisData = rawPayload
@@ -583,7 +620,7 @@ public final class LocalPipelineService {
         if let data = analysisData, !isJSONData(data) {
              // UNIFIED VISUAL ANALYSIS
              // Replaces manual barcode scanning + separate runVisualIntelligenceAnalysis
-             await analyzeVisualContent(data: data, existing: processed, accumulatedContext: &accumulatedContext, enrichmentService: enrichmentService)
+             await analyzeVisualContent(data: data, existing: processed, pipelineContext: &pipelineContext, enrichmentService: enrichmentService)
         }
         
 
@@ -690,13 +727,55 @@ public final class LocalPipelineService {
         )
         
         for result in results {
-            processParallelResult(result, to: processed, accumulatedContext: &accumulatedContext)
+            processParallelResult(result, to: processed, pipelineContext: &pipelineContext)
         }
         processed.processingLog.append("\(Date().formatted()): Parallel enrichment complete.")
         print("✅ [LocalPipeline] Parallel enrichment complete for \(processed.id)")
         
-        // Secondary LLM Analysis
-        await performLLMAnalysis(for: processed, descriptor: descriptor, accumulatedContext: accumulatedContext)
+        // Two-Stage Intelligence Pipeline:
+        // Stage 1: SLM @Generable ContextAnalysis (fast, typed structured extraction)
+        // Stage 2: FastVLM (multimodal synthesis using image + structured context)
+        
+        // Stage 1: SLM produces typed intermediate — always run for structured extraction
+        await performLLMAnalysis(for: processed, descriptor: descriptor, pipelineContext: pipelineContext)
+        
+        // Stage 2: FastVLM analysis (replaces SLM summary when available)
+        if let fastVLMService, FastVLMEnrichmentService.isEnabled {
+            let image: CGImage? = {
+                guard let imageData = rawPayload else { return nil }
+                return createCGImage(from: imageData)
+            }()
+            
+            if let analysis = try? await fastVLMService.analyze(
+                image: image,
+                enrichmentContext: pipelineContext.enrichmentContextString,
+                transcription: processed.transcription
+            ) {
+                pipelineContext.fastVLMAnalysis = analysis
+                processed.fastVLMAnalysis = analysis
+                processed.processingLog.append("\(Date().formatted()): FastVLM: structured analysis complete")
+                
+                // FastVLM overrides SLM output with richer multimodal analysis
+                if let summary = analysis.contextSummary {
+                    processed.summary = summary
+                }
+                if let title = analysis.suggestedTitle, processed.title == nil || processed.title?.isEmpty == true {
+                    processed.title = title
+                }
+                if let purpose = analysis.suggestedPurpose {
+                    if !processed.purposes.contains(purpose) {
+                        processed.purposes.append(purpose)
+                    }
+                }
+                if !analysis.suggestedTags.isEmpty {
+                    let combinedTags = Set(processed.tags).union(Set(analysis.suggestedTags))
+                    processed.tags = Array(combinedTags).sorted()
+                }
+                if !analysis.statements.isEmpty {
+                    processed.questions = analysis.statements
+                }
+            }
+        }
         // Trigger live UI update
         try? modelContext.save()
         
@@ -726,9 +805,13 @@ public final class LocalPipelineService {
                      processed.webContext = enrichment.webContext
                      processed.url = payload  // Store the full URL for future reference
                      
-                     // Add web content to LLM context
+                     // Add web content to pipeline context
                      if let textContent = enrichment.webContext?.textContent, !textContent.isEmpty {
-                         accumulatedContext += "\n=== QR CODE WEB CONTENT ===\n" + textContent.prefix(2000)
+                         if let existing = pipelineContext.documentContent {
+                             pipelineContext.documentContent = existing + "\n" + String(textContent.prefix(2000))
+                         } else {
+                             pipelineContext.documentContent = String(textContent.prefix(2000))
+                         }
                      }
                      
                      DiverLogger.pipeline.info("✅ QR URL enriched: \(enrichment.title ?? "No title")")
@@ -753,7 +836,7 @@ public final class LocalPipelineService {
         // User Requirement: "verification pass should always be run in the background after running the first UI pass"
         // We spawn a task to allow the function to return the 'ready' item immediately for UI display.
         Task {
-            await performLLMAnalysis(for: processed, descriptor: descriptor, accumulatedContext: accumulatedContext)
+            await performLLMAnalysis(for: processed, descriptor: descriptor, pipelineContext: pipelineContext)
         }
 
         if !finalPurposes.isEmpty {
@@ -869,8 +952,8 @@ public final class LocalPipelineService {
     public func regenerateSummary(for item: ProcessedItem) async {
         DiverLogger.pipeline.info("🔄 Regenerating summary for item \(item.id) via standard pipeline logic.")
         // Delegate to the standard deterministic logic
-        // We pass empty accumContext because performLLMAnalysis now constructs it from the item fields directly.
-        await performLLMAnalysis(for: item, descriptor: nil, accumulatedContext: "")
+        // We pass empty PipelineContext because performLLMAnalysis now constructs data from the item fields directly.
+        await performLLMAnalysis(for: item, descriptor: nil, pipelineContext: PipelineContext())
     }
     
 
@@ -883,6 +966,7 @@ public final class LocalPipelineService {
         duckDuckGoService: ContextualEnrichmentService? = nil,
         weatherService: WeatherEnrichmentService? = nil,
         indexingService: KnowledgeGraphIndexingService? = nil,
+        fastVLMService: FastVLMEnrichmentService? = nil,
         progressHandler: ((Double) -> Void)? = nil,
         logHandler: ((String) -> Void)? = nil
     ) async throws {
@@ -1041,7 +1125,8 @@ public final class LocalPipelineService {
                             foursquareService: foursquareService,
                             duckDuckGoService: duckDuckGoService,
                             weatherService: weatherService,
-                            indexingService: indexingService
+                            indexingService: indexingService,
+                            fastVLMService: fastVLMService
                         )
                         
                         // Conflict Detection
@@ -1348,7 +1433,7 @@ public final class LocalPipelineService {
     // Unified "Vision Engine" - replaces duplicate internal logic
     private let processor = IntelligenceProcessor()
     
-    private func analyzeVisualContent(data: Data, existing: ProcessedItem, accumulatedContext: inout String, enrichmentService: LinkEnrichmentService?) async {
+    private func analyzeVisualContent(data: Data, existing: ProcessedItem, pipelineContext: inout PipelineContext, enrichmentService: LinkEnrichmentService?) async {
         guard !data.isEmpty else { return }
         
         // Items already typed as "document" were rectified + text-extracted by the camera capture pipeline.
@@ -1388,7 +1473,7 @@ public final class LocalPipelineService {
             DiverLogger.pipeline.info("📸 [LocalPipeline] IntelligenceProcessor returned \(results.count) results")
             
             // Integrate results ON main actor (writes to ProcessedItem / SwiftData)
-            await integrateIntelligenceResults(results, to: existing, accumulatedContext: &accumulatedContext, enrichmentService: enrichmentService)
+            await integrateIntelligenceResults(results, to: existing, pipelineContext: &pipelineContext, enrichmentService: enrichmentService)
             
         } catch {
              DiverLogger.pipeline.error("❌ Visual Intelligence Failed: \(error)")
@@ -1396,7 +1481,7 @@ public final class LocalPipelineService {
     }
     
     // Unified Result Integrator
-    private func integrateIntelligenceResults(_ results: [IntelligenceResult], to item: ProcessedItem, accumulatedContext: inout String, enrichmentService: LinkEnrichmentService?) async {
+    private func integrateIntelligenceResults(_ results: [IntelligenceResult], to item: ProcessedItem, pipelineContext: inout PipelineContext, enrichmentService: LinkEnrichmentService?) async {
         var contextLog = ""
         var newTags: [String] = []
         
@@ -1405,6 +1490,7 @@ public final class LocalPipelineService {
             case .qr(let url):
                 contextLog += "• QR Code: \(url.absoluteString)\n"
                 newTags.append("QR Code")
+                pipelineContext.qrPayloads.append(url.absoluteString)
                 
                 // QR Priority for URL: Write if empty OR if currently a local/placeholder placeholder
                 let currentUrl = item.url?.lowercased() ?? ""
@@ -1415,7 +1501,6 @@ public final class LocalPipelineService {
                 
                 if isPlaceholder {
                     item.url = url.absoluteString
-                    accumulatedContext += "\nQR Code Link: \(url.absoluteString)"
                     
                     // Trigger immediate enrichment for this URL
                     if let enrichmentService, let url = URL(string: url.absoluteString) {
@@ -1427,7 +1512,6 @@ public final class LocalPipelineService {
             case .text(let text, let url):
                 if let url = url, item.url == nil { 
                     item.url = url.absoluteString 
-                    accumulatedContext += "\nOCR Link: \(url.absoluteString)"
                 }
                 // Accumulate ALL OCR text into transcription (not just documents)
                 if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -1437,10 +1521,15 @@ public final class LocalPipelineService {
                         item.transcription! += "\n" + text
                     }
                 }
-                // Log and add to context for LLM
+                // Add to structured context
                 if text.count > 3 {
                     contextLog += "• OCR: \(text.prefix(50))...\n"
-                    accumulatedContext += "\nDetected Text: \(text)"
+                    // Append to existing OCR text in pipeline context
+                    if let existing = pipelineContext.ocrText {
+                        pipelineContext.ocrText = existing + "\n" + text
+                    } else {
+                        pipelineContext.ocrText = text
+                    }
                 }
                 
             case .product(let code, let type, _):
@@ -1456,6 +1545,7 @@ public final class LocalPipelineService {
                     if !["screenshot", "text", "paper", "document"].contains(label.lowercased()) {
                          contextLog += "• Object: \(label)\n"
                          newTags.append(label)
+                         pipelineContext.visualTags.append(label)
                     }
                 }
                 
@@ -1463,18 +1553,19 @@ public final class LocalPipelineService {
                 if let label = label {
                     contextLog += "• Subject: \(label)\n"
                     newTags.append(label)
+                    pipelineContext.visualTags.append(label)
                 }
                 
             case .entertainment(let title, let type, _):
                  contextLog += "• Media: \(title) (\(type))\n"
                  newTags.append(String(describing: type))
-                 accumulatedContext += "\nIdentify Media: \(title) (\(type))"
+                 pipelineContext.identifiedMedia = "\(title) (\(type))"
                  
             case .document(_, let text, let label, let rectifiedImage):
                 contextLog += "• Document: \(label ?? "Scanned")\n"
                 newTags.append("Document")
                 if let t = text { 
-                    accumulatedContext += "\nDocument Content: \(t)"
+                    pipelineContext.documentContent = t
                     // CRITICAL: Set transcription if not already set (fixes TextEditor issue)
                     if item.transcription == nil {
                          item.transcription = t
@@ -1512,12 +1603,12 @@ public final class LocalPipelineService {
         }
         
         if !contextLog.isEmpty {
-            accumulatedContext += "\n--- Visual Analysis ---\n" + contextLog
+            pipelineContext.visualAnalysisLog = contextLog
         }
     }
 
 
-    private func analyzeVideoAsset(id: String, item: ProcessedItem, accumulatedContext: inout String, enrichmentService: LinkEnrichmentService?) async {
+    private func analyzeVideoAsset(id: String, item: ProcessedItem, pipelineContext: inout PipelineContext, enrichmentService: LinkEnrichmentService?) async {
         print("🎥 [LocalPipeline] Starting Multi-Frame Video Analysis for asset: \(id)")
         
         // 1. Fetch Asset
@@ -1563,7 +1654,7 @@ public final class LocalPipelineService {
                     for (index, thumb) in thumbnails.enumerated() {
                         print("   - Analyzing frame \(index + 1)")
                         let results = try await processor.process(image: thumb.image, mode: .fullAnalysis)
-                        await integrateIntelligenceResults(results, to: item, accumulatedContext: &accumulatedContext, enrichmentService: enrichmentService)
+                        await integrateIntelligenceResults(results, to: item, pipelineContext: &pipelineContext, enrichmentService: enrichmentService)
                     }
                     
                     item.processingLog.append("\(Date().formatted()): Video Analysis complete. Processed \(thumbnails.count) frames.")
@@ -1763,12 +1854,11 @@ public final class LocalPipelineService {
         // For now, we leave title management to the user or later inference.
     }
 
-    private func performLLMAnalysis(for item: ProcessedItem, descriptor: DiverItemDescriptor?, accumulatedContext: String) async {
+    private func performLLMAnalysis(for item: ProcessedItem, descriptor: DiverItemDescriptor?, pipelineContext: PipelineContext) async {
         let contextService = ContextQuestionService()
         
-        // AUDIT: Unified Context Engine
-        // We ignore the legacy 'accumulatedContext' string and instead rely on structured item fields
-        // to ensure consistency across all pipeline entry points (process, reprocess, regenerate).
+        // Use PipelineContext's structured serialization instead of the legacy string blob.
+        // The SLM receives a clean, typed context for @Generable ContextAnalysis extraction.
 
         
         // Fetch Session Context to inform intelligence
@@ -1854,7 +1944,7 @@ public final class LocalPipelineService {
             activityContext: item.activityContext,
             sessionContext: sessionContext.isEmpty ? nil : sessionContext,
             productContext: item.productMetadata,
-            visualContext: accumulatedContext,
+            visualContext: pipelineContext.asContextString,
             sourceURL: item.url
         )
         
@@ -2176,35 +2266,37 @@ public final class LocalPipelineService {
         }
     }
 
-    private func processParallelResult(_ result: ParallelEnrichmentResult, to item: ProcessedItem, accumulatedContext: inout String) {
+    private func processParallelResult(_ result: ParallelEnrichmentResult, to item: ProcessedItem, pipelineContext: inout PipelineContext) {
         if let linkData = result.link {
             applyEnrichment(linkData, to: item)
-            if let desc = linkData.descriptionText { accumulatedContext += "\nLink Summary: \(desc)" }
+            pipelineContext.linkEnrichment = linkData
         }
         if let fs = result.foursquare {
             applyEnrichment(fs, to: item)
-            accumulatedContext += "\nNearby Context: \(fs.title ?? ""), Categories: \(fs.categories.joined(separator: ", "))"
+            pipelineContext.placeEnrichment = fs
         }
         if let ddg = result.duckDuckGo {
             applyEnrichment(ddg, to: item, overwriteTitle: true)
-            accumulatedContext += "\nDuckDuckGo: \(ddg.title ?? "Unknown") - \(ddg.descriptionText ?? "")"
+            pipelineContext.duckDuckGoEnrichment = ddg
         }
         if let events = result.liveEventContext {
-            accumulatedContext += "\n\nLIVE EVENTS:\n\(events)"
+            pipelineContext.liveEventContext = events
         }
         if let w = result.weather {
-            accumulatedContext += "\nWeather: \(w.condition), \(Int(w.temperatureCelsius))°C"
+            pipelineContext.weatherContext = w
             item.weatherContext = w
         }
         if let a = result.activity {
-            accumulatedContext += "\nActivity: \(a.type) (\(a.confidence))"
+            pipelineContext.activityContext = a
             item.activityContext = a
         }
         if let path = result.coverImagePath {
+            pipelineContext.coverImagePath = path
             if item.webContext == nil { item.webContext = WebContext(snapshotURL: path) }
             else { item.webContext?.snapshotURL = path }
         }
         if let concepts = result.productConcepts {
+            pipelineContext.productConcepts = concepts
             let currentTags = Set(item.tags)
             let newTags = Set(concepts)
             item.tags = Array(currentTags.union(newTags)).sorted()
@@ -2542,6 +2634,14 @@ public final class LocalPipelineService {
         let firstByte = data[0]
         // JSON objects start with '{' or '['
         return firstByte == 0x7B || firstByte == 0x5B
+    }
+
+    /// Convert raw image Data to a CGImage for FastVLM multimodal analysis
+    nonisolated private func createCGImage(from data: Data) -> CGImage? {
+        guard !data.isEmpty, !isJSONData(data) else { return nil }
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              CGImageSourceGetCount(source) > 0 else { return nil }
+        return CGImageSourceCreateImageAtIndex(source, 0, nil)
     }
 
     func syncSession(for item: ProcessedItem) {

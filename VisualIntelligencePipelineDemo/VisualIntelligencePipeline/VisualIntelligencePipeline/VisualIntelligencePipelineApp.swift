@@ -192,6 +192,11 @@ struct VisualIntelligencePipelineApp: App {
                         Services.shared.knowledgeGraphService = unifiedAdapter
                         metadataPipelineService.indexingService = unifiedAdapter
                     }
+                    
+                    // Wire FastVLM enrichment (opt-in, model downloaded separately)
+                    if FastVLMEnrichmentService.isEnabled {
+                        metadataPipelineService.fastVLMService = FastVLMEnrichmentService()
+                    }
 
                     // Initialize SharedWithYouManager (iOS 16+, macOS 13+)
                     if #available(iOS 16.0, macOS 13.0, *) {

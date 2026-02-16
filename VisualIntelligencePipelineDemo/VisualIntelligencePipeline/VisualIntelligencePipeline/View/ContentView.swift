@@ -9,9 +9,14 @@ import SwiftUI
 import SwiftData
 import DiverKit
 
+extension Notification.Name {
+    static let fastVLMDownloadComplete = Notification.Name("fastVLMDownloadComplete")
+}
+
 struct ContentView: View {
     @EnvironmentObject var navigationManager: NavigationManager
     let pipelineService: MetadataPipelineService
+    @State private var showFastVLMToast = false
     
     var body: some View {
         NavigationSplitView {
@@ -32,6 +37,43 @@ struct ContentView: View {
             VisualIntelligenceView()
                 .environmentObject(navigationManager)
         }
+        .overlay(alignment: .top) {
+            if showFastVLMToast {
+                fastVLMReadyToast
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(duration: 0.4), value: showFastVLMToast)
+        .onReceive(NotificationCenter.default.publisher(for: .fastVLMDownloadComplete)) { _ in
+            showFastVLMToast = true
+            Task {
+                try? await Task.sleep(for: .seconds(3))
+                showFastVLMToast = false
+            }
+        }
+    }
+    
+    private var fastVLMReadyToast: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .font(.title3)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("FastVLM Ready")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                Text("On-device intelligence is now active")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding(12)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+        .padding(.horizontal)
+        .padding(.top, 8)
     }
 }
 

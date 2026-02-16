@@ -72,6 +72,7 @@ public final class ProcessedItem: Identifiable, DiverObject {
     @Attribute(.externalStorage)
     public var documentContextData: Data?
     public var qrContextData: Data?
+    public var fastVLMAnalysisData: Data?
     public var questions: [String] = [] 
     
     // Computed Accessors
@@ -103,6 +104,11 @@ public final class ProcessedItem: Identifiable, DiverObject {
     public var qrContext: QRCodeContext? {
         get { decode(qrContextData) }
         set { qrContextData = encode(newValue) }
+    }
+    
+    public var fastVLMAnalysis: FastVLMAnalysis? {
+        get { decode(fastVLMAnalysisData) }
+        set { fastVLMAnalysisData = encode(newValue) }
     }
     
     private func decode<T: Codable>(_ data: Data?) -> T? {

@@ -29,6 +29,7 @@ public final class MetadataPipelineService {
     public var weatherService: WeatherEnrichmentService?
     public var indexingService: KnowledgeGraphIndexingService?
     public var contextService: ContextQuestionService?
+    public var fastVLMService: FastVLMEnrichmentService?
     
     // MARK: - Queue Progress (observed by QueueProgressView)
     public var isProcessingQueue: Bool = false
@@ -493,7 +494,8 @@ public final class MetadataPipelineService {
                         duckDuckGoService: self.duckDuckGoService,
                         weatherService: self.weatherService,
                         indexingService: self.indexingService,
-                        contextService: self.contextService
+                        contextService: self.contextService,
+                        fastVLMService: self.fastVLMService
                     )
                     queueCompletedCount += 1
                 } catch {
@@ -673,7 +675,8 @@ public final class MetadataPipelineService {
                     duckDuckGoService: self.duckDuckGoService,
                     weatherService: self.weatherService,
                     indexingService: self.indexingService,
-                    contextService: self.contextService
+                    contextService: self.contextService,
+                    fastVLMService: self.fastVLMService
                 )
                 
                 try? modelContext.save()
@@ -761,7 +764,8 @@ public final class MetadataPipelineService {
             duckDuckGoService: duckDuckGoService,
             weatherService: weatherService,
             indexingService: indexingService,
-            contextService: contextService
+            contextService: contextService,
+            fastVLMService: fastVLMService
         )
         
         // Assign depth payload from queue item (captured atomically with photo)
