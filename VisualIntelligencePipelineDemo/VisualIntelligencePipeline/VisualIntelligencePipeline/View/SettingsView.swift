@@ -365,7 +365,7 @@ struct SettingsView: View {
                 
                 // 3. Delete sessions and collections
                 try modelContext.delete(model: SessionMetadata.self)
-                try modelContext.delete(model: DiverCollection.self)
+                try modelContext.delete(model: SessionCollection.self)
                 
                 // 4. Delete KnowMaps cache/models (if present)
                 try modelContext.delete(model: UserCachedRecord.self)
@@ -444,7 +444,7 @@ struct SettingsView: View {
         let database = container.privateCloudDatabase
         
         // Query and delete all records of each type
-        let recordTypes = ["CD_ProcessedItem", "CD_SessionMetadata", "CD_UserConcept", "CD_LocalInput", "CD_DiverCollection"]
+        let recordTypes = ["CD_ProcessedItem", "CD_SessionMetadata", "CD_UserConcept", "CD_LocalInput", "CD_SessionCollection"]
         
         for recordType in recordTypes {
             do {

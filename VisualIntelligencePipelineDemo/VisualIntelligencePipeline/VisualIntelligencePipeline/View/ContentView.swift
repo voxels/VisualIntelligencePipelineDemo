@@ -99,7 +99,7 @@ struct DetailPane: View {
 // MARK: - Session Items View (Content Pane)
 
 struct SessionItemsView: View {
-    let session: DiverSession?
+    let session: SessionMetadata?
     @Binding var selection: ProcessedItem?
     let pipelineService: MetadataPipelineService
     
@@ -107,16 +107,16 @@ struct SessionItemsView: View {
     @StateObject private var viewModel = SidebarViewModel()
     
     // Session Actions State
-    @State private var sessionForLocationEdit: DiverSession?
-    @State private var sessionToRename: DiverSession?
+    @State private var sessionForLocationEdit: SessionMetadata?
+    @State private var sessionToRename: SessionMetadata?
     @State private var newSessionTitle = ""
     @State private var showingDeleteConfirmation = false
     
     @Query(sort: \ProcessedItem.updatedAt, order: .reverse)
     private var allItems: [ProcessedItem]
     
-    @Query(sort: \DiverCollection.updatedAt, order: .reverse)
-    private var collections: [DiverCollection]
+    @Query(sort: \SessionCollection.updatedAt, order: .reverse)
+    private var collections: [SessionCollection]
     
     private var sessionItems: [ProcessedItem] {
         guard let session = session else { return [] }
@@ -227,7 +227,7 @@ struct SessionItemsView: View {
     // MARK: - Session Actions Menu
     
     @ViewBuilder
-    private func sessionActionsMenu(for session: DiverSession) -> some View {
+    private func sessionActionsMenu(for session: SessionMetadata) -> some View {
         Menu {
             Button {
                 sessionForLocationEdit = session
@@ -260,7 +260,7 @@ struct SessionItemsView: View {
         }
     }
     
-    private func sessionTitle(for session: DiverSession) -> String {
+    private func sessionTitle(for session: SessionMetadata) -> String {
         if let title = session.title, !title.isEmpty {
             return title
         }
@@ -277,7 +277,7 @@ struct SessionItemsView: View {
         }
     }
     
-    private func deleteSession(_ session: DiverSession) {
+    private func deleteSession(_ session: SessionMetadata) {
         // Delete all items in the session
         for item in sessionItems {
             modelContext.delete(item)
@@ -289,7 +289,7 @@ struct SessionItemsView: View {
         }
     }
     
-    private func analyzeSession(_ session: DiverSession) {
+    private func analyzeSession(_ session: SessionMetadata) {
         Task {
             let localPipeline = LocalPipelineService(modelContext: modelContext)
             await localPipeline.generateAndSaveSessionSummary(sessionID: session.sessionID)
@@ -421,12 +421,12 @@ struct SessionPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     
-    @Query(sort: \DiverSession.updatedAt, order: .reverse)
-    private var sessions: [DiverSession]
+    @Query(sort: \SessionMetadata.updatedAt, order: .reverse)
+    private var sessions: [SessionMetadata]
     
     @State private var searchText = ""
     
-    var filteredSessions: [DiverSession] {
+    var filteredSessions: [SessionMetadata] {
         if searchText.isEmpty {
             return sessions
         } else {

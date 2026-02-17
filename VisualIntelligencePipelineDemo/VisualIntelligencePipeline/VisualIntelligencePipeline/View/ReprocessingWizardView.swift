@@ -181,9 +181,9 @@ struct ReprocessingWizardView: View {
         )
     }
     
-    private func sessionForItem(_ item: ProcessedItem) -> DiverSession? {
+    private func sessionForItem(_ item: ProcessedItem) -> SessionMetadata? {
         guard let sessionID = item.sessionID else { return nil }
-        let fetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+        let fetch = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
         return try? modelContext.fetch(fetch).first
     }
     
@@ -233,7 +233,9 @@ struct ReprocessingWizardView: View {
                     locationService: services.locationService, // Passed for type signature, but reprocess logic passes nil internally
                     indexingService: services.knowledgeGraphService,
                     progressHandler: { p in
-                        self.progress = p
+                        Task { @MainActor in
+                            self.progress = p
+                        }
                     },
                     logHandler: { message in
                         // MainActor update is automatic if using @State on View but best to be safe or rely on @MainActor task

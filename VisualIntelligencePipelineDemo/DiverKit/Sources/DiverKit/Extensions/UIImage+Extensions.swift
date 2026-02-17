@@ -5,7 +5,7 @@ public extension UIImage {
     /// Returns a new UIImage with the orientation "baked in" (normalized to .up).
     /// This is useful when displaying images in views that ignore the imageOrientation property,
     /// or when preparing images for processing that expects upright orientation.
-    public func fixedOrientation() -> UIImage {
+    func fixedOrientation() -> UIImage {
         if imageOrientation == .up {
             return self
         }
@@ -20,7 +20,7 @@ public extension UIImage {
     
     /// Initialize with data and attempt to explicitly read orientation from EXIF
     /// if the standard init(data:) fails to handle it correctly.
-    public static func fromDataWithOrientation(_ data: Data) -> UIImage? {
+    static func fromDataWithOrientation(_ data: Data) -> UIImage? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil) else {
             return UIImage(data: data)
         }

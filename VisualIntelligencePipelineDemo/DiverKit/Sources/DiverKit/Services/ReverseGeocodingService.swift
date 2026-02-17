@@ -1,14 +1,13 @@
 import Foundation
 import CoreLocation
-import MapKit
+@preconcurrency import MapKit
 import DiverShared
 
 /// Priority-ranked reverse geocoding service.
-/// Priority: MKLocalSearch (primary) → CLGeocoder (secondary) → Foursquare (tertiary)
+/// Priority: MKLocalSearch (primary) → MKReverseGeocodingRequest (secondary) → Foursquare (tertiary)
 @MainActor
 public final class ReverseGeocodingService {
     
-    private let geocoder = CLGeocoder()
     private var foursquareService: ContextualEnrichmentService?
     
     public init(foursquareService: ContextualEnrichmentService? = nil) {
@@ -23,9 +22,9 @@ public final class ReverseGeocodingService {
             return mapKitResult
         }
         
-        // 2. Secondary: CLGeocoder for address fallback
-        if let geocoderResult = await lookupWithGeocoder(coordinate: coordinate) {
-            print("📍 ReverseGeocoding: Found via CLGeocoder: \(geocoderResult.name ?? "Unknown")")
+        // 2. Secondary: MKReverseGeocodingRequest for address fallback
+        if let geocoderResult = await lookupWithReverseGeocoding(coordinate: coordinate) {
+            print("📍 ReverseGeocoding: Found via MKReverseGeocodingRequest: \(geocoderResult.name ?? "Unknown")")
             return geocoderResult
         }
         
@@ -55,13 +54,14 @@ public final class ReverseGeocodingService {
             let response = try await search.start()
             
             if let item = response.mapItems.first {
+                let coordinate = item.location.coordinate
                 return PlaceContext(
-                    name: item.name ?? item.placemark.title ?? "Unknown",
+                    name: item.name ?? "Unknown",
                     categories: item.pointOfInterestCategory.map { [$0.rawValue] } ?? [],
                     placeID: nil, // MapKit doesn't provide stable IDs
-                    address: formatAddress(item.placemark),
-                    latitude: item.placemark.coordinate.latitude,
-                    longitude: item.placemark.coordinate.longitude,
+                    address: formattedAddress(for: item),
+                    latitude: coordinate.latitude,
+                    longitude: coordinate.longitude,
                     phoneNumber: item.phoneNumber,
                     website: item.url?.absoluteString
                 )
@@ -73,26 +73,26 @@ public final class ReverseGeocodingService {
         return nil
     }
     
-    // MARK: - CLGeocoder (Secondary)
+    // MARK: - MKReverseGeocodingRequest (Secondary)
     
-    private func lookupWithGeocoder(coordinate: CLLocationCoordinate2D) async -> PlaceContext? {
-        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+    private func lookupWithReverseGeocoding(coordinate: CLLocationCoordinate2D) async -> PlaceContext? {
+        guard let request = MKReverseGeocodingRequest(location:CLLocation(latitude:coordinate.latitude, longitude: coordinate.longitude)) else { return nil }
         
         do {
-            let placemarks = try await geocoder.reverseGeocodeLocation(location)
+            let mapItems = try await request.mapItems
             
-            if let placemark = placemarks.first {
-                let name = placemark.name ?? placemark.locality ?? placemark.administrativeArea ?? "Unknown"
+            if let item = mapItems.first {
+                let name = item.name ?? "Unknown"
                 return PlaceContext(
                     name: name,
                     categories: [],
-                    address: formatAddress(placemark),
+                    address: formattedAddress(for: item),
                     latitude: coordinate.latitude,
                     longitude: coordinate.longitude
                 )
             }
         } catch {
-            print("⚠️ CLGeocoder failed: \(error)")
+            print("⚠️ MKReverseGeocodingRequest failed: \(error)")
         }
         
         return nil
@@ -121,19 +121,10 @@ public final class ReverseGeocodingService {
     
     // MARK: - Helpers
     
-    private func formatAddress(_ placemark: MKPlacemark) -> String? {
-        var components: [String] = []
-        if let thoroughfare = placemark.thoroughfare { components.append(thoroughfare) }
-        if let locality = placemark.locality { components.append(locality) }
-        if let administrativeArea = placemark.administrativeArea { components.append(administrativeArea) }
-        return components.isEmpty ? nil : components.joined(separator: ", ")
-    }
-    
-    private func formatAddress(_ placemark: CLPlacemark) -> String? {
-        var components: [String] = []
-        if let thoroughfare = placemark.thoroughfare { components.append(thoroughfare) }
-        if let locality = placemark.locality { components.append(locality) }
-        if let administrativeArea = placemark.administrativeArea { components.append(administrativeArea) }
-        return components.isEmpty ? nil : components.joined(separator: ", ")
+    /// Builds a readable address from MKMapItem's address property (replaces deprecated placemark access).
+    private func formattedAddress(for item: MKMapItem) -> String? {
+        guard let address = item.address else { return nil }
+        
+        return address.shortAddress
     }
 }

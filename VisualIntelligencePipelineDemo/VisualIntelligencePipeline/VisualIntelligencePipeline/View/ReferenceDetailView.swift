@@ -37,13 +37,13 @@ struct ReferenceDetailContent: View {
     
     @Environment(\.modelContext) private var modelContext
     
-    @State private var cachedSession: DiverSession?
+    @State private var cachedSession: SessionMetadata?
     @State private var sessionLoaded = false
     
-    var session: DiverSession? {
+    var session: SessionMetadata? {
         if sessionLoaded { return cachedSession }
         guard let sessionID = item.sessionID else { return nil }
-        var descriptor = FetchDescriptor<DiverSession>(
+        var descriptor = FetchDescriptor<SessionMetadata>(
             predicate: #Predicate { $0.sessionID == sessionID }
         )
         descriptor.fetchLimit = 1
@@ -218,7 +218,7 @@ struct ReferenceDetailContent: View {
                 }
 
                 // Semantic Tags Section
-                let semanticTags = Array(Set(item.themes + item.tags + item.categories + item.purposes)).sorted()
+                let semanticTags = Array(Set(item.visualTags + item.tags + item.categories + item.purposes)).sorted()
                 if !semanticTags.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Semantic Tags")
@@ -229,12 +229,12 @@ struct ReferenceDetailContent: View {
                             ForEach(semanticTags, id: \.self) { tag in
                                 Button {
                                     if let sessionID = item.sessionID, let context = item.modelContext {
-                                        let descriptor = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+                                        let descriptor = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
                                         if let session = try? context.fetch(descriptor).first {
                                             session.title = tag.capitalized
                                             session.updatedAt = Date()
                                         } else {
-                                            let newSession = DiverSession(sessionID: sessionID, title: tag.capitalized)
+                                            let newSession = SessionMetadata(sessionID: sessionID, title: tag.capitalized)
                                             context.insert(newSession)
                                         }
                                         Task { @MainActor in try? context.save() }
@@ -1060,10 +1060,16 @@ struct GeocodingLocationViewWrapper: View {
     }
     
     private func geocode() {
-        let geocoder = CLGeocoder()
-        geocoder.geocodeAddressString(locationName) { placemarks, error in
-            if let location = placemarks?.first?.location {
-                self.coordinate = location.coordinate
+        Task {
+            do {
+                if let request = MKGeocodingRequest(addressString: locationName) {
+                    let mapItems = try await request.mapItems
+                    if let coordinate = mapItems.first?.placemark.coordinate {
+                        self.coordinate = coordinate
+                    }
+                }
+            } catch {
+                print("⚠️ Geocoding failed: \(error)")
             }
             self.isLoading = false
         }

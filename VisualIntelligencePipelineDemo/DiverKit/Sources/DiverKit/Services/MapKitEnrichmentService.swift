@@ -5,32 +5,33 @@ import DiverShared
 
 /// Enrichment service using Apple's MapKit (MKLocalSearch)
 public final class MapKitEnrichmentService: ContextualEnrichmentService, @unchecked Sendable {
-    let geocoder = CLGeocoder()
 
     public init() {}
     
     public func enrich(location: CLLocationCoordinate2D) async throws -> EnrichmentData? {
-        // Use CLGeocoder's async API for broad platform support
-        let clLocation = CLLocation(latitude: location.latitude, longitude: location.longitude)
-
-        // Use the async/await reverseGeocode API; cancellation is automatically handled by Task cancellation
-        let placemarks = try await geocoder.reverseGeocodeLocation(clLocation)
-        guard let placemark = placemarks.first else { return nil }
+        // Use MKReverseGeocodingRequest (replaces deprecated CLGeocoder)
+        guard let request = MKReverseGeocodingRequest(location:CLLocation(latitude: location.latitude, longitude: location.longitude)) else { return nil }
+        let mapItems = try await request.mapItems
+        guard let item = mapItems.first else { return nil }
+        
+        let name = item.name ?? "Unknown Location"
+        let addressString = formattedAddress(for: item)
+        let category = item.pointOfInterestCategory?.rawValue.replacingOccurrences(of: "MKPOICategory", with: "") ?? "Place"
 
         let placeContext = PlaceContext(
-            name: placemark.name ?? "Unknown Location",
-            categories: [placemark.category].compactMap { $0 },
+            name: name,
+            categories: [category],
             placeID: "mk-reverse-\(location.latitude)-\(location.longitude)",
-            address: [placemark.thoroughfare, placemark.locality].compactMap { $0 }.joined(separator: ", "),
+            address: addressString ?? "",
             latitude: location.latitude,
             longitude: location.longitude
         )
 
         let data = EnrichmentData(
-            title: placemark.name,
-            descriptionText: placemark.formattedTitle,
-            categories: [placemark.category].compactMap { $0 },
-            location: placemark.formattedTitle,
+            title: name,
+            descriptionText: addressString,
+            categories: [category],
+            location: addressString,
             placeContext: placeContext
         )
         return data
@@ -134,40 +135,33 @@ public final class MapKitEnrichmentService: ContextualEnrichmentService, @unchec
     private func mapItemToEnrichmentData(_ item: MKMapItem) -> EnrichmentData {
         let name = item.name ?? "Unknown Place"
         let category = item.pointOfInterestCategory?.rawValue.replacingOccurrences(of: "MKPOICategory", with: "") ?? "Place"
+        let coordinate = item.location.coordinate
+        let addressString = formattedAddress(for: item)
         
         let placeContext = PlaceContext(
             name: name,
             categories: [category],
-            placeID: "mk-\(name.hash)-\(item.placemark.coordinate.latitude)-\(item.placemark.coordinate.longitude)", // Deterministic ID for UI stability
-            address: item.placemark.formattedTitle,
-            latitude: item.placemark.coordinate.latitude,
-            longitude: item.placemark.coordinate.longitude,
+            placeID: "mk-\(name.hash)-\(coordinate.latitude)-\(coordinate.longitude)", // Deterministic ID for UI stability
+            address: addressString,
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
             phoneNumber: item.phoneNumber,
             website: item.url?.absoluteString
         )
         
         return EnrichmentData(
             title: name,
-            descriptionText: item.placemark.formattedTitle,
+            descriptionText: addressString,
             categories: [category],
-            location: item.placemark.formattedTitle,
+            location: addressString,
             placeContext: placeContext
         )
     }
+    
+    /// Builds a readable address string from MKMapItem's address property (replaces deprecated placemark access).
+    private func formattedAddress(for item: MKMapItem) -> String? {
+        guard let address = item.address else { return nil }
+        return address.shortAddress
+    }
 }
 
-private extension CLPlacemark {
-    var category: String? {
-        if #available(iOS 13.0, *) {
-            // Very rough approximation if needed, but CLPlacemark doesn't have a direct 'category' like POI
-            if let _ = self.areasOfInterest { return "Point of Interest" }
-        }
-        return nil
-    }
-    
-    var formattedTitle: String? {
-        // Construct a readable address
-        let components = [thoroughfare, subThoroughfare, locality, administrativeArea].compactMap { $0 }
-        return components.joined(separator: ", ")
-    }
-}

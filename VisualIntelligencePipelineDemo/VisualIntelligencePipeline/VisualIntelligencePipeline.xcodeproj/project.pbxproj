@@ -60,6 +60,7 @@
 		1E03D0412EFC20E20020DAA5 /* knowmaps in Frameworks */ = {isa = PBXBuildFile; productRef = 1E03D0402EFC20E20020DAA5 /* knowmaps */; };
 		1E03D0492EFC3B670020DAA5 /* DiverAppAttributionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03D0472EFC3B670020DAA5 /* DiverAppAttributionView.swift */; };
 		1E6E585D2F156BE700CA4385 /* EditLocationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E6E585A2F156BE700CA4385 /* EditLocationView.swift */; };
+		1E6E585D2F160AA700CA4385 /* QueueProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E6E585C2F160AA700CA4385 /* QueueProgressView.swift */; };
 		1E6E585E2F156BE700CA4385 /* EditSessionLocationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E6E585B2F156BE700CA4385 /* EditSessionLocationView.swift */; };
 		1E9ED8382F13DFF60022F6EA /* AppleMusicReferenceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9ED8372F13DFF60022F6EA /* AppleMusicReferenceView.swift */; };
 		1E9ED8432F13E00B0022F6EA /* PlaceSelectionMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9ED83D2F13E00B0022F6EA /* PlaceSelectionMapView.swift */; };
@@ -88,7 +89,6 @@
 		70F3ADB8AADAD2E6219F3B28 /* DiverQueueProcessingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B202E6BE357E18D064F157 /* DiverQueueProcessingService.swift */; };
 		7A97FA6E7E545D294AF576AF /* TestAnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B43CAFE7C5D15E858C87F0 /* TestAnalyticsService.swift */; };
 		8730250FFD9A0747B80E3ECB /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE51F7E92601A1166CD41ED /* SidebarView.swift */; };
-		1E6E585D2F160AA700CA4385 /* QueueProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E6E585C2F160AA700CA4385 /* QueueProgressView.swift */; };
 		9133AD759AFD71A72AF7CC9F /* VisualIntelligencePipelineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A210F16E7A971A22AD25B3 /* VisualIntelligencePipelineApp.swift */; };
 		9C1477C768B43E8BAF2FD052 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DEBECFBAC4353E5D8AE4A6E /* ContentView.swift */; };
 		9D7387990C610DC31DF602CB /* KnowMapsServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09530E9966028D5CC948DC91 /* KnowMapsServiceContainer.swift */; };

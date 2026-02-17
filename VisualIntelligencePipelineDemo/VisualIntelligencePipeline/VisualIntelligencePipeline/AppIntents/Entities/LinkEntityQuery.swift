@@ -109,7 +109,7 @@ struct LinkEntityQuery: EntityQuery {
                 let inModality = item.modality?.lowercased().contains(token) ?? false
                 let inSource = item.source?.lowercased().contains(token) ?? false
                 let inTranscription = item.transcription?.lowercased().contains(token) ?? false
-                let inThemes = item.themes.contains { $0.lowercased().contains(token) }
+                let inThemes = item.visualTags.contains { $0.lowercased().contains(token) }
                 let inFilename = item.filename?.lowercased().contains(token) ?? false
                 
                 return inTitle || inUrl || inSummary || inTags || 

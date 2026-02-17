@@ -1,6 +1,9 @@
 import Foundation
 import SwiftData
-public typealias DiverSession = SessionMetadata
+
+/// SessionCollection is the public name for DiverCollection.
+/// The @Model class retains its original name to preserve SwiftData schema compatibility.
+public typealias SessionCollection = DiverCollection
 
 
 @Model

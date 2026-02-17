@@ -22,6 +22,7 @@ import CoreLocation
 import AVFoundation
 import CoreMedia
 import SwiftData
+@preconcurrency import MapKit
 
 // A lightweight wrapper to explicitly allow passing non-Sendable types across concurrency domains.
 private struct UnsafeSendable<T>: @unchecked Sendable {
@@ -155,7 +156,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
     public func updatePlaceTitle(for placeID: String, with newTitle: String) {
         // Helper to update a single enrichment instance
         func updatedEnrichment(_ original: EnrichmentData) -> EnrichmentData {
-            var newContext = original.placeContext
+            let newContext = original.placeContext
             // Since PlaceContext properties are also let, we must recreate it if it exists, or create a new one
             let updatedPlaceContext: PlaceContext
             if let existing = newContext {
@@ -217,7 +218,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         print("🔄 VI ViewModel: Resuming context for session \(sessionID)")
         
         // 1. Fetch Session Metadata (to restore title/location)
-        let sessionDescriptor = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+        let sessionDescriptor = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
         if let session = try? context.fetch(sessionDescriptor).first {
              await MainActor.run {
                  self.sessionTitle = session.title
@@ -417,17 +418,20 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 self.capturedVideoURL = tempURL
                 
                 // Generate Thumbnail
-                let asset = AVAsset(url: tempURL)
+                let asset = AVURLAsset(url: tempURL)
                 let generator = AVAssetImageGenerator(asset: asset)
                 generator.appliesPreferredTrackTransform = true
-                if let cgImage = try? generator.copyCGImage(at: .zero, actualTime: nil) {
-                    #if canImport(UIKit)
-                    self.setCapturedImage(PlatformImage(cgImage: cgImage))
-                    #elseif canImport(AppKit)
-                    let size = NSSize(width: cgImage.width, height: cgImage.height)
-                    self.setCapturedImage(PlatformImage(cgImage: cgImage, size: size))
-                    #endif
-                    self.siftedImage = self.capturedImage
+                generator.generateCGImageAsynchronously(for: .zero) { [weak self] cgImage, _, _ in
+                    guard let self, let cgImage else { return }
+                    DispatchQueue.main.async {
+                        #if canImport(UIKit)
+                        self.setCapturedImage(PlatformImage(cgImage: cgImage))
+                        #elseif canImport(AppKit)
+                        let size = NSSize(width: cgImage.width, height: cgImage.height)
+                        self.setCapturedImage(PlatformImage(cgImage: cgImage, size: size))
+                        #endif
+                        self.siftedImage = self.capturedImage
+                    }
                 }
             } catch {
                 print("❌ VI ViewModel: Failed to prepare video for reprocessing: \(error)")
@@ -489,7 +493,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             
             if let targetSessionID = sessionID {
                 // RESTORE: Fetch specific session to ensure continuity
-                let descriptor = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == targetSessionID })
+                let descriptor = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == targetSessionID })
                 if let session = try? context.fetch(descriptor).first,
                    let lat = session.latitude, let lon = session.longitude {
                     let placeName = session.locationName ?? "Resumed Location"
@@ -564,26 +568,27 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 }
                 
                 // C. MapKit Reverse Geocode
-                let geocoder = CLGeocoder()
                 do {
-                    let placemarks = try await geocoder.reverseGeocodeLocation(currentLoc)
-                    if let best = placemarks.first {
-                        let name = best.name ?? best.thoroughfare ?? "Unknown Location"
-                        let address = [best.thoroughfare, best.locality].compactMap { $0 }.joined(separator: ", ")
-                        
-                        print("📍 Context: MapKit found '\(name)'")
-                        
-                        var finalPlace = EnrichmentData(
-                            title: name,
-                            image: nil,
-                            categories: ["Location"],
-                            location: address,
-                            placeContext: PlaceContext(name: name, categories: [], placeID: "mk-\(name)", address: address, latitude: currentLoc.coordinate.latitude, longitude: currentLoc.coordinate.longitude)
-                        )
-                        
-                        await MainActor.run {
-                            if self.selectedPlace == nil {
-                                self.selectPlace(finalPlace)
+                    if let request = MKReverseGeocodingRequest(location: currentLoc) {
+                        let mapItems = try await request.mapItems
+                        if let item = mapItems.first {
+                            let name = item.name ?? "Unknown Location"
+                            let address = item.address?.shortAddress
+                            
+                            print("📍 Context: MapKit found '\(name)'")
+                            
+                            let finalPlace = EnrichmentData(
+                                title: name,
+                                image: nil,
+                                categories: ["Location"],
+                                location: address,
+                                placeContext: PlaceContext(name: name, categories: [], placeID: "mk-\(name)", address: address, latitude: currentLoc.coordinate.latitude, longitude: currentLoc.coordinate.longitude)
+                            )
+                            
+                            await MainActor.run {
+                                if self.selectedPlace == nil {
+                                    self.selectPlace(finalPlace)
+                                }
                             }
                         }
                     }
@@ -602,7 +607,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }
         
         let sessionID = id
-        let descriptor = FetchDescriptor<DiverSession>(
+        let descriptor = FetchDescriptor<SessionMetadata>(
             predicate: #Predicate { $0.sessionID == sessionID }
         )
         
@@ -807,7 +812,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             }
             
             #if canImport(UIKit)
-            let visionOrientation = (image as? UIImage)?.imageOrientation.cgImagePropertyOrientation ?? .up
+            let visionOrientation = image.imageOrientation.cgImagePropertyOrientation
             #else
             let visionOrientation: CGImagePropertyOrientation = .up
             #endif
@@ -882,7 +887,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             do {
                 // ── Stage 2: Vision Analysis ──
                 #if canImport(UIKit)
-                print("🧠 Vision Orientation: \(visionOrientation.rawValue) (Raw: \((image as? UIImage)?.imageOrientation.rawValue ?? -1))")
+                print("🧠 Vision Orientation: \(visionOrientation.rawValue) (Raw: \(image.imageOrientation.rawValue))")
                 #else
                 print("🧠 Vision Orientation: \(visionOrientation.rawValue)")
                 #endif
@@ -1227,7 +1232,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
                     self.appendSessionImage(media.platformImage)
                     
                     #if canImport(UIKit)
-                    let visionOrientation = (media.platformImage as? UIImage)?.imageOrientation.cgImagePropertyOrientation ?? .up
+                    let visionOrientation = media.platformImage.imageOrientation.cgImagePropertyOrientation
                     #else
                     let visionOrientation: CGImagePropertyOrientation = .up
                     #endif
@@ -2046,7 +2051,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
 
              // User Request: Save captured image to Photo Library
             #if canImport(UIKit)
-            if let original = captured as? UIImage {
+            if let original = captured {
                 await MainActor.run {
                     self.saveToPhotoLibrary(image: original)
                 }
@@ -2192,7 +2197,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             }.first ?? place?.webContext
             
             let docCtx: DocumentContext? = self.results.compactMap { result -> DocumentContext? in
-                if case .document(_, let text, let label, _) = result {
+                if case .document(_, _, let label, _) = result {
                     return DocumentContext(fileType: label ?? "Document", pageCount: nil, author: nil)
                 }
                 return nil
@@ -2468,7 +2473,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         // Services
         let webService = self.webViewService
-        let locService = Services.shared.locationService
+        _ = Services.shared.locationService
         
         // --- PHASE 1: Data Extraction & Pre-computation ---
         // Identify critical entities that drive enrichment

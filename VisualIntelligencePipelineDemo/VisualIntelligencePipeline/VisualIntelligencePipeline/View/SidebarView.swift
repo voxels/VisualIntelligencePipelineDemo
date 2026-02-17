@@ -21,7 +21,7 @@ import Photos
 // MARK: - Main Sidebar View
 
 struct SidebarView: View {
-    @Binding var selectedSession: DiverSession?
+    @Binding var selectedSession: SessionMetadata?
     @StateObject private var viewModel = SidebarViewModel()
     @EnvironmentObject private var sharedWithYouManager: SharedWithYouManager
     @EnvironmentObject private var navigationManager: NavigationManager
@@ -35,17 +35,17 @@ struct SidebarView: View {
     @State private var selectedPhotos: [PhotosPickerItem] = []
     
     // Collection Management State
-    @State private var sessionToAddToCollection: DiverSession?
+    @State private var sessionToAddToCollection: SessionMetadata?
     @State private var showingCreateCollection = false
-    @State private var sessionForNewCollection: DiverSession?
-    @State private var sessionForLocationEdit: DiverSession?
+    @State private var sessionForNewCollection: SessionMetadata?
+    @State private var sessionForLocationEdit: SessionMetadata?
     @State private var newCollectionName = ""
     
     // Collection Renaming State
-    @State private var collectionToRename: DiverCollection?
+    @State private var collectionToRename: SessionCollection?
     
     // Session Renaming State
-    @State private var sessionToRename: DiverSession?
+    @State private var sessionToRename: SessionMetadata?
     @State private var newSessionTitle = ""
     
     // MARK: - Queries
@@ -55,14 +55,14 @@ struct SidebarView: View {
     @Query(filter: #Predicate<ProcessedItem> { $0.isFavorite == true }, sort: \ProcessedItem.updatedAt, order: .reverse)
     private var favoriteItems: [ProcessedItem]
     
-    @Query(sort: \DiverCollection.updatedAt, order: .reverse)
-    private var collections: [DiverCollection]
+    @Query(sort: \SessionCollection.updatedAt, order: .reverse)
+    private var collections: [SessionCollection]
     
-    @Query(sort: \DiverSession.updatedAt, order: .reverse)
-    private var sessions: [DiverSession]
+    @Query(sort: \SessionMetadata.updatedAt, order: .reverse)
+    private var sessions: [SessionMetadata]
     
-    @Query(filter: #Predicate<DiverSession> { $0.isFavorite == true }, sort: \DiverSession.updatedAt, order: .reverse)
-    private var favoriteSessions: [DiverSession]
+    @Query(filter: #Predicate<SessionMetadata> { $0.isFavorite == true }, sort: \SessionMetadata.updatedAt, order: .reverse)
+    private var favoriteSessions: [SessionMetadata]
     
     @Query(sort: \UserConcept.weight, order: .reverse)
     private var allConcepts: [UserConcept]
@@ -83,7 +83,7 @@ struct SidebarView: View {
     }
     
     /// Sessions not in any collection
-    private var standaloneSessions: [DiverSession] {
+    private var standaloneSessions: [SessionMetadata] {
         sessions.filter { !collectionSessionIDs.contains($0.sessionID) }
     }
     
@@ -96,8 +96,8 @@ struct SidebarView: View {
     // MARK: - Library Sorting
     
     private enum LibraryItem: Identifiable {
-        case collection(DiverCollection)
-        case session(DiverSession)
+        case collection(SessionCollection)
+        case session(SessionMetadata)
         
         var id: String {
             switch self {
@@ -478,17 +478,17 @@ struct SidebarView: View {
     }
     
     struct SidebarSessionRow: View {
-        let session: DiverSession
+        let session: SessionMetadata
         @ObservedObject var viewModel: SidebarViewModel
         let allItems: [ProcessedItem]
         let allConcepts: [UserConcept]
         
-        let onLocationEdit: (DiverSession) -> Void
-        let onRename: (DiverSession, String) -> Void
-        let onNewCollection: (DiverSession, String) -> Void
-        let onAddSession: (DiverSession, DiverCollection) -> Void
-        let collections: [DiverCollection]
-        let analyzeSession: (DiverSession) -> Void
+        let onLocationEdit: (SessionMetadata) -> Void
+        let onRename: (SessionMetadata, String) -> Void
+        let onNewCollection: (SessionMetadata, String) -> Void
+        let onAddSession: (SessionMetadata, SessionCollection) -> Void
+        let collections: [SessionCollection]
+        let analyzeSession: (SessionMetadata) -> Void
         
         @Environment(\.modelContext) private var modelContext
         
@@ -628,7 +628,7 @@ struct SidebarView: View {
         }
     }
     
-    private func analyzeSession(_ session: DiverSession) {
+    private func analyzeSession(_ session: SessionMetadata) {
         Task {
             let localPipeline = LocalPipelineService(modelContext: modelContext)
             await localPipeline.generateAndSaveSessionSummary(sessionID: session.sessionID)
@@ -773,7 +773,7 @@ struct SidebarView: View {
             }
         }
     
-    private func previewImage(for session: DiverSession) -> UIImage? {
+    private func previewImage(for session: SessionMetadata) -> UIImage? {
         viewModel.previewImage(for: session, allItems: allItems)
     }
     
@@ -810,7 +810,7 @@ struct SidebarView: View {
                                     // Move item to a new session in this collection?
                                     // Or just assign to collection (not supported directly on item)
                                     // Best: Create new session in collection with this item
-                                    viewModel.createSessionWithItem(item, in: collection, context: modelContext)
+                                    _ = viewModel.createSessionWithItem(item, in: collection, context: modelContext)
                                 } label: {
                                     Label(collection.name, systemImage: "folder")
                                 }
@@ -897,7 +897,7 @@ struct SidebarView: View {
 // MARK: - Session Row Label (for 3-pane navigation)
 
 struct SessionRowLabel: View {
-    let session: DiverSession
+    let session: SessionMetadata
     let allItems: [ProcessedItem]
     
     private var sessionTitle: String {
@@ -1303,13 +1303,13 @@ struct DailySummaryCard: View {
 
 
 extension SidebarView {
-    private func sessions(in collection: DiverCollection) -> [DiverSession] {
+    private func sessions(in collection: SessionCollection) -> [SessionMetadata] {
         sessions.filter { collection.sessionIDs.contains($0.sessionID) }
                 .sorted { $0.updatedAt > $1.updatedAt }
     }
 
     @ViewBuilder
-    private func collectionSessionContextMenu(session: DiverSession, collection: DiverCollection) -> some View {
+    private func collectionSessionContextMenu(session: SessionMetadata, collection: SessionCollection) -> some View {
         // Set as Current (Priority Action)
         Button {
             viewModel.setSessionAsCurrent(session, context: modelContext)
@@ -1365,7 +1365,7 @@ extension SidebarView {
     }
 
     @ViewBuilder
-    private func collectionGroup(for collection: DiverCollection) -> some View {
+    private func collectionGroup(for collection: SessionCollection) -> some View {
         DisclosureGroup {
             ForEach(sessions(in: collection)) { session in
                 SidebarSessionRow(
@@ -1428,7 +1428,7 @@ extension SidebarView {
     }
     
     @ViewBuilder
-    private func standaloneSessionRow(for session: DiverSession) -> some View {
+    private func standaloneSessionRow(for session: SessionMetadata) -> some View {
         SidebarSessionRow(
             session: session,
             viewModel: viewModel,

@@ -1,6 +1,7 @@
 import Foundation
 import Contacts
 import CoreLocation
+import MapKit
 import DiverShared
 
 /// Protocol defining the interface for contact services.
@@ -21,7 +22,7 @@ public final class ContactService: ContactServiceProvider, @unchecked Sendable {
     // Let's stick to simple implementation.
     
     private let contactStore = CNContactStore()
-    private let geocoder = CLGeocoder()
+    // CLGeocoder removed — using MKGeocodingRequest (iOS 26+)
     
     public init() {}
     
@@ -97,12 +98,14 @@ public final class ContactService: ContactServiceProvider, @unchecked Sendable {
                 return nil
             }
             
-            // Geocode
+            // Geocode via MapKit
             let postalAddress = homeAddress.value
             let addressString = CNPostalAddressFormatter.string(from: postalAddress, style: .mailingAddress)
             
-            let placemarks = try await geocoder.geocodeAddressString(addressString)
-            return placemarks.first?.location
+            guard let request = MKGeocodingRequest(addressString: addressString) else { return nil }
+            let mapItems = try await request.mapItems
+            guard let coordinate = mapItems.first?.placemark.coordinate else { return nil }
+            return CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
             
         } catch {
             // "Me" contact might not exist or other errors
@@ -152,8 +155,10 @@ public final class ContactService: ContactServiceProvider, @unchecked Sendable {
             let postalAddress = workAddress.value
             let addressString = CNPostalAddressFormatter.string(from: postalAddress, style: .mailingAddress)
             
-            let placemarks = try await geocoder.geocodeAddressString(addressString)
-            return placemarks.first?.location
+            guard let request = MKGeocodingRequest(addressString: addressString) else { return nil }
+            let mapItems = try await request.mapItems
+            guard let coordinate = mapItems.first?.placemark.coordinate else { return nil }
+            return CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
             
         } catch {
             DiverLogger.pipeline.error("Error fetching me contact work location: \(error.localizedDescription)")
@@ -162,7 +167,7 @@ public final class ContactService: ContactServiceProvider, @unchecked Sendable {
     }
     
     /// Fetches all contacts that have postal addresses, geocodes them, and sorts by distance from a reference location.
-    /// This method uses a persistent cache to avoid re-geocoding known addresses, significantly reducing CLGeocoder usage.
+    /// This method uses a persistent cache to avoid re-geocoding known addresses, significantly reducing MKGeocodingRequest usage.
     /// - Parameter referenceLocation: The location to sort by distance from (e.g., current location or pinned location)
     /// - Returns: Array of ContactAddress sorted by distance (nearest first)
     public func fetchContactsWithAddresses(sortedByDistanceFrom referenceLocation: CLLocation?) async -> [ContactAddress] {
@@ -253,8 +258,10 @@ public final class ContactService: ContactServiceProvider, @unchecked Sendable {
                 // Throttle slightly
                 try? await Task.sleep(nanoseconds: 100 * 1_000_000) // 100ms delay
                 
-                let placemarks = try await geocoder.geocodeAddressString(address.formattedAddress)
-                if let location = placemarks.first?.location {
+                guard let geoRequest = MKGeocodingRequest(addressString: address.formattedAddress) else { continue }
+                let mapItems = try await geoRequest.mapItems
+                if let coordinate = mapItems.first?.placemark.coordinate {
+                    let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
                     address.location = location
                     if let ref = referenceLocation {
                         address.distance = location.distance(from: ref)

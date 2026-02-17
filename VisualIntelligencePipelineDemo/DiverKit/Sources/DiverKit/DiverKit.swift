@@ -32,7 +32,7 @@ public struct ItemTransfer: Codable, Transferable, Sendable {
     }
 }
 
-/// Sendable DTO for transferring a DiverSession via drag and drop
+/// Sendable DTO for transferring a SessionMetadata via drag and drop
 public struct SessionTransfer: Codable, Transferable, Sendable {
     public let id: String
     

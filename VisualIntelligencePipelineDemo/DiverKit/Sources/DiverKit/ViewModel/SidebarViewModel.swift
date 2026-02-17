@@ -25,7 +25,7 @@ public final class SidebarViewModel: ObservableObject {
     @Published public var showingVisualIntelligence = false
     @Published public var showingShortcutGallery = false
     @Published public var isImporting = false
-    @Published public var importTargetSession: DiverSession? // Target session for import
+    @Published public var importTargetSession: SessionMetadata? // Target session for import
     
     // Selection Mode
     @Published public var isSelectionMode = false
@@ -117,7 +117,7 @@ public final class SidebarViewModel: ObservableObject {
     }
     
     /// Filter collections by search text - searches name and LLM summary
-    public func filterCollections(_ collections: [DiverCollection]) -> [DiverCollection] {
+    public func filterCollections(_ collections: [SessionCollection]) -> [SessionCollection] {
         guard !searchText.isEmpty else { return collections }
         
         let text = searchText.lowercased()
@@ -130,7 +130,7 @@ public final class SidebarViewModel: ObservableObject {
     }
     
     /// Filter sessions by search text - searches title, location, and summary
-    public func filterSessions(_ sessions: [DiverSession]) -> [DiverSession] {
+    public func filterSessions(_ sessions: [SessionMetadata]) -> [SessionMetadata] {
         guard !searchText.isEmpty else { return sessions }
         
         let text = searchText.lowercased()
@@ -150,7 +150,7 @@ public final class SidebarViewModel: ObservableObject {
     /// Remove sessions that have no items (empty/abandoned)
     public func removeEmptySessions(context: ModelContext) {
         // Fetch all sessions
-        let descriptor = FetchDescriptor<DiverSession>()
+        let descriptor = FetchDescriptor<SessionMetadata>()
         do {
             let sessions = try context.fetch(descriptor)
             var deletedCount = 0
@@ -253,14 +253,14 @@ public final class SidebarViewModel: ObservableObject {
         print("✅ Renamed session to '\(title)'")
     }
     
-    public func renameCollection(_ collection: DiverCollection, name: String, context: ModelContext) {
+    public func renameCollection(_ collection: SessionCollection, name: String, context: ModelContext) {
         collection.name = name
         collection.updatedAt = Date()
         do { try context.save() } catch { print("❌ Save failed (rename collection): \(error)") }
         print("✅ Renamed collection to '\(name)'")
     }
     
-    public func addSessionToCollection(_ session: SessionMetadata, collection: DiverCollection, context: ModelContext) {
+    public func addSessionToCollection(_ session: SessionMetadata, collection: SessionCollection, context: ModelContext) {
         if !collection.sessionIDs.contains(session.sessionID) {
             collection.sessionIDs.append(session.sessionID)
             collection.updatedAt = Date()
@@ -270,7 +270,7 @@ public final class SidebarViewModel: ObservableObject {
     }
     
     public func createCollection(name: String, session: SessionMetadata, context: ModelContext) {
-        let collection = DiverCollection(
+        let collection = SessionCollection(
             name: name,
             sessionIDs: [session.sessionID]
         )
@@ -279,8 +279,8 @@ public final class SidebarViewModel: ObservableObject {
         print("✅ Created collection '\(name)' with session '\(session.displayTitle)'")
     }
     
-    public func createSessionWithItem(_ item: ProcessedItem, in collection: DiverCollection, context: ModelContext) -> DiverSession {
-        let newSession = DiverSession(
+    public func createSessionWithItem(_ item: ProcessedItem, in collection: SessionCollection, context: ModelContext) -> SessionMetadata {
+        let newSession = SessionMetadata(
             sessionID: UUID().uuidString,
             title: item.title ?? "New Session",
             createdAt: Date()
@@ -304,12 +304,12 @@ public final class SidebarViewModel: ObservableObject {
         return newSession
     }
     
-    public func createStandaloneSessionWithItem(itemID: String, context: ModelContext) -> DiverSession? {
+    public func createStandaloneSessionWithItem(itemID: String, context: ModelContext) -> SessionMetadata? {
         let itemFetch = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.id == itemID })
         
         do {
             if let item = try context.fetch(itemFetch).first {
-                let newSession = DiverSession(
+                let newSession = SessionMetadata(
                     sessionID: UUID().uuidString,
                     title: item.title ?? "New Session",
                     createdAt: Date()
@@ -331,9 +331,9 @@ public final class SidebarViewModel: ObservableObject {
         return nil
     }
     
-    public func createSessionInCollectionWithItem(itemID: String, collectionID: String, context: ModelContext) -> DiverSession? {
+    public func createSessionInCollectionWithItem(itemID: String, collectionID: String, context: ModelContext) -> SessionMetadata? {
         let itemFetch = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.id == itemID })
-        let collectionFetch = FetchDescriptor<DiverCollection>(predicate: #Predicate { $0.collectionID == collectionID })
+        let collectionFetch = FetchDescriptor<SessionCollection>(predicate: #Predicate { $0.collectionID == collectionID })
         
         do {
             if let item = try context.fetch(itemFetch).first,
@@ -347,7 +347,7 @@ public final class SidebarViewModel: ObservableObject {
         return nil
     }
     
-    public func duplicateItem(_ item: ProcessedItem, to session: DiverSession, context: ModelContext) {
+    public func duplicateItem(_ item: ProcessedItem, to session: SessionMetadata, context: ModelContext) {
         let newItem = ProcessedItem(
             id: UUID().uuidString,
             inputId: item.inputId,
@@ -370,7 +370,7 @@ public final class SidebarViewModel: ObservableObject {
             masterCaptureID: item.masterCaptureID,
             sessionID: session.sessionID, // Target Session
             transcription: item.transcription,
-            themes: item.themes,
+            visualTags: item.visualTags,
             mediaType: item.mediaType,
             fileSize: item.fileSize,
             filename: item.filename,
@@ -458,7 +458,7 @@ public final class SidebarViewModel: ObservableObject {
         do { try context.save() } catch { print("❌ Save failed (delete item): \(error)") }
     }
     
-    public func deleteCollection(_ collection: DiverCollection, context: ModelContext) {
+    public func deleteCollection(_ collection: SessionCollection, context: ModelContext) {
         let name = collection.name
         context.delete(collection)
         print("🗑️ Deleted collection '\(name)'")
@@ -590,7 +590,7 @@ public final class SidebarViewModel: ObservableObject {
             let itemFetch = FetchDescriptor<ProcessedItem>(
                 predicate: #Predicate { $0.sessionID == sessionID }
             )
-            let sessionFetch = FetchDescriptor<DiverSession>(
+            let sessionFetch = FetchDescriptor<SessionMetadata>(
                 predicate: #Predicate { $0.sessionID == sessionID }
             )
             
@@ -623,7 +623,7 @@ public final class SidebarViewModel: ObservableObject {
         isSelectionMode = false
     }
     
-    /// Combine selected sessions into a new DiverCollection
+    /// Combine selected sessions into a new SessionCollection
     public func combineSelectedSessions(context: ModelContext) {
         guard !selectedSessions.isEmpty, !combineCollectionName.isEmpty else { return }
         
@@ -631,7 +631,7 @@ public final class SidebarViewModel: ObservableObject {
         let sessionIDs = Array(selectedSessions)
         
         // Create new collection
-        let collection = DiverCollection(
+        let collection = SessionCollection(
             name: name,
             sessionIDs: sessionIDs
         )
@@ -652,7 +652,7 @@ public final class SidebarViewModel: ObservableObject {
     }
     
     /// Update session timestamp to make it "Current"
-    public func setSessionAsCurrent(_ session: DiverSession, context: ModelContext) {
+    public func setSessionAsCurrent(_ session: SessionMetadata, context: ModelContext) {
         session.updatedAt = Date()
         do { try context.save() } catch { print("❌ Save failed (set session current): \(error)") }
         print("⏰ Set session '\(session.title ?? session.sessionID)' as Current")
@@ -662,10 +662,10 @@ public final class SidebarViewModel: ObservableObject {
         let newSessionID = UUID().uuidString
         
         // 1. Fetch and Clone Metadata
-        let metaFetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+        let metaFetch = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
         do {
             if let sourceMeta = try context.fetch(metaFetch).first {
-                let newMeta = DiverSession(
+                let newMeta = SessionMetadata(
                     sessionID: newSessionID,
                     title: "Copy of \(sourceMeta.title ?? "Untitled")",
                     createdAt: Date()
@@ -688,7 +688,7 @@ public final class SidebarViewModel: ObservableObject {
             print("©️ Duplicating \(sourceItems.count) items to new session \(newSessionID)")
             
             for source in sourceItems {
-                guard let urlString = source.url, let url = URL(string: urlString) else { continue }
+                guard let urlString = source.url, let _ = URL(string: urlString) else { continue }
                 
                 let uniqueID = UUID().uuidString
                 
@@ -723,7 +723,7 @@ public final class SidebarViewModel: ObservableObject {
                 newItem.filename = source.filename
                 newItem.fileSize = source.fileSize
                 newItem.transcription = source.transcription
-                newItem.themes = source.themes
+                newItem.visualTags = source.visualTags
                 
                 context.insert(newItem)
                 
@@ -783,7 +783,7 @@ public final class SidebarViewModel: ObservableObject {
             }
             
             // 3. Delete Source Session Metadata
-            let metaFetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sourceID })
+            let metaFetch = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sourceID })
             if let oldMeta = try context.fetch(metaFetch).first {
                 context.delete(oldMeta)
             }
@@ -803,7 +803,7 @@ public final class SidebarViewModel: ObservableObject {
 
     public func moveItem(itemID: String, toSessionID: String, context: ModelContext) {
         let itemFetch = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.id == itemID })
-        let sessionFetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == toSessionID })
+        let sessionFetch = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == toSessionID })
         
         do {
             if let item = try context.fetch(itemFetch).first,
@@ -835,8 +835,8 @@ public final class SidebarViewModel: ObservableObject {
     }
 
     public func moveSessionToCollection(sessionID: String, collectionID: String, context: ModelContext) {
-        let collectionFetch = FetchDescriptor<DiverCollection>(predicate: #Predicate { $0.collectionID == collectionID })
-        let sessionFetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+        let collectionFetch = FetchDescriptor<SessionCollection>(predicate: #Predicate { $0.collectionID == collectionID })
+        let sessionFetch = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
         
         do {
             if let collection = try context.fetch(collectionFetch).first,
@@ -861,13 +861,13 @@ public final class SidebarViewModel: ObservableObject {
     }
     
     public func removeSessionFromCollection(sessionID: String, context: ModelContext) {
-        let sessionFetch = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+        let sessionFetch = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
         
         do {
             if let session = try context.fetch(sessionFetch).first {
                 // If it has a parent collection, update it
                 if let collectionID = session.collectionID {
-                    let collectionFetch = FetchDescriptor<DiverCollection>(predicate: #Predicate { $0.collectionID == collectionID })
+                    let collectionFetch = FetchDescriptor<SessionCollection>(predicate: #Predicate { $0.collectionID == collectionID })
                     if let collection = try context.fetch(collectionFetch).first {
                         collection.sessionIDs.removeAll { $0 == sessionID }
                         collection.updatedAt = Date()
@@ -1022,7 +1022,7 @@ public final class SidebarViewModel: ObservableObject {
                     
                     // If single session, persist this summary as the session context
                     if ids.count == 1, let sessionID = ids.first {
-                        let fetchMeta = FetchDescriptor<DiverSession>(predicate: #Predicate { $0.sessionID == sessionID })
+                        let fetchMeta = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
                         if let meta = try? context.fetch(fetchMeta).first {
                             meta.summary = summary
                             do { try context.save() } catch { print("❌ Save failed (persist group summary): \(error)") }
@@ -1053,7 +1053,7 @@ public final class SidebarViewModel: ObservableObject {
     
     // MARK: - Photo Library Import
     
-    public func importSelectedPhotos(_ items: [PhotosPickerItem], context: ModelContext, targetSession: DiverSession? = nil) async {
+    public func importSelectedPhotos(_ items: [PhotosPickerItem], context: ModelContext, targetSession: SessionMetadata? = nil) async {
         // Use the proper PhotoLibraryImportService for clustering, session creation, and metadata extraction
         let importService = PhotoLibraryImportService(modelContext: context)
         

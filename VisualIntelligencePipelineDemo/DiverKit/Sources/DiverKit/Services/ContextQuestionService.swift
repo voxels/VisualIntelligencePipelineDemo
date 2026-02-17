@@ -58,7 +58,7 @@ public final class ContextQuestionService: Sendable {
         }
         
         // Build comprehensive context from all available sources
-        var contextParts: [String?] = [
+        let contextParts: [String?] = [
             // Core identification
             data.title != nil ? "Title: \(data.title!)" : nil,
             data.sourceURL != nil ? "Source URL: \(data.sourceURL!)" : nil,

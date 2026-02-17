@@ -28,9 +28,6 @@ struct VisualIntelligencePipelineApp: App {
     let dataStore: DiverDataStore
     let metadataPipelineService: MetadataPipelineService
     let keychainService: KeychainService
-    
-//    // Persistent enrichment services
-//    private let yahooURLService = YahooLinkEnrichmentService()
 
     // This is where KnowMapsServiceContainer needs a ModelContext, it can use the DiverDataStore's container
     @State private var knowMapsServices: KnowMapsServiceContainer?
@@ -112,10 +109,6 @@ struct VisualIntelligencePipelineApp: App {
         Services.shared.mapKitService = MapKitEnrichmentService()
         
         // Initialize MetadataPipelineService before registering it
-        
-//        // Initially use only Yahoo URL service
-//        let initialEnrichment = CompositeLinkEnrichmentService(services: [duckDuckGoContextService])
-        
         self.metadataPipelineService = MetadataPipelineService(
             queueStore: queueStore,
             modelContainer: dataStore.container,
@@ -252,7 +245,7 @@ struct VisualIntelligencePipelineApp: App {
                     
                     // Daily Narrative Backfill — runs AFTER queue drains so all items are ready
                     // Use a background context to avoid blocking the main thread
-                    let bgCtx = ModelContext(dataStore.container)
+                    let bgCtx = await ModelContext(dataStore.container)
                     bgCtx.autosaveEnabled = false
                     
                     guard let service = await MainActor.run(body: { Services.shared.dailyContextService }),

@@ -168,7 +168,7 @@ public struct DataSeeder {
                         tags: p.media_data.detected_objects ?? [],
                         status: .ready,
                         transcription: p.media_data.transcription,
-                        themes: p.media_data.themes ?? [],
+                        visualTags: p.media_data.themes ?? [],
                         mediaType: p.media_data.media_type,
                         fileSize: p.media_data.file_size,
                         filename: p.media_data.filename

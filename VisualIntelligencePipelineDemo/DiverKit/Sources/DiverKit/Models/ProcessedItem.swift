@@ -42,7 +42,7 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
     
     // Media metadata
     public var transcription: String?
-    public var themes: [String] = []
+    public var visualTags: [String] = []
     public var mediaType: String?
     public var fileSize: Int?
     public var filename: String?
@@ -150,7 +150,7 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
         masterCaptureID: String? = nil,
         sessionID: String? = nil,
         transcription: String? = nil,
-        themes: [String] = [],
+        visualTags: [String] = [],
         mediaType: String? = nil,
         fileSize: Int? = nil,
         filename: String? = nil,
@@ -192,7 +192,7 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
         self.masterCaptureID = masterCaptureID
         self.sessionID = sessionID
         self.transcription = transcription
-        self.themes = themes
+        self.visualTags = visualTags
         self.mediaType = mediaType
         self.fileSize = fileSize
         self.filename = filename
@@ -225,7 +225,7 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
             filename: filename,
             fileSize: fileSize,
             transcription: transcription,
-            themes: themes
+            visualTags: visualTags
         )
     }
     
@@ -278,14 +278,14 @@ public struct MediaMetadata: Codable, Hashable, Sendable {
     public var filename: String?
     public var fileSize: Int?
     public var transcription: String?
-    public var themes: [String]
+    public var visualTags: [String]
     
-    public init(mediaType: String? = nil, filename: String? = nil, fileSize: Int? = nil, transcription: String? = nil, themes: [String] = []) {
+    public init(mediaType: String? = nil, filename: String? = nil, fileSize: Int? = nil, transcription: String? = nil, visualTags: [String] = []) {
         self.mediaType = mediaType
         self.filename = filename
         self.fileSize = fileSize
         self.transcription = transcription
-        self.themes = themes
+        self.visualTags = visualTags
     }
 }
 

@@ -9,7 +9,7 @@ final class ArchitectureTests: XCTestCase {
     var service: LocalPipelineService!
 
     override func setUp() async throws {
-        let schema = Schema([ProcessedItem.self, SessionMetadata.self, DiverCollection.self, UserConcept.self, LocalInput.self])
+        let schema = Schema([ProcessedItem.self, SessionMetadata.self, SessionCollection.self, UserConcept.self, LocalInput.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         modelContext = ModelContext(modelContainer)
@@ -20,7 +20,7 @@ final class ArchitectureTests: XCTestCase {
         // Given: Models of different types
         let item = ProcessedItem(id: "item-1", title: "Test Item")
         let session = SessionMetadata(sessionID: "session-1", title: "Test Session")
-        let collection = DiverCollection(name: "Test Collection", sessionIDs: [])
+        let collection = SessionCollection(name: "Test Collection", sessionIDs: [])
 
         // Then: They should all conform to DiverObject and provide displayTitle
         XCTAssertTrue(item is any DiverObject)

@@ -9,7 +9,7 @@ final class ReprocessPipelineFilteringTests: XCTestCase {
     var service: LocalPipelineService!
 
     override func setUp() async throws {
-        let schema = Schema([ProcessedItem.self, SessionMetadata.self, DiverCollection.self, UserConcept.self, LocalInput.self])
+        let schema = Schema([ProcessedItem.self, SessionMetadata.self, SessionCollection.self, UserConcept.self, LocalInput.self])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         modelContext = ModelContext(modelContainer)

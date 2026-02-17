@@ -103,7 +103,7 @@ public struct PipelineImportService {
                         processedItem.filename = mediaData["filename"] as? String
                         
                         if let themes = mediaData["themes"] as? [String] {
-                            processedItem.themes = themes
+                            processedItem.visualTags = themes
                         }
                     }
                     

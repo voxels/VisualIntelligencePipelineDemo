@@ -331,7 +331,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
             
             // CRITICAL: Also clear parent session summary so it regenerates with new item data
             if let sessionID = localItem.sessionID {
-                let sessionFetch = FetchDescriptor<DiverSession>(
+                let sessionFetch = FetchDescriptor<SessionMetadata>(
                     predicate: #Predicate { $0.sessionID == sessionID }
                 )
                 if let session = try? activeContext.fetch(sessionFetch).first {
@@ -852,7 +852,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
         do {
             // Find sessions that need summaries regenerated
             // Either nil summary, or empty summary
-            let sessionDescriptor = FetchDescriptor<DiverSession>(
+            let sessionDescriptor = FetchDescriptor<SessionMetadata>(
                 predicate: #Predicate { $0.summary == nil }
             )
             let sessions = try activeContext.fetch(sessionDescriptor)
@@ -933,7 +933,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
         
         do {
             // Find collections that need summaries (no llmSummary yet)
-            let collectionDescriptor = FetchDescriptor<DiverCollection>(
+            let collectionDescriptor = FetchDescriptor<SessionCollection>(
                 predicate: #Predicate { $0.llmSummary == nil }
             )
             let collections = try activeContext.fetch(collectionDescriptor)

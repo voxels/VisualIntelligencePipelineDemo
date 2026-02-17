@@ -308,8 +308,7 @@ public final class IntelligenceProcessor: Sendable {
              // Handle QR Codes: Respect Layout Direction
              let qrObservations = observations.filter { $0.symbology == .qr }
              
-             let languageCode = Locale.current.language.languageCode?.identifier ?? "en"
-             let direction = Locale.characterDirection(forLanguage: languageCode)
+             let direction = Locale.current.language.characterDirection
              let isRTL = direction == .rightToLeft
              
              let sortedQRs: [VNBarcodeObservation]

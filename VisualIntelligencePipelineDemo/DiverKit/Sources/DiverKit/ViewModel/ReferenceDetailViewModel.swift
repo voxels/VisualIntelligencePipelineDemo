@@ -116,7 +116,7 @@ public class ReferenceDetailViewModel: ObservableObject {
             
             // Remove from suggestions if present
             if let idx = self.suggestedPurposes.firstIndex(of: purpose) {
-                withAnimation {
+                _ = withAnimation {
                     self.suggestedPurposes.remove(at: idx)
                 }
             }
@@ -132,7 +132,7 @@ public class ReferenceDetailViewModel: ObservableObject {
     public func removePurpose(_ purpose: String, from item: ProcessedItem) {
         // Mutate immediately for instant UI feedback
         if let index = item.purposes.firstIndex(of: purpose) {
-            withAnimation {
+            _ = withAnimation {
                 item.purposes.remove(at: index)
             }
             // Defer save so the animation isn't blocked
@@ -154,8 +154,8 @@ public class ReferenceDetailViewModel: ObservableObject {
             item.tags.remove(at: idx)
             changed = true
         }
-        if let idx = item.themes.firstIndex(of: tag) {
-            item.themes.remove(at: idx)
+        if let idx = item.visualTags.firstIndex(of: tag) {
+            item.visualTags.remove(at: idx)
             changed = true
         }
         if let idx = item.categories.firstIndex(of: tag) {

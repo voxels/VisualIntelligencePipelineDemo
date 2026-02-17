@@ -18,8 +18,8 @@ final class SidebarViewModelDragDropTests: XCTestCase {
 
     func testMoveItemBetweenSessions() async throws {
         // Given: Two sessions and an item in the first session
-        let session1 = DiverSession(sessionID: "s1", title: "Session 1")
-        let session2 = DiverSession(sessionID: "s2", title: "Session 2")
+        let session1 = SessionMetadata(sessionID: "s1", title: "Session 1")
+        let session2 = SessionMetadata(sessionID: "s2", title: "Session 2")
         let item = ProcessedItem(id: "i1", title: "Item 1", sessionID: "s1")
         item.session = session1
         
@@ -38,8 +38,8 @@ final class SidebarViewModelDragDropTests: XCTestCase {
 
     func testMoveSessionToCollection() async throws {
         // Given: A collection and a standalone session
-        let collection = DiverCollection(collectionID: "c1", name: "Collection 1")
-        let session = DiverSession(sessionID: "s1", title: "Session 1")
+        let collection = SessionCollection(collectionID: "c1", name: "Collection 1")
+        let session = SessionMetadata(sessionID: "s1", title: "Session 1")
         
         modelContext.insert(collection)
         modelContext.insert(session)
@@ -60,8 +60,8 @@ final class SidebarViewModelDragDropTests: XCTestCase {
 extension SidebarViewModelDragDropTests {
     func testMoveItemsBatchUpdatesSessionID() async throws {
         // Given: Two sessions and an item in the first session
-        let session1 = DiverSession(sessionID: "s1", title: "Session 1")
-        let session2 = DiverSession(sessionID: "s2", title: "Session 2")
+        let session1 = SessionMetadata(sessionID: "s1", title: "Session 1")
+        let session2 = SessionMetadata(sessionID: "s2", title: "Session 2")
         let item = ProcessedItem(id: "i1", title: "Item 1", sessionID: "s1")
         item.session = session1
         

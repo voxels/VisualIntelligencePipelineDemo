@@ -14,7 +14,6 @@
 - `DiverShared/`: Shared definitions & types (Pure Swift, no dependencies).
   - `DiverShared/Sources/DiverShared/`: Data models, App Group config, queue store, link wrapping.
   - `DiverShared/Tests/DiverSharedTests/`: Package tests.
-- `LocalPackages/YahooSearch/`: Local Swift package for web search enrichment.
 - `Documentation/`: App summary and beta review notes.
 
 Prefer putting cross-platform/shared logic in `DiverKit` and keeping `VisualIntelligencePipeline/` focused on UI + app wiring.

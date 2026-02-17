@@ -240,17 +240,19 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
         #endif
     }
     
-    // MARK: - Full Analysis (Image + Context Sequential)
+    // MARK: - Single-Pass Grounded Analysis
     
-    /// Run full FastVLM analysis: multimodal image analysis THEN context synthesis.
-    /// Sequential execution reduces peak memory by avoiding two concurrent KV caches.
+    /// Run grounded FastVLM analysis: image + Vision framework tags + enrichment context in one pass.
+    /// The Vision tags anchor the model to prevent hallucination; the image provides visual detail.
     /// - Parameters:
-    ///   - image: The source image (if available)
+    ///   - image: The source image (prefer sifted/subject-only when available)
+    ///   - visionTags: Classification labels from Vision framework (grounding anchors)
     ///   - enrichmentContext: Structured context from other enrichment services
     ///   - transcription: OCR text if available
-    /// - Returns: Structured `FastVLMAnalysis` combining both analyses
+    /// - Returns: Structured `FastVLMAnalysis` with grounded descriptions
     public func analyze(
         image: CGImage?,
+        visionTags: [String] = [],
         enrichmentContext: String,
         transcription: String? = nil
     ) async throws -> FastVLMAnalysis? {
@@ -264,32 +266,42 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
         // Run MLX inference at background priority to avoid starving the main thread.
         // GPU/CPU-intensive model inference saturates all cores; lowering priority
         // lets the OS scheduler keep the UI responsive.
+        let capturedImage = image
+        let capturedTags = visionTags
         let capturedContext = enrichmentContext
         let capturedTranscription = transcription
-        let result: FastVLMAnalysis? = try await Task.detached(priority: .background) { [self] in
-            // Image analysis disabled — FastVLM 0.5B produces unreliable image descriptions.
-            // Only context synthesis (structured enrichment data) is used.
-            let imageDesc: String? = nil
+        let result: FastVLMAnalysis? = await Task.detached(priority: .background) { [self] in
+            let analysisText: String?
             
-            let contextSummary: String? = if !capturedContext.isEmpty {
-                try? await runContextAnalysis(
-                    context: capturedContext,
+            if let capturedImage {
+                // Single-pass: image + grounding data → structured output
+                analysisText = try? await runGroundedAnalysis(
+                    image: capturedImage,
+                    visionTags: capturedTags,
+                    enrichmentContext: capturedContext,
+                    transcription: capturedTranscription,
+                    container: container
+                )
+            } else if !capturedContext.isEmpty {
+                // Text-only fallback (e.g. link items with no image)
+                analysisText = try? await runTextOnlyAnalysis(
+                    enrichmentContext: capturedContext,
                     transcription: capturedTranscription,
                     container: container
                 )
             } else {
-                nil
+                analysisText = nil
             }
             
             // If we got nothing, return nil
-            guard contextSummary != nil else { return nil }
+            guard let analysisText else { return nil }
             
-            // Parse structured fields from FastVLM's context analysis
-            let parsed = parseStructuredOutput(contextSummary)
+            // Parse structured fields from FastVLM output
+            let parsed = parseStructuredOutput(analysisText)
             
             return FastVLMAnalysis(
-                imageDescription: imageDesc,
-                contextSummary: parsed.summary ?? contextSummary,
+                imageDescription: parsed.summary,
+                contextSummary: parsed.summary ?? analysisText,
                 suggestedTitle: parsed.title,
                 suggestedPurpose: parsed.purpose,
                 suggestedTags: parsed.tags,
@@ -297,7 +309,7 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
             )
         }.value
         
-        print("✅ [FastVLMService] Full analysis complete — image: \(result?.imageDescription != nil), context: \(result?.contextSummary != nil)")
+        print("✅ [FastVLMService] Grounded analysis complete — hasImage: \(image != nil), visionTags: \(visionTags.count), result: \(result != nil)")
         return result
         
         #else
@@ -305,83 +317,58 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
         #endif
     }
     
-    // MARK: - Individual Analysis Methods
+    // MARK: - Analysis Methods
     
     #if canImport(MLXVLM) && !targetEnvironment(simulator)
-    /// Multimodal image analysis using VLM
-    private func runImageAnalysis(
+    /// Single-pass grounded image analysis: sends the image to the VLM alongside
+    /// Vision framework tags as anchoring context to prevent hallucination.
+    private func runGroundedAnalysis(
         image: CGImage,
-        container: ModelContainer
-    ) async throws -> String? {
-        print("🧠 [FastVLMService] Starting multimodal image analysis")
-        
-        let prompt = """
-        Describe the subject matter of this image. Focus on: the main subject, any text or writing visible, \
-        products, brands, activities, and notable details.
-        Ignore the camera, phone, or device used to capture this image.  Ignore the background material that is not the focus of the image.
-        Be specific and factual about what is depicted.
-        """
-        
-        let result: String = try await container.perform { context in
-            let ciImage = CIImage(cgImage: image)
-            let imageInput = UserInput.Image.ciImage(ciImage)
-            let lmInput = try await context.processor.prepare(input: UserInput(prompt: prompt, images: [imageInput]))
-            let params = GenerateParameters(maxTokens: 512, temperature: 0.0)
-            let stream = try MLXLMCommon.generate(
-                input: lmInput, parameters: params, context: context
-            )
-            var output = ""
-            for await generation in stream {
-                if case .chunk(let text) = generation {
-                    output += text
-                    if output.count > 2048 { break }
-                }
-            }
-            return output
-        }
-        
-        let trimmed = result.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-        
-        print("✅ [FastVLMService] Image analysis: \(trimmed.count) chars")
-        return trimmed
-    }
-    
-    /// Context synthesis using VLM (text-only mode, same model)
-    private func runContextAnalysis(
-        context: String,
+        visionTags: [String],
+        enrichmentContext: String,
         transcription: String?,
         container: ModelContainer
     ) async throws -> String? {
-        print("🧠 [FastVLMService] Starting context analysis")
+        print("🧠 [FastVLMService] Starting grounded image analysis (tags: \(visionTags.count))")
         
+        // Build grounded prompt — anchor the model with what Vision already confirmed
         var prompt = """
-        Analyze the following data about a captured item and provide a structured analysis.
-        Combine ALL context (visual, location, environmental, web) into unified insights.
-        
-        Respond in this exact format:
-        TITLE: [A specific, descriptive title]
-        SUMMARY: [2-sentence summary of what this capture represents]
-        PURPOSE: [The user's likely intent, e.g. "Shopping for camera gear"]
-        TAGS: [tag1, tag2, tag3]
-        STATEMENTS:
-        - [Statement 1 combining visual + context evidence]
-        - [Statement 2 combining visual + context evidence]
-        - [Statement 3 combining visual + context evidence]
-        
-        Context Data:
-        \(String(context.prefix(4000)))
+        Analyze this image and provide a structured description.
         """
         
-        if let transcription, !transcription.isEmpty {
-            prompt += "\n\nOCR Text:\n\(String(transcription.prefix(1000)))"
+        if !visionTags.isEmpty {
+            prompt += "\nThis image has been classified as containing: \(visionTags.prefix(10).joined(separator: ", "))."
         }
         
-        let userInput = UserInput(prompt: prompt)
+        if let transcription, !transcription.isEmpty {
+            prompt += "\nVisible text detected: \(String(transcription.prefix(500)))"
+        }
         
-        let result: String = try await container.perform { [prompt] context in
-            let lmInput = try await context.processor.prepare(input: UserInput(prompt: prompt))
-            let params = GenerateParameters(maxTokens: 384, temperature: 0.0)
+        if !enrichmentContext.isEmpty {
+            prompt += "\nAdditional context: \(String(enrichmentContext.prefix(1000)))"
+        }
+        
+        prompt += """
+        
+        
+        Respond in this exact format:
+        TITLE: [short descriptive title of what is shown]
+        SUMMARY: [one sentence describing only what you can confirm seeing]
+        PURPOSE: [the user's likely intent for capturing this]
+        TAGS: [tag1, tag2, tag3]
+        STATEMENTS:
+        - [specific observation about what is visible]
+        - [specific observation about what is visible]
+        
+        Only describe what you can directly see. Do not speculate. If unsure, say "unknown".
+        """
+        
+        let finalPrompt = prompt
+        let result: String = try await container.perform { context in
+            let ciImage = CIImage(cgImage: image)
+            let imageInput = UserInput.Image.ciImage(ciImage)
+            let lmInput = try await context.processor.prepare(input: UserInput(prompt: finalPrompt, images: [imageInput]))
+            let params = GenerateParameters(maxTokens: 128, temperature: 0.0)
             let stream = try MLXLMCommon.generate(
                 input: lmInput, parameters: params, context: context
             )
@@ -389,7 +376,7 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
             for await generation in stream {
                 if case .chunk(let text) = generation {
                     output += text
-                    if output.count > 1536 { break }
+                    if output.count > 512 { break }
                 }
             }
             return output
@@ -398,7 +385,56 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
         let trimmed = result.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         
-        print("✅ [FastVLMService] Context analysis: \(trimmed.count) chars")
+        print("✅ [FastVLMService] Grounded image analysis: \(trimmed.count) chars")
+        return trimmed
+    }
+    
+    /// Text-only fallback for items without images (links, QR codes, etc.)
+    private func runTextOnlyAnalysis(
+        enrichmentContext: String,
+        transcription: String?,
+        container: ModelContainer
+    ) async throws -> String? {
+        print("🧠 [FastVLMService] Starting text-only analysis (no image)")
+        
+        var prompt = """
+        Analyze the following data about a captured item.
+        
+        Respond in this exact format:
+        TITLE: [short descriptive title]
+        SUMMARY: [one sentence summary]
+        PURPOSE: [the user's likely intent]
+        TAGS: [tag1, tag2, tag3]
+        
+        Context Data:
+        \(String(enrichmentContext.prefix(2000)))
+        """
+        
+        if let transcription, !transcription.isEmpty {
+            prompt += "\n\nOCR Text:\n\(String(transcription.prefix(500)))"
+        }
+        
+        let finalPrompt = prompt
+        let result: String = try await container.perform { context in
+            let lmInput = try await context.processor.prepare(input: UserInput(prompt: finalPrompt))
+            let params = GenerateParameters(maxTokens: 128, temperature: 0.0)
+            let stream = try MLXLMCommon.generate(
+                input: lmInput, parameters: params, context: context
+            )
+            var output = ""
+            for await generation in stream {
+                if case .chunk(let text) = generation {
+                    output += text
+                    if output.count > 512 { break }
+                }
+            }
+            return output
+        }
+        
+        let trimmed = result.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        
+        print("✅ [FastVLMService] Text-only analysis: \(trimmed.count) chars")
         return trimmed
     }
     #endif

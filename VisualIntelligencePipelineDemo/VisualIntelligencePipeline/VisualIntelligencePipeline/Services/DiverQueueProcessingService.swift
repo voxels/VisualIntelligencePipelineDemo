@@ -117,7 +117,7 @@ final class DiverQueueProcessingService {
                     }
                 } else if let assetID = record.item.photosAssetIdentifier {
                     // 0.5. Hybrid Input: Photos Asset (Deferred Loading)
-                    var fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetID], options: nil)
+                    let fetchResult = PHAsset.fetchAssets(withLocalIdentifiers: [assetID], options: nil)
                     var asset = fetchResult.firstObject
                     
                     // Fallback: Try appending standard suffix if missing (heuristics for raw pickle IDs)

@@ -308,7 +308,7 @@ final class ActionViewController: UIViewController {
                 includePayload: true
             )
 
-            let wrappedString = wrappedURL.absoluteString
+
 
             // Step 3: Share via RichLinkSharer
             // We use the original URL for scraping if available, and the wrapped URL as the primary link

@@ -13,7 +13,7 @@ public struct SessionClusteringService {
     /// Cluster imported assets into sessions based on time and location similarity.
     /// Uses 1σ (standard deviation) of the distribution for grouping thresholds.
     /// - Parameter items: Array of imported assets with metadata
-    /// - Returns: Array of clusters, each becoming a DiverSession
+    /// - Returns: Array of clusters, each becoming a SessionMetadata
     public func clusterItems(_ items: [ImportedAsset]) -> [[ImportedAsset]] {
         guard !items.isEmpty else { return [] }
         

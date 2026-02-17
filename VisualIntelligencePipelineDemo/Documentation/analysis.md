@@ -26,7 +26,6 @@
 | **DiverShared** | 16 | 1,239 | Pure Swift shared data models and utilities |
 | **Tests** | 18 | 1,534 | Unit tests for DiverKit |
 | **Widget** | 5 | 666 | Home & Lock screen widgets |
-| **LocalPackages** | 2 | 25 | YahooSearch stub |
 
 ### DiverKit Internal Breakdown
 

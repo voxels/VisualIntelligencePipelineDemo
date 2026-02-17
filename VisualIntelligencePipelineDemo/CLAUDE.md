@@ -48,7 +48,6 @@ swift test --filter DiverSharedTests.LinkWrappingTests/testWrapURL
    - AppIntents: 5 intents (Save, Share, Search, GetRecent, Open) + Widget extension
    - Location: `VisualIntelligencePipeline/VisualIntelligencePipeline/`
 
-4. **LocalPackages/YahooSearch** — Local package for web search enrichment
 
 ### Key Architectural Patterns
 

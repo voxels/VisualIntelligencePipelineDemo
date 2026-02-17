@@ -55,16 +55,16 @@ public final class PhotoLibraryImportService {
     /// - Parameters:
     ///   - items: PhotosPickerItems from multi-select picker
     ///   - collectionName: Name for the new collection
-    /// - Returns: Created DiverCollection
+    /// - Returns: Created SessionCollection
     @MainActor
     public func importItems(
         _ items: [PhotosPickerItem],
         collectionName: String
-    ) async throws -> DiverCollection {
+    ) async throws -> SessionCollection {
         print("📥 PhotoLibraryImportService: Starting import of \(items.count) items...")
         
         // 1. Create collection
-        let collection = DiverCollection(name: collectionName)
+        let collection = SessionCollection(name: collectionName)
         modelContext.insert(collection)
         
         // 2. Extract metadata from items OFF the main thread to keep UI responsive
@@ -132,7 +132,7 @@ public final class PhotoLibraryImportService {
             }
             
             // Create session
-            let session = DiverSession(
+            let session = SessionMetadata(
                 sessionID: sessionID,
                 title: locationName ?? "Session \(sessionIDs.count + 1)",
                 createdAt: timestamp,
@@ -210,12 +210,12 @@ public final class PhotoLibraryImportService {
     /// Import selected photos/videos into an EXISTING session.
     /// - Parameters:
     ///   - items: PhotosPickerItems from multi-select picker
-    ///   - session: The existing DiverSession to import into
+    ///   - session: The existing SessionMetadata to import into
     /// - Returns: List of created ProcessedItems
     @MainActor
     public func importItems(
         _ items: [PhotosPickerItem],
-        into session: DiverSession
+        into session: SessionMetadata
     ) async throws -> [ProcessedItem] {
         print("📥 PhotoLibraryImportService: Starting import of \(items.count) items into session '\(session.displayTitle)'...")
         
@@ -353,7 +353,7 @@ public final class PhotoLibraryImportService {
     
     // MARK: - Thumbnail Extraction
     
-    private func saveThumbnailToDisk(image: CGImage, id: String) -> String? {
+    private nonisolated func saveThumbnailToDisk(image: CGImage, id: String) -> String? {
         #if canImport(UIKit)
         // Draw into an opaque context to strip alpha channel —
         // JPEG doesn't support alpha and keeping it doubles decode memory.
@@ -373,7 +373,7 @@ public final class PhotoLibraryImportService {
     }
     
     #if canImport(UIKit)
-    private func saveThumbnailToDisk(image: UIImage, id: String) -> String? {
+    private nonisolated func saveThumbnailToDisk(image: UIImage, id: String) -> String? {
         guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
         
         // Ensure directory exists
@@ -403,7 +403,7 @@ public final class PhotoLibraryImportService {
     
     private func updateSession(sessionID: String, thumbnailPaths: [String]) async {
         let id = sessionID
-        let descriptor = FetchDescriptor<DiverSession>(
+        let descriptor = FetchDescriptor<SessionMetadata>(
             predicate: #Predicate { $0.sessionID == id }
         )
         
@@ -598,19 +598,26 @@ public final class PhotoLibraryImportService {
     
     /// Extract a single thumbnail frame from video using AVAssetImageGenerator
     private func extractSingleVideoThumbnail(from url: URL, id: String) async -> String? {
-        let asset = AVAsset(url: url)
+        let asset = AVURLAsset(url: url)
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
         generator.maximumSize = CGSize(width: 300, height: 300)
         
-        do {
-            let time = CMTime(seconds: 1, preferredTimescale: 600)
-            let cgImage = try generator.copyCGImage(at: time, actualTime: nil)
-            return saveThumbnailToDisk(image: cgImage, id: id)
-        } catch {
-            print("⚠️ Failed to extract video frame: \(error)")
-            return nil
+        let time = CMTime(seconds: 1, preferredTimescale: 600)
+        let fileURL: String? = await withUnsafeContinuation { continuation in
+            generator.generateCGImageAsynchronously(for: time) { [weak self] cgImage, _, error in
+                if let error {
+                    print("⚠️ Failed to extract video frame: \(error)")
+                    continuation.resume(returning: nil)
+                } else if let cgImage, let self {
+                    let path = self.saveThumbnailToDisk(image: cgImage, id: id)
+                    continuation.resume(returning: path)
+                } else {
+                    continuation.resume(returning: nil)
+                }
+            }
         }
+        return fileURL
     }
     
     /// Create a memory-efficient downsampled thumbnail from image data

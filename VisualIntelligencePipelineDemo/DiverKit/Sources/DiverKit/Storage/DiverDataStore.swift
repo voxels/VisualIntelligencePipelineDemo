@@ -15,13 +15,16 @@ public final class DiverDataStore {
         LocalInput.self,
         ProcessedItem.self,
         UserConcept.self,
-        DiverSession.self,
-        DiverCollection.self
+        SessionMetadata.self,
+        SessionCollection.self
     ]
 
     public init(schema: Schema, configurations: [ModelConfiguration]) {
         do {
-            self.container = try ModelContainer(for: schema, configurations: configurations)
+            self.container = try ModelContainer(
+                for: schema,
+                configurations: configurations
+            )
         } catch {
             fatalError("DiverDataStore: Failed to create ModelContainer with custom configurations: \(error)")
         }
@@ -51,8 +54,10 @@ public final class DiverDataStore {
         }
 
         do {
-            self.container = try ModelContainer(for: schema, configurations: [configuration])
-
+            self.container = try ModelContainer(
+                for: schema,
+                configurations: [configuration]
+            )
         } catch {
             fatalError("DiverDataStore: Failed to create ModelContainer: \(error)")
         }
@@ -60,8 +65,8 @@ public final class DiverDataStore {
     
     // MARK: - Helper Queries
     
-    public func fetchLastSession() -> DiverSession? {
-        var descriptor = FetchDescriptor<DiverSession>(
+    public func fetchLastSession() -> SessionMetadata? {
+        var descriptor = FetchDescriptor<SessionMetadata>(
             sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
         )
         descriptor.fetchLimit = 1

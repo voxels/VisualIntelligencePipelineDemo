@@ -4,8 +4,93 @@ import SwiftData
 import DiverKit
 import DiverShared
 
+// MARK: - Unified Location Edit Target
+
+/// Enum-based target so one view handles both item-level and session-level edits.
+enum LocationEditTarget {
+    case item(ProcessedItem)
+    case session(SessionMetadata)
+    
+    var navigationTitle: String {
+        switch self {
+        case .item: return "Edit Location"
+        case .session: return "Edit Session Location"
+        }
+    }
+    
+    var currentLocationName: String {
+        switch self {
+        case .item(let item):
+            return item.placeContext?.name ?? item.location ?? "Unknown Place"
+        case .session(let session):
+            return session.locationName ?? "Unknown Place"
+        }
+    }
+    
+    var currentLocationDetail: String {
+        switch self {
+        case .item(let item):
+            return item.location ?? "No Coordinates"
+        case .session(let session):
+            if let lat = session.latitude, let lon = session.longitude {
+                return "\(lat), \(lon)"
+            }
+            return "No Coordinates"
+        }
+    }
+    
+    var placeIDDetail: String? {
+        switch self {
+        case .item(let item): return item.placeContext?.placeID
+        case .session: return nil
+        }
+    }
+    
+    var coordinate: CLLocationCoordinate2D? {
+        switch self {
+        case .item(let item):
+            if let ctx = item.placeContext, let lat = ctx.latitude, let lon = ctx.longitude {
+                return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+            }
+            if let locString = item.location {
+                let components = locString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+                if components.count == 2, let lat = Double(components[0]), let lon = Double(components[1]) {
+                    return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+                }
+            }
+            return nil
+        case .session(let session):
+            if let lat = session.latitude, let lon = session.longitude {
+                return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+            }
+            return nil
+        }
+    }
+    
+    var existingPlaceContext: PlaceContext? {
+        switch self {
+        case .item(let item): return item.placeContext
+        case .session: return nil
+        }
+    }
+    
+    var categories: [String] {
+        switch self {
+        case .item(let item): return item.categories
+        case .session: return []
+        }
+    }
+    
+    var sessionID: String? {
+        switch self {
+        case .item(let item): return item.sessionID
+        case .session(let session): return session.sessionID
+        }
+    }
+}
+
 struct EditLocationView: View {
-    @Bindable var item: ProcessedItem
+    let target: LocationEditTarget
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.metadataPipelineService) private var pipelineService
@@ -18,43 +103,33 @@ struct EditLocationView: View {
     @State private var position: MapCameraPosition = .automatic
     @State private var visibleRegion: MKCoordinateRegion?
     @State private var searchText = ""
-    @State private var hasZoomedToSession = false
     @State private var isUpdating = false
     @State private var selectedMapFeature: MapFeature?
     
-    @Query private var sessions: [DiverSession]
+    @Query private var sessions: [SessionMetadata]
     
+    /// Convenience initializer for ProcessedItem
     init(item: ProcessedItem) {
-        self.item = item
+        self.target = .item(item)
         
-        // Synchronously determine initial position from available context
-        let initialCoord: CLLocationCoordinate2D? = {
-            // Priority 1: Structured Place Context
-            if let ctx = item.placeContext, let lat = ctx.latitude, let lon = ctx.longitude {
-                return CLLocationCoordinate2D(latitude: lat, longitude: lon)
-            }
-            
-            // Priority 2: Parsed Location String
-            if let locString = item.location {
-                let components = locString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-                if components.count == 2,
-                   let lat = Double(components[0]),
-                   let lon = Double(components[1]) {
-                    return CLLocationCoordinate2D(latitude: lat, longitude: lon)
-                }
-            }
-            
-            // Fallback: This will jump if we don't have item-specific data, but it's better than world view
-            return nil
-        }()
-        
-        if let coord = initialCoord {
+        if let coord = LocationEditTarget.item(item).coordinate {
             self._position = State(initialValue: .region(MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))))
         } else {
-            // Default to automatic which might be user location if enabled
             self._position = State(initialValue: .automatic)
         }
     }
+    
+    /// Convenience initializer for SessionMetadata
+    init(session: SessionMetadata) {
+        self.target = .session(session)
+        
+        if let coord = LocationEditTarget.session(session).coordinate {
+            self._position = State(initialValue: .region(MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))))
+        } else {
+            self._position = State(initialValue: .automatic)
+        }
+    }
+    
     /// Contacts filtered by search text
     private var filteredContactAddresses: [ContactAddress] {
         guard !searchText.isEmpty else { return contactAddresses }
@@ -65,30 +140,18 @@ struct EditLocationView: View {
         }
     }
     
+    /// Session location (for item-level edits, shows context from parent session)
     private var sessionLocation: CLLocationCoordinate2D? {
-        if let sessionID = item.sessionID, let session = sessions.first(where: { $0.sessionID == sessionID }),
-           let lat = session.latitude, let lon = session.longitude {
-            return CLLocationCoordinate2D(latitude: lat, longitude: lon)
-        }
-        return nil
-    }
-    
-    private var itemLocationCoordinate: CLLocationCoordinate2D? {
-        // Priority 1: Structured Place Context
-        if let ctx = item.placeContext, let lat = ctx.latitude, let lon = ctx.longitude {
-            return CLLocationCoordinate2D(latitude: lat, longitude: lon)
-        }
-        
-        // Priority 2: Parsed Location String (e.g. "37.7,-122.4")
-        if let locString = item.location {
-            let components = locString.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-            if components.count == 2,
-               let lat = Double(components[0]),
-               let lon = Double(components[1]) {
+        switch target {
+        case .item(let item):
+            if let sessionID = item.sessionID, let session = sessions.first(where: { $0.sessionID == sessionID }),
+               let lat = session.latitude, let lon = session.longitude {
                 return CLLocationCoordinate2D(latitude: lat, longitude: lon)
             }
+            return nil
+        case .session:
+            return nil
         }
-        return nil
     }
     
     var body: some View {
@@ -104,12 +167,12 @@ struct EditLocationView: View {
                 // Current Location
                 Section("Current Location") {
                     VStack(alignment: .leading) {
-                        Text(item.placeContext?.name ?? item.location ?? "Unknown Place")
+                        Text(target.currentLocationName)
                             .font(.headline)
-                        Text(item.location ?? "No Coordinates")
+                        Text(target.currentLocationDetail)
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                        if let pid = item.placeContext?.placeID {
+                        if let pid = target.placeIDDetail {
                             Text("ID: \(pid)")
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
@@ -117,7 +180,7 @@ struct EditLocationView: View {
                     }
                     .contentShape(Rectangle())
                     .onTapGesture {
-                        if let loc = itemLocationCoordinate {
+                        if let loc = target.coordinate {
                             withAnimation {
                                 position = .region(MKCoordinateRegion(center: loc, span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)))
                             }
@@ -169,7 +232,7 @@ struct EditLocationView: View {
                     }
                 }
                 
-                // Contact Addresses (at bottom)
+                // Contact Addresses
                 if !filteredContactAddresses.isEmpty {
                     Section {
                         ForEach(filteredContactAddresses) { contact in
@@ -200,7 +263,7 @@ struct EditLocationView: View {
                      }
                 }
             }
-            .navigationTitle("Edit Location")
+            .navigationTitle(target.navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search Places")
             .toolbar {
@@ -230,7 +293,7 @@ struct EditLocationView: View {
         .overlay {
             if isUpdating {
                 Color.black.opacity(0.3).ignoresSafeArea()
-                ProgressView("Updating Context...")
+                ProgressView("Updating...")
                 .padding()
                 .glassEffect()
                 .cornerRadius(10)
@@ -241,14 +304,14 @@ struct EditLocationView: View {
     // MARK: - Map Section
     private var mapSection: some View {
         Map(position: $position, selection: $selectedMapFeature) {
-            // Current Item Location
-            if let loc = itemLocationCoordinate {
+            // Current Location
+            if let loc = target.coordinate {
                 Marker("Current", coordinate: loc)
                     .tint(.purple)
             }
             
-            // Session Location (if different)
-            if let sl = sessionLocation, sl.latitude != itemLocationCoordinate?.latitude {
+            // Session Location (item-level only, if different from item)
+            if let sl = sessionLocation, sl.latitude != target.coordinate?.latitude {
                  Marker("Session", coordinate: sl)
                     .tint(.gray)
             }
@@ -404,7 +467,7 @@ struct EditLocationView: View {
     
     private func setupInitialPosition() {
         Task {
-            // 1. If we don't have a specific position yet, try session or current location
+            // 1. Map Position — use target coordinate, session, or current location
             if case .automatic = position {
                 if let sl = sessionLocation {
                     await MainActor.run {
@@ -423,13 +486,18 @@ struct EditLocationView: View {
                 }
             }
             
-            // 2. Initial selection from context
-            if let context = item.placeContext {
+            // 2. Initial selection from existing context (item-level only)
+            if let context = target.existingPlaceContext {
+                let summary: String
+                switch target {
+                case .item(let item): summary = item.summary ?? "Current Location"
+                case .session: summary = "Current Location"
+                }
                 let currentPlace = EnrichmentData(
                     title: context.name,
-                    descriptionText: item.summary ?? "Current Location",
-                    categories: item.categories,
-                    location: item.location,
+                    descriptionText: summary,
+                    categories: target.categories,
+                    location: target.currentLocationDetail,
                     placeContext: context
                 )
                 await MainActor.run {
@@ -438,7 +506,7 @@ struct EditLocationView: View {
             }
             
             // 3. Trigger nearby search
-            if let loc = itemLocationCoordinate { 
+            if let loc = target.coordinate { 
                 await fetchCandidates(explicitCenter: loc)
             } else if let sl = sessionLocation { 
                 await fetchCandidates(explicitCenter: sl)
@@ -457,9 +525,8 @@ struct EditLocationView: View {
         isLoadingContacts = true
         defer { isLoadingContacts = false }
         
-        // Get reference location for sorting
         var referenceLocation: CLLocation?
-        if let coord = itemLocationCoordinate {
+        if let coord = target.coordinate {
             referenceLocation = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
         } else if let sl = sessionLocation {
             referenceLocation = CLLocation(latitude: sl.latitude, longitude: sl.longitude)
@@ -492,11 +559,10 @@ struct EditLocationView: View {
         isLoading = true
         defer { isLoading = false }
         
-        let searchCenter = explicitCenter ?? visibleRegion?.center ?? itemLocationCoordinate ?? sessionLocation
+        let searchCenter = explicitCenter ?? visibleRegion?.center ?? target.coordinate ?? sessionLocation
         
         guard let center = searchCenter else { return }
         
-        // Use LocationSearchAggregator for MapKit-primary search
         let results = await LocationSearchAggregator.fetchCandidates(
             query: searchText,
             center: center,
@@ -509,24 +575,35 @@ struct EditLocationView: View {
         }
     }
     
+    // MARK: - Update Location (target-specific)
+    
     private func updateLocation() async {
         guard let candidate = selectedCandidate else { return }
         
         isUpdating = true
         
+        switch target {
+        case .item(let item):
+            await updateItemLocation(item: item, candidate: candidate)
+        case .session(let session):
+            await updateSessionLocation(session: session, candidate: candidate)
+        }
+    }
+    
+    /// Item-level update: updates item fields + linked session
+    private func updateItemLocation(item: ProcessedItem, candidate: EnrichmentData) async {
         let newContext = candidate.placeContext
         let newCategories = candidate.categories
         let newLocation = (newContext?.latitude != nil && newContext?.longitude != nil) ? "\(newContext!.latitude!),\(newContext!.longitude!)" : nil
         
         await MainActor.run {
-            // 1. Update Core Metadata
+            // 1. Smart Name Merge
             let currentTitle = item.title
             let isGenericTitle = ["Home", "Unknown Place", "Current Location", item.location, ""].contains(currentTitle ?? "")
             let oldName = item.placeContext?.name ?? (isGenericTitle ? nil : currentTitle)
 
             var finalContext = newContext
             
-            // Smart Merge: If new name looks like an address AND old name was valid, preserve old name
             if let newName = newContext?.name, let old = oldName, !old.isEmpty, old != "Unknown Place" {
                 let isAddressLike = newName.range(of: "^\\d+\\s+[A-Za-z]+", options: .regularExpression) != nil
                 let oldIsAddressLike = old.range(of: "^\\d+\\s+[A-Za-z]+", options: .regularExpression) != nil
@@ -569,8 +646,6 @@ struct EditLocationView: View {
                 item.location = loc
             }
             item.categories = newCategories
-            
-            // Reset purposes for fresh regeneration
             item.purposes = []
             
             // 2. Update linked Session
@@ -596,7 +671,41 @@ struct EditLocationView: View {
                 try? await pipelineService?.processItemImmediately(item)
             }
             
-            // 4. Finalize UI state and dismiss
+            isUpdating = false
+            dismiss()
+        }
+    }
+    
+    /// Session-level update: updates session + all child items
+    private func updateSessionLocation(session: SessionMetadata, candidate: EnrichmentData) async {
+        await MainActor.run {
+            // 1. Update Session Metadata
+            session.locationName = candidate.placeContext?.name
+            session.placeID = candidate.placeContext?.placeID
+            if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
+                session.latitude = lat
+                session.longitude = lon
+            }
+            
+            // 2. Update children in session and trigger reprocessing
+            let targetID = session.sessionID
+            let descriptor = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.sessionID == targetID })
+            if let items = try? modelContext.fetch(descriptor) {
+                for item in items {
+                    item.placeContext = candidate.placeContext
+                    if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {
+                        item.location = "\(lat),\(lon)"
+                    }
+                    item.categories = candidate.categories
+                    item.purposes = []
+                    
+                    Task {
+                        try? await pipelineService?.processItemImmediately(item)
+                    }
+                }
+            }
+            
+            try? modelContext.save()
             isUpdating = false
             dismiss()
         }
@@ -660,4 +769,3 @@ struct LocationCandidateRow: View {
          .buttonStyle(.plain)
     }
 }
-

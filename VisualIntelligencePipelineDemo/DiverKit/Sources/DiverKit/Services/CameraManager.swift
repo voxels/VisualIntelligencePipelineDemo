@@ -9,7 +9,9 @@ import UIKit
 #endif
 
 /// Agent [CORE] - Responsible for Camera Session and Intent Launch Foundation
-public final class CameraManager: NSObject, ObservableObject {
+/// Safety: @unchecked Sendable is correct — serial `sessionQueue` guards AVFoundation work,
+/// `@Published` properties are only mutated via DispatchQueue.main.async.
+public final class CameraManager: NSObject, ObservableObject, @unchecked Sendable {
     @Published public var isReady = false
     @Published public var session = AVCaptureSession()
     @Published public var isRecording = false

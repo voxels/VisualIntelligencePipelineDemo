@@ -9,7 +9,6 @@ The project is modularized using Swift Package Manager:
 *   `VisualIntelligencePipeline/` — Main application target and UI.
 *   `DiverKit/` — Core logic: ML, pipeline orchestration, services, and view models.
 *   `DiverShared/` — Pure Swift shared data models and utilities.
-*   `LocalPackages/YahooSearch` — Local package for web search enrichment.
 
 **Key Technologies:**
 

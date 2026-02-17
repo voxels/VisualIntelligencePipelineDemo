@@ -3,6 +3,8 @@ import SwiftData
 import DiverShared
 
 @Model
+// Note: @unchecked Sendable appears redundant (macro generates Sendable) but is required
+// for strict send checking in MetadataPipelineService's PipelineActor-isolated code.
 public final class LocalInput: Identifiable, @unchecked Sendable {
     public var id: UUID = UUID()
     public var createdAt: Date = Date.now

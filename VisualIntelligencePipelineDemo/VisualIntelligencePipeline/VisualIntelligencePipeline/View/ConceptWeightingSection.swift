@@ -50,16 +50,16 @@ struct ConceptWeightingSection: View {
 
     var relevantConcepts: [UserConcept] {
         // Filter concepts that match item tags or categories
-        let relevantTags = Set(item.tags + item.categories + item.themes)
+        let relevantTags = Set(item.tags + item.categories + item.visualTags)
         return userConcepts.filter { relevantTags.contains($0.name) }
     }
     
     private func removeConcept(_ concept: UserConcept) {
-        // Remove the concept name from the item's tags, categories, and themes
+        // Remove the concept name from the item's tags, categories, and visualTags
         // This unlinks the weight control for THIS item without deleting the global Concept definition
         item.tags.removeAll { $0 == concept.name }
         item.categories.removeAll { $0 == concept.name }
-        item.themes.removeAll { $0 == concept.name }
+        item.visualTags.removeAll { $0 == concept.name }
         Task { @MainActor in try? modelContext.save() }
     }
 
@@ -136,7 +136,7 @@ struct ConceptWeightingSection: View {
         // Clear existing derived concepts first
         item.tags = []
         item.categories = []
-        item.themes = []
+        item.visualTags = []
         item.purposes = []
         
         // Clear context data so enrichment runs fresh  
