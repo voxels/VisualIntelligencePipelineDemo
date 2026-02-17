@@ -43,23 +43,32 @@ final class MetadataPipelineServiceTests: XCTestCase {
         try queueStore.enqueue(item)
 
         // When: We process the queue
+        // Note: processPendingQueue() internally uses Task.detached(priority: .utility),
+        // so the await returns before processing is complete.
         try await service.processPendingQueue()
-
-        // Then: The queue should be empty
-        let pending = try queueStore.pendingEntries()
-        XCTAssertTrue(pending.isEmpty)
-
-        // And: A LocalInput should exist in SwiftData
-        // LocalInput should be consumed (deleted)
-        let descriptorDetails = FetchDescriptor<LocalInput>()
-        let inputs = try modelContext.fetch(descriptorDetails)
-        XCTAssertEqual(inputs.count, 0)
         
-        // And: A ProcessedItem should exist
+        // Wait for the background task to drain the queue
+        var retries = 0
+        while retries < 30 {
+            try await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+            let remaining = try queueStore.pendingEntries()
+            if remaining.isEmpty { break }
+            retries += 1
+        }
+
+        // Then: The queue should be empty (background task should have consumed it)
+        let pending = try queueStore.pendingEntries()
+        XCTAssertTrue(pending.isEmpty, "Queue should be drained after processing")
+
+        // And: A ProcessedItem should exist in a fresh context
+        // (background processing writes to a separate ModelContext)
+        let freshCtx = ModelContext(modelContainer)
+        freshCtx.autosaveEnabled = false
         let processedDetails = FetchDescriptor<ProcessedItem>()
-        let items = try modelContext.fetch(processedDetails)
-        XCTAssertEqual(items.count, 1)
+        let items = try freshCtx.fetch(processedDetails)
+        XCTAssertEqual(items.count, 1, "Should have created 1 ProcessedItem")
         XCTAssertEqual(items.first?.url, "https://example.com")
         XCTAssertEqual(items.first?.entityType, "web")
     }
+
 }

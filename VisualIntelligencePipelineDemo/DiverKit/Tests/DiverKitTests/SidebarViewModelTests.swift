@@ -212,10 +212,11 @@ final class SidebarViewModelTests: XCTestCase {
     // MARK: - Empty Sessions Cleanup
     
     func testRemoveEmptySessionsDeletesOrphans() throws {
-        // Session with no items
-        let emptySession = makeSession(sessionID: "empty", title: "Empty")
+        // Session with no items — backdate to bypass the 5-second grace period
+        // that protects active capture sessions
+        let emptySession = makeSession(sessionID: "empty", title: "Empty", createdAt: Date().addingTimeInterval(-10))
         // Session with an item
-        let fullSession = makeSession(sessionID: "full", title: "Full")
+        let fullSession = makeSession(sessionID: "full", title: "Full", createdAt: Date().addingTimeInterval(-10))
         let item = makeProcessedItem(id: "i1", sessionID: "full")
         item.session = fullSession
         

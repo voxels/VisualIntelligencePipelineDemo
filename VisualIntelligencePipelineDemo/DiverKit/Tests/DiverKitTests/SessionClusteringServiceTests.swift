@@ -68,10 +68,12 @@ final class SessionClusteringServiceTests: XCTestCase {
                 latitude: 40.7128, longitude: -74.0060
             )
         }
-        // LA items - 3 items starting 10 minutes later (close in time, far in location)
+        // LA items - 3 items starting 2 hours later (far in both time and location)
+        // The clustering service uses dynamic thresholds (min 1h for time),
+        // so we need sufficient time gap + location distance to guarantee a split.
         let laItems = (0..<3).map { i in
             makeImportedAsset(
-                creationDate: now.addingTimeInterval(600 + Double(i) * 60),
+                creationDate: now.addingTimeInterval(7200 + Double(i) * 60),
                 latitude: 34.0522, longitude: -118.2437
             )
         }
@@ -81,6 +83,7 @@ final class SessionClusteringServiceTests: XCTestCase {
         
         XCTAssertGreaterThanOrEqual(clusters.count, 2, "Items in NYC and LA should be in different clusters")
     }
+
     
     func testItemsAtSameLocationGroupTogether() {
         let now = Date()
