@@ -140,7 +140,7 @@ actor ScreenshotProcessor {
         do {
             try handler.perform([request])
         } catch {
-            throw ProcessingError.visionProcessingFailed(error as! Error)
+            throw ProcessingError.visionProcessingFailed(error)
         }
 
         guard let observations = request.results else {
@@ -235,7 +235,7 @@ actor ScreenshotProcessor {
         do {
             try handler.perform([request])
         } catch {
-            throw ProcessingError.visionProcessingFailed(error as! Error)
+            throw ProcessingError.visionProcessingFailed(error)
         }
 
         guard let observations = request.results else {
