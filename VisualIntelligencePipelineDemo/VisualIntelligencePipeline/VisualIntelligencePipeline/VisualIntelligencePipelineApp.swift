@@ -221,7 +221,7 @@ struct VisualIntelligencePipelineApp: App {
                     navigationManager.isScanActive = true
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .diverQueueDidUpdate)) { _ in
-                    Task {
+                    Task.detached(priority: .utility) { [metadataPipelineService] in
                         try? await metadataPipelineService.processPendingQueue()
                     }
                 }
@@ -245,36 +245,42 @@ struct VisualIntelligencePipelineApp: App {
                 }
                 
                 // Process queue when app enters foreground, then backfill daily context
-                Task {
+                Task.detached(priority: .utility) { [metadataPipelineService, dataStore] in
                     try? await metadataPipelineService.processPendingQueue()
                     // Defer Data Diagnostics / Session Consolidation (User Request)
                     // await metadataPipelineService.runDataDiagnostics()
                     
                     // Daily Narrative Backfill — runs AFTER queue drains so all items are ready
-                    await MainActor.run {
-                        guard let service = Services.shared.dailyContextService, !service.hasContent else { return }
-                        print("📝 Daily Context is empty, checking for backfill items...")
-                        let calendar = Calendar.current
-                        let startOfDay = calendar.startOfDay(for: Date())
-                        
-                        let descriptor = FetchDescriptor<ProcessedItem>(
-                            predicate: #Predicate { $0.createdAt >= startOfDay },
-                            sortBy: [SortDescriptor(\.createdAt)]
-                        )
-                        
-                        do {
-                            let items = try dataStore.mainContext.fetch(descriptor)
-                            if !items.isEmpty {
-                                print("📝 Found \(items.count) items to backfill daily context.")
-                                let logs = items.map { item in
-                                    let time = item.createdAt.formatted(date: .omitted, time: .shortened)
-                                    return "[\(time)] Captured: \(item.title ?? "Untitled Item")"
-                                }
+                    // Use a background context to avoid blocking the main thread
+                    let bgCtx = ModelContext(dataStore.container)
+                    bgCtx.autosaveEnabled = false
+                    
+                    guard let service = await MainActor.run(body: { Services.shared.dailyContextService }),
+                          await !service.hasContent else { return }
+                    
+                    print("📝 Daily Context is empty, checking for backfill items...")
+                    let calendar = Calendar.current
+                    let startOfDay = calendar.startOfDay(for: Date())
+                    
+                    let descriptor = FetchDescriptor<ProcessedItem>(
+                        predicate: #Predicate { $0.createdAt >= startOfDay },
+                        sortBy: [SortDescriptor(\.createdAt)]
+                    )
+                    
+                    do {
+                        let items = try bgCtx.fetch(descriptor)
+                        if !items.isEmpty {
+                            print("📝 Found \(items.count) items to backfill daily context.")
+                            let logs = items.map { item in
+                                let time = item.createdAt.formatted(date: .omitted, time: .shortened)
+                                return "[\(time)] Captured: \(item.title ?? "Untitled Item")"
+                            }
+                            await MainActor.run {
                                 service.ingest(logs)
                             }
-                        } catch {
-                            print("❌ Failed to fetch items for daily context backfill: \(error)")
                         }
+                    } catch {
+                        print("❌ Failed to fetch items for daily context backfill: \(error)")
                     }
                 }
 

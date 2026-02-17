@@ -324,8 +324,7 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
         let prompt = """
         Describe the subject matter of this image. Focus on: the main subject, any text or writing visible, \
         products, brands, activities, and notable details.
-        Ignore the camera, phone, or device used to capture this image. Do not mention photographic equipment, \
-        lenses, image quality, or capture metadata.
+        Ignore the camera, phone, or device used to capture this image.  Ignore the background material that is not the focus of the image.
         Be specific and factual about what is depicted.
         """
         

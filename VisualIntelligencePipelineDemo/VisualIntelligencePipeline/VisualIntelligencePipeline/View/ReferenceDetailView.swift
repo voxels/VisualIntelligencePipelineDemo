@@ -333,7 +333,7 @@ struct ReferenceDetailContent: View {
                 
                 // Media Info Section (Using Abstraction)
                 let mediaInfo = item.mediaInfo
-                if mediaInfo.mediaType != nil || mediaInfo.filename != nil || mediaInfo.fileSize != nil {
+                if mediaInfo.mediaType != nil || mediaInfo.filename != nil || mediaInfo.fileSize != nil || item.aestheticsScore != nil {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Media Information")
                             .font(.title3)
@@ -362,6 +362,15 @@ struct ReferenceDetailContent: View {
                                 Text("Size:")
                                     .foregroundStyle(.secondary)
                                 Text(ByteCountFormatter.string(fromByteCount: Int64(fileSize), countStyle: .file))
+                            }
+                            .font(.caption)
+                        }
+                        
+                        if let score = item.aestheticsScore {
+                            HStack {
+                                Text("Aesthetics:")
+                                    .foregroundStyle(.secondary)
+                                Text(String(format: "%.0f%%", score * 100))
                             }
                             .font(.caption)
                         }

@@ -184,6 +184,10 @@ final class KnowMapsRetrievalAdapter: KnowledgeGraphRetrievalService {
         guard let manager = UnifiedDataManager.shared else { return nil }
         var results: [(text: String, weight: Double)] = []
         
+        // Use a background context to avoid blocking the main thread during pipeline enrichment
+        let bgCtx = ModelContext(manager.store.container)
+        bgCtx.autosaveEnabled = false
+        
         // CRITICAL FIX: Skip global UserConcept retrieval when scoped to a session
         // This is the ROOT CAUSE of concept contamination (plants from yesterday appearing today)
         if sessionID == nil {
@@ -192,7 +196,7 @@ final class KnowMapsRetrievalAdapter: KnowledgeGraphRetrievalService {
                 predicate: #Predicate<UserConcept> { $0.weight > 1.2 },
                 sortBy: [SortDescriptor(\.weight, order: .reverse)]
             )
-            let boostedConcepts = try manager.mainContext.fetch(conceptDescriptor)
+            let boostedConcepts = try bgCtx.fetch(conceptDescriptor)
             
             for concept in boostedConcepts.prefix(5) {
                  results.append(("User strongly values concept: \(concept.name)", concept.weight))
@@ -213,7 +217,7 @@ final class KnowMapsRetrievalAdapter: KnowledgeGraphRetrievalService {
             )
             var fetchDescriptor = descriptor
             fetchDescriptor.fetchLimit = 5
-            items = try manager.mainContext.fetch(fetchDescriptor)
+            items = try bgCtx.fetch(fetchDescriptor)
         } else {
             // Global search (no session scoping)
             let descriptor = FetchDescriptor<ProcessedItem>(
@@ -225,7 +229,7 @@ final class KnowMapsRetrievalAdapter: KnowledgeGraphRetrievalService {
             )
             var fetchDescriptor = descriptor
             fetchDescriptor.fetchLimit = 5
-            items = try manager.mainContext.fetch(fetchDescriptor)
+            items = try bgCtx.fetch(fetchDescriptor)
         }
         
         if !items.isEmpty {
