@@ -261,40 +261,50 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
         isLoading = true
         defer { isLoading = false }
         
-        // Run sequentially to avoid two concurrent KV caches in memory
-        let imageDesc: String? = if let image {
-            try? await runImageAnalysis(image: image, container: container)
-        } else {
-            nil
-        }
-        
-        let contextSummary: String? = if !enrichmentContext.isEmpty {
-            try? await runContextAnalysis(
-                context: enrichmentContext,
-                transcription: transcription,
-                container: container
+        // Run MLX inference at background priority to avoid starving the main thread.
+        // GPU/CPU-intensive model inference saturates all cores; lowering priority
+        // lets the OS scheduler keep the UI responsive.
+        let capturedContext = enrichmentContext
+        let capturedTranscription = transcription
+        let result: FastVLMAnalysis? = try await Task.detached(priority: .background) { [self] in
+            // Run sequentially to avoid two concurrent KV caches in memory
+            let imageDesc: String? = if let image {
+                try? await runImageAnalysis(image: image, container: container)
+            } else {
+                nil
+            }
+            
+            // Yield between heavy inference passes
+            await Task.yield()
+            
+            let contextSummary: String? = if !capturedContext.isEmpty {
+                try? await runContextAnalysis(
+                    context: capturedContext,
+                    transcription: capturedTranscription,
+                    container: container
+                )
+            } else {
+                nil
+            }
+            
+            // If we got nothing from either, return nil
+            guard imageDesc != nil || contextSummary != nil else { return nil }
+            
+            // Parse structured fields from FastVLM's context analysis
+            let parsed = parseStructuredOutput(contextSummary)
+            
+            return FastVLMAnalysis(
+                imageDescription: imageDesc,
+                contextSummary: parsed.summary ?? contextSummary,
+                suggestedTitle: parsed.title,
+                suggestedPurpose: parsed.purpose,
+                suggestedTags: parsed.tags,
+                statements: parsed.statements
             )
-        } else {
-            nil
-        }
+        }.value
         
-        // If we got nothing from either, return nil
-        guard imageDesc != nil || contextSummary != nil else { return nil }
-        
-        // Parse structured fields from FastVLM's context analysis
-        let parsed = parseStructuredOutput(contextSummary)
-        
-        let analysis = FastVLMAnalysis(
-            imageDescription: imageDesc,
-            contextSummary: parsed.summary ?? contextSummary,
-            suggestedTitle: parsed.title,
-            suggestedPurpose: parsed.purpose,
-            suggestedTags: parsed.tags,
-            statements: parsed.statements
-        )
-        
-        print("✅ [FastVLMService] Full analysis complete — image: \(imageDesc != nil), context: \(contextSummary != nil)")
-        return analysis
+        print("✅ [FastVLMService] Full analysis complete — image: \(result?.imageDescription != nil), context: \(result?.contextSummary != nil)")
+        return result
         
         #else
         return nil

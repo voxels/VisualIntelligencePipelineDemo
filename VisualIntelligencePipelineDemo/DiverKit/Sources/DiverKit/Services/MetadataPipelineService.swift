@@ -661,6 +661,12 @@ public final class MetadataPipelineService: @unchecked Sendable {
                     purposes: []
                 )
                 
+                // Cache descriptor for crash recovery (matches handle(record:) pattern)
+                localInput.descriptorJSON = try? JSONEncoder().encode(descriptor)
+                
+                // Save checkpoint: ensures LocalInput + descriptorJSON survive a crash
+                try? activeContext.save()
+                
                 queueStatusMessage = "Running pipeline…"
                 _ = try await localPipeline.process(
                     input: localInput,
@@ -742,6 +748,9 @@ public final class MetadataPipelineService: @unchecked Sendable {
         localInput.descriptorJSON = try? JSONEncoder().encode(descriptor)
 
         activeContext.insert(localInput)
+        // CRITICAL: Save immediately so LocalInput (with descriptorJSON containing sessionID)
+        // survives a crash. Without this, resumeSuspendedQueue can't recover the session ID.
+        try? activeContext.save()
         let localPipeline = LocalPipelineService(modelContext: activeContext)
         
         // For photo library imports, pass nil for locationService to prevent GPS override

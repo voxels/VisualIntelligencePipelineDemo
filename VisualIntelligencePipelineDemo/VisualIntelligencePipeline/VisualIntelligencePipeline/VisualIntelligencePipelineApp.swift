@@ -132,13 +132,8 @@ struct VisualIntelligencePipelineApp: App {
         let localPipeline = LocalPipelineService(modelContext: dataStore.mainContext)
         Services.shared.localPipelineService = localPipeline
 
-        // One-time relationship reconciliation at launch (no longer per-LocalPipelineService init)
-        let container = dataStore.container
-        Task.detached(priority: .utility) {
-            let bgCtx = ModelContext(container)
-            let reconciler = LocalPipelineService(modelContext: bgCtx)
-            await reconciler.reconcileRelationships()
-        }
+        // Relationship reconciliation runs via maintainLibrary (Settings > Rebuild Library)
+        // Not called at launch to avoid SQLite contention with initial UI rendering
 
         // Initialize KeychainService with app group
         self.keychainService = KeychainService(service: KeychainService.ServiceIdentifier.diver, accessGroup: AppGroupConfig.default.keychainAccessGroup)
