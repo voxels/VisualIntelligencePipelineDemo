@@ -31,8 +31,8 @@
 <main class="main">
   <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> DiverKit — Services</div>
   <h1 class="page-title">DiverKit — Services</h1>
-  <p class="page-subtitle">33 services covering pipeline orchestration, location/weather/web/music enrichment, ML inference, session management, and more.</p>
-  <div class="stats-bar"><div class="stat"><div class="stat-value">33</div><div class="stat-label">Files</div></div><div class="stat"><div class="stat-value">33+</div><div class="stat-label">Types</div></div></div>
+  <p class="page-subtitle">36 services covering pipeline orchestration, location/weather/web/music enrichment, ML inference, session management, and more.</p>
+  <div class="stats-bar"><div class="stat"><div class="stat-value">36</div><div class="stat-label">Files</div></div><div class="stat"><div class="stat-value">36+</div><div class="stat-label">Types</div></div></div>
   <div class="section">
   <h2 class="section-title">Pipeline Orchestration</h2>
   <ul class="type-list"><li class="type-item searchable" data-name="LocalPipelineService">
@@ -74,6 +74,11 @@
   <div class="name"><strong>IntelligenceResult</strong></div>
   <div class="conformances">Pipeline result: .detected, .sifted, .enriched</div>
 </li>
+<li class="type-item searchable" data-name="FastVLMEnrichmentService">
+  <span class="badge badge-class">class</span>
+  <div class="name"><strong>FastVLMEnrichmentService</strong></div>
+  <div class="conformances">Multimodal image analysis via FastVLM 0.5B (MLX Swift). Two-pass: image description + context synthesis. Prompt excludes camera/capture equipment to prevent hallucinations.</div>
+</li>
 <li class="type-item searchable" data-name="FoundationModelsIntentClassifier">
   <span class="badge badge-class">class</span>
   <div class="name"><strong>FoundationModelsIntentClassifier</strong></div>
@@ -84,7 +89,7 @@
   <div class="name"><strong>AestheticsScoringService</strong></div>
   <div class="conformances">CoreML image quality scoring</div>
 </li></ul>
-  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">IntelligenceProcessor generates summaries, concepts, and tags by composing LLM prompts enriched with weather, location, OCR text, and web data.</p>
+  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">IntelligenceProcessor generates summaries, concepts, and tags by composing LLM prompts enriched with weather, location, OCR text, and web data. FastVLMEnrichmentService runs Apple's FastVLM 0.5B model locally for multimodal image understanding.</p>
 </div>
 <div class="section">
   <h2 class="section-title">Location Services</h2>
@@ -215,6 +220,11 @@
   <div class="name"><strong>PhotoLibraryImportService</strong></div>
   <div class="conformances">683 lines — PHAsset import with EXIF extraction</div>
 </li>
+<li class="type-item searchable" data-name="PhotosAssetLoader">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>PhotosAssetLoader</strong></div>
+  <div class="conformances">PHAsset loading and thumbnail generation</div>
+</li>
 <li class="type-item searchable" data-name="DocumentManager">
   <span class="badge badge-struct">struct</span>
   <div class="name"><strong>DocumentManager</strong></div>
@@ -244,6 +254,11 @@
   <span class="badge badge-class">class</span>
   <div class="name"><strong>SSEStreamService</strong></div>
   <div class="conformances">Server-Sent Events streaming client</div>
+</li>
+<li class="type-item searchable" data-name="Probe">
+  <span class="badge badge-struct">struct</span>
+  <div class="name"><strong>Probe</strong></div>
+  <div class="conformances">Diagnostic/performance measurement utility</div>
 </li></ul>
   
 </div>

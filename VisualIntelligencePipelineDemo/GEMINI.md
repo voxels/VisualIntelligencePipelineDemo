@@ -26,18 +26,19 @@ The project is modularized using Swift Package Manager:
 *   **Context Enrichment:** Enriches captured items with:
     *   **Location:** MapKit reverse geocoding (Landmarks/Addresses) with contact detection (Home, friends), and user-pinnable persistence. Foursquare is available in the location editing UI for manual searches.
     *   **Web:** Link metadata extraction and rich link previews for web URLs and QR codes.
-    *   **Aesthetics:** Quality scoring bundled into the Vision analysis pass via `VNCalculateImageAestheticsScoresRequest`.
+    *   **Aesthetics:** Quality scoring bundled into the Vision analysis pass via `VNCalculateImageAestheticsScoresRequest`. Score displayed in detail view Media Information section.
     *   **Music:** Apple Music and Spotify recognition for music-related captures.
     *   **Documents:** Automatic perspective correction and saving of detected documents.
     *   **QR Codes:** Automatic detection and web enrichment of QR code URLs.
 *   **AI-Powered Understanding:** LLM-generated summaries, purpose identification, concept tagging, and daily focus briefs via `SystemLanguageModel`.
-*   **Session Management:** Captures are auto-grouped by location and time into `DiverSession`s with AI-generated summaries.
+*   **Session Management:** Captures are auto-grouped by location and time into `DiverSession`s with AI-generated summaries. Sessions support bulk location editing via `EditSessionLocationView`.
 
 ### Pipeline Services
 
 *   **`LocalPipelineService`:** The core orchestrator. Handles ingestion, enrichment, and persistence.
-*   **`MetadataPipelineService`:** Converts queue items to `LocalInput` and orchestrates metadata extraction.
+*   **`MetadataPipelineService`:** Converts queue items to `LocalInput` and orchestrates metadata extraction. Uses `Task.detached(priority: .utility)` for all heavy processing.
 *   **`IntelligenceProcessor`:** Runs on-device LLM prompts for concept extraction and summarization. Also runs 6 Vision requests (OCR, QR, semantic, document, sifting, aesthetics) in a single pass via `executePipeline`.
+*   **`FastVLMEnrichmentService`:** Runs Apple's FastVLM 0.5B model locally via MLX Swift. Image analysis prompt focuses on subject matter (objects, text, activities) and explicitly excludes camera/capture equipment references to prevent hallucinations.
 *   **Reprocessing:** Supports silent background reprocessing (`reprocessPipeline`) to update metadata. Reuses existing item IDs to prevent duplicates.
 *   **Session Sync:** Automatically synchronizes location edits between `ProcessedItem` and its parent `DiverSession`.
 *   **Enriched Session Summaries:** `generateAndSaveSessionSummary` aggregates all item metadata (transcription, themes, tags, categories, location, web/document/QR context, FastVLM analysis, product metadata, questions, media type) for LLM summarization.
@@ -77,7 +78,7 @@ cd DiverShared && swift test
 
 *   **SwiftUI:** Views are organized in `VisualIntelligencePipeline/VisualIntelligencePipeline/View/`.
 *   **View Models:** Located in `DiverKit/Sources/DiverKit/ViewModel/` — `VisualIntelligenceViewModel`, `SidebarViewModel`, `ReferenceDetailViewModel`, `ProcessedItemViewModel`.
-*   **Services:** Located in `DiverKit/Sources/DiverKit/Services/` — 35 services covering camera, enrichment, pipeline, location, and more.
+*   **Services:** Located in `DiverKit/Sources/DiverKit/Services/` — 36 services covering camera, enrichment, pipeline, location, and more.
 *   **Swift Packages:** Shared code modularized into `DiverKit` and `DiverShared`.
 *   **Asynchronous Operations:** Uses `async/await` throughout for network requests, ML inference, and file I/O.
 *   **Dependency Injection:** Services like `KnowMapsServiceContainer` and `DiverQueueProcessingService` are injected at initialization.
@@ -102,7 +103,15 @@ cd DiverShared && swift test
 
 5.  **Main Thread Safety:**
     *   Keep long-running pipeline tasks off the main thread. Use `@PipelineActor` or `Task.detached` for heavy processing.
+    *   **Never use `Task { }` in SwiftUI handlers** (`onAppear`, `onChange`, `onReceive`) for pipeline work — it inherits `@MainActor`. Always use `Task.detached(priority: .utility)` with explicit capture lists.
+    *   **Use background `ModelContext`** for SwiftData fetches in pipeline/enrichment code. Create via `ModelContext(container)` with `autosaveEnabled = false`. Never use `dataStore.mainContext` or `manager.mainContext` from background tasks.
     *   Provide immediate visual feedback on user actions even when underlying model updates are still in progress.
+
+## Data Model Relationships
+
+*   **`masterCaptureID`** (String): Links sibling captures from the same session (e.g., a photo + its detected QR code URL + its detected document). Displayed in `ReferenceDetailView` via `CaptureSiblingsView`.
+*   **`parentItem` / `childItems`** (SwiftData relationship): Purpose-based parent-child links created by `linkToParent(item:purpose:)`. Groups items by activity/intent. Only populated when the pipeline identifies a shared purpose across items.
+*   **`sessionID`** (String): Links items to their `DiverSession`. Managed by `VisualIntelligenceViewModel.activeSessionID` — set once in `onAppear` and only changed by explicit session-start actions.
 
 ## Terminology
 
@@ -114,20 +123,26 @@ cd DiverShared && swift test
 ## Key Files
 
 ### App & UI
-*   `VisualIntelligencePipelineApp.swift` — App entry point, service initialization
+*   `VisualIntelligencePipelineApp.swift` — App entry point, service initialization, foreground/background lifecycle
 *   `View/VisualIntelligenceView.swift` — Camera and capture UI
 *   `View/SidebarView.swift` — Main navigation sidebar
-*   `View/ReferenceDetailView.swift` — Item detail view
+*   `View/ReferenceDetailView.swift` — Item detail view (media info, aesthetics score, capture siblings, references)
 *   `View/CaptureReviewView.swift` — Post-capture review
-*   `View/EditLocationView.swift` — Location editing
+*   `View/EditLocationView.swift` — Location editing for individual items
+*   `View/EditSessionLocationView.swift` — Bulk location editing for sessions
 *   `View/SettingsView.swift` — App settings and library maintenance UI
+*   `View/QueueProgressView.swift` — Pipeline queue processing progress
+*   `View/ReprocessingWizardView.swift` — Guided reprocessing workflow
 
 ### Core Services (DiverKit)
 *   `Services/LocalPipelineService.swift` — Core pipeline orchestrator
-*   `Services/MetadataPipelineService.swift` — Metadata extraction
+*   `Services/MetadataPipelineService.swift` — Metadata extraction and queue processing
 *   `Services/IntelligenceProcessor.swift` — On-device LLM processing
+*   `Services/FastVLMEnrichmentService.swift` — FastVLM multimodal image analysis
 *   `Services/LocationSearchAggregator.swift` — Unified Foursquare + MapKit search
+*   `Services/SessionClusteringService.swift` — Time/location-based session grouping
 *   `Services/CameraManager.swift` — AVFoundation camera management
+*   `Services/DailyContextService.swift` — Daily focus summary generation
 *   `Storage/DiverDataStore.swift` — SwiftData container management
 
 ### Models (DiverKit)
@@ -135,3 +150,4 @@ cd DiverShared && swift test
 *   `Models/DiverSession.swift` — Session grouping model
 *   `Models/DiverCollection.swift` — User-created collections
 *   `Models/UserConcept.swift` — Concept/tag model
+*   `Models/AestheticsTypes.swift` — Image quality scoring types

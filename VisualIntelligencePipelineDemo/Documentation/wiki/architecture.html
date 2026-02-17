@@ -32,7 +32,7 @@
   <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> Architecture</div>
   <h1 class="page-title">Architecture</h1>
   <p class="page-subtitle">System design, data flow, and module dependency overview for Visual Intelligence Pipeline.</p>
-  <div class="stats-bar"><div class="stat"><div class="stat-value">49,890</div><div class="stat-label">Lines</div></div><div class="stat"><div class="stat-value">314</div><div class="stat-label">Files</div></div><div class="stat"><div class="stat-value">53</div><div class="stat-label">Commits</div></div><div class="stat"><div class="stat-value">36</div><div class="stat-label">Days</div></div></div>
+  <div class="stats-bar"><div class="stat"><div class="stat-value">50,800+</div><div class="stat-label">Lines</div></div><div class="stat"><div class="stat-value">316</div><div class="stat-label">Files</div></div><div class="stat"><div class="stat-value">53+</div><div class="stat-label">Commits</div></div><div class="stat"><div class="stat-value">37</div><div class="stat-label">Days</div></div></div>
   
 <div class="section">
   <h2 class="section-title">Module Dependencies</h2>
@@ -41,7 +41,7 @@
     &nbsp;&nbsp;&bull; AppGroupConfig, ContextSnapshot, DiverQueueStore, LinkWrapping, Validation<br>
     &nbsp;&nbsp;&nbsp;&nbsp;↑<br>
     <span style="color:var(--accent-blue)">DiverKit</span> <span style="color:var(--text-muted)">(depends on DiverShared)</span><br>
-    &nbsp;&nbsp;&bull; Services (33), Models (14), ViewModels (4), Storage (5), Core, Auth, Schemas (56)<br>
+     &nbsp;&nbsp;&bull; Services (36), Models (14), ViewModels (4), Storage (5), Core, Auth, Schemas (56)<br>
     &nbsp;&nbsp;&nbsp;&nbsp;↑<br>
     <span style="color:var(--accent-purple)">VisualIntelligencePipeline</span> <span style="color:var(--text-muted)">(depends on DiverKit + DiverShared)</span><br>
     &nbsp;&nbsp;&bull; Views (25), Services (7), AppIntents (5+), Widget (20 files), ActionExtension (5 files)<br>
@@ -62,11 +62,12 @@
     &nbsp;&nbsp;Raw Input → LocalPipelineService.process()<br>
     &nbsp;&nbsp;&nbsp;&nbsp;├── LocationSearchAggregator (Foursquare + MapKit, parallel)<br>
     &nbsp;&nbsp;&nbsp;&nbsp;├── WeatherEnrichmentService (WeatherKit)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;├── AestheticsScoringService (CoreML quality scoring)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;├── DuckDuckGoEnrichmentService (web intelligence)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;├── AppleMusicEnrichmentService (music matching)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;├── DocumentManager (perspective correction)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;└── IntelligenceProcessor (SystemLanguageModel: summaries, concepts, tags)<br><br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── AestheticsScoringService (CoreML quality scoring)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── FastVLMEnrichmentService (FastVLM 0.5B multimodal image analysis)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── DuckDuckGoEnrichmentService (web intelligence)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── AppleMusicEnrichmentService (music matching)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── DocumentManager (perspective correction)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;└── IntelligenceProcessor (SystemLanguageModel: summaries, concepts, tags)<br><br>
     <strong style="color:var(--accent-purple)">Persistence</strong><br>
     &nbsp;&nbsp;ProcessedItem → SwiftData (DiverDataStore) → CloudKit sync<br>
     &nbsp;&nbsp;SessionClusteringService → DiverSession grouping<br>

@@ -153,9 +153,9 @@ def generate_all():
     # --- DiverKit Services ---
     pages["diverkit-services.html"] = page(
         "DiverKit — Services",
-        "33 services covering pipeline orchestration, location/weather/web/music enrichment, ML inference, session management, and more.",
+        "36 services covering pipeline orchestration, location/weather/web/music enrichment, ML inference, session management, and more.",
         "dks",
-        [("33", "Files"), ("33+", "Types")],
+        [("36", "Files"), ("36+", "Types")],
         "\n".join([
             section("Pipeline Orchestration", [
                 type_item("LocalPipelineService", "struct", "2,732 lines — core orchestrator: ingestion → enrichment → persistence"),
@@ -167,9 +167,10 @@ def generate_all():
             section("Intelligence &amp; ML", [
                 type_item("IntelligenceProcessor", "class", "568 lines — on-device LLM prompts via SystemLanguageModel"),
                 type_item("IntelligenceResult", "enum", "Pipeline result: .detected, .sifted, .enriched"),
+                type_item("FastVLMEnrichmentService", "class", "Multimodal image analysis via FastVLM 0.5B (MLX Swift). Two-pass: image description + context synthesis. Prompt excludes camera/capture equipment to prevent hallucinations."),
                 type_item("FoundationModelsIntentClassifier", "class", "Intent classification using Foundation Models"),
                 type_item("AestheticsScoringService", "struct", "CoreML image quality scoring"),
-            ], "IntelligenceProcessor generates summaries, concepts, and tags by composing LLM prompts enriched with weather, location, OCR text, and web data."),
+            ], "IntelligenceProcessor generates summaries, concepts, and tags by composing LLM prompts enriched with weather, location, OCR text, and web data. FastVLMEnrichmentService runs Apple's FastVLM 0.5B model locally for multimodal image understanding."),
             section("Location Services", [
                 type_item("LocationSearchAggregator", "struct", "Parallel Foursquare + MapKit search with merged results"),
                 type_item("SimpleMapFeature", "struct", "Lightweight map annotation model"),
@@ -200,12 +201,14 @@ def generate_all():
                 type_item("DailyContextService", "class", "ObservableObject — Daily Focus summary generation"),
                 type_item("CameraManager", "class", "AVFoundation camera session management"),
                 type_item("PhotoLibraryImportService", "struct", "683 lines — PHAsset import with EXIF extraction"),
+                type_item("PhotosAssetLoader", "struct", "PHAsset loading and thumbnail generation"),
                 type_item("DocumentManager", "struct", "Sendable — document detection, perspective correction, saving"),
                 type_item("ContactService", "protocol", "ContactServiceProvider — CNContact enrichment"),
                 type_item("ContextQuestionService", "class", "Interactive context question generation"),
                 type_item("ContextEnrichmentCoordinator", "actor", "Coordinates parallel enrichment tasks"),
                 type_item("DiverLinkGenerator", "struct", "HMAC-signed DiverLink creation"),
                 type_item("SSEStreamService", "class", "Server-Sent Events streaming client"),
+                type_item("Probe", "struct", "Diagnostic/performance measurement utility"),
             ]),
         ])
     )
@@ -463,7 +466,7 @@ def generate_all():
         "Architecture",
         "System design, data flow, and module dependency overview for Visual Intelligence Pipeline.",
         "arch",
-        [("49,890", "Lines"), ("314", "Files"), ("53", "Commits"), ("36", "Days")],
+        [("50,800+", "Lines"), ("316", "Files"), ("53+", "Commits"), ("37", "Days")],
         """
 <div class="section">
   <h2 class="section-title">Module Dependencies</h2>
@@ -472,7 +475,7 @@ def generate_all():
     &nbsp;&nbsp;&bull; AppGroupConfig, ContextSnapshot, DiverQueueStore, LinkWrapping, Validation<br>
     &nbsp;&nbsp;&nbsp;&nbsp;↑<br>
     <span style="color:var(--accent-blue)">DiverKit</span> <span style="color:var(--text-muted)">(depends on DiverShared)</span><br>
-    &nbsp;&nbsp;&bull; Services (33), Models (14), ViewModels (4), Storage (5), Core, Auth, Schemas (56)<br>
+     &nbsp;&nbsp;&bull; Services (36), Models (14), ViewModels (4), Storage (5), Core, Auth, Schemas (56)<br>
     &nbsp;&nbsp;&nbsp;&nbsp;↑<br>
     <span style="color:var(--accent-purple)">VisualIntelligencePipeline</span> <span style="color:var(--text-muted)">(depends on DiverKit + DiverShared)</span><br>
     &nbsp;&nbsp;&bull; Views (25), Services (7), AppIntents (5+), Widget (20 files), ActionExtension (5 files)<br>
@@ -493,11 +496,12 @@ def generate_all():
     &nbsp;&nbsp;Raw Input → LocalPipelineService.process()<br>
     &nbsp;&nbsp;&nbsp;&nbsp;├── LocationSearchAggregator (Foursquare + MapKit, parallel)<br>
     &nbsp;&nbsp;&nbsp;&nbsp;├── WeatherEnrichmentService (WeatherKit)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;├── AestheticsScoringService (CoreML quality scoring)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;├── DuckDuckGoEnrichmentService (web intelligence)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;├── AppleMusicEnrichmentService (music matching)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;├── DocumentManager (perspective correction)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;└── IntelligenceProcessor (SystemLanguageModel: summaries, concepts, tags)<br><br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── AestheticsScoringService (CoreML quality scoring)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── FastVLMEnrichmentService (FastVLM 0.5B multimodal image analysis)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── DuckDuckGoEnrichmentService (web intelligence)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── AppleMusicEnrichmentService (music matching)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── DocumentManager (perspective correction)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;└── IntelligenceProcessor (SystemLanguageModel: summaries, concepts, tags)<br><br>
     <strong style="color:var(--accent-purple)">Persistence</strong><br>
     &nbsp;&nbsp;ProcessedItem → SwiftData (DiverDataStore) → CloudKit sync<br>
     &nbsp;&nbsp;SessionClusteringService → DiverSession grouping<br>

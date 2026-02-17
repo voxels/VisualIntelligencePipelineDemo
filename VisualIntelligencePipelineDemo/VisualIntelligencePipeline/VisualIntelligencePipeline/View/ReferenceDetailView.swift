@@ -206,11 +206,7 @@ struct ReferenceDetailContent: View {
                         .padding(.horizontal)
                     }
                     .detailCardStyle()
-                } else {
-                    ContentUnavailableView("No References Found", systemImage: "magnifyingglass", description: Text("The pipeline hasn't extracted any entities yet."))
                 }
-                
-                // Divider removed
 
                 
                 // Grouped Capture Content

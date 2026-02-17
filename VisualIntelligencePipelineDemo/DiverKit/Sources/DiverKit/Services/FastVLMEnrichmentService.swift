@@ -267,15 +267,9 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
         let capturedContext = enrichmentContext
         let capturedTranscription = transcription
         let result: FastVLMAnalysis? = try await Task.detached(priority: .background) { [self] in
-            // Run sequentially to avoid two concurrent KV caches in memory
-            let imageDesc: String? = if let image {
-                try? await runImageAnalysis(image: image, container: container)
-            } else {
-                nil
-            }
-            
-            // Yield between heavy inference passes
-            await Task.yield()
+            // Image analysis disabled — FastVLM 0.5B produces unreliable image descriptions.
+            // Only context synthesis (structured enrichment data) is used.
+            let imageDesc: String? = nil
             
             let contextSummary: String? = if !capturedContext.isEmpty {
                 try? await runContextAnalysis(
@@ -287,8 +281,8 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
                 nil
             }
             
-            // If we got nothing from either, return nil
-            guard imageDesc != nil || contextSummary != nil else { return nil }
+            // If we got nothing, return nil
+            guard contextSummary != nil else { return nil }
             
             // Parse structured fields from FastVLM's context analysis
             let parsed = parseStructuredOutput(contextSummary)
@@ -332,7 +326,7 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
             let ciImage = CIImage(cgImage: image)
             let imageInput = UserInput.Image.ciImage(ciImage)
             let lmInput = try await context.processor.prepare(input: UserInput(prompt: prompt, images: [imageInput]))
-            let params = GenerateParameters(maxTokens: 512, temperature: 0.3)
+            let params = GenerateParameters(maxTokens: 512, temperature: 0.0)
             let stream = try MLXLMCommon.generate(
                 input: lmInput, parameters: params, context: context
             )
@@ -387,7 +381,7 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
         
         let result: String = try await container.perform { [prompt] context in
             let lmInput = try await context.processor.prepare(input: UserInput(prompt: prompt))
-            let params = GenerateParameters(maxTokens: 384, temperature: 0.3)
+            let params = GenerateParameters(maxTokens: 384, temperature: 0.0)
             let stream = try MLXLMCommon.generate(
                 input: lmInput, parameters: params, context: context
             )

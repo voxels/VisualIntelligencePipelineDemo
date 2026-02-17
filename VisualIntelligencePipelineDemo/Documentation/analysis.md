@@ -32,7 +32,7 @@
 
 | Category | Count |
 |----------|-------|
-| Services | 35 |
+| Services | 36 |
 | Models | 14 |
 | View Models | 4 |
 | Storage | 5 |

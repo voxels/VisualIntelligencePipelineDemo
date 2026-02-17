@@ -422,25 +422,20 @@ public final class LocalPipelineService {
                     existing.fastVLMAnalysis = analysis
                     existing.processingLog.append("\(Date().formatted()): FastVLM: structured analysis complete")
                     
-                    // FastVLM overrides SLM output with richer multimodal analysis
+                    // Apply accurate fields
                     if let title = analysis.suggestedTitle, existing.title == nil || existing.title?.isEmpty == true {
                         existing.title = title
-                    }
-                    if let summary = analysis.contextSummary {
-                        existing.summary = summary
                     }
                     if let purpose = analysis.suggestedPurpose {
                         if !existing.purposes.contains(purpose) {
                             existing.purposes.append(purpose)
                         }
                     }
-                    if !analysis.suggestedTags.isEmpty {
-                        let combinedTags = Set(existing.tags).union(Set(analysis.suggestedTags))
-                        existing.tags = Array(combinedTags).sorted()
-                    }
-                    if !analysis.statements.isEmpty {
-                        existing.questions = analysis.statements
-                    }
+                    
+                    // Log remaining fields for debugging — tags/statements not reliable enough for UI
+                    print("📝 [FastVLM] Item \(existing.id) — contextSummary: \(analysis.contextSummary ?? "nil")")
+                    print("📝 [FastVLM] Item \(existing.id) — suggestedTags: \(analysis.suggestedTags)")
+                    print("📝 [FastVLM] Item \(existing.id) — statements: \(analysis.statements)")
                 }
             }
             
@@ -653,10 +648,7 @@ public final class LocalPipelineService {
                 processed.fastVLMAnalysis = analysis
                 processed.processingLog.append("\(Date().formatted()): FastVLM: structured analysis complete")
                 
-                // FastVLM overrides SLM output with richer multimodal analysis
-                if let summary = analysis.contextSummary {
-                    processed.summary = summary
-                }
+                // Apply accurate fields
                 if let title = analysis.suggestedTitle, processed.title == nil || processed.title?.isEmpty == true {
                     processed.title = title
                 }
@@ -665,13 +657,11 @@ public final class LocalPipelineService {
                         processed.purposes.append(purpose)
                     }
                 }
-                if !analysis.suggestedTags.isEmpty {
-                    let combinedTags = Set(processed.tags).union(Set(analysis.suggestedTags))
-                    processed.tags = Array(combinedTags).sorted()
-                }
-                if !analysis.statements.isEmpty {
-                    processed.questions = analysis.statements
-                }
+                
+                // Log remaining fields for debugging — tags/statements not reliable enough for UI
+                print("📝 [FastVLM] Item \(processed.id) — contextSummary: \(analysis.contextSummary ?? "nil")")
+                print("📝 [FastVLM] Item \(processed.id) — suggestedTags: \(analysis.suggestedTags)")
+                print("📝 [FastVLM] Item \(processed.id) — statements: \(analysis.statements)")
             }
         }
         // Trigger live UI update
