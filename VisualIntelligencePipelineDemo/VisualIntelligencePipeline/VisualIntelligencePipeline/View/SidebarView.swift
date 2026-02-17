@@ -256,6 +256,7 @@ struct SidebarView: View {
                     } label: {
                         Label("Settings", systemImage: "gear")
                     }
+                    .accessibilityIdentifier("settingsButton")
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }

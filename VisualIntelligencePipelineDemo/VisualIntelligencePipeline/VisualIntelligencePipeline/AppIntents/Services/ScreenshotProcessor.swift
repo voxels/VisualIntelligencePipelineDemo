@@ -26,7 +26,7 @@ actor ScreenshotProcessor {
     enum ProcessingError: LocalizedError {
         case invalidImage
         case noURLsFound
-        case visionProcessingFailed(Error)
+        case visionProcessingFailed(String)
 
         var errorDescription: String? {
             switch self {
@@ -34,8 +34,8 @@ actor ScreenshotProcessor {
                 return "The provided image could not be processed"
             case .noURLsFound:
                 return "No URLs were found in the screenshot"
-            case .visionProcessingFailed(let error):
-                return "Vision processing failed: \(error.localizedDescription)"
+            case .visionProcessingFailed(let message):
+                return "Vision processing failed: \(message)"
             }
         }
     }
@@ -140,7 +140,7 @@ actor ScreenshotProcessor {
         do {
             try handler.perform([request])
         } catch {
-            throw ProcessingError.visionProcessingFailed(error)
+            throw ProcessingError.visionProcessingFailed(error.localizedDescription)
         }
 
         guard let observations = request.results else {
@@ -235,7 +235,7 @@ actor ScreenshotProcessor {
         do {
             try handler.perform([request])
         } catch {
-            throw ProcessingError.visionProcessingFailed(error)
+            throw ProcessingError.visionProcessingFailed(error.localizedDescription)
         }
 
         guard let observations = request.results else {
