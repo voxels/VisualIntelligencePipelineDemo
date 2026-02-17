@@ -322,8 +322,11 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
         print("🧠 [FastVLMService] Starting multimodal image analysis")
         
         let prompt = """
-        Describe this image in detail. Focus on: objects, text, activities, and anything notable.
-        Be specific and factual. Identify brands, products, text content, and activities you can see.
+        Describe the subject matter of this image. Focus on: the main subject, any text or writing visible, \
+        products, brands, activities, and notable details.
+        Ignore the camera, phone, or device used to capture this image. Do not mention photographic equipment, \
+        lenses, image quality, or capture metadata.
+        Be specific and factual about what is depicted.
         """
         
         let result: String = try await container.perform { context in

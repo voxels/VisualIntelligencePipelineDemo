@@ -1113,8 +1113,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         print("📥 Batch capture: \(items.count) items")
         
-        // Reset state for new batch session
-        self.activeSessionID = UUID().uuidString
+        // activeSessionID is set once in onAppear; don't overwrite here.
         self.sessionImages = []
         self.sessionDepthData = []
         self.results = []
@@ -1375,8 +1374,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         print("📸 Processing selected photo via unified pipeline...")
         
-        // Reset state for new selection (always new session for new photo selection)
-        self.activeSessionID = UUID().uuidString
+        // activeSessionID is set once in onAppear; don't overwrite here.
         self.sessionImages = []
         self.results = []
         self.accumulatedContexts = []
