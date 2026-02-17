@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import Testing
 import knowmaps
-@testable import Diver
+@testable import VisualIntelligencePipeline
 
 struct KnowMapsCacheStoreTests {
     @Test @MainActor

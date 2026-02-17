@@ -1,7 +1,7 @@
 import XCTest
 import AppIntents
 import SwiftData
-@testable import Diver
+@testable import VisualIntelligencePipeline
 import DiverKit
 import DiverShared
 
@@ -19,7 +19,7 @@ final class LinkEntityQueryTests: XCTestCase {
         context = dataStore.mainContext
         
         // Make dataStore available to LinkEntityQuery via DiverApp
-        DiverApp._staticDataStore = dataStore
+        VisualIntelligencePipelineApp._staticDataStore = dataStore
         
         query = LinkEntityQuery()
         
@@ -27,7 +27,7 @@ final class LinkEntityQueryTests: XCTestCase {
     }
 
     override func tearDown() async throws {
-        DiverApp._staticDataStore = nil
+        VisualIntelligencePipelineApp._staticDataStore = nil
         try await super.tearDown()
     }
 

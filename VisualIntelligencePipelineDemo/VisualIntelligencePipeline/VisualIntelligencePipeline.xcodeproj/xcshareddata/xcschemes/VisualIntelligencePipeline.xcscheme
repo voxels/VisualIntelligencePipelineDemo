@@ -28,6 +28,26 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "2C5172D6F90533D12DE96E9F"
+               BuildableName = "VisualIntelligencePipelineTests.xctest"
+               BlueprintName = "VisualIntelligencePipelineTests"
+               ReferencedContainer = "container:VisualIntelligencePipeline.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "F27D800C841D2305CDC76CF7"
+               BuildableName = "DiverUITests_iOS.xctest"
+               BlueprintName = "DiverUITests_iOS"
+               ReferencedContainer = "container:VisualIntelligencePipeline.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

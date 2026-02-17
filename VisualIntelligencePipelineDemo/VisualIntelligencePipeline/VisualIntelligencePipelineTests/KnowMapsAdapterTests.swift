@@ -2,7 +2,7 @@ import Foundation
 import Testing
 import knowmaps
 import DiverShared
-@testable import Diver
+@testable import VisualIntelligencePipeline
 
 @MainActor
 struct KnowMapsAdapterTests {

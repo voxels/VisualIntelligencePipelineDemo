@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "FB45EBA8D8C09CA4808CD555"
-               BuildableName = "VisualIntelligencePipelineTests_macOS.bundle"
-               BlueprintName = "VisualIntelligencePipelineTests_macOS"
+               BlueprintIdentifier = "2C5172D6F90533D12DE96E9F"
+               BuildableName = "VisualIntelligencePipelineTests.xctest"
+               BlueprintName = "VisualIntelligencePipelineTests"
                ReferencedContainer = "container:VisualIntelligencePipeline.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -29,6 +29,18 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES"
       shouldAutocreateTestPlan = "YES">
+      <Testables>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "2C5172D6F90533D12DE96E9F"
+               BuildableName = "VisualIntelligencePipelineTests.xctest"
+               BlueprintName = "VisualIntelligencePipelineTests"
+               ReferencedContainer = "container:VisualIntelligencePipeline.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+      </Testables>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -50,9 +62,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "FB45EBA8D8C09CA4808CD555"
-            BuildableName = "VisualIntelligencePipelineTests_macOS.bundle"
-            BlueprintName = "VisualIntelligencePipelineTests_macOS"
+            BlueprintIdentifier = "2C5172D6F90533D12DE96E9F"
+            BuildableName = "VisualIntelligencePipelineTests.xctest"
+            BlueprintName = "VisualIntelligencePipelineTests"
             ReferencedContainer = "container:VisualIntelligencePipeline.xcodeproj">
          </BuildableReference>
       </MacroExpansion>

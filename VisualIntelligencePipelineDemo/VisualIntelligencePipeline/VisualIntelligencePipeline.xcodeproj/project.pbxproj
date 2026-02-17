@@ -192,7 +192,7 @@
 		1E03D02F2EFBD3F20020DAA5 /* URLCompletenessAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLCompletenessAnalyzer.swift; sourceTree = "<group>"; };
 		1E03D0392EFBFA3F0020DAA5 /* NavigationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationManager.swift; sourceTree = "<group>"; };
 		1E03D0472EFC3B670020DAA5 /* DiverAppAttributionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiverAppAttributionView.swift; sourceTree = "<group>"; };
-		1E160AC535402EF1545DA24A /* DiverUITests_iOS.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiverUITests_iOS.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E160AC535402EF1545DA24A /* DiverUITests_iOS.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DiverUITests_iOS.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E6E585A2F156BE700CA4385 /* EditLocationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditLocationView.swift; sourceTree = "<group>"; };
 		1E6E585B2F156BE700CA4385 /* EditSessionLocationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditSessionLocationView.swift; sourceTree = "<group>"; };
 		1E6E585C2F160AA700CA4385 /* QueueProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueProgressView.swift; sourceTree = "<group>"; };
@@ -455,7 +455,7 @@
 				D77C396762A1E09D7BD33BF2 /* VisualIntelligencePipeline.app */,
 				3EE453BDEFB20800DBFF0B1B /* VisualIntelligencePipelineTests.xctest */,
 				D027BD82E576693E8A997539 /* VisualIntelligencePipelineTests_macOS.bundle */,
-				1E160AC535402EF1545DA24A /* DiverUITests_iOS.bundle */,
+				1E160AC535402EF1545DA24A /* DiverUITests_iOS.xctest */,
 				A1F40E40FD53ECA425061490 /* DiverUITests_macOS.bundle */,
 				1E03CF252EFAE80F0020DAA5 /* ActionExtension.appex */,
 				1E03CFB22EFB55560020DAA5 /* VisualIntelligencePipelineWidget.appex */,
@@ -656,8 +656,8 @@
 			);
 			name = DiverUITests_iOS;
 			productName = DiverUITests_iOS;
-			productReference = 1E160AC535402EF1545DA24A /* DiverUITests_iOS.bundle */;
-			productType = "com.apple.product-type.bundle";
+			productReference = 1E160AC535402EF1545DA24A /* DiverUITests_iOS.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 		FB45EBA8D8C09CA4808CD555 /* VisualIntelligencePipelineTests_macOS */ = {
 			isa = PBXNativeTarget;
@@ -1246,9 +1246,11 @@
 		78C8CFACECB52D2ED21B7E48 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1258,6 +1260,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = VisualIntelligencePipeline;
 			};
 			name = Release;
 		};
@@ -1339,7 +1342,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VisualIntelligencePipeline_iOS.app/VisualIntelligencePipeline_iOS";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VisualIntelligencePipeline.app/VisualIntelligencePipeline";
 			};
 			name = Release;
 		};
@@ -1403,9 +1406,11 @@
 		D94C6C2948085AC18FE7E4CA /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1415,6 +1420,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = VisualIntelligencePipeline;
 			};
 			name = Debug;
 		};
@@ -1435,7 +1441,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VisualIntelligencePipeline_iOS.app/VisualIntelligencePipeline_iOS";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VisualIntelligencePipeline.app/VisualIntelligencePipeline";
 			};
 			name = Debug;
 		};

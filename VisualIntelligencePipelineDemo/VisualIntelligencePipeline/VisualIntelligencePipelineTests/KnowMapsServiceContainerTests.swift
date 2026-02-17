@@ -1,4 +1,4 @@
-@testable import Diver
+@testable import VisualIntelligencePipeline
 import Security
 import SwiftData
 import Testing

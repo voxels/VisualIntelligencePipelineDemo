@@ -1,6 +1,6 @@
 import XCTest
 import SharedWithYou
-@testable import Diver
+@testable import VisualIntelligencePipeline
 @testable import DiverKit
 import DiverShared
 

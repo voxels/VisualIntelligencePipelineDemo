@@ -1,7 +1,7 @@
 import XCTest
 import AppIntents
 import SwiftData
-@testable import Diver
+@testable import VisualIntelligencePipeline
 import DiverKit
 import DiverShared
 

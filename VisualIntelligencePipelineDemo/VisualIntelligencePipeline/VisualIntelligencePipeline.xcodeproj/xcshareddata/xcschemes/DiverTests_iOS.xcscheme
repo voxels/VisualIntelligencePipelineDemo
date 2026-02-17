@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "2C5172D6F90533D12DE96E9F"
-               BuildableName = "DiverTests_iOS.xctest"
-               BlueprintName = "DiverTests_iOS"
-               ReferencedContainer = "container:Diver.xcodeproj">
+               BuildableName = "VisualIntelligencePipelineTests.xctest"
+               BlueprintName = "VisualIntelligencePipelineTests"
+               ReferencedContainer = "container:VisualIntelligencePipeline.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -35,9 +35,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "2C5172D6F90533D12DE96E9F"
-               BuildableName = "DiverTests_iOS.xctest"
-               BlueprintName = "DiverTests_iOS"
-               ReferencedContainer = "container:Diver.xcodeproj">
+               BuildableName = "VisualIntelligencePipelineTests.xctest"
+               BlueprintName = "VisualIntelligencePipelineTests"
+               ReferencedContainer = "container:VisualIntelligencePipeline.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -63,9 +63,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "2C5172D6F90533D12DE96E9F"
-            BuildableName = "DiverTests_iOS.xctest"
-            BlueprintName = "DiverTests_iOS"
-            ReferencedContainer = "container:Diver.xcodeproj">
+            BuildableName = "VisualIntelligencePipelineTests.xctest"
+            BlueprintName = "VisualIntelligencePipelineTests"
+            ReferencedContainer = "container:VisualIntelligencePipeline.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </ProfileAction>
