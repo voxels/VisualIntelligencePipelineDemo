@@ -264,7 +264,7 @@ final class PipelineIntegrationTests: XCTestCase {
         
         // Query: all ready items
         let readyDesc = FetchDescriptor<ProcessedItem>(
-            predicate: #Predicate { $0.status == .ready }
+            predicate: #Predicate { $0.statusRaw == "ready" }
         )
         let readyItems = try modelContext.fetch(readyDesc)
         

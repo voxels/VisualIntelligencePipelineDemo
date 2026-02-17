@@ -42,7 +42,7 @@ final class LocalPipelineServiceTests: XCTestCase {
     func testProcessExistingItemUpdatesAttributionAndStatus() async throws {
         // Given: An existing ProcessedItem with status .queued
         let processedId = "existing-item"
-        let existing = ProcessedItem(id: processedId, title: "Old Title", status: .queued)
+        let existing = ProcessedItem(id: processedId, url: nil, title: "Old Title", status: .queued)
         modelContext.insert(existing)
         
         let input = LocalInput(url: "https://example.com")

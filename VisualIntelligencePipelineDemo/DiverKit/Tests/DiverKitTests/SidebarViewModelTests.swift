@@ -179,8 +179,8 @@ final class SidebarViewModelTests: XCTestCase {
     func testSortAndFilterByURL() {
         viewModel.searchText = "github"
         let items = [
-            makeProcessedItem(id: "1", title: "Repo", url: "https://github.com/repo"),
-            makeProcessedItem(id: "2", title: "Docs", url: "https://docs.example.com"),
+            makeProcessedItem(id: "1", url: "https://github.com/repo", title: "Repo"),
+            makeProcessedItem(id: "2", url: "https://docs.example.com", title: "Docs"),
         ]
         
         let result = viewModel.sortAndFilter(items: items)

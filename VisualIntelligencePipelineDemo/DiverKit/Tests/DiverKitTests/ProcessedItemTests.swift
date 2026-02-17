@@ -71,7 +71,7 @@ final class ProcessedItemTests: XCTestCase {
         let item = ProcessedItem(
             id: "media-test",
             transcription: "Hello World",
-            themes: ["dark", "moody"],
+            visualTags: ["dark", "moody"],
             mediaType: "image/jpeg",
             fileSize: 1024,
             filename: "photo.jpg"
@@ -83,8 +83,9 @@ final class ProcessedItemTests: XCTestCase {
         XCTAssertEqual(info.filename, "photo.jpg")
         XCTAssertEqual(info.fileSize, 1024)
         XCTAssertEqual(info.transcription, "Hello World")
-        XCTAssertEqual(info.themes, ["dark", "moody"])
+        XCTAssertEqual(info.visualTags, ["dark", "moody"])
     }
+
 
     // MARK: - Payload Encoding/Decoding Tests
 
@@ -214,7 +215,7 @@ final class ProcessedItemTests: XCTestCase {
         let manager = makeTestDataManager()
         let context = manager.mainContext
         
-        let item = ProcessedItem(id: "update-test", title: "Before Update", status: .queued)
+        let item = ProcessedItem(id: "update-test", url: nil, title: "Before Update", status: .queued)
         context.insert(item)
         try context.save()
         
@@ -261,7 +262,7 @@ final class ProcessedItemTests: XCTestCase {
         let context = manager.mainContext
         
         let session = SessionMetadata(sessionID: "sess-1", title: "Test Session")
-        let item = ProcessedItem(id: "rel-item", title: "Item", sessionID: "sess-1")
+        let item = ProcessedItem(id: "rel-item", url: nil, title: "Item", sessionID: "sess-1")
         item.session = session
         
         context.insert(session)

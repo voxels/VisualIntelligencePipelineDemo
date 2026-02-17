@@ -23,7 +23,7 @@ final class MetadataPipelineServiceTests: XCTestCase {
         queueStore = try DiverQueueStore(directoryURL: tempURL)
 
         // Setup Service
-        service = MetadataPipelineService(queueStore: queueStore, modelContext: modelContext)
+        service = MetadataPipelineService(queueStore: queueStore, modelContainer: modelContainer, mainContext: modelContext)
     }
 
     override func tearDown() async throws {

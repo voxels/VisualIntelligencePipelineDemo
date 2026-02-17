@@ -22,7 +22,7 @@ final class LibraryMaintenanceTests: XCTestCase {
     
     // MARK: - recoverStuckItems
     
-    func testRecoverStuckItems_ResetsProcessingToQueued() throws {
+    func testRecoverStuckItems_ResetsProcessingToQueued() async throws {
         // Insert items stuck in processing
         let stuck1 = makeProcessedItem(id: "stuck-1", title: "Stuck A", status: .processing)
         let stuck2 = makeProcessedItem(id: "stuck-2", title: "Stuck B", status: .processing)
@@ -34,7 +34,7 @@ final class LibraryMaintenanceTests: XCTestCase {
         try modelContext.save()
         
         // Recover
-        try service.recoverStuckItems()
+        try await service.recoverStuckItems()
         
         // Verify stuck items reset to queued
         let fetchStuck = FetchDescriptor<ProcessedItem>(
@@ -51,14 +51,14 @@ final class LibraryMaintenanceTests: XCTestCase {
         XCTAssertEqual(readyItems.count, 1)
     }
     
-    func testRecoverStuckItems_CreatesLocalInput() throws {
+    func testRecoverStuckItems_CreatesLocalInput() async throws {
         let stuck = makeProcessedItem(id: "stuck-input", title: "Stuck", status: .processing)
         stuck.url = "https://stuck.com"
         stuck.sessionID = "sess-stuck"
         modelContext.insert(stuck)
         try modelContext.save()
         
-        try service.recoverStuckItems()
+        try await service.recoverStuckItems()
         
         // Verify a LocalInput was created for re-processing
         let inputFetch = FetchDescriptor<LocalInput>()
@@ -68,13 +68,13 @@ final class LibraryMaintenanceTests: XCTestCase {
         XCTAssertEqual(inputs.first?.sessionID, "sess-stuck")
     }
     
-    func testRecoverStuckItems_NoStuckItems() throws {
+    func testRecoverStuckItems_NoStuckItems() async throws {
         let item = makeProcessedItem(id: "ready-only", status: .ready)
         modelContext.insert(item)
         try modelContext.save()
         
         // Should not throw or modify anything
-        try service.recoverStuckItems()
+        try await service.recoverStuckItems()
         
         let fetch = FetchDescriptor<ProcessedItem>()
         let items = try modelContext.fetch(fetch)
@@ -84,7 +84,7 @@ final class LibraryMaintenanceTests: XCTestCase {
     
     // MARK: - assignOrphanedItems
     
-    func testAssignOrphanedItems_MatchesByTime() throws {
+    func testAssignOrphanedItems_MatchesByTime() async throws {
         // Session created at T
         let sessionTime = Date()
         let session = makeSession(sessionID: "s-time", title: "Time Session", createdAt: sessionTime)
@@ -102,7 +102,7 @@ final class LibraryMaintenanceTests: XCTestCase {
         modelContext.insert(orphan)
         try modelContext.save()
         
-        try service.assignOrphanedItems()
+        try await service.assignOrphanedItems()
         
         // Verify orphan was assigned
         let fetch = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.id == "orphan-1" })
@@ -110,7 +110,7 @@ final class LibraryMaintenanceTests: XCTestCase {
         XCTAssertEqual(result.first?.sessionID, "s-time", "Orphan should be assigned to nearest session")
     }
     
-    func testAssignOrphanedItems_CreatesNewSessionWhenNoMatch() throws {
+    func testAssignOrphanedItems_CreatesNewSessionWhenNoMatch() async throws {
         // Session created far in the past
         let session = makeSession(sessionID: "old-sess", title: "Old", createdAt: Date().addingTimeInterval(-86400))
         modelContext.insert(session)
@@ -121,7 +121,7 @@ final class LibraryMaintenanceTests: XCTestCase {
         modelContext.insert(orphan)
         try modelContext.save()
         
-        try service.assignOrphanedItems()
+        try await service.assignOrphanedItems()
         
         // A new session should have been created
         let sessionFetch = FetchDescriptor<SessionMetadata>()
@@ -134,7 +134,7 @@ final class LibraryMaintenanceTests: XCTestCase {
         XCTAssertNotNil(item?.sessionID)
     }
     
-    func testAssignOrphanedItems_NoOrphans() throws {
+    func testAssignOrphanedItems_NoOrphans() async throws {
         let session = makeSession(sessionID: "sess-ok", title: "OK")
         let item = makeProcessedItem(id: "has-session", sessionID: "sess-ok")
         item.session = session
@@ -144,7 +144,7 @@ final class LibraryMaintenanceTests: XCTestCase {
         try modelContext.save()
         
         // Should complete without error
-        try service.assignOrphanedItems()
+        try await service.assignOrphanedItems()
         
         // Nothing changes
         let fetch = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.id == "has-session" })
@@ -153,7 +153,7 @@ final class LibraryMaintenanceTests: XCTestCase {
     
     // MARK: - regenerateMissingSessions
     
-    func testRegenerateMissingSessions_CreatesForOrphanedSessionID() throws {
+    func testRegenerateMissingSessions_CreatesForOrphanedSessionID() async throws {
         // Item with a sessionID but no matching SessionMetadata
         let item = makeProcessedItem(id: "no-session-item", title: "Orphan", sessionID: "missing-sess-id")
         modelContext.insert(item)
@@ -165,7 +165,7 @@ final class LibraryMaintenanceTests: XCTestCase {
         )
         XCTAssertEqual(try modelContext.fetch(beforeFetch).count, 0)
         
-        try service.regenerateMissingSessions()
+        try await service.regenerateMissingSessions()
         
         // Session should now exist
         let afterFetch = FetchDescriptor<SessionMetadata>(
@@ -176,7 +176,7 @@ final class LibraryMaintenanceTests: XCTestCase {
         XCTAssertEqual(sessions.first?.createdAt, item.createdAt, "Session should use item's creation date")
     }
     
-    func testRegenerateMissingSessions_SkipsExistingSessions() throws {
+    func testRegenerateMissingSessions_SkipsExistingSessions() async throws {
         let session = makeSession(sessionID: "exists-sess", title: "Existing")
         let item = makeProcessedItem(id: "has-session-item", sessionID: "exists-sess")
         
@@ -184,7 +184,7 @@ final class LibraryMaintenanceTests: XCTestCase {
         modelContext.insert(item)
         try modelContext.save()
         
-        try service.regenerateMissingSessions()
+        try await service.regenerateMissingSessions()
         
         // No duplicate session created
         let fetch = FetchDescriptor<SessionMetadata>(
@@ -195,7 +195,7 @@ final class LibraryMaintenanceTests: XCTestCase {
     
     // MARK: - consolidateSessions
     
-    func testConsolidateSessions_MergesFragmented() throws {
+    func testConsolidateSessions_MergesFragmented() async throws {
         let now = Date()
         
         // Two sessions with same time (< 5s) and same location (< 50m)
@@ -223,7 +223,7 @@ final class LibraryMaintenanceTests: XCTestCase {
         modelContext.insert(item2)
         try modelContext.save()
         
-        try service.consolidateSessions()
+        try await service.consolidateSessions()
         
         // Items should now share the same sessionID
         let allItems = try modelContext.fetch(FetchDescriptor<ProcessedItem>())
@@ -231,7 +231,7 @@ final class LibraryMaintenanceTests: XCTestCase {
         XCTAssertEqual(sessionIDs.count, 1, "Fragmented sessions should be consolidated into one")
     }
     
-    func testConsolidateSessions_KeepsSeparateWhenFarApart() throws {
+    func testConsolidateSessions_KeepsSeparateWhenFarApart() async throws {
         let now = Date()
         
         // Two sessions far apart in time
@@ -254,7 +254,7 @@ final class LibraryMaintenanceTests: XCTestCase {
         modelContext.insert(session2)
         try modelContext.save()
         
-        try service.consolidateSessions()
+        try await service.consolidateSessions()
         
         // Both sessions should remain
         let sessions = try modelContext.fetch(FetchDescriptor<SessionMetadata>())

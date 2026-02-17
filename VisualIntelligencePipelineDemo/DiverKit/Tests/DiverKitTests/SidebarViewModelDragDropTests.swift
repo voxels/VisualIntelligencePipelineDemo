@@ -20,7 +20,7 @@ final class SidebarViewModelDragDropTests: XCTestCase {
         // Given: Two sessions and an item in the first session
         let session1 = SessionMetadata(sessionID: "s1", title: "Session 1")
         let session2 = SessionMetadata(sessionID: "s2", title: "Session 2")
-        let item = ProcessedItem(id: "i1", title: "Item 1", sessionID: "s1")
+        let item = ProcessedItem(id: "i1", url: nil, title: "Item 1", sessionID: "s1")
         item.session = session1
         
         modelContext.insert(session1)
@@ -62,7 +62,7 @@ extension SidebarViewModelDragDropTests {
         // Given: Two sessions and an item in the first session
         let session1 = SessionMetadata(sessionID: "s1", title: "Session 1")
         let session2 = SessionMetadata(sessionID: "s2", title: "Session 2")
-        let item = ProcessedItem(id: "i1", title: "Item 1", sessionID: "s1")
+        let item = ProcessedItem(id: "i1", url: nil, title: "Item 1", sessionID: "s1")
         item.session = session1
         
         modelContext.insert(session1)

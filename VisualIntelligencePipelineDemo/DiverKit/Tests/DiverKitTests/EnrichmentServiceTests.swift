@@ -16,7 +16,8 @@ final class EnrichmentServiceTests: XCTestCase {
             location: "New York, NY",
             rating: 4.8
         )
-        let mock = MockContextualEnrichmentService(locationResult: mockData)
+        let mock = MockEnrichmentService()
+        mock.locationResult = mockData
         let location = CLLocationCoordinate2D(latitude: 40.7829, longitude: -73.9654)
         
         let result = try await mock.enrich(location: location)
@@ -35,7 +36,8 @@ final class EnrichmentServiceTests: XCTestCase {
             categories: ["Coffee"],
             location: "San Francisco"
         )
-        let mock = MockContextualEnrichmentService(queryResult: mockData)
+        let mock = MockEnrichmentService()
+        mock.queryResult = mockData
         
         let result = try await mock.enrich(query: "Blue Bottle", location: nil)
         
@@ -45,7 +47,8 @@ final class EnrichmentServiceTests: XCTestCase {
     }
     
     func testMockContextualEnrichment_ThrowsError() async {
-        let mock = MockContextualEnrichmentService(error: NSError(domain: "test", code: -1))
+        let mock = MockEnrichmentService()
+        mock.errorToThrow = NSError(domain: "test", code: -1)
         
         do {
             let _ = try await mock.enrich(location: CLLocationCoordinate2D())
@@ -58,7 +61,7 @@ final class EnrichmentServiceTests: XCTestCase {
     }
     
     func testMockContextualEnrichment_ReturnsNil() async throws {
-        let mock = MockContextualEnrichmentService() // No data configured → returns nil
+        let mock = MockEnrichmentService() // No data configured → returns nil
         
         let result = try await mock.enrich(location: CLLocationCoordinate2D(latitude: 0, longitude: 0))
         
@@ -72,10 +75,11 @@ final class EnrichmentServiceTests: XCTestCase {
         let mockData = EnrichmentData(
             title: "Wikipedia",
             descriptionText: "Free encyclopedia",
-            categories: ["Reference"],
-            imageURL: URL(string: "https://wikipedia.org/logo.png")
+            image: "https://wikipedia.org/logo.png",
+            categories: ["Reference"]
         )
-        let mock = MockLinkEnrichmentService(result: mockData)
+        let mock = MockLinkEnrichmentService()
+        mock.result = mockData
         
         let result = try await mock.enrich(url: URL(string: "https://wikipedia.org")!)
         
@@ -86,7 +90,8 @@ final class EnrichmentServiceTests: XCTestCase {
     }
     
     func testMockLinkEnrichment_ThrowsError() async {
-        let mock = MockLinkEnrichmentService(error: URLError(.timedOut))
+        let mock = MockLinkEnrichmentService()
+        mock.errorToThrow = URLError(.timedOut)
         
         do {
             let _ = try await mock.enrich(url: URL(string: "https://timeout.com")!)
@@ -116,9 +121,8 @@ final class EnrichmentServiceTests: XCTestCase {
     // MARK: - Call Tracking
     
     func testMockTracksMultipleCalls() async throws {
-        let mock = MockContextualEnrichmentService(
-            locationResult: EnrichmentData(title: "Place")
-        )
+        let mock = MockEnrichmentService()
+        mock.locationResult = EnrichmentData(title: "Place")
         
         for _ in 0..<5 {
             let _ = try await mock.enrich(location: CLLocationCoordinate2D())

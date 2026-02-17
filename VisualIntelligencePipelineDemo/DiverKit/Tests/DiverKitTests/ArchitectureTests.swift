@@ -18,7 +18,7 @@ final class ArchitectureTests: XCTestCase {
 
     func testDiverObjectConformance() {
         // Given: Models of different types
-        let item = ProcessedItem(id: "item-1", title: "Test Item")
+        let item = ProcessedItem(id: "item-1", url: nil, title: "Test Item")
         let session = SessionMetadata(sessionID: "session-1", title: "Test Session")
         let collection = SessionCollection(name: "Test Collection", sessionIDs: [])
 
@@ -35,7 +35,7 @@ final class ArchitectureTests: XCTestCase {
     func testSessionItemRelationship() throws {
         // Given: A session and an item
         let session = SessionMetadata(sessionID: "session-1", title: "Test Session")
-        let item = ProcessedItem(id: "item-1", title: "Test Item")
+        let item = ProcessedItem(id: "item-1", url: nil, title: "Test Item")
         modelContext.insert(session)
         modelContext.insert(item)
         
@@ -51,7 +51,7 @@ final class ArchitectureTests: XCTestCase {
     func testCascadeDelete() throws {
         // Given: A session with an item
         let session = SessionMetadata(sessionID: "session-cascade", title: "Test Cascade")
-        let item = ProcessedItem(id: "item-cascade", title: "Child Item")
+        let item = ProcessedItem(id: "item-cascade", url: nil, title: "Child Item")
         modelContext.insert(session)
         modelContext.insert(item)
         item.session = session
@@ -71,7 +71,7 @@ final class ArchitectureTests: XCTestCase {
         // Given: Records with matching IDs but no pointers (simulating old data)
         let sessionID = "recon-session"
         let session = SessionMetadata(sessionID: sessionID, title: "Recon Session")
-        let item = ProcessedItem(id: "recon-item", title: "Recon Item")
+        let item = ProcessedItem(id: "recon-item", url: nil, title: "Recon Item")
         item.sessionID = sessionID // Set the ID but not the pointer
         
         modelContext.insert(session)

@@ -56,7 +56,7 @@ final class PipelinePerformanceTests: XCTestCase {
         // Measure fetch performance
         measure {
             let descriptor = FetchDescriptor<ProcessedItem>(
-                predicate: #Predicate { $0.status == .ready },
+                predicate: #Predicate { $0.statusRaw == "ready" },
                 sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
             )
             let _ = try? modelContext.fetch(descriptor)

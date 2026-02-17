@@ -64,6 +64,7 @@ final class ContextualServicesTests: XCTestCase {
         // If real model is present, it returns 3-5 purposes
     }
     
+    func testDuckDuckGoEnrichment() async throws {
         let service = DuckDuckGoEnrichmentService()
         let coords = CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060) // NYC for test
         
@@ -77,4 +78,5 @@ final class ContextualServicesTests: XCTestCase {
         // Questions generation is done later in the pipeline usually, but if the service generates them:
         // XCTAssertFalse(enrichment?.questions.isEmpty ?? true)
     }
+
 }
