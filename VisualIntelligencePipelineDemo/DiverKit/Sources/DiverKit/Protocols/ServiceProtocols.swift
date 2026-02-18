@@ -46,6 +46,7 @@ public protocol FastVLMAnalyzing: AnyObject, Sendable {
     var retainModel: Bool { get set }
     
     func loadModel() async throws
+    func unloadModel()
     func ensureModelAvailable(progress: @escaping @Sendable (Double) -> Void) async throws
     func deleteModel() throws
     func analyze(

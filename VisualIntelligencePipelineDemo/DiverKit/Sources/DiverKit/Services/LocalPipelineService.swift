@@ -75,8 +75,8 @@ public final class LocalPipelineService {
         locationService: LocationProvider? = nil,
 
         indexingService: KnowledgeGraphIndexingService? = nil,
-        contextService: ContextQuestionService? = nil,
-        fastVLMService: FastVLMEnrichmentService? = nil
+        contextService: (any ContextProcessing)? = nil,
+        fastVLMService: (any FastVLMAnalyzing)? = nil
     ) async throws -> ProcessedItem {
         let resolvedId = descriptor?.id ?? resolveId(for: input)
 
@@ -425,7 +425,7 @@ public final class LocalPipelineService {
             await performLLMAnalysis(for: existing, descriptor: descriptor, pipelineContext: localPipelineContext)
             
             // Stage 2: FastVLM analysis (enriches/overrides SLM output with multimodal understanding)
-            if let fastVLMService, FastVLMEnrichmentService.isEnabled {
+            if let fastVLMService, fastVLMService.isAvailable {
                 let image: CGImage? = {
                     guard let imageData = rawPayload ?? existing.rawPayload else { return nil }
                     return createCGImage(from: imageData)
@@ -671,7 +671,7 @@ public final class LocalPipelineService {
         await performLLMAnalysis(for: processed, descriptor: descriptor, pipelineContext: pipelineContext)
         
         // Stage 2: FastVLM analysis (replaces SLM summary when available)
-        if let fastVLMService, FastVLMEnrichmentService.isEnabled {
+        if let fastVLMService, fastVLMService.isAvailable {
             let image: CGImage? = {
                 guard let imageData = rawPayload else { return nil }
                 return createCGImage(from: imageData)
@@ -869,7 +869,7 @@ public final class LocalPipelineService {
         enrichmentService: LinkEnrichmentService? = nil,
         locationService: LocationProvider? = nil,
         indexingService: KnowledgeGraphIndexingService? = nil,
-        fastVLMService: FastVLMEnrichmentService? = nil,
+        fastVLMService: (any FastVLMAnalyzing)? = nil,
         progressHandler: (@Sendable (Double) -> Void)? = nil,
         logHandler: (@Sendable (String) -> Void)? = nil
     ) async throws {

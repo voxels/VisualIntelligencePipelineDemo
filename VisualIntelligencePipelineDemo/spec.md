@@ -38,7 +38,7 @@ VisualIntelligencePipelineDemo/
 | Module | Responsibility | Key Contents |
 |--------|---------------|--------------|
 | **VisualIntelligencePipeline** | App entry point, UI layer, App Intents | 25 SwiftUI views, 7 app services, 14 App Intent definitions |
-| **DiverKit** | Business logic, ML pipelines, persistence | 37 services, 4 view models, 14 models, 56 API schemas, storage layer |
+| **DiverKit** | Business logic, ML pipelines, persistence | 36 services, 4 service protocols, 4 view models, 14 models, 56 API schemas, storage layer |
 | **DiverShared** | Cross-target shared types | `AppGroupConfig`, `QueueStore`, `LinkWrapping`, `IntelligenceCapability`, `ContextSnapshot` |
 
 ### 2.2 Concurrency Model

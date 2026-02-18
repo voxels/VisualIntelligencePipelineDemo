@@ -99,32 +99,38 @@ cd DiverShared && swift test
 *   **Test Mocks:** Located in `DiverKit/Tests/DiverKitTests/Mocks/` — `MockFastVLMService` (conforms to `FastVLMAnalyzing`), `MockEnrichmentService`, etc.
 *   **Swift Packages:** Shared code modularized into `DiverKit` and `DiverShared`.
 *   **Asynchronous Operations:** Uses `async/await` throughout for network requests, ML inference, and file I/O.
-*   **Dependency Injection:** Services like `KnowMapsServiceContainer` and `DiverQueueProcessingService` are injected at initialization.
+*   **Dependency Injection:** Services like `KnowMapsServiceContainer` and `DiverQueueProcessingService` are injected at initialization. `MetadataPipelineService` and `LocalPipelineService` accept `(any ContextProcessing)?` and `(any FastVLMAnalyzing)?` protocol types for testability.
 
 ## Critical Development Rules (Read Carefully)
 
-1.  **Apple Documentation Lookup:**
+1.  **Documentation Must Stay Current Between Every Commit:**
+    *   **All markdown files** in the project must be updated to reflect code changes before every commit to GitHub.
+    *   Files to check and update: `GEMINI.md`, `README.md`, `changelog.md`, `spec.md`, `Documentation/analysis.md`, `Documentation/APP_SUMMARY.md`, `Documentation/BETA_REVIEW_NOTES.md`, and the HTML wiki (`Documentation/wiki/`).
+    *   `changelog.md` must have a dated entry for every commit with all changes.
+    *   Service counts, protocol counts, test counts, and feature descriptions must match the current codebase.
+
+2.  **Apple Documentation Lookup:**
     *   **Always use the Cupertino CLI** (`/opt/homebrew/bin/cupertino`) for Apple documentation queries. Prefer it over web searches for API details, concurrency patterns, framework behavior, and best practices.
     *   Available sources: `apple-docs`, `samples`, `hig`, `apple-archive`, `swift-evolution`, `swift-org`, `swift-book`, `packages`.
     *   Semantic searches: `search_symbols`, `search_property_wrappers`, `search_concurrency`, `search_conformances`.
 
-2.  **NEVER Compromise Data Integrity:**
+3.  **NEVER Compromise Data Integrity:**
     *   **Schema Changes:** Do **NOT** rename Core Data entities (e.g., `SessionMetadata`) or perform destructive schema changes without a fully tested migration plan.
     *   **Recovery:** Prioritize recovery mechanisms over wiping data.
 
-3.  **Build Stability is Paramount:**
+4.  **Build Stability is Paramount:**
     *   After *any* refactoring (especially renaming types), verify the project builds.
     *   When renaming a type, ensure **ALL** references across the codebase are updated immediately.
 
-4.  **Dependency Management (KnowMaps):**
+5.  **Dependency Management (KnowMaps):**
     *   Local Swift Package dependencies can resolve to stale commits. If you encounter "inaccessible due to 'internal' protection level" errors, it is likely a stale dependency cache.
     *   Runtime reflection (using `Mirror`) is an acceptable *temporary* workaround when documented.
 
-5.  **UI & MapKit Stability:**
+6.  **UI & MapKit Stability:**
     *   Use `.id` (UUID) rather than `placeID` for identifying MapKit results in SwiftUI lists.
     *   Use aspect-ratio based layouts for images instead of fixed dimensions.
 
-6.  **Main Thread Safety:**
+7.  **Main Thread Safety:**
     *   Keep long-running pipeline tasks off the main thread. Use `@PipelineActor` or `Task.detached` for heavy processing.
     *   **Never use `Task { }` in SwiftUI handlers** (`onAppear`, `onChange`, `onReceive`) for pipeline work — it inherits `@MainActor`. Always use `Task.detached(priority: .utility)` with explicit capture lists.
     *   **Use background `ModelContext`** for SwiftData fetches in pipeline/enrichment code. Create via `ModelContext(container)` with `autosaveEnabled = false`. Never use `dataStore.mainContext` or `manager.mainContext` from background tasks.

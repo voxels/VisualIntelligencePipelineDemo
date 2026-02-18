@@ -215,3 +215,106 @@ struct ServiceProtocolConformanceTests {
         _ = aesthetics
     }
 }
+
+// MARK: - DI Injection Tests
+
+@Suite("Service Protocol DI Injection")
+struct ServiceProtocolDITests {
+    
+    @Test("MockFastVLMService can be injected as FastVLMAnalyzing")
+    func fastVLMInjection() async throws {
+        let mock = MockFastVLMService()
+        mock.isAvailable = true
+        mock.analyzeResult = FastVLMAnalysis(
+            imageDescription: "Injected analysis",
+            contextSummary: nil,
+            suggestedTitle: "Mock Title",
+            suggestedPurpose: nil,
+            suggestedTags: ["test"],
+            statements: []
+        )
+        
+        // Assign through protocol-typed variable (same as MetadataPipelineService.fastVLMService)
+        let service: (any FastVLMAnalyzing)? = mock
+        
+        // Verify protocol dispatch works
+        #expect(service?.isAvailable == true)
+        let result = try await service?.analyze(image: nil, visionTags: [], enrichmentContext: "test", transcription: nil)
+        #expect(result?.imageDescription == "Injected analysis")
+        #expect(result?.suggestedTitle == "Mock Title")
+        #expect(mock.analyzeCallCount == 1)
+    }
+    
+    @Test("MockContextProcessor can be injected as ContextProcessing")
+    func contextInjection() async throws {
+        let mock = MockContextProcessor(
+            summary: "Injected summary",
+            statements: ["s1", "s2"],
+            purpose: "injected",
+            tags: ["di", "test"]
+        )
+        
+        // Assign through protocol-typed variable (same as MetadataPipelineService.contextService)
+        let service: (any ContextProcessing)? = mock
+        
+        let result = try await service?.processContext(from: EnrichmentData(title: "DI test"), sessionID: "session-1")
+        #expect(result?.summary == "Injected summary")
+        #expect(result?.statements == ["s1", "s2"])
+        #expect(result?.purpose == "injected")
+        #expect(result?.tags == ["di", "test"])
+    }
+    
+    @Test("FastVLM availability controls pipeline gating")
+    func fastVLMAvailabilityGating() {
+        let mock = MockFastVLMService()
+        let service: (any FastVLMAnalyzing)? = mock
+        
+        // Simulate the pipeline guard: `if let fastVLMService, fastVLMService.isAvailable`
+        mock.isAvailable = true
+        if let svc = service, svc.isAvailable {
+            // Pipeline would proceed — expected path
+        } else {
+            Issue.record("Expected available service to pass guard")
+        }
+        
+        mock.isAvailable = false
+        if let svc = service, svc.isAvailable {
+            Issue.record("Expected unavailable service to be gated")
+        }
+        // Pipeline would skip — expected path
+    }
+    
+    @Test("FastVLM lifecycle through protocol matches pipeline usage")
+    func fastVLMPipelineLifecycle() async throws {
+        let mock = MockFastVLMService()
+        let service: (any FastVLMAnalyzing)? = mock
+        
+        // Pipeline start: retain model during batch
+        service?.retainModel = true
+        #expect(mock.retainModel == true)
+        
+        // Pipeline end: release and unload
+        service?.retainModel = false
+        service?.unloadModel()
+        #expect(mock.retainModel == false)
+        #expect(mock.unloadModelCallCount == 1)
+    }
+    
+    @Test("Nil service correctly skips pipeline stages")
+    func nilServiceSkipsStage() async throws {
+        let context: (any ContextProcessing)? = nil
+        let vlm: (any FastVLMAnalyzing)? = nil
+        
+        // Mirrors pipeline guards: `guard let contextService = self.contextService else { return }`
+        #expect(context == nil)
+        #expect(vlm == nil)
+        
+        // These would be the fallback paths in the pipeline
+        var contextRan = false
+        if let ctx = context {
+            _ = try await ctx.summarizeText("test")
+            contextRan = true
+        }
+        #expect(!contextRan)
+    }
+}

@@ -1,6 +1,35 @@
 # Changelog
 
-## 2026-02-16
+## 2026-02-18
+
+### Performance Refactor — Phase 0 & Phase 1 (Partial)
+
+#### @MainActor Fix (Phase 0)
+- **Root Cause Fix**: Changed 5 `Task { @MainActor in ... }` closures → `Task.detached(priority: .utility)` in `VisualIntelligenceViewModel` to move Vision/LLM/sifting work off the main thread.
+
+#### @unchecked Sendable Audit (Phase 1D)
+- **Safety Documentation**: Added `/// Safety:` comments to all 10 production `@unchecked Sendable` types (`FoursquareEnrichmentService`, `MapKitEnrichmentService`, `DuckDuckGoEnrichmentService`, `AestheticsScoringService`, `KeychainService`, `CameraManager`, `LocationService`, `SSEStreamService`, `FastVLMEnrichmentService`, `MetadataPipelineService`). All verified safe via immutability, statelessness, serial queues, or explicit locks.
+
+#### Service Protocol Extraction (Phase 2B)
+- **New File**: `DiverKit/Sources/DiverKit/Protocols/ServiceProtocols.swift` — 4 protocols: `IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`.
+- **Conformances Added**: `IntelligenceProcessor`, `ContextQuestionService`, `AestheticsScoringService`, `FastVLMEnrichmentService` now conform to their respective protocols.
+- **Instance `isAvailable`**: Added instance property to `FastVLMEnrichmentService` (delegates to static `isAvailable`) for protocol-based DI.
+
+#### Pipeline DI Integration
+- **MetadataPipelineService**: Stored properties changed from concrete types → protocol existentials: `contextService: (any ContextProcessing)?`, `fastVLMService: (any FastVLMAnalyzing)?`.
+- **LocalPipelineService**: `process()` and `reprocessPipeline()` params changed to protocol types. `FastVLMEnrichmentService.isEnabled` static checks → `fastVLMService.isAvailable` instance checks (2 sites).
+- **Protocol Updated**: Added `unloadModel()` to `FastVLMAnalyzing` (required by `cancelProcessing()`).
+
+#### TDD Tests
+- **New File**: `DiverKit/Tests/DiverKitTests/ServiceProtocolTests.swift` — 15 tests in 2 suites:
+  - *Service Protocol Conformance* (10): concrete conformance, mock call tracking, lifecycle, errors, type-erased DI.
+  - *Service Protocol DI Injection* (5): mock injection, availability gating, lifecycle management, nil-service skip.
+- **Updated Mock**: `MockFastVLMService` now conforms to `FastVLMAnalyzing`.
+
+#### Documentation
+- **GEMINI.md**: Added testing section (schemes, `swift test` caveat, table), protocols section, DI documentation, documentation update convention.
+- **Wiki** (`diverkit-services.html`): Added "Service Protocols" section with 4 protocols. Updated `LocalPipelineService`, `MetadataPipelineService`, `IntelligenceProcessor`, `FastVLMEnrichmentService`, `AestheticsScoringService`, `ContextQuestionService` descriptions.
+- **Implementation Plan**: Phase 2B updated with actual protocol names and marked complete.
 
 ### Pipeline Performance & Enrichment Trimming
 - **Foreground Freeze Fix**: Removed the 200ms `Task.sleep` and ~12 unnecessary `MainActor.run` wrappers from `processPendingQueue`, eliminating the multi-second UI freeze when returning to the foreground.

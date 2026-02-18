@@ -11,9 +11,8 @@ Uses Apple's Vision framework (`VNGeneratePersonInstanceMaskRequest`) to automat
 
 ### Deep Contextual Enrichment
 Every capture is automatically enriched with layers of real-world context:
-- **Location** — Foursquare venues and Apple MapKit landmarks via a unified `LocationSearchAggregator`, with user-pinnable location persistence and bidirectional session sync.
-- **Weather** — Current environmental conditions via WeatherKit.
-- **Web Intelligence** — DuckDuckGo enrichments, link metadata extraction, and rich link previews.
+- **Location** — Apple MapKit reverse geocoding and contact detection (Home, friends), with user-pinnable persistence and bidirectional session sync. Foursquare available in editing UI for manual venue searches.
+- **Web Intelligence** — Link metadata extraction and rich link previews for web URLs and QR codes.
 - **Aesthetics Scoring** — Image quality scores using `VNCalculateImageAestheticsScoresRequest` plus brightness, contrast, and sharpness analysis.
 - **Document Detection** — Automatic perspective correction via `VNDetectDocumentSegmentationRequest` and saving of detected documents as separate child items.
 - **Music Recognition** — Apple Music and Spotify identification for music-related captures.
@@ -43,12 +42,12 @@ The project is modularized using Swift Package Manager:
 | Module | Purpose |
 |--------|---------|
 | `VisualIntelligencePipeline/` | Main application target and UI |
-| `DiverKit/` | Core logic — ML pipeline, 35 services, view models, models, storage |
+| `DiverKit/` | Core logic — ML pipeline, 36 services, 4 protocols, view models, models, storage |
 | `DiverShared/` | Pure Swift shared data models and utilities |
 | `ActionExtension/` | Share Sheet extension for link ingestion |
 | `VisualIntelligencePipelineWidget/` | Home & Lock screen widgets |
 
-**Key Technologies:** Swift, SwiftUI, SwiftData + CloudKit, Vision, Foundation Models, MLX Swift, MapKit, WeatherKit
+**Key Technologies:** Swift, SwiftUI, SwiftData + CloudKit, Vision, Foundation Models, MLX Swift, MapKit
 
 ## Machine Learning Pipeline Architecture
 
@@ -114,7 +113,7 @@ Runs 6 Apple Vision requests in a **single pass** on the captured image:
 - **`liveSifting`** — Sifting request only (real-time camera preview)
 - **`fullAnalysis`** — All 5 requests (after save)
 
-**Service:** `DiverKit/Services/IntelligenceProcessor.swift`
+**Service:** `DiverKit/Services/IntelligenceProcessor.swift` (conforms to `IntelligenceProcessing` protocol)
 
 ---
 
@@ -126,11 +125,9 @@ Each enrichment service populates a typed field on `PipelineContext`. Downstream
 |---|---|---|
 | `ocrText` | Vision (Stage 1) | Recognized text |
 | `visualTags` | Vision (Stage 1) | Classification labels |
-| `placeEnrichment` | `LocationSearchAggregator` | Foursquare + MapKit venues |
-| `weatherContext` | WeatherKit | Temperature, conditions |
-| `activityContext` | CoreMotion | Walking, driving, stationary |
+| `placeEnrichment` | `MapKitEnrichmentService` | Reverse geocoding + contact detection |
 | `linkEnrichment` | `LinkEnrichmentService` | Web page metadata |
-| `duckDuckGoEnrichment` | `DuckDuckGoEnrichmentService` | Search results |
+| `qrURLs` | Vision (Stage 1) | Detected QR code URLs |
 
 **Service:** `DiverKit/Services/PipelineContext.swift`
 
@@ -147,7 +144,7 @@ An **opt-in** multimodal vision-language model running locally via [MLX Swift](h
 - **Output:** `FastVLMAnalysis` struct with `imageDescription`, `contextSummary`, `suggestedTitle`, `suggestedPurpose`, `suggestedTags`, `statements`
 - **Memory management:** Monitors `DispatchSource.makeMemoryPressureSource` and unloads model under memory pressure
 
-**Service:** `DiverKit/Services/FastVLMEnrichmentService.swift`
+**Service:** `DiverKit/Services/FastVLMEnrichmentService.swift` (conforms to `FastVLMAnalyzing` protocol)
 
 ---
 
@@ -164,7 +161,7 @@ Uses Apple Intelligence (`FoundationModels.LanguageModelSession`) for on-device 
 - **Context chaining:** If input exceeds 3,500 chars, buffers and chains summaries to stay within token limits
 - **Fallback:** Returns `descriptionText` if SystemLanguageModel unavailable (< iOS 26)
 
-**Service:** `DiverKit/Services/ContextQuestionService.swift`
+**Service:** `DiverKit/Services/ContextQuestionService.swift` (conforms to `ContextProcessing` protocol)
 
 ---
 
@@ -177,7 +174,7 @@ Scores image quality for thumbnail selection and context weighting. As of v1.1, 
 - **Video support:** `AestheticsScoringService` samples up to 100 frames, scores each, deduplicates via `VNFeaturePrintObservation` similarity, returns top N diverse frames
 - **Output:** `aestheticsScore` (0.0–1.0) stored on `ProcessedItem` via `IntelligenceResult.aesthetics`
 
-**Service:** `DiverKit/Services/AestheticsScoringService.swift`
+**Service:** `DiverKit/Services/AestheticsScoringService.swift` (conforms to `AestheticsScoring` protocol)
 
 ---
 
@@ -188,7 +185,7 @@ Scores image quality for thumbnail selection and context weighting. As of v1.1, 
 1. **Ingest** — `DiverQueueItem` enters the processing queue
 2. **Metadata** — `MetadataPipelineService` extracts EXIF, GPS, file metadata
 3. **Vision** — `IntelligenceProcessor.performRequests()` runs Stage 1 (OCR, QR, semantic, document, sifting, aesthetics)
-4. **Enrichment** — Location, weather, web, music services populate `PipelineContext`
+4. **Enrichment** — Location, web, music services populate `PipelineContext`
 5. **QR Enrichment** — QR URLs discovered in Stage 1 get full web enrichment (title, summary, metadata)
 6. **FastVLM** — If enabled, `FastVLMEnrichmentService.analyze()` adds multimodal context
 7. **LLM** — `ContextQuestionService.processContext()` generates summary, tags, purpose
@@ -196,6 +193,8 @@ Scores image quality for thumbnail selection and context weighting. As of v1.1, 
 9. **Session** — Item auto-grouped into `DiverSession` by location+time proximity
 
 **Service:** `DiverKit/Services/LocalPipelineService.swift`
+
+> **Protocol-based DI:** `LocalPipelineService` and `MetadataPipelineService` accept `(any ContextProcessing)?` and `(any FastVLMAnalyzing)?` for testability. All 4 ML service protocols are defined in `DiverKit/Protocols/ServiceProtocols.swift`.
 
 ## Getting Started
 
@@ -207,15 +206,17 @@ Scores image quality for thumbnail selection and context weighting. As of v1.1, 
 
 ```bash
 # Build for iOS Simulator
-xcodebuild -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj \
+xcodebuild -project VisualIntelligencePipelineDemo/VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj \
   -scheme VisualIntelligencePipeline \
-  -destination 'platform=iOS Simulator,name=iPhone 17' build
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 
-# Run DiverKit package tests
-cd DiverKit && swift test
+# Run DiverKit unit tests (requires iOS Simulator — UIKit dependency)
+xcodebuild test -project VisualIntelligencePipelineDemo/VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj \
+  -scheme DiverTests_iOS \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
 
-# Run DiverShared package tests
-cd DiverShared && swift test
+# Run DiverShared package tests (pure Swift, no UIKit)
+cd VisualIntelligencePipelineDemo/DiverShared && swift test
 ```
 
 ## Documentation

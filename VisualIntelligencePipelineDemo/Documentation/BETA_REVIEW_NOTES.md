@@ -1,7 +1,7 @@
 # Visual Intelligence Pipeline — Beta Review Notes
 
-**Version:** 1.1 (Build 2)
-**Date:** February 16, 2026
+**Version:** 1.2 (Build 3)
+**Date:** February 18, 2026
 **Platform:** iOS 26.0+
 **Requires:** Device with Apple Intelligence support
 
@@ -132,7 +132,6 @@ This is the **first public beta**. Your feedback is critical to shaping the fina
 |-------|----------|-------|
 | Apple Intelligence features require iOS 26 with a supported device | Expected | On unsupported devices, AI summaries and concept tagging will be unavailable. |
 | First capture may take a few seconds to initialize the camera pipeline | Low | Subsequent captures are faster. |
-| Weather context may be unavailable without location permission | Low | Grant "While Using" location access for full enrichment. |
 | FastVLM model download (~500MB) required for multimodal analysis | Expected | Optional feature, app works fully without it. |
 
 ---

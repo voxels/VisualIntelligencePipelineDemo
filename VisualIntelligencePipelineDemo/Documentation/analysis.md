@@ -1,8 +1,8 @@
 # Visual Intelligence Pipeline — v1.1 Analysis
 
-**Date:** 2026-02-16
-**Revision:** Post-pipeline audit refresh
-**Development period:** 37 days (Jan 11 – Feb 16, 2026)
+**Date:** 2026-02-18
+**Revision:** Post-protocol extraction + DI integration
+**Development period:** 39 days (Jan 11 – Feb 18, 2026)
 
 ---
 
@@ -98,11 +98,12 @@ The top 6 files contain ~12,700 lines (25% of the codebase). `LocalPipelineServi
 
 | Area | Test Status |
 |------|-------------|
-| `LocalPipelineService` (3,041 lines) | 1 test file |
-| `VisualIntelligenceViewModel` (2,837 lines) | Not directly tested |
-| `SidebarViewModel` (1,208 lines) | 1 drag-drop test file only |
+| `LocalPipelineService` (2,860 lines) | 1 test file |
+| `VisualIntelligenceViewModel` (2,837 lines) | 5 tests (init, capture, reset, recording, peel) |
+| `SidebarViewModel` (1,208 lines) | 1 drag-drop test file |
+| Service Protocols (4 protocols) | 15 tests (conformance, DI injection, lifecycle, gating) |
 | Views (24 files) | No unit tests |
-| `IntelligenceProcessor` | 1 test file |
+| `IntelligenceProcessor` | 1 test file + 2 protocol conformance tests |
 
 ---
 
@@ -154,17 +155,18 @@ On Feb 16, 2026, a comprehensive code quality audit was performed across the pip
 | Double image parse | `LocalPipelineService` | 1 | Consolidated `CGImageSourceCreateWithData` calls |
 | Stale label | `LocalPipelineService` | 1 | "Foursquare" → "Place" in LLM context builder |
 | Missing enrichment | `LocalPipelineService` | 1 | QR URLs now get web enrichment (was silently ignored) |
-| Temp file leak | `VisualIntelligenceViewModel` | 2 | Cleanup added in `resetState` and `reCapture` |
-| Aesthetics bundling | `AestheticsScoringService`, `IntelligenceProcessor` | — | Scoring moved into single Vision pass |
+| Protocols | **11 public protocols** — `LocationProvider`, `LinkEnrichmentService`, `ContactServiceProvider`, `KnowledgeGraphIndexingService`, `KnowledgeGraphRetrievalService`, `IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`, + 2 others |
+| Missing protocols | None — all core services now have protocol abstractions | — | Scoring moved into single Vision pass |
 
 ### Positive Patterns (Unchanged from v1.0)
 
 - **Async/await throughout** — No completion-handler callback nesting. All services use structured concurrency.
-- **Dependency injection** — Services accept dependencies via initializer, enabling testability.
+- **Protocol-based DI** — Pipeline services (`MetadataPipelineService`, `LocalPipelineService`) accept protocol-typed dependencies (`(any ContextProcessing)?`, `(any FastVLMAnalyzing)?`), enabling mock injection for testing.
 - **SwiftData + CloudKit** — Local-first persistence with sync, managed through a single `DiverDataStore` entry point.
 - **Typed errors** — `DiverLinkError` and domain-specific error types rather than raw `Error`.
 - **Consistent naming** — `*Service`, `*ViewModel`, `*View` suffixes are applied uniformly.
 - **Localization-ready** — `LocalizedStrings.swift` with 699 lines of localized content.
+- **`@unchecked Sendable` audit** — All 10 production `@unchecked Sendable` types documented with `/// Safety:` comments justifying thread safety.
 
 ### Remaining Concerns
 

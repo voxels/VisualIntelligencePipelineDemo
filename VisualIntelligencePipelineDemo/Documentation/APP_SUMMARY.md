@@ -64,11 +64,12 @@ Fully integrated with Apple's system:
 
 ## 🏗️ Architecture Highlights
 
-- **Modular Swift Packages** — `DiverKit` (ML & pipeline orchestration, 35 services), `DiverShared` (data models & utilities), and the main app target.
+- **Modular Swift Packages** — `DiverKit` (ML & pipeline orchestration, 36 services, 4 service protocols), `DiverShared` (data models & utilities), and the main app target.
 - **Local-First with Sync** — SwiftData persistence backed by CloudKit for seamless cross-device access.
 - **On-Device ML** — All inference runs locally: Apple Vision framework (6 request types in a single pass), FastVLM 0.5B via MLX Swift, and Apple Intelligence via Foundation Models.
 - **Queue-Based Reliability** — A file-based queue ensures no shared link or capture is ever lost, even under extension time limits or interruptions.
 - **Structured Context Pipeline** — `PipelineContext` aggregates typed fields from each enrichment service (Vision, location, web, knowledge graph) so that downstream ML consumers read structured data rather than parsing text.
+- **Protocol-Based DI** — Core ML services (`IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`) are abstracted behind `Sendable` protocols, enabling mock injection for unit testing.
 
 ---
 

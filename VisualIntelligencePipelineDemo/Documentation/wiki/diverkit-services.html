@@ -56,12 +56,14 @@
           <li class="type-item searchable" data-name="LocalPipelineService">
             <span class="badge badge-struct">struct</span>
             <div class="name"><strong>LocalPipelineService</strong></div>
-            <div class="conformances">2,732 lines — core orchestrator: ingestion → enrichment → persistence</div>
+            <div class="conformances">2,860 lines — core orchestrator: ingestion → enrichment → persistence. Accepts
+              <em>(any ContextProcessing)?</em> and <em>(any FastVLMAnalyzing)?</em> via DI</div>
           </li>
           <li class="type-item searchable" data-name="MetadataPipelineService">
             <span class="badge badge-struct">struct</span>
             <div class="name"><strong>MetadataPipelineService</strong></div>
-            <div class="conformances">1,002 lines — queue item → LocalInput, metadata extraction</div>
+            <div class="conformances">1,020 lines — queue → LocalInput, metadata extraction. Stores <em>(any
+                ContextProcessing)?</em> and <em>(any FastVLMAnalyzing)?</em> for pipeline dispatch</div>
           </li>
           <li class="type-item searchable" data-name="PipelineImportService">
             <span class="badge badge-struct">struct</span>
@@ -90,7 +92,8 @@
             <span class="badge badge-class">class</span>
             <div class="name"><strong>IntelligenceProcessor</strong></div>
             <div class="conformances">585 lines — Vision pipeline (OCR, QR, semantic, sifting, aesthetics). Conforms to
-              <em>IntelligenceProcessing</em></div>
+              <em>IntelligenceProcessing</em>
+            </div>
           </li>
           <li class="type-item searchable" data-name="IntelligenceResult">
             <span class="badge badge-enum">enum</span>
@@ -101,7 +104,8 @@
             <span class="badge badge-class">class</span>
             <div class="name"><strong>FastVLMEnrichmentService</strong></div>
             <div class="conformances">Multimodal image analysis via FastVLM 0.5B (MLX Swift). Conforms to
-              <em>FastVLMAnalyzing</em></div>
+              <em>FastVLMAnalyzing</em>
+            </div>
           </li>
           <li class="type-item searchable" data-name="FoundationModelsIntentClassifier">
             <span class="badge badge-class">class</span>
@@ -305,7 +309,8 @@
             <span class="badge badge-class">class</span>
             <div class="name"><strong>ContextQuestionService</strong></div>
             <div class="conformances">On-device LLM context analysis, summaries, purposes. Conforms to
-              <em>ContextProcessing</em></div>
+              <em>ContextProcessing</em>
+            </div>
           </li>
           <li class="type-item searchable" data-name="ContextEnrichmentCoordinator">
             <span class="badge badge-actor">actor</span>

@@ -43,8 +43,8 @@ public final class MetadataPipelineService: @unchecked Sendable {
     public var locationService: LocationProvider?
 
     public var indexingService: KnowledgeGraphIndexingService?
-    public var contextService: ContextQuestionService?
-    public var fastVLMService: FastVLMEnrichmentService?
+    public var contextService: (any ContextProcessing)?
+    public var fastVLMService: (any FastVLMAnalyzing)?
     
     // MARK: - Queue Progress (observed by QueueProgressView)
     public var isProcessingQueue: Bool = false
@@ -70,7 +70,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
         locationService: LocationProvider? = nil,
 
         indexingService: KnowledgeGraphIndexingService? = nil,
-        contextService: ContextQuestionService? = nil
+        contextService: (any ContextProcessing)? = nil
     ) {
         self.queueStore = queueStore
         self.modelContainer = modelContainer
