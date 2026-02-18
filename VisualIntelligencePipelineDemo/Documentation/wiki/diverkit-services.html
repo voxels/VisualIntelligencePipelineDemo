@@ -57,13 +57,16 @@
             <span class="badge badge-struct">struct</span>
             <div class="name"><strong>LocalPipelineService</strong></div>
             <div class="conformances">2,860 lines — core orchestrator: ingestion → enrichment → persistence. Accepts
-              <em>(any ContextProcessing)?</em> and <em>(any FastVLMAnalyzing)?</em> via DI</div>
+              <em>(any ContextProcessing)?</em> and <em>(any FastVLMAnalyzing)?</em> via DI
+            </div>
           </li>
           <li class="type-item searchable" data-name="MetadataPipelineService">
             <span class="badge badge-struct">struct</span>
             <div class="name"><strong>MetadataPipelineService</strong></div>
-            <div class="conformances">1,020 lines — queue → LocalInput, metadata extraction. Stores <em>(any
-                ContextProcessing)?</em> and <em>(any FastVLMAnalyzing)?</em> for pipeline dispatch</div>
+            <div class="conformances">1,049 lines — queue → LocalInput, metadata extraction. Emits progress via
+              <code>AsyncStream&lt;QueueProgressEvent&gt;</code>. Stores <em>(any
+                ContextProcessing)?</em> and <em>(any FastVLMAnalyzing)?</em> for pipeline dispatch
+            </div>
           </li>
           <li class="type-item searchable" data-name="PipelineImportService">
             <span class="badge badge-struct">struct</span>

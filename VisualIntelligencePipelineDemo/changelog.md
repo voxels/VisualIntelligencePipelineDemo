@@ -2,6 +2,26 @@
 
 ## 2026-02-18
 
+### Performance Refactor — Phase 1 (Continued)
+
+#### SidebarView Decomposition
+- **SidebarView** reduced from 1,447 → 889 lines by extracting 7 helper views into `View/Sidebar/`:
+  - `SessionRowLabel.swift` (156 lines), `SidebarSessionRow.swift` (167 lines), `ItemRow.swift` (73 lines), `ItemRowWithActions.swift` (50 lines), `ThumbnailView.swift` (65 lines), `DailySummaryCard.swift` (56 lines), `ItemIconConfig.swift` (53 lines).
+- All 7 files added to `project.pbxproj` with PBXBuildFile, PBXFileReference, and PBXGroup entries.
+
+#### Dead Code Removal
+- **Deleted** standalone `PipelineStatusView.swift` and inline duplicate in `VisualIntelligenceView.swift` (~70 lines). Neither was ever instantiated.
+- `VisualIntelligenceView.swift` reduced from 1,698 → 1,625 lines.
+
+#### AsyncStream Progress Delivery
+- **New File**: `DiverKit/Sources/DiverKit/Models/QueueProgressEvent.swift` — `Sendable` enum with `.started`, `.processingItem`, `.itemCompleted`, `.completed`, `.cancelled` cases. Includes computed `progress` (0.0–1.0) and `isProcessing` properties.
+- **MetadataPipelineService**: Added `progressStream: AsyncStream<QueueProgressEvent>` with `emitProgress()` calls at start, cancel, item-processing, item-completed, and queue-completed points. Backward compatible — existing mutable properties preserved.
+
+#### TDD Tests
+- **New File**: `DiverKit/Tests/DiverKitTests/QueueProgressEventTests.swift` — 10 tests in 2 suites:
+  - *QueueProgressEventTests* (6): progress calculation, isProcessing, divide-by-zero guard.
+  - *QueueProgressStreamTests* (4): cancellation emission, multi-cancel safety, fraction calculation, isProcessing for all event types.
+
 ### Performance Refactor — Phase 0 & Phase 1 (Partial)
 
 #### @MainActor Fix (Phase 0)

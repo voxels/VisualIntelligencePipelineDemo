@@ -59,6 +59,23 @@ public final class MetadataPipelineService: @unchecked Sendable {
         return Double(queueCompletedCount) / Double(queueTotalCount)
     }
     
+    // MARK: - AsyncStream-based Progress Delivery
+    
+    /// Stream of queue progress events. Subscribe with `for await event in service.progressStream`.
+    /// The stream is long-lived and emits events for each queue processing cycle.
+    public var progressStream: AsyncStream<QueueProgressEvent> {
+        AsyncStream { continuation in
+            self.progressContinuation = continuation
+        }
+    }
+    
+    /// Active continuation for the progress stream.
+    private var progressContinuation: AsyncStream<QueueProgressEvent>.Continuation?
+    
+    private func emitProgress(_ event: QueueProgressEvent) {
+        progressContinuation?.yield(event)
+    }
+    
     private var currentTask: Task<Void, Never>?
     private var queueGeneration: Int = 0
 
@@ -93,6 +110,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
         queueCompletedCount = 0
         queueCurrentItemTitle = nil
         queueStatusMessage = nil
+        emitProgress(.cancelled)
         // Unload FastVLM from GPU — Metal buffers are invalidated in background
         fastVLMService?.retainModel = false
         fastVLMService?.unloadModel()
@@ -149,6 +167,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
             self.queueCompletedCount = 0
             self.queueCurrentItemTitle = nil
             self.queueStatusMessage = "Checking queue…"
+            self.emitProgress(.started(totalCount: 0))
 
             do {
                 // 1. Resume any stuck items from previous sessions (DB persistence)
@@ -181,6 +200,12 @@ public final class MetadataPipelineService: @unchecked Sendable {
                         let itemTitle = record.item.descriptor.title
                         self.queueCurrentItemTitle = itemTitle
                         self.queueStatusMessage = "Processing shared link…"
+                        self.emitProgress(.processingItem(
+                            completedCount: self.queueCompletedCount,
+                            totalCount: self.queueTotalCount,
+                            itemTitle: itemTitle,
+                            statusMessage: "Processing shared link…"
+                        ))
                         
                         do {
                             print("📦 [MetadataPipeline] Starting: \(record.item.id)")
@@ -189,6 +214,10 @@ public final class MetadataPipelineService: @unchecked Sendable {
                             try self.queueStore.remove(record)
                             successCount += 1
                             self.queueCompletedCount += 1
+                            self.emitProgress(.itemCompleted(
+                                completedCount: self.queueCompletedCount,
+                                totalCount: self.queueTotalCount
+                            ))
                             print("✅ [MetadataPipeline] Finished: \(record.item.id)")
                             DiverLogger.queue.debug("Successfully processed and persisted queue item: \(record.item.id)")
                         } catch {
@@ -716,6 +745,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
     private func resetQueueProgress() {
         queueCurrentItemTitle = nil
         queueStatusMessage = "Complete"
+        emitProgress(.completed(totalCount: queueTotalCount))
         resetTask?.cancel()
         resetTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5s

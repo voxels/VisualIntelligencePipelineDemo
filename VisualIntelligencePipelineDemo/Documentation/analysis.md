@@ -1,7 +1,7 @@
 # Visual Intelligence Pipeline — v1.1 Analysis
 
 **Date:** 2026-02-18
-**Revision:** Post-protocol extraction + DI integration
+**Revision:** Post-SidebarView decomposition + AsyncStream progress delivery
 **Development period:** 39 days (Jan 11 – Feb 18, 2026)
 
 ---
@@ -12,8 +12,8 @@
 |--------|-------|
 | Total Swift files | 316 |
 | Total lines of code | ~50,800 |
-| Test files | 18 |
-| Test lines | 1,534 |
+| Test files | 19 |
+| Test lines | 1,738 |
 | Contributors | 1 |
 | Development period | 37 days |
 
@@ -22,9 +22,9 @@
 | Module | Files | Lines | Purpose |
 |--------|-------|-------|---------|
 | **DiverKit** | 200 | 28,800 | Core logic — services, models, view models, storage, extensions |
-| **App Target** | 91 | 19,747 | UI views (24), AppIntents (21), ActionExtension (5), app-level services |
+| **App Target** | 98 | 19,800 | UI views (30), AppIntents (21), ActionExtension (5), app-level services |
 | **DiverShared** | 16 | 1,239 | Pure Swift shared data models and utilities |
-| **Tests** | 18 | 1,534 | Unit tests for DiverKit |
+| **Tests** | 19 | 1,738 | Unit tests for DiverKit |
 | **Widget** | 5 | 666 | Home & Lock screen widgets |
 
 ### DiverKit Internal Breakdown
@@ -49,10 +49,10 @@ These files carry the most complexity and are the primary candidates for future 
 | `LocalPipelineService.swift` | 3,041 | Pipeline orchestration, enrichment, persistence |
 | `VisualIntelligenceViewModel.swift` | 2,837 | Camera, detection, sifting, capture review, import |
 | `ReferenceDetailView.swift` | 2,496 | Item detail view with multiple card layouts |
-| `VisualIntelligenceView.swift` | 1,698 | Camera UI, overlays, review stack |
-| `SidebarView.swift` | 1,445 | Navigation sidebar, sessions, collections, drag-and-drop |
+| `VisualIntelligenceView.swift` | 1,625 | Camera UI, overlays, review stack |
+| `SidebarView.swift` | 889 | Navigation sidebar, sessions, collections, drag-and-drop |
 | `SidebarViewModel.swift` | 1,208 | Sidebar state, session management, library maintenance |
-| `MetadataPipelineService.swift` | 1,007 | Queue → LocalInput conversion, metadata extraction |
+| `MetadataPipelineService.swift` | 1,049 | Queue → LocalInput conversion, metadata extraction, AsyncStream progress |
 | `LocalizedStrings.swift` | 699 | Generated localization strings |
 | `PhotoLibraryImportService.swift` | 687 | Photo/video import with EXIF handling |
 | `EditLocationView.swift` | 663 | Location search, map selection, pinning |
@@ -94,7 +94,7 @@ The top 6 files contain ~12,700 lines (25% of the codebase). `LocalPipelineServi
 > `ReferenceDetailView.swift` (2,496 lines) is the largest SwiftUI view file. Complex views of this size risk Swift compiler timeouts and have historically caused build failures in this project. Consider extracting card types into separate view files.
 
 **Test Coverage**
-18 test files with 1,534 lines represent ~3% of the codebase by line count. Test coverage is focused on DiverKit but remains shallow — most tests validate happy paths. Key gaps:
+18 test files with 1,738 lines represent ~3% of the codebase by line count. Test coverage is focused on DiverKit but remains shallow — most tests validate happy paths. Key gaps:
 
 | Area | Test Status |
 |------|-------------|
@@ -102,7 +102,8 @@ The top 6 files contain ~12,700 lines (25% of the codebase). `LocalPipelineServi
 | `VisualIntelligenceViewModel` (2,837 lines) | 5 tests (init, capture, reset, recording, peel) |
 | `SidebarViewModel` (1,208 lines) | 1 drag-drop test file |
 | Service Protocols (4 protocols) | 15 tests (conformance, DI injection, lifecycle, gating) |
-| Views (24 files) | No unit tests |
+| QueueProgressEvent + AsyncStream | 10 tests (enum properties, stream emission, cancellation) |
+| Views (30 files) | No unit tests |
 | `IntelligenceProcessor` | 1 test file + 2 protocol conformance tests |
 
 ---
@@ -171,7 +172,7 @@ On Feb 16, 2026, a comprehensive code quality audit was performed across the pip
 ### Remaining Concerns
 
 - **God objects** — `LocalPipelineService` (3,041 lines) and `VisualIntelligenceViewModel` (2,837 lines) combine too many responsibilities. Risk of merge conflicts, compiler timeouts, and cognitive overload.
-- **View complexity** — `ReferenceDetailView` (2,496 lines) and `VisualIntelligenceView` (1,698 lines) may benefit from extraction into sub-views.
+- **View complexity** — `ReferenceDetailView` (2,496 lines) and `VisualIntelligenceView` (1,625 lines) may benefit from extraction into sub-views. `SidebarView` decomposed from 1,445 → 889 lines (7 child views extracted to `View/Sidebar/`).
 - **Test depth** — Tests exist for DiverKit but are disproportionately small relative to the implementation (~3% ratio). Edge cases, error paths, and integration scenarios need more coverage.
 
 ---

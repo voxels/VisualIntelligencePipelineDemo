@@ -154,7 +154,8 @@ cd DiverShared && swift test
 ### App & UI
 *   `VisualIntelligencePipelineApp.swift` — App entry point, service initialization, foreground/background lifecycle
 *   `View/VisualIntelligenceView.swift` — Camera and capture UI
-*   `View/SidebarView.swift` — Main navigation sidebar
+*   `View/SidebarView.swift` — Main navigation sidebar (889 lines, delegates to 7 child views in `View/Sidebar/`)
+*   `View/Sidebar/` — Extracted child views: `SessionRowLabel`, `SidebarSessionRow`, `ItemRow`, `ItemRowWithActions`, `ThumbnailView`, `DailySummaryCard`, `ItemIconConfig`
 *   `View/ReferenceDetailView.swift` — Item detail view (media info, aesthetics score, capture siblings, references)
 *   `View/CaptureReviewView.swift` — Post-capture review
 *   `View/EditLocationView.swift` — Location editing for individual items
@@ -180,6 +181,7 @@ cd DiverShared && swift test
 *   `Models/DiverCollection.swift` — User-created collections
 *   `Models/UserConcept.swift` — Concept/tag model
 *   `Models/AestheticsTypes.swift` — Image quality scoring types
+*   `Models/QueueProgressEvent.swift` — AsyncStream event enum for queue progress delivery
 
 ## Code Cleanliness & Known Technical Debt
 
@@ -194,10 +196,10 @@ cd DiverShared && swift test
 ### ViewModel Bloat
 *   **`VisualIntelligenceViewModel`:** ~2900 lines, 31 `@Published` properties. Pending migration to `@Observable` for per-property tracking (eliminates `objectWillChange` over-broadcasting).
 *   **`SidebarViewModel`:** ~1200 lines, 22 `@Published` properties. Same `@Observable` migration needed.
-*   **`SidebarView`:** ~1450 lines. Should be decomposed into focused child section views.
+*   **`SidebarView`:** 889 lines (decomposed from ~1450; 7 child views extracted to `View/Sidebar/`).
 
 ### Service Coupling
-*   **`MetadataPipelineService`:** Views directly read mutable progress properties (`isProcessingQueue`, `queueTotalCount`, etc.). Should migrate to `AsyncStream`-based event delivery.
+*   **`MetadataPipelineService`:** Views directly read mutable progress properties (`isProcessingQueue`, `queueTotalCount`, etc.). AsyncStream-based `progressStream` added alongside for incremental migration to `for await` event delivery.
 *   **`Services.shared`:** Global singleton accessed from `@MainActor` context. Accesses from `Task.detached` must use `await MainActor.run { Services.shared.someService }`.
 *   **Protocol extraction needed:** `FastVLMEnrichmentService`, `ContextQuestionService`, `AestheticsService`, `IntelligenceProcessor` — extract protocols for testability and dependency injection.
 
