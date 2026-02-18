@@ -31,6 +31,10 @@
 - **VisualIntelligenceViewModel**: Same migration, 31 `@Published` removed. Updated 12+ consumer sites across 5 files. `@AppStorage` wrapped with `@ObservationIgnored`, `objectWillChange.send()` removed. 3 sub-views use `@Bindable` for `$viewModel.` binding projections.
 - Per-property tracking via Observation framework eliminates `objectWillChange` over-broadcasting — only views reading specific changed properties re-render.
 
+#### Inter-Stage Cancellation + Autorelease Pools (Phase 2A)
+- **`LocalPipelineService.process()`**: Added 6 `Task.isCancelled` guards (3 per pipeline path) between: Location/Visual Analysis → Parallel Enrichment → SLM → FastVLM. On cancellation, item status resets to `.queued` and partial progress is saved, enabling retry without data loss.
+- **`createCGImage(from:)`**: Wrapped in `autoreleasepool` to prevent CGImage decode buffer accumulation during batch processing.
+
 ### Performance Refactor — Phase 0 & Phase 1 (Partial)
 
 #### @MainActor Fix (Phase 0)

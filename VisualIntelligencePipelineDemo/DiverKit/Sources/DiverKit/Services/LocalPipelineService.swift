@@ -398,6 +398,13 @@ public final class LocalPipelineService {
                 }
             }
             
+            // ── Cancellation check: after Location + Visual Analysis ──
+            guard !Task.isCancelled else {
+                existing.status = .queued
+                try? modelContext.save()
+                throw CancellationError()
+            }
+            
             // Perform enrichment and LLM analysis (awaited for proper progress tracking)
             let results = await self.performParallelEnrichment(
                 resolvedId: interimResolvedId,
@@ -417,12 +424,26 @@ public final class LocalPipelineService {
                 self.processParallelResult(result, to: existing, pipelineContext: &localPipelineContext)
             }
             
+            // ── Cancellation check: after Parallel Enrichment ──
+            guard !Task.isCancelled else {
+                existing.status = .queued
+                try? modelContext.save()
+                throw CancellationError()
+            }
+            
             // Two-Stage Intelligence Pipeline:
             // Stage 1: SLM @Generable ContextAnalysis (fast, typed structured extraction)
             // Stage 2: FastVLM (multimodal synthesis using image + structured context)
             
             // Stage 1: SLM produces typed intermediate — always run for structured extraction
             await performLLMAnalysis(for: existing, descriptor: descriptor, pipelineContext: localPipelineContext)
+            
+            // ── Cancellation check: after SLM ──
+            guard !Task.isCancelled else {
+                existing.status = .queued
+                try? modelContext.save()
+                throw CancellationError()
+            }
             
             // Stage 2: FastVLM analysis (enriches/overrides SLM output with multimodal understanding)
             if let fastVLMService, fastVLMService.isAvailable {
@@ -539,6 +560,12 @@ public final class LocalPipelineService {
              await analyzeVisualContent(data: data, existing: processed, pipelineContext: &pipelineContext, enrichmentService: enrichmentService)
         }
         
+        // ── Cancellation check: after Visual Analysis ──
+        guard !Task.isCancelled else {
+            processed.status = .queued
+            try? modelContext.save()
+            throw CancellationError()
+        }
 
         
         // Apply contextual Location -> Foursquare -> DuckDuckGo enrichment
@@ -663,12 +690,26 @@ public final class LocalPipelineService {
         processed.processingLog.append("\(Date().formatted()): Parallel enrichment complete.")
         print("✅ [LocalPipeline] Parallel enrichment complete for \(processed.id)")
         
+        // ── Cancellation check: after Parallel Enrichment ──
+        guard !Task.isCancelled else {
+            processed.status = .queued
+            try? modelContext.save()
+            throw CancellationError()
+        }
+        
         // Two-Stage Intelligence Pipeline:
         // Stage 1: SLM @Generable ContextAnalysis (fast, typed structured extraction)
         // Stage 2: FastVLM (multimodal synthesis using image + structured context)
         
         // Stage 1: SLM produces typed intermediate — always run for structured extraction
         await performLLMAnalysis(for: processed, descriptor: descriptor, pipelineContext: pipelineContext)
+        
+        // ── Cancellation check: after SLM ──
+        guard !Task.isCancelled else {
+            processed.status = .queued
+            try? modelContext.save()
+            throw CancellationError()
+        }
         
         // Stage 2: FastVLM analysis (replaces SLM summary when available)
         if let fastVLMService, fastVLMService.isAvailable {
@@ -2570,10 +2611,12 @@ public final class LocalPipelineService {
 
     /// Convert raw image Data to a CGImage for FastVLM multimodal analysis
     nonisolated private func createCGImage(from data: Data) -> CGImage? {
-        guard !data.isEmpty, !isJSONData(data) else { return nil }
-        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-              CGImageSourceGetCount(source) > 0 else { return nil }
-        return CGImageSourceCreateImageAtIndex(source, 0, nil)
+        autoreleasepool {
+            guard !data.isEmpty, !isJSONData(data) else { return nil }
+            guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+                  CGImageSourceGetCount(source) > 0 else { return nil }
+            return CGImageSourceCreateImageAtIndex(source, 0, nil)
+        }
     }
 
     /// Finds an existing session matching the item by time, location, and topic similarity.
