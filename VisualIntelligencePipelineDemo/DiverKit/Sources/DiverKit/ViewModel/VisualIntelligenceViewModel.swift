@@ -667,7 +667,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
     // MARK: - Unified Capture Processing Pipeline
     
     /// Describes the source and configuration for a single capture analysis.
-    public enum CaptureInput {
+    public enum CaptureInput: @unchecked Sendable {
         /// Live camera capture. imageData is raw JPEG bytes, depthData from LiDAR.
         case camera(imageData: Data, depthData: Data?)
         /// Single photo picked from library.
@@ -856,13 +856,15 @@ public class VisualIntelligenceViewModel: ObservableObject {
         // Cancel any previous analysis to prevent race conditions
         currentAnalysisTask?.cancel()
         
-        currentAnalysisTask = Task(priority: .utility) { @MainActor [weak self] in
+        currentAnalysisTask = Task.detached(priority: .utility) { [weak self] in
             guard let self = self else { return }
             
+            // Capture @MainActor-isolated references for use in detached context
+            let processor = await MainActor.run { self.processor }
             // ── Stage 1: Resolve Media ──
             guard let media = try? await self.resolveMedia(from: input) else {
                 print("❌ analyzeCapture: Failed to resolve media")
-                self.isAnalyzing = false
+                await MainActor.run { self.isAnalyzing = false }
                 return
             }
             
@@ -872,16 +874,18 @@ public class VisualIntelligenceViewModel: ObservableObject {
             
             // ── Update UI State ──
             print("📸 analyzeCapture: Starting pipeline...")
-            self.setCapturedImage(image)
-            self.capturedImageVisionOrientation = visionOrientation
-            self.pipelineStatus = .sifting
-            self.isAnalyzing = true
-            self.isReviewing = true
-            
-            self.appendSessionImage(image, depthData: media.depthData)
-            
-            if media.shouldSaveToLibrary {
-                self.saveImageToPhotoLibrary(image)
+            await MainActor.run {
+                self.setCapturedImage(image)
+                self.capturedImageVisionOrientation = visionOrientation
+                self.pipelineStatus = .sifting
+                self.isAnalyzing = true
+                self.isReviewing = true
+                
+                self.appendSessionImage(image, depthData: media.depthData)
+                
+                if media.shouldSaveToLibrary {
+                    self.saveImageToPhotoLibrary(image)
+                }
             }
             
             do {
@@ -892,19 +896,20 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 print("🧠 Vision Orientation: \(visionOrientation.rawValue)")
                 #endif
                 
-                let fullResults = try await self.processor.process(image: cgImage, orientation: visionOrientation, mode: .fullAnalysis)
+                let fullResults = try await processor.process(image: cgImage, orientation: visionOrientation, mode: .fullAnalysis)
                 print("✅ Raw Analysis Results: \(fullResults.map { $0.title })")
                 
                 var resultsWithPurpose = fullResults
                 
                 // ── Stage 3: Sifted Image Extraction ──
-                self.pipelineStatus = .reading
+                await MainActor.run { self.pipelineStatus = .reading }
                 
                 if let sifted = fullResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
                    case .siftedSubject(let observation, _) = sifted {
-                    Task {
-                        let cgOrientation = await MainActor.run { () -> CGImagePropertyOrientation in
-                            return self.capturedImageVisionOrientation
+                    Task.detached(priority: .utility) { [weak self] in
+                        guard let self else { return }
+                        let cgOrientation = await MainActor.run {
+                            self.capturedImageVisionOrientation
                         }
                         if let (sImage, sBounds) = await self.extractSiftedImage(
                             observation: UnsafeSendable(value: observation),
@@ -931,11 +936,12 @@ public class VisualIntelligenceViewModel: ObservableObject {
                         }
                     }
                     
-                    let currentHistory = self.accumulatedContexts
+                    let currentHistory = await MainActor.run { self.accumulatedContexts }
                     
                     // Location truthing: imported metadata > pinned > live GPS
-                    var currentLocation: CLLocation? = self.capturedMediaLocation
-                    if currentLocation == nil, let locService = Services.shared.locationService {
+                    var currentLocation: CLLocation? = await MainActor.run { self.capturedMediaLocation }
+                    let locService = await MainActor.run { Services.shared.locationService }
+                    if currentLocation == nil, let locService {
                         currentLocation = await locService.getCurrentLocation()
                     }
                     
@@ -956,7 +962,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
                     
                     // Home/Work enrichment
                     var finalCandidates = candidates
-                    if let contactService = Services.shared.contactService {
+                    let contactService = await MainActor.run { Services.shared.contactService }
+                    if let contactService {
                         let home = try? await contactService.getHomeLocation()
                         let work = try? await contactService.getWorkLocation()
                         
@@ -1045,42 +1052,45 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 
                 // ── Merge pending capture result (camera express capture) ──
                 var shouldAutoSave = false
-                if let pending = self.pendingCaptureResult {
+                let pending = await MainActor.run { self.pendingCaptureResult }
+                if let pending {
                     resultsWithPurpose.insert(pending, at: 0)
-                    self.pendingCaptureResult = nil
+                    await MainActor.run { self.pendingCaptureResult = nil }
                     shouldAutoSave = true
                 }
                 
                 // ── Result assignment (merge vs replace) ──
-                if media.shouldMergeResults {
-                    let existing = self.results
-                    let newUnique = resultsWithPurpose.filter { newResult in
-                        !existing.contains(where: { $0.title == newResult.title && $0.subtitle == newResult.subtitle })
-                    }
-                    self.results = existing + newUnique
-                    print("✅ Multi-Photo: Merged \(newUnique.count) new results. Total: \(self.results.count)")
-                } else {
-                    self.results = resultsWithPurpose
-                }
-                
-                print("✅ Analysis Complete: Found \(resultsWithPurpose.count) results")
-                
+                let finalResultsWithPurpose = resultsWithPurpose
                 await MainActor.run {
+                    if media.shouldMergeResults {
+                        let existing = self.results
+                        let newUnique = finalResultsWithPurpose.filter { newResult in
+                            !existing.contains(where: { $0.title == newResult.title && $0.subtitle == newResult.subtitle })
+                        }
+                        self.results = existing + newUnique
+                        print("✅ Multi-Photo: Merged \(newUnique.count) new results. Total: \(self.results.count)")
+                    } else {
+                        self.results = finalResultsWithPurpose
+                    }
+                    
+                    print("✅ Analysis Complete: Found \(finalResultsWithPurpose.count) results")
                     self.pipelineStatus = .complete
                     self.isAnalyzing = false
                 }
                 
                 if shouldAutoSave {
                     print("🚀 Express Capture: Auto-saving...")
-                    self.commitReviewSave()
+                    await MainActor.run { self.commitReviewSave() }
                 }
                 
                 // ── Stage 5: Background Verification → Stage 6: Context Suggestions ──
                 // Sequential: verification enriches self.results first, then context suggestions
                 // use the full result set for specific, OCR-informed suggestions.
                 print("🔍 Starting Background Verification...")
-                Task {
-                    for await result in self.processor.verify(initialResults: self.results, image: cgImage) {
+                let currentResults = await MainActor.run { self.results }
+                Task.detached(priority: .utility) { [weak self] in
+                    guard let self else { return }
+                    for await result in processor.verify(initialResults: currentResults, image: cgImage) {
                         await MainActor.run {
                             if !self.results.contains(result) {
                                 withAnimation {
@@ -1097,7 +1107,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
                     // Stage 6: Now that verification is complete, generate context suggestions
                     print("🤖 Auto-triggering Context Analysis (post-verification)...")
                     await MainActor.run { self.pipelineStatus = .reasoning }
-                    await self.regenerateContextSuggestions(for: self.selectedPlace)
+                    let selectedPlace = await MainActor.run { self.selectedPlace }
+                    await self.regenerateContextSuggestions(for: selectedPlace)
                     await MainActor.run { self.pipelineStatus = .complete }
                 }
                 
@@ -1136,19 +1147,22 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }
         
         // Multi-item: full pipeline on first, vision-only on rest
-        Task {
+        Task.detached(priority: .utility) { [weak self] in
+            guard let self else { return }
             // First item gets full pipeline (enrichment, verification, context)
             let firstItem = items[0]
-            guard let firstMedia = try? await resolveMedia(from: .photoPickerItem(firstItem)) else {
+            guard let firstMedia = try? await self.resolveMedia(from: .photoPickerItem(firstItem)) else {
                 print("❌ Batch: Failed to load first item")
-                self.isAnalyzing = false
+                await MainActor.run { self.isAnalyzing = false }
                 return
             }
             
             // Set up primary image
-            self.setCapturedImage(firstMedia.platformImage)
-            self.capturedImageVisionOrientation = firstMedia.visionOrientation
-            self.appendSessionImage(firstMedia.platformImage)
+            await MainActor.run {
+                self.setCapturedImage(firstMedia.platformImage)
+                self.capturedImageVisionOrientation = firstMedia.visionOrientation
+                self.appendSessionImage(firstMedia.platformImage)
+            }
             
             var allResults: [IntelligenceResult] = []
             
@@ -1164,14 +1178,16 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 // Extract sifted image from first
                 if let sifted = firstResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
                    case .siftedSubject(let observation, _) = sifted {
-                    let cgOrientation = self.capturedImageVisionOrientation
+                    let cgOrientation = await MainActor.run { self.capturedImageVisionOrientation }
                     if let (sImage, sBounds) = await self.extractSiftedImage(
                         observation: UnsafeSendable(value: observation),
                         frame: UnsafeSendable(value: firstMedia.cgImage),
                         orientation: cgOrientation
                     ) {
-                        self.siftedImage = sImage
-                        self.siftedBoundingBox = sBounds
+                        await MainActor.run {
+                            self.siftedImage = sImage
+                            self.siftedBoundingBox = sBounds
+                        }
                     }
                 }
                 
@@ -1184,8 +1200,9 @@ public class VisualIntelligenceViewModel: ObservableObject {
                         }
                     }
                     
-                    var currentLocation: CLLocation? = self.capturedMediaLocation
-                    if currentLocation == nil, let locService = Services.shared.locationService {
+                    var currentLocation: CLLocation? = await MainActor.run { self.capturedMediaLocation }
+                    let locService = await MainActor.run { Services.shared.locationService }
+                    if currentLocation == nil, let locService {
                         currentLocation = await locService.getCurrentLocation()
                     }
                     
@@ -1194,9 +1211,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
                         await MainActor.run { self.currentCaptureCoordinate = loc.coordinate }
                     }
                     
+                    let currentAccumulatedContexts = await MainActor.run { self.accumulatedContexts }
                     let (enriched, stepSummary, candidates) = await self.enrichContext(
                         from: firstResults,
-                        accumulatedContext: self.accumulatedContexts,
+                        accumulatedContext: currentAccumulatedContexts,
                         locationOverride: currentLocation
                     )
                     
@@ -1229,7 +1247,9 @@ public class VisualIntelligenceViewModel: ObservableObject {
                         continue
                     }
                     
-                    self.appendSessionImage(media.platformImage)
+                    await MainActor.run {
+                        self.appendSessionImage(media.platformImage)
+                    }
                     
                     #if canImport(UIKit)
                     let visionOrientation = media.platformImage.imageOrientation.cgImagePropertyOrientation
@@ -1259,8 +1279,10 @@ public class VisualIntelligenceViewModel: ObservableObject {
             }
             
             // Background verification → context suggestions (sequential)
-            Task {
-                for await result in self.processor.verify(initialResults: allResults, image: firstMedia.cgImage) {
+            Task.detached(priority: .utility) { [weak self] in
+                guard let self else { return }
+                let processor = await MainActor.run { self.processor }
+                for await result in processor.verify(initialResults: allResults, image: firstMedia.cgImage) {
                     await MainActor.run {
                         if !self.results.contains(result) {
                             withAnimation { self.results.append(result) }
@@ -1270,7 +1292,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
                 
                 // Now that verification is complete, generate context suggestions
                 await MainActor.run { self.pipelineStatus = .reasoning }
-                await self.regenerateContextSuggestions(for: self.selectedPlace)
+                let selectedPlace = await MainActor.run { self.selectedPlace }
+                await self.regenerateContextSuggestions(for: selectedPlace)
                 await MainActor.run { self.pipelineStatus = .complete }
             }
         }
