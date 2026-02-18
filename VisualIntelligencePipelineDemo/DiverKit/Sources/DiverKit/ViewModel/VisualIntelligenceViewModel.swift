@@ -2779,6 +2779,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
             
             let step = duration / Double(sampleCount)
             for i in 0..<sampleCount {
+                 guard !Task.isCancelled else { break }
                  let time = CMTime(seconds: Double(i) * step, preferredTimescale: 600)
                  if let image = try? await generator.image(at: time).image {
                      

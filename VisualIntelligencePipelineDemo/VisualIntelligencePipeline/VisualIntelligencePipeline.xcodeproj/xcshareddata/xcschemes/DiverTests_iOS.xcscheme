@@ -10,14 +10,14 @@
          <BuildActionEntry
             buildForTesting = "YES"
             buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "2C5172D6F90533D12DE96E9F"
-               BuildableName = "VisualIntelligencePipelineTests.xctest"
-               BlueprintName = "VisualIntelligencePipelineTests"
+               BlueprintIdentifier = "87F388E85B00E01AD0AECC95"
+               BuildableName = "VisualIntelligencePipeline.app"
+               BlueprintName = "VisualIntelligencePipeline"
                ReferencedContainer = "container:VisualIntelligencePipeline.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -27,20 +27,13 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES"
-      shouldAutocreateTestPlan = "YES">
-      <Testables>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "2C5172D6F90533D12DE96E9F"
-               BuildableName = "VisualIntelligencePipelineTests.xctest"
-               BlueprintName = "VisualIntelligencePipelineTests"
-               ReferencedContainer = "container:VisualIntelligencePipeline.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
-      </Testables>
+      shouldUseLaunchSchemeArgsEnv = "YES">
+      <TestPlans>
+         <TestPlanReference
+            reference = "container:VisualIntelligencePipeline.xcodeproj/xcshareddata/TestPlans/DiverKitTests.xctestplan"
+            default = "YES">
+         </TestPlanReference>
+      </TestPlans>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
@@ -59,15 +52,6 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "2C5172D6F90533D12DE96E9F"
-            BuildableName = "VisualIntelligencePipelineTests.xctest"
-            BlueprintName = "VisualIntelligencePipelineTests"
-            ReferencedContainer = "container:VisualIntelligencePipeline.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

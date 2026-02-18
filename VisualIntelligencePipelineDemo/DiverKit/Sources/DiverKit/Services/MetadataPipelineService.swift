@@ -1,4 +1,5 @@
 import Foundation
+import os
 import SwiftData
 import DiverShared
 import WidgetKit
@@ -17,7 +18,16 @@ private final class BackgroundTaskHolder: Sendable {
 #endif
 
 @Observable
+// MARK: - Thread Safety
+// @unchecked Sendable is used because mutable state (`bgContext`, progress
+// counters, `currentTask`) is guarded by:
+//   1. `stateLock` (OSAllocatedUnfairLock) for synchronous property access
+//   2. `queueGeneration` monotonic counter ensuring only one batch runs at a time
+// The `[self]` strong capture in the detached task is intentional — the service
+// must outlive its processing tasks.
 public final class MetadataPipelineService: @unchecked Sendable {
+    /// Protects mutable pipeline state from concurrent access.
+    private let stateLock = OSAllocatedUnfairLock(initialState: 0)
     private let queueStore: DiverQueueStore
     private let modelContainer: ModelContainer
     private let modelContext: ModelContext  // Main context — UI-driven operations only
@@ -83,6 +93,9 @@ public final class MetadataPipelineService: @unchecked Sendable {
         queueCompletedCount = 0
         queueCurrentItemTitle = nil
         queueStatusMessage = nil
+        // Unload FastVLM from GPU — Metal buffers are invalidated in background
+        fastVLMService?.retainModel = false
+        fastVLMService?.unloadModel()
         print("🛑 [MetadataPipeline] Processing cancelled (app backgrounded)")
     }
 
@@ -101,7 +114,9 @@ public final class MetadataPipelineService: @unchecked Sendable {
         // Use a reference type to allow the expiration handler to end the task
         let bgTaskHolder = await MainActor.run { () -> BackgroundTaskHolder in
             let holder = BackgroundTaskHolder()
-            holder.taskID = UIApplication.shared.beginBackgroundTask(withName: "DiverMetadataPipeline") {
+            holder.taskID = UIApplication.shared.beginBackgroundTask(withName: "DiverMetadataPipeline") { [self] in
+                // iOS is about to kill us — cancel GPU/ML work immediately
+                self.cancelProcessing()
                 UIApplication.shared.endBackgroundTask(holder.taskID)
                 holder.taskID = .invalid
             }

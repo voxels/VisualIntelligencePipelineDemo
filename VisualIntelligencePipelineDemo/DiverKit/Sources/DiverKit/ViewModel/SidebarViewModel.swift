@@ -418,7 +418,10 @@ public final class SidebarViewModel: ObservableObject {
     }
     
     public func relatedConcepts(for session: SessionMetadata, allItems: [ProcessedItem], allConcepts: [UserConcept]) -> [UserConcept] {
-        let sessionItems = allItems.filter { $0.session == session }
+        // Use sessionID string comparison instead of relationship ($0.session == session)
+        // to avoid forcing SwiftData to fault potentially deleted relationships during body evaluation.
+        let targetID = session.sessionID
+        let sessionItems = allItems.filter { $0.sessionID == targetID }
         var sessionTerms = Set<String>()
         for item in sessionItems {
             sessionTerms.formUnion(item.tags)

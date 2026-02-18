@@ -1,0 +1,28 @@
+{
+  "configurations" : [
+    {
+      "id" : "D8E3F4A5-B2C1-4D6E-9F0A-1B2C3D4E5F6A",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:VisualIntelligencePipeline.xcodeproj",
+      "identifier" : "87F388E85B00E01AD0AECC95",
+      "name" : "VisualIntelligencePipeline"
+    }
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:..\/DiverKit",
+        "identifier" : "DiverKitTests",
+        "name" : "DiverKitTests"
+      }
+    }
+  ],
+  "version" : 1
+}

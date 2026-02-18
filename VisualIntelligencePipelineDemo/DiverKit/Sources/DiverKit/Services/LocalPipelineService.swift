@@ -1357,6 +1357,9 @@ public final class LocalPipelineService {
         do {
             let capturedData = data
             results = try await Task.detached(priority: .userInitiated) {
+                // Bail if cancelled (e.g. app backgrounded) before submitting GPU work
+                guard !Task.isCancelled else { return [IntelligenceResult]() }
+                
                 let processor = IntelligenceProcessor()
                 
                 // Single image source parse for both EXIF orientation and CGImage creation

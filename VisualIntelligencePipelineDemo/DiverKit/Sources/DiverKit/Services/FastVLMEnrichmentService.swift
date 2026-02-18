@@ -271,6 +271,13 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
         let capturedContext = enrichmentContext
         let capturedTranscription = transcription
         let result: FastVLMAnalysis? = await Task.detached(priority: .background) { [self] in
+            // Bail immediately if the parent task was cancelled (e.g. app backgrounded).
+            // This prevents submitting new Metal command buffers after iOS has invalidated them.
+            guard !Task.isCancelled else {
+                print("⏭️ [FastVLM] Skipping inference — task cancelled (app backgrounded)")
+                return nil
+            }
+            
             let analysisText: String?
             
             if let capturedImage {
