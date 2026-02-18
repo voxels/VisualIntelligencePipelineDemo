@@ -88,6 +88,13 @@
 		703C31A9FC71D8132CF9C709 /* KnowMapsServiceContainerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87AB3C01B38C1569F168108F /* KnowMapsServiceContainerTests.swift */; };
 		70F3ADB8AADAD2E6219F3B28 /* DiverQueueProcessingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B202E6BE357E18D064F157 /* DiverQueueProcessingService.swift */; };
 		7A97FA6E7E545D294AF576AF /* TestAnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B43CAFE7C5D15E858C87F0 /* TestAnalyticsService.swift */; };
+		AA000001AA000001AA000001 /* ItemIconConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000001BB000001BB000001 /* ItemIconConfig.swift */; };
+		AA000002AA000002AA000002 /* ThumbnailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000002BB000002BB000002 /* ThumbnailView.swift */; };
+		AA000003AA000003AA000003 /* ItemRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000003BB000003BB000003 /* ItemRow.swift */; };
+		AA000004AA000004AA000004 /* ItemRowWithActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000004BB000004BB000004 /* ItemRowWithActions.swift */; };
+		AA000005AA000005AA000005 /* SessionRowLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000005BB000005BB000005 /* SessionRowLabel.swift */; };
+		AA000006AA000006AA000006 /* DailySummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000006BB000006BB000006 /* DailySummaryCard.swift */; };
+		AA000007AA000007AA000007 /* SidebarSessionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000007BB000007BB000007 /* SidebarSessionRow.swift */; };
 		8730250FFD9A0747B80E3ECB /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE51F7E92601A1166CD41ED /* SidebarView.swift */; };
 		9133AD759AFD71A72AF7CC9F /* VisualIntelligencePipelineApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06A210F16E7A971A22AD25B3 /* VisualIntelligencePipelineApp.swift */; };
 		9C1477C768B43E8BAF2FD052 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DEBECFBAC4353E5D8AE4A6E /* ContentView.swift */; };
@@ -212,6 +219,13 @@
 		4E3CA07A0775461AC2587072 /* DiverQueueItemHierarchyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DiverQueueItemHierarchyTests.swift; sourceTree = "<group>"; };
 		5615B73F96C328A98E941CD5 /* VisualIntelligencePipeline.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VisualIntelligencePipeline.entitlements; sourceTree = "<group>"; };
 		573D807F9496EBE7C68BF217 /* KnowMapsCacheStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowMapsCacheStore.swift; sourceTree = "<group>"; };
+		BB000001BB000001BB000001 /* ItemIconConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemIconConfig.swift; sourceTree = "<group>"; };
+		BB000002BB000002BB000002 /* ThumbnailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailView.swift; sourceTree = "<group>"; };
+		BB000003BB000003BB000003 /* ItemRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemRow.swift; sourceTree = "<group>"; };
+		BB000004BB000004BB000004 /* ItemRowWithActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemRowWithActions.swift; sourceTree = "<group>"; };
+		BB000005BB000005BB000005 /* SessionRowLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionRowLabel.swift; sourceTree = "<group>"; };
+		BB000006BB000006BB000006 /* DailySummaryCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailySummaryCard.swift; sourceTree = "<group>"; };
+		BB000007BB000007BB000007 /* SidebarSessionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarSessionRow.swift; sourceTree = "<group>"; };
 		5DE51F7E92601A1166CD41ED /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		6CDDCCF965B4759AEBA1940F /* LinkPreviewView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LinkPreviewView.swift; sourceTree = "<group>"; };
 		7D231EE83CF65D9AC35B008C /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
@@ -493,9 +507,24 @@
 			path = Schema;
 			sourceTree = "<group>";
 		};
+		CC000001CC000001CC000001 /* Sidebar */ = {
+			isa = PBXGroup;
+			children = (
+				BB000006BB000006BB000006 /* DailySummaryCard.swift */,
+				BB000001BB000001BB000001 /* ItemIconConfig.swift */,
+				BB000003BB000003BB000003 /* ItemRow.swift */,
+				BB000004BB000004BB000004 /* ItemRowWithActions.swift */,
+				BB000005BB000005BB000005 /* SessionRowLabel.swift */,
+				BB000007BB000007BB000007 /* SidebarSessionRow.swift */,
+				BB000002BB000002BB000002 /* ThumbnailView.swift */,
+			);
+			path = Sidebar;
+			sourceTree = "<group>";
+		};
 		D2328F25AE3674D3A25348D5 /* View */ = {
 			isa = PBXGroup;
 			children = (
+				CC000001CC000001CC000001 /* Sidebar */,
 				1E6E585A2F156BE700CA4385 /* EditLocationView.swift */,
 				1E6E585B2F156BE700CA4385 /* EditSessionLocationView.swift */,
 				1E9ED8392F13E00B0022F6EA /* ConceptListView.swift */,
@@ -827,6 +856,13 @@
 				18DD303DE276163BF28BD02F /* ReferenceDetailView.swift in Sources */,
 				1E03D0242EFBD2E00020DAA5 /* ShortcutGalleryView.swift in Sources */,
 				8730250FFD9A0747B80E3ECB /* SidebarView.swift in Sources */,
+				AA000001AA000001AA000001 /* ItemIconConfig.swift in Sources */,
+				AA000002AA000002AA000002 /* ThumbnailView.swift in Sources */,
+				AA000003AA000003AA000003 /* ItemRow.swift in Sources */,
+				AA000004AA000004AA000004 /* ItemRowWithActions.swift in Sources */,
+				AA000005AA000005AA000005 /* SessionRowLabel.swift in Sources */,
+				AA000006AA000006AA000006 /* DailySummaryCard.swift in Sources */,
+				AA000007AA000007AA000007 /* SidebarSessionRow.swift in Sources */,
 				1E03D03A2EFBFA3F0020DAA5 /* NavigationManager.swift in Sources */,
 				27C2D998F88C5D7770B460DF /* LinkPreviewView.swift in Sources */,
 				1E6E585D2F160AA700CA4385 /* QueueProgressView.swift in Sources */,
