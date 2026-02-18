@@ -28,7 +28,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.metadataPipelineService) private var pipelineService
     @EnvironmentObject private var sharedWithYouManager: SharedWithYouManager
-    @ObservedObject var viewModel: SidebarViewModel
+    var viewModel: SidebarViewModel
 
     @State private var showingClearConfirmation = false
     @State private var isClearing = false

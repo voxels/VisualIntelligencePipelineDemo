@@ -4,7 +4,7 @@ import DiverKit
 import DiverShared
 
 struct PlaceSelectionMapView: View {
-    @ObservedObject var viewModel: VisualIntelligenceViewModel
+    var viewModel: VisualIntelligenceViewModel
     @Environment(\.dismiss) private var dismiss
     
     @State private var position: MapCameraPosition = .automatic

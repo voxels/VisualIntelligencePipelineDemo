@@ -2,7 +2,7 @@ import SwiftUI
 import DiverKit
 
 struct ContextChipBar: View {
-    @ObservedObject var viewModel: VisualIntelligenceViewModel
+    var viewModel: VisualIntelligenceViewModel
     @Binding var isEnteringCustomContext: Bool
     
     var body: some View {

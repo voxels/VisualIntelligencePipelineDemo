@@ -22,7 +22,7 @@ import Photos
 
 struct SidebarView: View {
     @Binding var selectedSession: SessionMetadata?
-    @StateObject private var viewModel = SidebarViewModel()
+    @State private var viewModel = SidebarViewModel()
     @EnvironmentObject private var sharedWithYouManager: SharedWithYouManager
     @EnvironmentObject private var navigationManager: NavigationManager
     @Environment(\.modelContext) private var modelContext

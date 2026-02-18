@@ -26,6 +26,11 @@
 - **SidebarView**: Migrated queue progress display from direct `MetadataPipelineService` property reads to reactive `AsyncStream` consumption via `.task { for await event in pipelineService.progressStream }`. Added 7 `@State` properties for queue progress. `QueueProgressView` now reads from local state instead of the service.
 - SidebarView grew from 889 → 945 lines (net +56 from `.task` handler).
 
+#### @Observable Migration (Phase 2A)
+- **SidebarViewModel**: Removed `ObservableObject` conformance, added `@Observable` macro. Removed all 22 `@Published` property wrappers. Updated 6 consumer sites: `@StateObject` → `@State` (SidebarView, ContentView), `@ObservedObject` → `var` (SettingsView, SidebarSessionRow, ContentView×2).
+- **VisualIntelligenceViewModel**: Same migration, 31 `@Published` removed. Updated 12+ consumer sites across 5 files. `@AppStorage` wrapped with `@ObservationIgnored`, `objectWillChange.send()` removed. 3 sub-views use `@Bindable` for `$viewModel.` binding projections.
+- Per-property tracking via Observation framework eliminates `objectWillChange` over-broadcasting — only views reading specific changed properties re-render.
+
 ### Performance Refactor — Phase 0 & Phase 1 (Partial)
 
 #### @MainActor Fix (Phase 0)

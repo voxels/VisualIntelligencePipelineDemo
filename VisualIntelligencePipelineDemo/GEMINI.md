@@ -194,9 +194,9 @@ cd DiverShared && swift test
 *   **`CaptureInput`:** Marked `@unchecked Sendable` because it contains `PhotosPickerItem` (not `Sendable`). Safe because it's consumed exactly once after crossing the isolation boundary.
 
 ### ViewModel Bloat
-*   **`VisualIntelligenceViewModel`:** ~2900 lines, 31 `@Published` properties. Pending migration to `@Observable` for per-property tracking (eliminates `objectWillChange` over-broadcasting).
-*   **`SidebarViewModel`:** ~1200 lines, 22 `@Published` properties. Same `@Observable` migration needed.
-*   **`SidebarView`:** 889 lines (decomposed from ~1450; 7 child views extracted to `View/Sidebar/`).
+*   **`VisualIntelligenceViewModel`:** ~2900 lines, 31 properties. Migrated to `@Observable` — per-property tracking eliminates `objectWillChange` over-broadcasting.
+*   **`SidebarViewModel`:** ~1200 lines, 22 properties. Migrated to `@Observable`.
+*   **`SidebarView`:** 945 lines (decomposed from ~1450; 7 child views extracted to `View/Sidebar/`).
 
 ### Service Coupling
 *   **`MetadataPipelineService`:** Views directly read mutable progress properties (`isProcessingQueue`, `queueTotalCount`, etc.). AsyncStream-based `progressStream` added alongside for incremental migration to `for await` event delivery.

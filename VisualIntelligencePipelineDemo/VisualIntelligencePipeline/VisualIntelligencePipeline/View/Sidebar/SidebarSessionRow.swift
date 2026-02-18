@@ -11,7 +11,7 @@ import DiverKit
 
 struct SidebarSessionRow: View {
     let session: SessionMetadata
-    @ObservedObject var viewModel: SidebarViewModel
+    var viewModel: SidebarViewModel
     let allItems: [ProcessedItem]
     let allConcepts: [UserConcept]
     

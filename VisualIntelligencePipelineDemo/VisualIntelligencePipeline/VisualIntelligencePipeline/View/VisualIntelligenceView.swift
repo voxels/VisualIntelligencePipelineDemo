@@ -10,7 +10,7 @@ import AVKit
 
 /// Agent [DESIGN] - Unified Shutter UI (iOS 26)
 public struct VisualIntelligenceView: View {
-    @StateObject private var viewModel = VisualIntelligenceViewModel()
+    @State private var viewModel = VisualIntelligenceViewModel()
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var navigationManager: NavigationManager
     
@@ -228,7 +228,7 @@ public struct VisualIntelligenceView: View {
 // MARK: - Layer Components
 
 struct VisualIntelligenceReviewLayer: View {
-    @ObservedObject var viewModel: VisualIntelligenceViewModel
+    @Bindable var viewModel: VisualIntelligenceViewModel
     @State private var currentIndex: Int = 0
     
     var body: some View {
@@ -353,7 +353,7 @@ struct VisualIntelligenceReviewLayer: View {
 }
 
 struct VisualIntelligenceCameraLayer: View {
-    @ObservedObject var viewModel: VisualIntelligenceViewModel
+    var viewModel: VisualIntelligenceViewModel
     
     var body: some View {
         CameraPreviewView(session: viewModel.cameraManager.session)
@@ -362,7 +362,7 @@ struct VisualIntelligenceCameraLayer: View {
 }
 
 struct VisualIntelligenceHUD: View {
-    @ObservedObject var viewModel: VisualIntelligenceViewModel
+    @Bindable var viewModel: VisualIntelligenceViewModel
     @Binding var isEnteringCustomContext: Bool
     @Binding var showingFullScreenReview: Bool
     @Binding var showingIntelligenceView: Bool
@@ -570,7 +570,7 @@ extension VisualIntelligenceView {
 // MARK: - Consolidated Dependencies
 
 struct SessionLocationBar: View {
-    @ObservedObject var viewModel: VisualIntelligenceViewModel
+    var viewModel: VisualIntelligenceViewModel
     
     var body: some View {
         HStack {
@@ -746,7 +746,7 @@ private struct ResultPill: View {
 }
 
 struct ContextChipBar: View {
-    @ObservedObject var viewModel: VisualIntelligenceViewModel
+    var viewModel: VisualIntelligenceViewModel
     @Binding var isEnteringCustomContext: Bool
     
     // Context results from intelligence pipeline (semantic, purpose, entertainment)
@@ -928,7 +928,7 @@ struct TopStatusPill: View {
 }
 
 struct DocumentDetailView: View {
-    @ObservedObject var viewModel: VisualIntelligenceViewModel
+    var viewModel: VisualIntelligenceViewModel
     let image: UIImage
     @Environment(\.dismiss) private var dismiss
     @State private var hasSaved = false
@@ -1130,7 +1130,7 @@ struct FullScreenImageView: View {
 
 /// Intelligence Results View - Detailed results screen pushed from Capture View
 struct IntelligenceResultsView: View {
-    @ObservedObject var viewModel: VisualIntelligenceViewModel
+    @Bindable var viewModel: VisualIntelligenceViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var isEnteringCustomContext = false
     @State private var customContextText = ""

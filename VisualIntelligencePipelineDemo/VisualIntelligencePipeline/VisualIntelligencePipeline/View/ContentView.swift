@@ -104,7 +104,7 @@ struct SessionItemsView: View {
     let pipelineService: MetadataPipelineService
     
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel = SidebarViewModel()
+    @State private var viewModel = SidebarViewModel()
     
     // Session Actions State
     @State private var sessionForLocationEdit: SessionMetadata?
@@ -352,7 +352,7 @@ struct ItemRowButton: View {
 @MainActor
 struct ItemRowContainer: View {
     let item: ProcessedItem
-    @ObservedObject var viewModel: SidebarViewModel
+    var viewModel: SidebarViewModel
     let modelContext: ModelContext
     @Binding var selection: ProcessedItem?
     
@@ -417,7 +417,7 @@ struct ItemRowContainer: View {
 
 struct SessionPickerSheet: View {
     let item: ProcessedItem
-    @ObservedObject var viewModel: SidebarViewModel
+    var viewModel: SidebarViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     

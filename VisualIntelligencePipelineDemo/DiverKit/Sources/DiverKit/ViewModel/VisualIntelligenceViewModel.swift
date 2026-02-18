@@ -22,6 +22,7 @@ import CoreLocation
 import AVFoundation
 import CoreMedia
 import SwiftData
+import Observation
 @preconcurrency import MapKit
 
 // A lightweight wrapper to explicitly allow passing non-Sendable types across concurrency domains.
@@ -36,18 +37,19 @@ private struct UnsafeSendable<T>: @unchecked Sendable {
 extension IntelligenceResult: @unchecked Sendable {}
 
 @MainActor
-public class VisualIntelligenceViewModel: ObservableObject {
+@Observable
+public class VisualIntelligenceViewModel {
     // MARK: - App State & Dependencies
 
     // MARK: - Published UI State
-    @Published public var results: [IntelligenceResult] = []
-    @Published public var siftedImage: PlatformImage?
-    @Published public var siftedBoundingBox: CGRect?
-    @Published public var capturedImage: PlatformImage?
-    @Published public var sessionDepthData: [Data?] = [] // Depth maps parallel to sessionImages
-    @Published public var capturedVideoURL: URL? // For video reprocessing
-    @Published public var sessionImages: [PlatformImage] = [] // For multi-image capture
-    @Published public var activeSessionID: String = UUID().uuidString // Session Persistence
+    public var results: [IntelligenceResult] = []
+    public var siftedImage: PlatformImage?
+    public var siftedBoundingBox: CGRect?
+    public var capturedImage: PlatformImage?
+    public var sessionDepthData: [Data?] = [] // Depth maps parallel to sessionImages
+    public var capturedVideoURL: URL? // For video reprocessing
+    public var sessionImages: [PlatformImage] = [] // For multi-image capture
+    public var activeSessionID: String = UUID().uuidString // Session Persistence
     
     // MARK: - Orientation-Safe Image Setters
     // All image assignments must go through these to guarantee normalized orientation.
@@ -72,23 +74,23 @@ public class VisualIntelligenceViewModel: ObservableObject {
         self.sessionDepthData.append(depthData)
     }
     public var accumulatedContexts: [String] = [] // For sequential context history
-    @Published public var isReviewing: Bool = false
-    @Published public var peelAmount: CGFloat = 0
-    @Published public var rectifiedDocument: PlatformImage?
+    public var isReviewing: Bool = false
+    public var peelAmount: CGFloat = 0
+    public var rectifiedDocument: PlatformImage?
     public var rectifiedDocumentText: String? // Non-published state to hold text for saving
-    @Published public var showingDocumentView: Bool = false
-    @Published public var selectedPurposes: Set<String> = []
-    @Published public var selectedResults: Set<IntelligenceResult> = []
-    @Published public var sessionTitle: String? // Explicit user-selected title
-    @Published public var shouldDismiss: Bool = false
+    public var showingDocumentView: Bool = false
+    public var selectedPurposes: Set<String> = []
+    public var selectedResults: Set<IntelligenceResult> = []
+    public var sessionTitle: String? // Explicit user-selected title
+    public var shouldDismiss: Bool = false
     
     /// Derived: True when first analysis has produced results (no explicit state needed)
     public var hasCompletedFirstAnalysis: Bool { !results.isEmpty }
     
     // Map Selection
-    @Published public var placeCandidates: [EnrichmentData] = []
+    public var placeCandidates: [EnrichmentData] = []
     
-    @Published public var selectedPlace: EnrichmentData? {
+    public var selectedPlace: EnrichmentData? {
         didSet {
             if isLocationPinned {
                 savePinnedState()
@@ -96,9 +98,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }
     }
     
-    @AppStorage("diver.isLocationPinned") public var isLocationPinned: Bool = false {
+    @ObservationIgnored @AppStorage("diver.isLocationPinned") public var isLocationPinned: Bool = false {
         didSet {
-            objectWillChange.send()
             savePinnedState()
             if !isLocationPinned {
                 // Clear persistence if unpinned
@@ -107,7 +108,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         }
     }
     
-    @Published public var showingPlaceSelection: Bool = false
+    public var showingPlaceSelection: Bool = false
     
     // Helper for persistence
     private func savePinnedState() {
@@ -130,8 +131,8 @@ public class VisualIntelligenceViewModel: ObservableObject {
     }
     
     // Renaming
-    @Published public var renamingPlace: EnrichmentData?
-    @Published public var newPlaceTitle: String = ""
+    public var renamingPlace: EnrichmentData?
+    public var newPlaceTitle: String = ""
     
     // Pipeline Visualization State
     public enum PipelineStatus: String, CaseIterable, Equatable {
@@ -146,7 +147,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
         
         public var displayText: String { rawValue }
     }
-    @Published public var pipelineStatus: PipelineStatus = .idle
+    public var pipelineStatus: PipelineStatus = .idle
     
     public func startRenaming(_ place: EnrichmentData) {
         self.renamingPlace = place
@@ -271,7 +272,7 @@ public class VisualIntelligenceViewModel: ObservableObject {
     }
 
     // Photo picker selection (for processing a chosen photo)
-    @Published public var selectedPhotoItem: PhotosPickerItem? {
+    public var selectedPhotoItem: PhotosPickerItem? {
         didSet {
             if let _ = selectedPhotoItem {
                 processSelectedPhoto()
@@ -280,11 +281,11 @@ public class VisualIntelligenceViewModel: ObservableObject {
     }
 
     // MARK: - Internal State
-    @Published public var activeObservation: VNInstanceMaskObservation?
+    public var activeObservation: VNInstanceMaskObservation?
     public var lastCaptureTime: Date?
 
-    @Published public var cameraManager = CameraManager()
-    @Published public var currentOrientation: CGImagePropertyOrientation = .up
+    public var cameraManager = CameraManager()
+    public var currentOrientation: CGImagePropertyOrientation = .up
     /// Stores the EXIF orientation that was active when Vision analyzed the captured image.
     /// Needed because `capturedImage` is normalized to `.up` for display, but Vision
     /// coordinates (e.g. VNRectangleObservation) are in the original orientation's coordinate system.
@@ -293,13 +294,13 @@ public class VisualIntelligenceViewModel: ObservableObject {
     private var linkGenerator: DiverLinkGenerator?
     private let webViewService = WebViewLinkEnrichmentService() // New Service
     private var currentAnalysisTask: Task<Void, Never>?
-    @Published public var isAnalyzing = false
-    @Published public var isSavingDocument = false
+    public var isAnalyzing = false
+    public var isSavingDocument = false
     
     // Error Handling
-    @Published public var showingSaveError = false
-    @Published public var saveErrorMessage: String?
-    @Published public var isSaving = false
+    public var showingSaveError = false
+    public var saveErrorMessage: String?
+    public var isSaving = false
     
     public init(linkGenerator: DiverLinkGenerator? = nil) {
         if let linkGenerator {

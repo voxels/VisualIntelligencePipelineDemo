@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import DiverShared
+import Observation
 
 #if canImport(UIKit)
 import UIKit
@@ -15,33 +16,34 @@ import UIKit
 import PhotosUI
 
 @MainActor
-public final class SidebarViewModel: ObservableObject {
-    @Published public var isMaintaining = false
-    @Published public var maintenanceProgress: Double = 0
-    @Published public var maintenanceStatus: String = ""
-    @Published public var searchText = ""
-    @Published public var sortOrder: SortOrder = .dateDescending
-    @Published public var showingSettings = false
-    @Published public var showingVisualIntelligence = false
-    @Published public var showingShortcutGallery = false
-    @Published public var isImporting = false
-    @Published public var importTargetSession: SessionMetadata? // Target session for import
+@Observable
+public final class SidebarViewModel {
+    public var isMaintaining = false
+    public var maintenanceProgress: Double = 0
+    public var maintenanceStatus: String = ""
+    public var searchText = ""
+    public var sortOrder: SortOrder = .dateDescending
+    public var showingSettings = false
+    public var showingVisualIntelligence = false
+    public var showingShortcutGallery = false
+    public var isImporting = false
+    public var importTargetSession: SessionMetadata? // Target session for import
     
     // Selection Mode
-    @Published public var isSelectionMode = false
-    @Published public var selectedSessions: Set<String> = []
-    @Published public var groupSummaryResult: SummaryResult? = nil
-    @Published public var itemToEditLocation: ProcessedItem?
-    @Published public var itemToReprocess: ProcessedItem?
-    @Published public var itemToDuplicate: ProcessedItem?
-    @Published public var showingDeleteConfirmation = false
-    @Published public var showingCombineCollectionSheet = false
-    @Published public var combineCollectionName = ""
-    @Published public var importError: String? // For user-facing import notifications
-    @Published public var isPerformingAction = false // Immediate feedback for blocking operations
+    public var isSelectionMode = false
+    public var selectedSessions: Set<String> = []
+    public var groupSummaryResult: SummaryResult? = nil
+    public var itemToEditLocation: ProcessedItem?
+    public var itemToReprocess: ProcessedItem?
+    public var itemToDuplicate: ProcessedItem?
+    public var showingDeleteConfirmation = false
+    public var showingCombineCollectionSheet = false
+    public var combineCollectionName = ""
+    public var importError: String? // For user-facing import notifications
+    public var isPerformingAction = false // Immediate feedback for blocking operations
     
     // Semantic search results (IDs of items matching via knowledge graph)
-    @Published public var semanticMatchIDs: Set<String> = []
+    public var semanticMatchIDs: Set<String> = []
     
     public struct SummaryResult: Identifiable {
         public let id = UUID()

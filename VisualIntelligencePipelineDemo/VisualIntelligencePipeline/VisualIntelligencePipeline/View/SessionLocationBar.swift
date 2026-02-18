@@ -2,7 +2,7 @@ import SwiftUI
 import DiverKit
 
 struct SessionLocationBar: View {
-    @ObservedObject var viewModel: VisualIntelligenceViewModel
+    var viewModel: VisualIntelligenceViewModel
     
     var body: some View {
         HStack {
