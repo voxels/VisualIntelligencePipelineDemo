@@ -22,6 +22,10 @@
   - *QueueProgressEventTests* (6): progress calculation, isProcessing, divide-by-zero guard.
   - *QueueProgressStreamTests* (4): cancellation emission, multi-cancel safety, fraction calculation, isProcessing for all event types.
 
+#### SidebarView AsyncStream Subscription
+- **SidebarView**: Migrated queue progress display from direct `MetadataPipelineService` property reads to reactive `AsyncStream` consumption via `.task { for await event in pipelineService.progressStream }`. Added 7 `@State` properties for queue progress. `QueueProgressView` now reads from local state instead of the service.
+- SidebarView grew from 889 → 945 lines (net +56 from `.task` handler).
+
 ### Performance Refactor — Phase 0 & Phase 1 (Partial)
 
 #### @MainActor Fix (Phase 0)

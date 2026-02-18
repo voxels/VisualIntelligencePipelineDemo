@@ -50,7 +50,7 @@ These files carry the most complexity and are the primary candidates for future 
 | `VisualIntelligenceViewModel.swift` | 2,837 | Camera, detection, sifting, capture review, import |
 | `ReferenceDetailView.swift` | 2,496 | Item detail view with multiple card layouts |
 | `VisualIntelligenceView.swift` | 1,625 | Camera UI, overlays, review stack |
-| `SidebarView.swift` | 889 | Navigation sidebar, sessions, collections, drag-and-drop |
+| `SidebarView.swift` | 945 | Navigation sidebar, sessions, collections, drag-and-drop |
 | `SidebarViewModel.swift` | 1,208 | Sidebar state, session management, library maintenance |
 | `MetadataPipelineService.swift` | 1,049 | Queue → LocalInput conversion, metadata extraction, AsyncStream progress |
 | `LocalizedStrings.swift` | 699 | Generated localization strings |

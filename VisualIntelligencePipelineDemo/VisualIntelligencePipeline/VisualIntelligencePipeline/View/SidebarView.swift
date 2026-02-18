@@ -41,6 +41,14 @@ struct SidebarView: View {
     @State private var sessionForLocationEdit: SessionMetadata?
     @State private var newCollectionName = ""
     
+    // Queue Progress State (fed by AsyncStream)
+    @State private var queueIsProcessing = false
+    @State private var queueTotalCount = 0
+    @State private var queueCompletedCount = 0
+    @State private var queueCurrentItemTitle: String? = nil
+    @State private var queueStatusMessage: String? = nil
+    @State private var queueProgress: Double = 0
+    
     // Collection Renaming State
     @State private var collectionToRename: SessionCollection?
     
@@ -176,6 +184,51 @@ struct SidebarView: View {
             viewModel.setPipelineService(pipelineService)
             // Clean up empty/abandoned sessions on appear
             viewModel.removeEmptySessions(context: modelContext)
+        }
+        .task {
+            for await event in pipelineService.progressStream {
+                switch event {
+                case .started(let totalCount):
+                    queueIsProcessing = true
+                    queueTotalCount = totalCount
+                    queueCompletedCount = 0
+                    queueCurrentItemTitle = nil
+                    queueStatusMessage = "Starting…"
+                    queueProgress = 0
+                    
+                case .processingItem(let completed, let total, let title, let status):
+                    queueIsProcessing = true
+                    queueTotalCount = total
+                    queueCompletedCount = completed
+                    queueCurrentItemTitle = title
+                    queueStatusMessage = status
+                    queueProgress = event.progress
+                    
+                case .itemCompleted(let completed, let total):
+                    queueCompletedCount = completed
+                    queueTotalCount = total
+                    queueProgress = event.progress
+                    
+                case .completed:
+                    queueStatusMessage = "Complete"
+                    queueProgress = 1.0
+                    // Delay hiding the overlay to show completion briefly
+                    try? await Task.sleep(nanoseconds: 1_500_000_000)
+                    queueIsProcessing = false
+                    queueTotalCount = 0
+                    queueCompletedCount = 0
+                    queueStatusMessage = nil
+                    queueCurrentItemTitle = nil
+                    
+                case .cancelled:
+                    queueIsProcessing = false
+                    queueTotalCount = 0
+                    queueCompletedCount = 0
+                    queueStatusMessage = nil
+                    queueCurrentItemTitle = nil
+                    queueProgress = 0
+                }
+            }
         }
         .sheet(item: $viewModel.itemToEditLocation) { item in
             EditLocationView(item: item)
@@ -356,16 +409,16 @@ struct SidebarView: View {
     
     @ViewBuilder
     private var queueProgressOverlay: some View {
-        if pipelineService.isProcessingQueue {
+        if queueIsProcessing {
             QueueProgressView(
-                totalCount: pipelineService.queueTotalCount,
-                completedCount: pipelineService.queueCompletedCount,
-                currentItemTitle: pipelineService.queueCurrentItemTitle,
-                statusMessage: pipelineService.queueStatusMessage,
-                progress: pipelineService.queueProgress
+                totalCount: queueTotalCount,
+                completedCount: queueCompletedCount,
+                currentItemTitle: queueCurrentItemTitle,
+                statusMessage: queueStatusMessage,
+                progress: queueProgress
             )
             .transition(.move(edge: .bottom).combined(with: .opacity))
-            .animation(.spring(duration: 0.3), value: pipelineService.isProcessingQueue)
+            .animation(.spring(duration: 0.3), value: queueIsProcessing)
         }
     }
     
