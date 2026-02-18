@@ -52,7 +52,7 @@ public struct FastVLMAnalysis: Codable, Sendable, Equatable {
 /// Model is opt-in: user must enable and download via Settings.
 /// Safety: @unchecked Sendable — mutable `container` guarded by `loadLock` (NSLock),
 /// `isLoading`/`retainModel`/`memoryPressureSource` accessed from single-consumer patterns.
-public final class FastVLMEnrichmentService: @unchecked Sendable {
+public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendable {
     
     // MARK: - Configuration
     
@@ -87,6 +87,9 @@ public final class FastVLMEnrichmentService: @unchecked Sendable {
         return false
         #endif
     }
+    
+    /// Instance-level availability check (protocol conformance)
+    public var isAvailable: Bool { Self.isAvailable }
     
     /// HuggingFace Hub cache directory for this model
     /// defaultHubApi sets downloadBase = cachesDirectory; localRepoLocation = downloadBase/models/<id>

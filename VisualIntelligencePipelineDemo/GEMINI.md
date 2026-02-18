@@ -60,24 +60,43 @@ The project is modularized using Swift Package Manager:
 
 ### Testing
 
+> **Note:** `swift test` does not work for DiverKit — it compiles for macOS which lacks UIKit.
+> Always use `xcodebuild test` with an iOS Simulator destination.
+
 ```bash
 # Build for iOS Simulator
 xcodebuild -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj \
   -scheme VisualIntelligencePipeline \
-  -destination 'platform=iOS Simulator,name=iPhone 17' build
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 
-# Run DiverKit package tests
-cd DiverKit && swift test
+# Run DiverKit unit tests (service protocols, pipeline, view models)
+xcodebuild test -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj \
+  -scheme DiverTests_iOS \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
 
-# Run DiverShared package tests
+# Run app-level unit tests
+xcodebuild test -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj \
+  -scheme VisualIntelligencePipeline \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+
+# Run DiverShared package tests (pure Swift, no UIKit)
 cd DiverShared && swift test
 ```
+
+**Test Schemes:**
+| Scheme | Target | Contents |
+|--------|--------|----------|
+| `DiverTests_iOS` | DiverKit SPM tests | Service protocols, pipeline, enrichment, VM tests |
+| `VisualIntelligencePipeline` | App test bundle | Integration, share intent, adapter tests |
+| `DiverShared` | SharedLib SPM tests | Pure Swift model/utility tests |
 
 ## Development Conventions
 
 *   **SwiftUI:** Views are organized in `VisualIntelligencePipeline/VisualIntelligencePipeline/View/`.
 *   **View Models:** Located in `DiverKit/Sources/DiverKit/ViewModel/` — `VisualIntelligenceViewModel`, `SidebarViewModel`, `ReferenceDetailViewModel`, `ProcessedItemViewModel`.
+*   **Protocols:** Located in `DiverKit/Sources/DiverKit/Protocols/` — `IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`.
 *   **Services:** Located in `DiverKit/Sources/DiverKit/Services/` — 36 services covering camera, enrichment, pipeline, location, and more.
+*   **Test Mocks:** Located in `DiverKit/Tests/DiverKitTests/Mocks/` — `MockFastVLMService` (conforms to `FastVLMAnalyzing`), `MockEnrichmentService`, etc.
 *   **Swift Packages:** Shared code modularized into `DiverKit` and `DiverShared`.
 *   **Asynchronous Operations:** Uses `async/await` throughout for network requests, ML inference, and file I/O.
 *   **Dependency Injection:** Services like `KnowMapsServiceContainer` and `DiverQueueProcessingService` are injected at initialization.

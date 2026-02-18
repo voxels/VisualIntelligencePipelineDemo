@@ -1,275 +1,344 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DiverKit — Services — Developer Wiki</title>
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DiverKit — Services — Developer Wiki</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-<div class="layout">
-<nav class="sidebar">
-  <div class="sidebar-header"><h1>Visual Intelligence Pipeline</h1><div class="version">v1.1 Developer Wiki</div></div>
-  <div class="search-box"><input type="text" id="search" placeholder="Search types…" oninput="filterTypes(this.value)"></div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Overview</div>
-    <a class="sidebar-link" href="index.html">Home</a>
-    <a class="sidebar-link" href="architecture.html">Architecture</a>
+  <div class="layout">
+    <nav class="sidebar">
+      <div class="sidebar-header">
+        <h1>Visual Intelligence Pipeline</h1>
+        <div class="version">v1.1 Developer Wiki</div>
+      </div>
+      <div class="search-box"><input type="text" id="search" placeholder="Search types…"
+          oninput="filterTypes(this.value)"></div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Overview</div>
+        <a class="sidebar-link" href="index.html">Home</a>
+        <a class="sidebar-link" href="architecture.html">Architecture</a>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-title">Modules</div>
+        <a class="sidebar-link" href="divershared.html">DiverShared</a>
+        <a class="sidebar-link" href="diverkit-models.html">DiverKit — Models</a>
+        <a class="sidebar-link active" href="diverkit-services.html">DiverKit — Services</a>
+        <a class="sidebar-link" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
+        <a class="sidebar-link" href="diverkit-core.html">DiverKit — Core</a>
+        <a class="sidebar-link" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
+        <a class="sidebar-link" href="app-views.html">App — Views</a>
+        <a class="sidebar-link" href="app-services.html">App — Services</a>
+        <a class="sidebar-link" href="app-intents.html">App — Intents &amp; Widgets</a>
+      </div>
+    </nav>
+    <main class="main">
+      <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> DiverKit — Services</div>
+      <h1 class="page-title">DiverKit — Services</h1>
+      <p class="page-subtitle">36 services covering pipeline orchestration, location/weather/web/music enrichment, ML
+        inference, session management, and more.</p>
+      <div class="stats-bar">
+        <div class="stat">
+          <div class="stat-value">36</div>
+          <div class="stat-label">Files</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">36+</div>
+          <div class="stat-label">Types</div>
+        </div>
+      </div>
+      <div class="section">
+        <h2 class="section-title">Pipeline Orchestration</h2>
+        <ul class="type-list">
+          <li class="type-item searchable" data-name="LocalPipelineService">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>LocalPipelineService</strong></div>
+            <div class="conformances">2,732 lines — core orchestrator: ingestion → enrichment → persistence</div>
+          </li>
+          <li class="type-item searchable" data-name="MetadataPipelineService">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>MetadataPipelineService</strong></div>
+            <div class="conformances">1,002 lines — queue item → LocalInput, metadata extraction</div>
+          </li>
+          <li class="type-item searchable" data-name="PipelineImportService">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>PipelineImportService</strong></div>
+            <div class="conformances">Photo/video import into the pipeline</div>
+          </li>
+          <li class="type-item searchable" data-name="ReprocessContext">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>ReprocessContext</strong></div>
+            <div class="conformances">Configuration for silent background reprocessing</div>
+          </li>
+          <li class="type-item searchable" data-name="ParallelEnrichmentResult">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>ParallelEnrichmentResult</strong></div>
+            <div class="conformances">Aggregated results from parallel enrichment services</div>
+          </li>
+        </ul>
+        <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">LocalPipelineService is the central
+          orchestrator. It receives raw input, fans out to enrichment services in parallel, and persists the enriched
+          ProcessedItem to SwiftData.</p>
+      </div>
+      <div class="section">
+        <h2 class="section-title">Intelligence &amp; ML</h2>
+        <ul class="type-list">
+          <li class="type-item searchable" data-name="IntelligenceProcessor">
+            <span class="badge badge-class">class</span>
+            <div class="name"><strong>IntelligenceProcessor</strong></div>
+            <div class="conformances">585 lines — Vision pipeline (OCR, QR, semantic, sifting, aesthetics). Conforms to
+              <em>IntelligenceProcessing</em></div>
+          </li>
+          <li class="type-item searchable" data-name="IntelligenceResult">
+            <span class="badge badge-enum">enum</span>
+            <div class="name"><strong>IntelligenceResult</strong></div>
+            <div class="conformances">Pipeline result: .detected, .sifted, .enriched</div>
+          </li>
+          <li class="type-item searchable" data-name="FastVLMEnrichmentService">
+            <span class="badge badge-class">class</span>
+            <div class="name"><strong>FastVLMEnrichmentService</strong></div>
+            <div class="conformances">Multimodal image analysis via FastVLM 0.5B (MLX Swift). Conforms to
+              <em>FastVLMAnalyzing</em></div>
+          </li>
+          <li class="type-item searchable" data-name="FoundationModelsIntentClassifier">
+            <span class="badge badge-class">class</span>
+            <div class="name"><strong>FoundationModelsIntentClassifier</strong></div>
+            <div class="conformances">Intent classification using Foundation Models</div>
+          </li>
+          <li class="type-item searchable" data-name="AestheticsScoringService">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>AestheticsScoringService</strong></div>
+            <div class="conformances">Vision image/video quality scoring. Conforms to <em>AestheticsScoring</em></div>
+          </li>
+        </ul>
+        <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">IntelligenceProcessor generates
+          summaries, concepts, and tags by composing LLM prompts enriched with weather, location, OCR text, and web
+          data. FastVLMEnrichmentService runs Apple's FastVLM 0.5B model locally for multimodal image understanding.</p>
+      </div>
+      <div class="section">
+        <h2 class="section-title">Location Services</h2>
+        <ul class="type-list">
+          <li class="type-item searchable" data-name="LocationSearchAggregator">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>LocationSearchAggregator</strong></div>
+            <div class="conformances">Parallel Foursquare + MapKit search with merged results</div>
+          </li>
+          <li class="type-item searchable" data-name="SimpleMapFeature">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>SimpleMapFeature</strong></div>
+            <div class="conformances">Lightweight map annotation model</div>
+          </li>
+          <li class="type-item searchable" data-name="FoursquareEnrichmentService">
+            <span class="badge badge-class">class</span>
+            <div class="name"><strong>FoursquareEnrichmentService</strong></div>
+            <div class="conformances">Venue search and detail enrichment</div>
+          </li>
+          <li class="type-item searchable" data-name="MapKitEnrichmentService">
+            <span class="badge badge-class">class</span>
+            <div class="name"><strong>MapKitEnrichmentService</strong></div>
+            <div class="conformances">Apple Maps landmark/address enrichment</div>
+          </li>
+          <li class="type-item searchable" data-name="ReverseGeocodingService">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>ReverseGeocodingService</strong></div>
+            <div class="conformances">CLGeocoder coordinate → address</div>
+          </li>
+          <li class="type-item searchable" data-name="LocationProvider">
+            <span class="badge badge-protocol">protocol</span>
+            <div class="name"><strong>LocationProvider</strong></div>
+            <div class="conformances">AnyObject, Sendable — CLLocationManager abstraction</div>
+          </li>
+          <li class="type-item searchable" data-name="LocationService">
+            <span class="badge badge-class">class</span>
+            <div class="name"><strong>LocationService</strong></div>
+            <div class="conformances">GPS coordinate provider</div>
+          </li>
+          <li class="type-item searchable" data-name="SessionClusteringService">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>SessionClusteringService</strong></div>
+            <div class="conformances">Location/time-based session grouping</div>
+          </li>
+        </ul>
+        <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">LocationSearchAggregator runs Foursquare
+          and MapKit searches in parallel, deduplicates by proximity, and returns a unified result set.</p>
+      </div>
+      <div class="section">
+        <h2 class="section-title">Content Enrichment</h2>
+        <ul class="type-list">
+          <li class="type-item searchable" data-name="WeatherEnrichmentService">
+            <span class="badge badge-actor">actor</span>
+            <div class="name"><strong>WeatherEnrichmentService</strong></div>
+            <div class="conformances">WeatherKit current conditions</div>
+          </li>
+          <li class="type-item searchable" data-name="DuckDuckGoEnrichmentService">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>DuckDuckGoEnrichmentService</strong></div>
+            <div class="conformances">Web search enrichment</div>
+          </li>
+          <li class="type-item searchable" data-name="WebViewLinkEnrichmentService">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>WebViewLinkEnrichmentService</strong></div>
+            <div class="conformances">URL metadata extraction via WKWebView</div>
+          </li>
+          <li class="type-item searchable" data-name="AppleMusicEnrichmentService">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>AppleMusicEnrichmentService</strong></div>
+            <div class="conformances">LinkEnrichmentService — MusicKit matching</div>
+          </li>
+          <li class="type-item searchable" data-name="SpotifyService">
+            <span class="badge badge-class">class</span>
+            <div class="name"><strong>SpotifyService</strong></div>
+            <div class="conformances">Spotify track/album identification</div>
+          </li>
+          <li class="type-item searchable" data-name="FoursquareLinkEnrichmentService">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>FoursquareLinkEnrichmentService</strong></div>
+            <div class="conformances">Foursquare URL enrichment</div>
+          </li>
+          <li class="type-item searchable" data-name="YahooSearchService">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>YahooSearchService</strong></div>
+            <div class="conformances">Web search via LocalPackages/YahooSearch</div>
+          </li>
+        </ul>
+
+      </div>
+      <div class="section">
+        <h2 class="section-title">Enrichment Protocols</h2>
+        <ul class="type-list">
+          <li class="type-item searchable" data-name="EnrichmentData">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>EnrichmentData</strong></div>
+            <div class="conformances">Sendable, Codable, Identifiable — venue/place result</div>
+          </li>
+          <li class="type-item searchable" data-name="LinkEnrichmentService">
+            <span class="badge badge-protocol">protocol</span>
+            <div class="name"><strong>LinkEnrichmentService</strong></div>
+            <div class="conformances">Sendable — async enrich(url:) → EnrichmentData</div>
+          </li>
+          <li class="type-item searchable" data-name="ContextualEnrichmentService">
+            <span class="badge badge-protocol">protocol</span>
+            <div class="name"><strong>ContextualEnrichmentService</strong></div>
+            <div class="conformances">Sendable — enrichment with context injection</div>
+          </li>
+          <li class="type-item searchable" data-name="KnowledgeGraphIndexingService">
+            <span class="badge badge-protocol">protocol</span>
+            <div class="name"><strong>KnowledgeGraphIndexingService</strong></div>
+            <div class="conformances">Sendable — index items for semantic search</div>
+          </li>
+          <li class="type-item searchable" data-name="KnowledgeGraphRetrievalService">
+            <span class="badge badge-protocol">protocol</span>
+            <div class="name"><strong>KnowledgeGraphRetrievalService</strong></div>
+            <div class="conformances">Sendable — retrieve by vector similarity</div>
+          </li>
+        </ul>
+
+      </div>
+      <div class="section">
+        <h2 class="section-title">Service Protocols</h2>
+        <ul class="type-list">
+          <li class="type-item searchable" data-name="IntelligenceProcessing">
+            <span class="badge badge-protocol">protocol</span>
+            <div class="name"><strong>IntelligenceProcessing</strong></div>
+            <div class="conformances">Sendable — Vision pipeline abstraction: process(frame:) and process(image:)</div>
+          </li>
+          <li class="type-item searchable" data-name="ContextProcessing">
+            <span class="badge badge-protocol">protocol</span>
+            <div class="name"><strong>ContextProcessing</strong></div>
+            <div class="conformances">Sendable — LLM context analysis: processContext(from:) and summarizeText()</div>
+          </li>
+          <li class="type-item searchable" data-name="AestheticsScoring">
+            <span class="badge badge-protocol">protocol</span>
+            <div class="name"><strong>AestheticsScoring</strong></div>
+            <div class="conformances">Sendable — image/video quality scoring: extractBestFrames() and
+              bestThumbnailFromImage()</div>
+          </li>
+          <li class="type-item searchable" data-name="FastVLMAnalyzing">
+            <span class="badge badge-protocol">protocol</span>
+            <div class="name"><strong>FastVLMAnalyzing</strong></div>
+            <div class="conformances">AnyObject, Sendable — multimodal inference: analyze(), loadModel(), deleteModel()
+            </div>
+          </li>
+        </ul>
+        <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">Service protocols enable dependency
+          injection and testability. Each protocol captures the public API surface of its concrete implementation.
+          Defined in <code>Protocols/ServiceProtocols.swift</code>.</p>
+
+      </div>
+      <div class="section">
+        <h2 class="section-title">Other Services</h2>
+        <ul class="type-list">
+          <li class="type-item searchable" data-name="DailyContextService">
+            <span class="badge badge-class">class</span>
+            <div class="name"><strong>DailyContextService</strong></div>
+            <div class="conformances">ObservableObject — Daily Focus summary generation</div>
+          </li>
+          <li class="type-item searchable" data-name="CameraManager">
+            <span class="badge badge-class">class</span>
+            <div class="name"><strong>CameraManager</strong></div>
+            <div class="conformances">AVFoundation camera session management</div>
+          </li>
+          <li class="type-item searchable" data-name="PhotoLibraryImportService">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>PhotoLibraryImportService</strong></div>
+            <div class="conformances">683 lines — PHAsset import with EXIF extraction</div>
+          </li>
+          <li class="type-item searchable" data-name="PhotosAssetLoader">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>PhotosAssetLoader</strong></div>
+            <div class="conformances">PHAsset loading and thumbnail generation</div>
+          </li>
+          <li class="type-item searchable" data-name="DocumentManager">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>DocumentManager</strong></div>
+            <div class="conformances">Sendable — document detection, perspective correction, saving</div>
+          </li>
+          <li class="type-item searchable" data-name="ContactService">
+            <span class="badge badge-protocol">protocol</span>
+            <div class="name"><strong>ContactService</strong></div>
+            <div class="conformances">ContactServiceProvider — CNContact enrichment</div>
+          </li>
+          <li class="type-item searchable" data-name="ContextQuestionService">
+            <span class="badge badge-class">class</span>
+            <div class="name"><strong>ContextQuestionService</strong></div>
+            <div class="conformances">On-device LLM context analysis, summaries, purposes. Conforms to
+              <em>ContextProcessing</em></div>
+          </li>
+          <li class="type-item searchable" data-name="ContextEnrichmentCoordinator">
+            <span class="badge badge-actor">actor</span>
+            <div class="name"><strong>ContextEnrichmentCoordinator</strong></div>
+            <div class="conformances">Coordinates parallel enrichment tasks</div>
+          </li>
+          <li class="type-item searchable" data-name="DiverLinkGenerator">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>DiverLinkGenerator</strong></div>
+            <div class="conformances">HMAC-signed DiverLink creation</div>
+          </li>
+          <li class="type-item searchable" data-name="SSEStreamService">
+            <span class="badge badge-class">class</span>
+            <div class="name"><strong>SSEStreamService</strong></div>
+            <div class="conformances">Server-Sent Events streaming client</div>
+          </li>
+          <li class="type-item searchable" data-name="Probe">
+            <span class="badge badge-struct">struct</span>
+            <div class="name"><strong>Probe</strong></div>
+            <div class="conformances">Diagnostic/performance measurement utility</div>
+          </li>
+        </ul>
+
+      </div>
+    </main>
   </div>
-  <div class="sidebar-section">
-    <div class="sidebar-section-title">Modules</div>
-    <a class="sidebar-link" href="divershared.html">DiverShared</a>
-    <a class="sidebar-link" href="diverkit-models.html">DiverKit — Models</a>
-    <a class="sidebar-link active" href="diverkit-services.html">DiverKit — Services</a>
-    <a class="sidebar-link" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
-    <a class="sidebar-link" href="diverkit-core.html">DiverKit — Core</a>
-    <a class="sidebar-link" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
-    <a class="sidebar-link" href="app-views.html">App — Views</a>
-    <a class="sidebar-link" href="app-services.html">App — Services</a>
-    <a class="sidebar-link" href="app-intents.html">App — Intents &amp; Widgets</a>
-  </div>
-</nav>
-<main class="main">
-  <div class="breadcrumb"><a href="index.html">Wiki</a> <span class="sep">›</span> DiverKit — Services</div>
-  <h1 class="page-title">DiverKit — Services</h1>
-  <p class="page-subtitle">36 services covering pipeline orchestration, location/weather/web/music enrichment, ML inference, session management, and more.</p>
-  <div class="stats-bar"><div class="stat"><div class="stat-value">36</div><div class="stat-label">Files</div></div><div class="stat"><div class="stat-value">36+</div><div class="stat-label">Types</div></div></div>
-  <div class="section">
-  <h2 class="section-title">Pipeline Orchestration</h2>
-  <ul class="type-list"><li class="type-item searchable" data-name="LocalPipelineService">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>LocalPipelineService</strong></div>
-  <div class="conformances">2,732 lines — core orchestrator: ingestion → enrichment → persistence</div>
-</li>
-<li class="type-item searchable" data-name="MetadataPipelineService">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>MetadataPipelineService</strong></div>
-  <div class="conformances">1,002 lines — queue item → LocalInput, metadata extraction</div>
-</li>
-<li class="type-item searchable" data-name="PipelineImportService">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>PipelineImportService</strong></div>
-  <div class="conformances">Photo/video import into the pipeline</div>
-</li>
-<li class="type-item searchable" data-name="ReprocessContext">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>ReprocessContext</strong></div>
-  <div class="conformances">Configuration for silent background reprocessing</div>
-</li>
-<li class="type-item searchable" data-name="ParallelEnrichmentResult">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>ParallelEnrichmentResult</strong></div>
-  <div class="conformances">Aggregated results from parallel enrichment services</div>
-</li></ul>
-  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">LocalPipelineService is the central orchestrator. It receives raw input, fans out to enrichment services in parallel, and persists the enriched ProcessedItem to SwiftData.</p>
-</div>
-<div class="section">
-  <h2 class="section-title">Intelligence &amp; ML</h2>
-  <ul class="type-list"><li class="type-item searchable" data-name="IntelligenceProcessor">
-  <span class="badge badge-class">class</span>
-  <div class="name"><strong>IntelligenceProcessor</strong></div>
-  <div class="conformances">568 lines — on-device LLM prompts via SystemLanguageModel</div>
-</li>
-<li class="type-item searchable" data-name="IntelligenceResult">
-  <span class="badge badge-enum">enum</span>
-  <div class="name"><strong>IntelligenceResult</strong></div>
-  <div class="conformances">Pipeline result: .detected, .sifted, .enriched</div>
-</li>
-<li class="type-item searchable" data-name="FastVLMEnrichmentService">
-  <span class="badge badge-class">class</span>
-  <div class="name"><strong>FastVLMEnrichmentService</strong></div>
-  <div class="conformances">Multimodal image analysis via FastVLM 0.5B (MLX Swift). Two-pass: image description + context synthesis. Prompt excludes camera/capture equipment to prevent hallucinations.</div>
-</li>
-<li class="type-item searchable" data-name="FoundationModelsIntentClassifier">
-  <span class="badge badge-class">class</span>
-  <div class="name"><strong>FoundationModelsIntentClassifier</strong></div>
-  <div class="conformances">Intent classification using Foundation Models</div>
-</li>
-<li class="type-item searchable" data-name="AestheticsScoringService">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>AestheticsScoringService</strong></div>
-  <div class="conformances">CoreML image quality scoring</div>
-</li></ul>
-  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">IntelligenceProcessor generates summaries, concepts, and tags by composing LLM prompts enriched with weather, location, OCR text, and web data. FastVLMEnrichmentService runs Apple's FastVLM 0.5B model locally for multimodal image understanding.</p>
-</div>
-<div class="section">
-  <h2 class="section-title">Location Services</h2>
-  <ul class="type-list"><li class="type-item searchable" data-name="LocationSearchAggregator">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>LocationSearchAggregator</strong></div>
-  <div class="conformances">Parallel Foursquare + MapKit search with merged results</div>
-</li>
-<li class="type-item searchable" data-name="SimpleMapFeature">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>SimpleMapFeature</strong></div>
-  <div class="conformances">Lightweight map annotation model</div>
-</li>
-<li class="type-item searchable" data-name="FoursquareEnrichmentService">
-  <span class="badge badge-class">class</span>
-  <div class="name"><strong>FoursquareEnrichmentService</strong></div>
-  <div class="conformances">Venue search and detail enrichment</div>
-</li>
-<li class="type-item searchable" data-name="MapKitEnrichmentService">
-  <span class="badge badge-class">class</span>
-  <div class="name"><strong>MapKitEnrichmentService</strong></div>
-  <div class="conformances">Apple Maps landmark/address enrichment</div>
-</li>
-<li class="type-item searchable" data-name="ReverseGeocodingService">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>ReverseGeocodingService</strong></div>
-  <div class="conformances">CLGeocoder coordinate → address</div>
-</li>
-<li class="type-item searchable" data-name="LocationProvider">
-  <span class="badge badge-protocol">protocol</span>
-  <div class="name"><strong>LocationProvider</strong></div>
-  <div class="conformances">AnyObject, Sendable — CLLocationManager abstraction</div>
-</li>
-<li class="type-item searchable" data-name="LocationService">
-  <span class="badge badge-class">class</span>
-  <div class="name"><strong>LocationService</strong></div>
-  <div class="conformances">GPS coordinate provider</div>
-</li>
-<li class="type-item searchable" data-name="SessionClusteringService">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>SessionClusteringService</strong></div>
-  <div class="conformances">Location/time-based session grouping</div>
-</li></ul>
-  <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">LocationSearchAggregator runs Foursquare and MapKit searches in parallel, deduplicates by proximity, and returns a unified result set.</p>
-</div>
-<div class="section">
-  <h2 class="section-title">Content Enrichment</h2>
-  <ul class="type-list"><li class="type-item searchable" data-name="WeatherEnrichmentService">
-  <span class="badge badge-actor">actor</span>
-  <div class="name"><strong>WeatherEnrichmentService</strong></div>
-  <div class="conformances">WeatherKit current conditions</div>
-</li>
-<li class="type-item searchable" data-name="DuckDuckGoEnrichmentService">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>DuckDuckGoEnrichmentService</strong></div>
-  <div class="conformances">Web search enrichment</div>
-</li>
-<li class="type-item searchable" data-name="WebViewLinkEnrichmentService">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>WebViewLinkEnrichmentService</strong></div>
-  <div class="conformances">URL metadata extraction via WKWebView</div>
-</li>
-<li class="type-item searchable" data-name="AppleMusicEnrichmentService">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>AppleMusicEnrichmentService</strong></div>
-  <div class="conformances">LinkEnrichmentService — MusicKit matching</div>
-</li>
-<li class="type-item searchable" data-name="SpotifyService">
-  <span class="badge badge-class">class</span>
-  <div class="name"><strong>SpotifyService</strong></div>
-  <div class="conformances">Spotify track/album identification</div>
-</li>
-<li class="type-item searchable" data-name="FoursquareLinkEnrichmentService">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>FoursquareLinkEnrichmentService</strong></div>
-  <div class="conformances">Foursquare URL enrichment</div>
-</li>
-<li class="type-item searchable" data-name="YahooSearchService">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>YahooSearchService</strong></div>
-  <div class="conformances">Web search via LocalPackages/YahooSearch</div>
-</li></ul>
-  
-</div>
-<div class="section">
-  <h2 class="section-title">Enrichment Protocols</h2>
-  <ul class="type-list"><li class="type-item searchable" data-name="EnrichmentData">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>EnrichmentData</strong></div>
-  <div class="conformances">Sendable, Codable, Identifiable — venue/place result</div>
-</li>
-<li class="type-item searchable" data-name="LinkEnrichmentService">
-  <span class="badge badge-protocol">protocol</span>
-  <div class="name"><strong>LinkEnrichmentService</strong></div>
-  <div class="conformances">Sendable — async enrich(url:) → EnrichmentData</div>
-</li>
-<li class="type-item searchable" data-name="ContextualEnrichmentService">
-  <span class="badge badge-protocol">protocol</span>
-  <div class="name"><strong>ContextualEnrichmentService</strong></div>
-  <div class="conformances">Sendable — enrichment with context injection</div>
-</li>
-<li class="type-item searchable" data-name="KnowledgeGraphIndexingService">
-  <span class="badge badge-protocol">protocol</span>
-  <div class="name"><strong>KnowledgeGraphIndexingService</strong></div>
-  <div class="conformances">Sendable — index items for semantic search</div>
-</li>
-<li class="type-item searchable" data-name="KnowledgeGraphRetrievalService">
-  <span class="badge badge-protocol">protocol</span>
-  <div class="name"><strong>KnowledgeGraphRetrievalService</strong></div>
-  <div class="conformances">Sendable — retrieve by vector similarity</div>
-</li></ul>
-  
-</div>
-<div class="section">
-  <h2 class="section-title">Other Services</h2>
-  <ul class="type-list"><li class="type-item searchable" data-name="DailyContextService">
-  <span class="badge badge-class">class</span>
-  <div class="name"><strong>DailyContextService</strong></div>
-  <div class="conformances">ObservableObject — Daily Focus summary generation</div>
-</li>
-<li class="type-item searchable" data-name="CameraManager">
-  <span class="badge badge-class">class</span>
-  <div class="name"><strong>CameraManager</strong></div>
-  <div class="conformances">AVFoundation camera session management</div>
-</li>
-<li class="type-item searchable" data-name="PhotoLibraryImportService">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>PhotoLibraryImportService</strong></div>
-  <div class="conformances">683 lines — PHAsset import with EXIF extraction</div>
-</li>
-<li class="type-item searchable" data-name="PhotosAssetLoader">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>PhotosAssetLoader</strong></div>
-  <div class="conformances">PHAsset loading and thumbnail generation</div>
-</li>
-<li class="type-item searchable" data-name="DocumentManager">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>DocumentManager</strong></div>
-  <div class="conformances">Sendable — document detection, perspective correction, saving</div>
-</li>
-<li class="type-item searchable" data-name="ContactService">
-  <span class="badge badge-protocol">protocol</span>
-  <div class="name"><strong>ContactService</strong></div>
-  <div class="conformances">ContactServiceProvider — CNContact enrichment</div>
-</li>
-<li class="type-item searchable" data-name="ContextQuestionService">
-  <span class="badge badge-class">class</span>
-  <div class="name"><strong>ContextQuestionService</strong></div>
-  <div class="conformances">Interactive context question generation</div>
-</li>
-<li class="type-item searchable" data-name="ContextEnrichmentCoordinator">
-  <span class="badge badge-actor">actor</span>
-  <div class="name"><strong>ContextEnrichmentCoordinator</strong></div>
-  <div class="conformances">Coordinates parallel enrichment tasks</div>
-</li>
-<li class="type-item searchable" data-name="DiverLinkGenerator">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>DiverLinkGenerator</strong></div>
-  <div class="conformances">HMAC-signed DiverLink creation</div>
-</li>
-<li class="type-item searchable" data-name="SSEStreamService">
-  <span class="badge badge-class">class</span>
-  <div class="name"><strong>SSEStreamService</strong></div>
-  <div class="conformances">Server-Sent Events streaming client</div>
-</li>
-<li class="type-item searchable" data-name="Probe">
-  <span class="badge badge-struct">struct</span>
-  <div class="name"><strong>Probe</strong></div>
-  <div class="conformances">Diagnostic/performance measurement utility</div>
-</li></ul>
-  
-</div>
-</main>
-</div>
-<script>
-function filterTypes(q) {
-  document.querySelectorAll('.searchable').forEach(el => {
-    el.style.display = (!q || el.dataset.name.toLowerCase().includes(q.toLowerCase())) ? 'flex' : 'none';
-  });
-}
-</script>
+  <script>
+    function filterTypes(q) {
+      document.querySelectorAll('.searchable').forEach(el => {
+        el.style.display = (!q || el.dataset.name.toLowerCase().includes(q.toLowerCase())) ? 'flex' : 'none';
+      });
+    }
+  </script>
 </body>
+
 </html>

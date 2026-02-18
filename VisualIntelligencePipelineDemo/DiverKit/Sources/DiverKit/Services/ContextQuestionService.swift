@@ -12,7 +12,7 @@ import FoundationModels
 #endif
 
 /// A service that uses on-device LLMs to generate summaries, questions, and purposes.
-public final class ContextQuestionService: Sendable {
+public final class ContextQuestionService: ContextProcessing, Sendable {
     
     public init() {}
 

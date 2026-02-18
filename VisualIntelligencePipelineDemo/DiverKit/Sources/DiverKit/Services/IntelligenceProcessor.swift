@@ -221,7 +221,7 @@ extension IntelligenceResult {
 }
 
 /// Agent [VISION/AI] - Responsible for OCR, QR, Semantic, Subject, and Product Analysis
-public final class IntelligenceProcessor: Sendable {
+public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
     public init() {}
     
     public enum AnalysisMode: Sendable {
