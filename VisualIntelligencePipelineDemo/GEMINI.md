@@ -205,9 +205,9 @@ cd DiverShared && swift test
 
 ### Performance Debt
 *   **Apple's 100ms hang threshold:** Per Apple's "Improving App Responsiveness" guide, any main-thread delay >100ms is noticeable. Less than half that time is available for app work due to event handling and rendering overhead.
-*   **No cancellation between pipeline stages:** `LocalPipelineService.process()` chains 6 stages sequentially without `Task.isCancelled` checks.
-*   **No `autoreleasepool`** in image processing loops — potential memory pressure during batch operations.
-*   **No caching:** Reverse geocoding, CGImage decoding, and link enrichment repeat work on every call.
+*   **Inter-stage cancellation (implemented):** `LocalPipelineService.process()` has 6 `Task.isCancelled` guards (3 per path) between Location/Visual → Parallel Enrichment → SLM → FastVLM. On cancellation, items reset to `.queued` with partial progress saved.
+*   **Autorelease pools (implemented):** `createCGImage(from:)` uses `autoreleasepool` to prevent CGImage decode buffer accumulation during batch processing.
+*   **Caching (implemented):** Reverse geocoding uses a coordinate-keyed cache (4-decimal places ≈ 11m, 1hr TTL). CGImage decoding uses `NSCache<NSString, CGImageWrapper>` (countLimit=10). Link enrichment uses URL-keyed cache (1hr TTL).
 *   **`sortAndFilter` in views:** O(n log n) computed on every render — should cache results.
 
 ### Apple Documentation References (via Cupertino CLI)

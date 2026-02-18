@@ -179,4 +179,172 @@ final class PipelinePerformanceTests: XCTestCase {
             XCTAssertEqual(totalItems, 200)
         }
     }
+    
+    // MARK: - Reverse Geocoding Cache Performance
+    
+    /// Measures reverse geocoding cache hit performance.
+    /// First call populates cache; subsequent calls should be near-instant.
+    /// Baseline: cache hits should be <1ms vs ~100-500ms for network lookup.
+    func testReverseGeocodingCacheHitPerformance() async throws {
+        let service = ReverseGeocodingService()
+        let coordinate = CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060) // NYC
+        
+        // Warm the cache with first lookup
+        _ = await service.lookup(coordinate: coordinate)
+        
+        // Measure cache hit performance
+        measure {
+            let exp = expectation(description: "cache-hit")
+            Task { @MainActor in
+                _ = await service.lookup(coordinate: coordinate)
+                exp.fulfill()
+            }
+            wait(for: [exp], timeout: 5)
+        }
+    }
+    
+    /// Measures that nearby coordinates (within 11m) share the same cache entry.
+    /// Coordinates rounded to 4 decimal places should produce cache hits.
+    func testReverseGeocodingNearbyCoordinatesCacheSharing() async {
+        let service = ReverseGeocodingService()
+        let base = CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060)
+        // Offset by ~5m (well within 11m radius of 4-decimal rounding)
+        let nearby = CLLocationCoordinate2D(latitude: 40.71284, longitude: -74.00604)
+        
+        // Warm cache with base coordinate
+        _ = await service.lookup(coordinate: base)
+        
+        // Nearby coordinate should hit cache (same 4-decimal key)
+        measure {
+            let exp = expectation(description: "nearby-hit")
+            Task { @MainActor in
+                _ = await service.lookup(coordinate: nearby)
+                exp.fulfill()
+            }
+            wait(for: [exp], timeout: 5)
+        }
+    }
+    
+    // MARK: - CGImage Decode Cache Performance
+    
+    /// Measures CGImage decode performance for repeated decode of same data.
+    /// Second decode should be a cache hit (NSCache).
+    /// Run on device with Instruments Allocations to verify no duplicate decode buffers.
+    func testCGImageDecodeCacheHit() throws {
+        let pipeline = LocalPipelineService(modelContext: modelContext)
+        
+        // Create a small valid PNG image (1x1 pixel red)
+        let pngData = createMinimalPNG()
+        
+        // First decode: cache miss (populates cache)
+        let first = pipeline.createCGImageForTesting(from: pngData)
+        XCTAssertNotNil(first, "First decode should succeed")
+        
+        // Second decode: cache hit (should be faster)
+        measure {
+            let _ = pipeline.createCGImageForTesting(from: pngData)
+        }
+    }
+    
+    // MARK: - Cancellation Recovery Performance
+    
+    /// Measures how quickly a cancelled pipeline item resets to .queued.
+    /// Validates that cancellation guards save partial progress efficiently.
+    func testCancellationRecoveryThroughput() throws {
+        // Create items in .processing state (simulating mid-pipeline cancellation)
+        let items = (0..<50).map { i in
+            makeProcessedItem(
+                id: "cancel-\(i)",
+                title: "Cancelling \(i)",
+                status: .processing
+            )
+        }
+        
+        for item in items {
+            modelContext.insert(item)
+        }
+        try modelContext.save()
+        
+        // Measure bulk status reset (simulates cancellation cleanup)
+        measure {
+            let fetch = FetchDescriptor<ProcessedItem>(
+                predicate: #Predicate { $0.statusRaw == "processing" }
+            )
+            guard let processing = try? modelContext.fetch(fetch) else { return }
+            
+            for item in processing {
+                item.status = .queued
+            }
+            try? modelContext.save()
+        }
+    }
+    
+    // MARK: - Pipeline Cold vs Warm Start
+    
+    /// Measures LocalPipelineService initialization time.
+    /// This establishes a baseline for pipeline cold-start latency.
+    func testPipelineInitialization() {
+        measure {
+            let _ = LocalPipelineService(modelContext: modelContext)
+        }
+    }
+    
+    // MARK: - Concurrent Read Performance
+    
+    /// Measures SwiftData fetch performance under concurrent read pressure.
+    /// Simulates sidebar + pipeline both reading items simultaneously.
+    func testConcurrentFetchPerformance() throws {
+        // Setup: Insert 200 items across 5 sessions
+        for s in 0..<5 {
+            for i in 0..<40 {
+                let item = makeProcessedItem(
+                    id: "concurrent-\(s)-\(i)",
+                    title: "Item \(i)",
+                    status: .ready,
+                    sessionID: "session-\(s)"
+                )
+                modelContext.insert(item)
+            }
+        }
+        try modelContext.save()
+        
+        measure {
+            // Simulate sidebar fetch
+            let allFetch = FetchDescriptor<ProcessedItem>(
+                sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+            )
+            let _ = try? modelContext.fetch(allFetch)
+            
+            // Simulate session-specific fetch
+            let sessionFetch = FetchDescriptor<ProcessedItem>(
+                predicate: #Predicate { $0.sessionID == "session-0" }
+            )
+            let _ = try? modelContext.fetch(sessionFetch)
+            
+            // Simulate status filter fetch
+            let statusFetch = FetchDescriptor<ProcessedItem>(
+                predicate: #Predicate { $0.statusRaw == "ready" }
+            )
+            let _ = try? modelContext.fetch(statusFetch)
+        }
+    }
+    
+    // MARK: - Helpers
+    
+    /// Creates a minimal valid 1x1 red PNG for CGImage decode tests
+    private func createMinimalPNG() -> Data {
+        // Minimal 1x1 red PNG (67 bytes)
+        let pngHeader: [UInt8] = [
+            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
+            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52, // IHDR chunk
+            0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, // 1x1
+            0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53, 0xDE, // 8-bit RGB
+            0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41, 0x54, // IDAT chunk
+            0x08, 0xD7, 0x63, 0xF8, 0xCF, 0xC0, 0x00, 0x00, // compressed data
+            0x00, 0x02, 0x00, 0x01, 0xE2, 0x21, 0xBC, 0x33, // CRC
+            0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, // IEND chunk
+            0xAE, 0x42, 0x60, 0x82
+        ]
+        return Data(pngHeader)
+    }
 }

@@ -10,12 +10,50 @@ public final class ReverseGeocodingService {
     
     private var foursquareService: ContextualEnrichmentService?
     
+    /// Cache entry with TTL for reverse geocoding results
+    private struct CachedGeocode {
+        let result: PlaceContext
+        let timestamp: Date
+        var isExpired: Bool { Date().timeIntervalSince(timestamp) > 3600 } // 1 hour TTL
+    }
+    
+    /// Coordinate-keyed cache (4 decimal places ≈ 11m radius)
+    private var geocodeCache: [String: CachedGeocode] = [:]
+    
+    /// Round coordinate to 4 decimal places for cache key
+    private func cacheKey(for coordinate: CLLocationCoordinate2D) -> String {
+        let lat = (coordinate.latitude * 10000).rounded() / 10000
+        let lon = (coordinate.longitude * 10000).rounded() / 10000
+        return "\(lat),\(lon)"
+    }
+    
     public init(foursquareService: ContextualEnrichmentService? = nil) {
         self.foursquareService = foursquareService
     }
     
     /// Lookup place information for a coordinate using priority-ranked services
     public func lookup(coordinate: CLLocationCoordinate2D) async -> PlaceContext? {
+        let key = cacheKey(for: coordinate)
+        
+        // Check cache first
+        if let cached = geocodeCache[key], !cached.isExpired {
+            print("📍 ReverseGeocoding: Cache HIT for \(key)")
+            return cached.result
+        }
+        
+        // Cache miss — perform lookup
+        let result = await performLookup(coordinate: coordinate)
+        
+        // Cache the result
+        if let result {
+            geocodeCache[key] = CachedGeocode(result: result, timestamp: Date())
+        }
+        
+        return result
+    }
+    
+    /// Perform the actual priority-ranked lookup (separated for caching)
+    private func performLookup(coordinate: CLLocationCoordinate2D) async -> PlaceContext? {
         // 1. Primary: MKLocalSearch for MapKit place data
         if let mapKitResult = await lookupWithMapKit(coordinate: coordinate) {
             print("📍 ReverseGeocoding: Found via MKLocalSearch: \(mapKitResult.name ?? "Unknown")")

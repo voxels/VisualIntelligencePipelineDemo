@@ -11,9 +11,32 @@ import Photos
 public final class LocalPipelineService {
     nonisolated(unsafe) private let modelContext: ModelContext
     private var cachedHomeLocation: CLLocation?
+    
+    // MARK: - Caches
+    
+    /// CGImage decode cache keyed by data hash. Prevents re-decoding for Vision → FastVLM.
+    /// NSCache auto-evicts under memory pressure.
+    nonisolated(unsafe) private let cgImageCache = NSCache<NSString, CGImageWrapper>()
+    
+    /// Link enrichment cache keyed by URL string with 1-hour TTL.
+    private var linkEnrichmentCache: [String: CachedEnrichment] = [:]
+    
+    /// Wrapper to store CGImage in NSCache (requires NSObject subclass)
+    private final class CGImageWrapper: NSObject {
+        let image: CGImage
+        init(_ image: CGImage) { self.image = image }
+    }
+    
+    /// Link enrichment cache entry with TTL
+    private struct CachedEnrichment {
+        let data: EnrichmentData
+        let timestamp: Date
+        var isExpired: Bool { Date().timeIntervalSince(timestamp) > 3600 } // 1 hour TTL
+    }
 
     nonisolated public init(modelContext: ModelContext) {
         self.modelContext = modelContext
+        cgImageCache.countLimit = 10 // Limit to 10 cached images
     }
     
     // MARK: - Deterministic Context Builder
@@ -123,7 +146,7 @@ public final class LocalPipelineService {
                 if url.scheme?.lowercased().hasPrefix("secretatomics") == false {
                     do {
                         let enrichment = try await withTimeout(seconds: 10) {
-                            try await enrichmentService.enrich(url: url)
+                            try await self.cachedEnrich(url: url, service: enrichmentService)
                         }
                         
                         if let enrichment {
@@ -761,7 +784,7 @@ public final class LocalPipelineService {
                  DiverLogger.pipeline.info("🔗 QR URL detected: \(payload) - starting web enrichment")
                  
                  if let enrichment = try? await self.withTimeout(seconds: 30, operation: {
-                     try await enrichmentService.enrich(url: qrURL)
+                     try await self.cachedEnrich(url: qrURL, service: enrichmentService)
                  }) {
                      // Apply web enrichment to item
                      if processed.title == nil || processed.title?.isEmpty == true || processed.title == "QR Code Link" {
@@ -2602,6 +2625,28 @@ public final class LocalPipelineService {
         if let lastError { throw lastError }
     }
 
+    /// URL-keyed link enrichment with 1-hour TTL cache.
+    /// Prevents redundant web scraping for duplicate URLs.
+    private func cachedEnrich(url: URL, service: LinkEnrichmentService) async throws -> EnrichmentData? {
+        let key = url.absoluteString
+        
+        // Check cache
+        if let cached = linkEnrichmentCache[key], !cached.isExpired {
+            DiverLogger.pipeline.debug("Link enrichment cache HIT for \(key)")
+            return cached.data
+        }
+        
+        // Cache miss — perform enrichment
+        let result = try await service.enrich(url: url)
+        
+        // Cache result
+        if let result {
+            linkEnrichmentCache[key] = CachedEnrichment(data: result, timestamp: Date())
+        }
+        
+        return result
+    }
+
     nonisolated private func isJSONData(_ data: Data) -> Bool {
         guard !data.isEmpty else { return false }
         let firstByte = data[0]
@@ -2609,14 +2654,36 @@ public final class LocalPipelineService {
         return firstByte == 0x7B || firstByte == 0x5B
     }
 
-    /// Convert raw image Data to a CGImage for FastVLM multimodal analysis
+    /// Convert raw image Data to a CGImage for FastVLM multimodal analysis.
+    /// Uses NSCache to avoid re-decoding the same data within a pipeline run.
     nonisolated private func createCGImage(from data: Data) -> CGImage? {
-        autoreleasepool {
+        let cacheKey = "\(data.count)" as NSString
+        
+        // Check cache first
+        if let cached = cgImageCache.object(forKey: cacheKey) {
+            return cached.image
+        }
+        
+        // Decode with autoreleasepool
+        let image: CGImage? = autoreleasepool {
             guard !data.isEmpty, !isJSONData(data) else { return nil }
             guard let source = CGImageSourceCreateWithData(data as CFData, nil),
                   CGImageSourceGetCount(source) > 0 else { return nil }
             return CGImageSourceCreateImageAtIndex(source, 0, nil)
         }
+        
+        // Cache result
+        if let image {
+            cgImageCache.setObject(CGImageWrapper(image), forKey: cacheKey)
+        }
+        
+        return image
+    }
+
+    /// Internal test-accessible wrapper for `createCGImage(from:)`.
+    /// Only visible via `@testable import DiverKit`.
+    func createCGImageForTesting(from data: Data) -> CGImage? {
+        createCGImage(from: data)
     }
 
     /// Finds an existing session matching the item by time, location, and topic similarity.

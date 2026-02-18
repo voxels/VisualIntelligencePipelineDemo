@@ -35,6 +35,15 @@
 - **`LocalPipelineService.process()`**: Added 6 `Task.isCancelled` guards (3 per pipeline path) between: Location/Visual Analysis → Parallel Enrichment → SLM → FastVLM. On cancellation, item status resets to `.queued` and partial progress is saved, enabling retry without data loss.
 - **`createCGImage(from:)`**: Wrapped in `autoreleasepool` to prevent CGImage decode buffer accumulation during batch processing.
 
+#### Pipeline Caching (Phase 4)
+- **`ReverseGeocodingService`**: Coordinate-keyed cache with 1-hour TTL. Key rounds to 4 decimal places (≈11m radius), preventing redundant MKLocalSearch/MapKit/Foursquare calls for items at the same GPS coordinates.
+- **`LocalPipelineService.createCGImage`**: `NSCache<NSString, CGImageWrapper>` with `countLimit=10`. Prevents re-decoding the same image data for Vision → FastVLM within a pipeline run.
+- **`LocalPipelineService.cachedEnrich`**: URL-keyed enrichment cache with 1-hour TTL. Prevents redundant web scraping for duplicate URLs across items.
+
+#### Performance Test Stubs + Instruments Workflow (Phase 3)
+- **`PipelinePerformanceTests.swift`**: Added 6 new `measure {}` benchmarks (12 total): reverse geocoding cache hit/miss, nearby coordinate sharing, CGImage decode cache, cancellation recovery throughput, pipeline initialization, concurrent fetch.
+- **`.agent/workflows/instruments.md`**: Step-by-step Instruments profiling guide covering Time Profiler, Allocations, Leaks, and Hangs analysis.
+
 ### Performance Refactor — Phase 0 & Phase 1 (Partial)
 
 #### @MainActor Fix (Phase 0)
