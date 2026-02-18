@@ -11,6 +11,10 @@ import Combine
 import LDSwiftEventSource
 
 /// SSE Stream Service - Uses LaunchDarkly EventSource
+/// Safety: @unchecked Sendable — mutable `eventSource` and `continuation` are accessed
+/// from a single-stream lifecycle (one stream active at a time). EventHandler callbacks
+/// are serialized by the EventSource library. However, stopStream() could technically
+/// race with onMessage() — consider adding NSLock if concurrent stop/event scenarios arise.
 final class SSEStreamService: @unchecked Sendable {
     private var eventSource: EventSource?
     private var continuation: AsyncStream<SSEEvent>.Continuation?

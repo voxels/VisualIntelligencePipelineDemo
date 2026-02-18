@@ -7,7 +7,10 @@ public protocol LocationProvider: AnyObject, Sendable {
     func getCurrentLocation() async -> CLLocation?
 }
 
-/// Service responsible for fetching the current GPS location
+/// Service responsible for fetching the current GPS location.
+/// Safety: @unchecked Sendable — mutable `locationContinuation` is guarded by the
+/// single-consumer pattern: `getCurrentLocation()` returns nil if a request is already
+/// in flight, and delegate callbacks happen serially on CLLocationManager's delegate thread.
 public final class LocationService: NSObject, LocationProvider, @unchecked Sendable {
     private let locationManager: CLLocationManager
     private var locationContinuation: CheckedContinuation<CLLocation?, Never>?

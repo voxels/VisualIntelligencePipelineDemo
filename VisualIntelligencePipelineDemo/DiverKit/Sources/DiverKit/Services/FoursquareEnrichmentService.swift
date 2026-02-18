@@ -3,6 +3,8 @@ import CoreLocation
 import DiverShared
 
 /// Enrichment service using Foursquare Places API
+/// Safety: @unchecked Sendable is correct — only immutable `let` property (apiKey),
+/// all methods are stateless async functions using URLSession.shared (Sendable).
 public final class FoursquareEnrichmentService: ContextualEnrichmentService, @unchecked Sendable {
     private let apiKey: String?
     

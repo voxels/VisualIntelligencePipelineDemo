@@ -50,6 +50,8 @@ public struct FastVLMAnalysis: Codable, Sendable, Equatable {
 /// On-device FastVLM enrichment service using MLX Swift (VLM only).
 /// Provides multimodal image understanding as an additive enrichment step.
 /// Model is opt-in: user must enable and download via Settings.
+/// Safety: @unchecked Sendable — mutable `container` guarded by `loadLock` (NSLock),
+/// `isLoading`/`retainModel`/`memoryPressureSource` accessed from single-consumer patterns.
 public final class FastVLMEnrichmentService: @unchecked Sendable {
     
     // MARK: - Configuration

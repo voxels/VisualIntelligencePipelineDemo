@@ -4,6 +4,8 @@ import DiverShared
 
 /// Enrichment service using DuckDuckGo Instant Answer API
 /// API: https://api.duckduckgo.com/?q=...&format=json
+/// Safety: @unchecked Sendable is correct — no stored properties at all,
+/// all methods are stateless async functions using URLSession.shared.
 public final class DuckDuckGoEnrichmentService: ContextualEnrichmentService, LinkEnrichmentService, @unchecked Sendable {
     
     public init() {}

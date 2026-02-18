@@ -84,23 +84,28 @@ cd DiverShared && swift test
 
 ## Critical Development Rules (Read Carefully)
 
-1.  **NEVER Compromise Data Integrity:**
+1.  **Apple Documentation Lookup:**
+    *   **Always use the Cupertino CLI** (`/opt/homebrew/bin/cupertino`) for Apple documentation queries. Prefer it over web searches for API details, concurrency patterns, framework behavior, and best practices.
+    *   Available sources: `apple-docs`, `samples`, `hig`, `apple-archive`, `swift-evolution`, `swift-org`, `swift-book`, `packages`.
+    *   Semantic searches: `search_symbols`, `search_property_wrappers`, `search_concurrency`, `search_conformances`.
+
+2.  **NEVER Compromise Data Integrity:**
     *   **Schema Changes:** Do **NOT** rename Core Data entities (e.g., `SessionMetadata`) or perform destructive schema changes without a fully tested migration plan.
     *   **Recovery:** Prioritize recovery mechanisms over wiping data.
 
-2.  **Build Stability is Paramount:**
+3.  **Build Stability is Paramount:**
     *   After *any* refactoring (especially renaming types), verify the project builds.
     *   When renaming a type, ensure **ALL** references across the codebase are updated immediately.
 
-3.  **Dependency Management (KnowMaps):**
+4.  **Dependency Management (KnowMaps):**
     *   Local Swift Package dependencies can resolve to stale commits. If you encounter "inaccessible due to 'internal' protection level" errors, it is likely a stale dependency cache.
     *   Runtime reflection (using `Mirror`) is an acceptable *temporary* workaround when documented.
 
-4.  **UI & MapKit Stability:**
+5.  **UI & MapKit Stability:**
     *   Use `.id` (UUID) rather than `placeID` for identifying MapKit results in SwiftUI lists.
     *   Use aspect-ratio based layouts for images instead of fixed dimensions.
 
-5.  **Main Thread Safety:**
+6.  **Main Thread Safety:**
     *   Keep long-running pipeline tasks off the main thread. Use `@PipelineActor` or `Task.detached` for heavy processing.
     *   **Never use `Task { }` in SwiftUI handlers** (`onAppear`, `onChange`, `onReceive`) for pipeline work — it inherits `@MainActor`. Always use `Task.detached(priority: .utility)` with explicit capture lists.
     *   **Use background `ModelContext`** for SwiftData fetches in pipeline/enrichment code. Create via `ModelContext(container)` with `autosaveEnabled = false`. Never use `dataStore.mainContext` or `manager.mainContext` from background tasks.
@@ -150,3 +155,38 @@ cd DiverShared && swift test
 *   `Models/DiverCollection.swift` — User-created collections
 *   `Models/UserConcept.swift` — Concept/tag model
 *   `Models/AestheticsTypes.swift` — Image quality scoring types
+
+## Code Cleanliness & Known Technical Debt
+
+### Concurrency Patterns (Validated against Apple Docs)
+*   **SE-0466 (`defaultIsolation`):** `Task {}` inside `@MainActor` contexts inherits main actor isolation. Always use `Task.detached(priority: .utility)` with explicit `[weak self]` capture lists for ML/Vision/LLM work. Use `await MainActor.run { }` for UI-only property updates.
+*   **`LanguageModelSession`:** `final class` with no actor isolation — safe to run from any thread.
+*   **`IntelligenceProcessor`:** `Sendable` with no actor isolation — must not be called from `@MainActor` tasks.
+*   **Vision framework (iOS 18+):** Native Swift concurrency support — runs naturally on background threads.
+*   **`@unchecked Sendable`:** ~20 usages across the codebase. Each must be audited to verify thread safety is enforced via locking (e.g., `OSAllocatedUnfairLock`).
+*   **`CaptureInput`:** Marked `@unchecked Sendable` because it contains `PhotosPickerItem` (not `Sendable`). Safe because it's consumed exactly once after crossing the isolation boundary.
+
+### ViewModel Bloat
+*   **`VisualIntelligenceViewModel`:** ~2900 lines, 31 `@Published` properties. Pending migration to `@Observable` for per-property tracking (eliminates `objectWillChange` over-broadcasting).
+*   **`SidebarViewModel`:** ~1200 lines, 22 `@Published` properties. Same `@Observable` migration needed.
+*   **`SidebarView`:** ~1450 lines. Should be decomposed into focused child section views.
+
+### Service Coupling
+*   **`MetadataPipelineService`:** Views directly read mutable progress properties (`isProcessingQueue`, `queueTotalCount`, etc.). Should migrate to `AsyncStream`-based event delivery.
+*   **`Services.shared`:** Global singleton accessed from `@MainActor` context. Accesses from `Task.detached` must use `await MainActor.run { Services.shared.someService }`.
+*   **Protocol extraction needed:** `FastVLMEnrichmentService`, `ContextQuestionService`, `AestheticsService`, `IntelligenceProcessor` — extract protocols for testability and dependency injection.
+
+### Performance Debt
+*   **Apple's 100ms hang threshold:** Per Apple's "Improving App Responsiveness" guide, any main-thread delay >100ms is noticeable. Less than half that time is available for app work due to event handling and rendering overhead.
+*   **No cancellation between pipeline stages:** `LocalPipelineService.process()` chains 6 stages sequentially without `Task.isCancelled` checks.
+*   **No `autoreleasepool`** in image processing loops — potential memory pressure during batch operations.
+*   **No caching:** Reverse geocoding, CGImage decoding, and link enrichment repeat work on every call.
+*   **`sortAndFilter` in views:** O(n log n) computed on every render — should cache results.
+
+### Apple Documentation References (via Cupertino CLI)
+*   **`@ModelActor` macro (SwiftData, iOS 17+):** Generates boilerplate for `ModelActor` protocol conformance; creates isolated `ModelContext` for background SwiftData access. Preferred over raw `ModelContext(container)` for actor-based background persistence.
+*   **`DefaultSerialModelExecutor` (SwiftData):** Safely performs storage tasks on an isolated model context. Used internally by `@ModelActor`.
+*   **`@ObservationIgnored` (Observation framework):** Disables observation tracking for specific properties. Use for caches, debug logs, and internal bookkeeping that shouldn't trigger view updates during `@Observable` migration.
+*   **SE-0449 `nonisolated` inference cutoff (Swift 6.1):** Allows `nonisolated` on declarations to prevent global actor inference from protocols/supertypes. Applied when a struct conforming to an `@MainActor` protocol has pure-computation methods that shouldn't require main-thread execution.
+*   **SE-0461 Isolation regions:** Defines sending rules between nonisolated, actor-isolated, and `@concurrent` contexts. Governs how values cross isolation boundaries in `Task.detached` closures.
+

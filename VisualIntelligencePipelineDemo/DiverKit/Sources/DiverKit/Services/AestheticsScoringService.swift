@@ -10,6 +10,8 @@ import UIKit
 /// Service for extracting aesthetically-scored frames from videos.
 /// Uses Apple's Vision framework for ML-based aesthetic scoring,
 /// bundled with FeaturePrint generation in a single handler.perform() per frame.
+/// Safety: @unchecked Sendable is correct — only private `let` constants
+/// (similarityThreshold, framesToEvaluate), no mutable state.
 @available(iOS 17.0, macOS 14.0, *)
 public final class AestheticsScoringService: @unchecked Sendable {
     

@@ -1,7 +1,7 @@
 # Visual Intelligence Pipeline — Project Specification
 
-> **Version:** 1.0  
-> **Last Updated:** 2026-02-17  
+> **Version:** 1.1  
+> **Last Updated:** 2026-02-18  
 > **Platform:** iOS 26.0+  
 > **Bundle ID:** `com.secretatomics.VisualIntelligencePipeline`
 
@@ -49,8 +49,27 @@ VisualIntelligencePipelineDemo/
 | Heavy computation | `Task.detached(priority: .utility)` | ML inference, image analysis, metadata extraction |
 | Background SwiftData | `ModelContext(container)` with `autosaveEnabled = false` | All pipeline/enrichment SwiftData access |
 | UI updates | `@MainActor` | View models, published properties |
+| Progress reporting | `AsyncStream` (SE-0314) | Queue progress, pipeline status events |
 
-> **Critical Rule:** Never use `Task { }` in SwiftUI handlers (`onAppear`, `onChange`, `onReceive`) for pipeline work — it inherits `@MainActor`. Always use `Task.detached(priority: .utility)` with explicit capture lists.
+#### Threading Rules (Apple Documentation Validated)
+
+> **Critical Rule:** Never use `Task { }` in SwiftUI handlers (`onAppear`, `onChange`, `onReceive`) or inside `@MainActor`-annotated types for pipeline work — it inherits `@MainActor` isolation (SE-0466). Always use `Task.detached(priority: .utility)` with explicit capture lists.
+
+**Actor isolation inheritance (SE-0466, Swift 6.2):**
+- `Task { }` inside an `@MainActor` class/method → inherits `@MainActor` isolation
+- `Task.detached { }` → runs on the cooperative thread pool, no actor isolation inherited
+- Inner `Task { }` inside an outer `Task { @MainActor }` → also inherits `@MainActor`
+
+**ML service threading (confirmed via Apple docs):**
+- `LanguageModelSession` (Foundation Models) — `final class`, no actor isolation. Pure `async/await`. Safe to call from any thread.
+- `VisionRequest` (Vision, iOS 18+) — Swift concurrency native. Designed for background execution.
+- `IntelligenceProcessor` — `Sendable`, no actor annotation. Can run on any thread.
+- `FastVLMEnrichmentService` — MLX Swift inference. No `@MainActor` requirement.
+
+**Use `@MainActor` only for:**
+- Updating `@Published` / `@Observable` properties that drive SwiftUI views
+- Accessing UIKit/AppKit objects that require main thread
+- Brief hops via `await MainActor.run { ... }` for 1–2 property assignments
 
 ### 2.3 Data Flow
 
@@ -227,13 +246,13 @@ Provides two serialization outputs:
 
 ### 4.2 ML & Intelligence
 
-| Service | Responsibility |
-|---------|---------------|
-| **IntelligenceProcessor** | Runs 6 Vision requests in a single `executePipeline` pass (OCR, QR, semantic classification, document detection, subject sifting, aesthetics scoring). Also drives on-device LLM (SystemLanguageModel) for concept extraction and summarization. |
-| **FastVLMEnrichmentService** | Apple FastVLM 0.5B via MLX Swift. Single-pass grounded analysis: image + Vision tags + enrichment context → structured output. Prefers sifted (subject-only) image. ~500MB on-demand download, memory-pressure eviction. |
-| **ContextQuestionService** | Apple Foundation Models (`LanguageModelSession`) structured generation via `@Generable` macro. Produces summaries, evidence statements, intent identification, tags. |
-| **FoundationModelsIntentClassifier** | LLM-based intent classification for incoming items. |
-| **AestheticsScoringService** | Wraps `VNCalculateImageAestheticsScoresRequest`. Also bundled into `IntelligenceProcessor.executePipeline`; standalone usage for video frame selection and import scoring. |
+| Service | Isolation | Responsibility |
+|---------|-----------|---------------|
+| **IntelligenceProcessor** | `Sendable`, no actor | Runs 6 Vision requests in a single `executePipeline` pass (OCR, QR, semantic classification, document detection, subject sifting, aesthetics scoring). Also drives on-device LLM for concept extraction and summarization. **Must run off `@MainActor`.** |
+| **FastVLMEnrichmentService** | `@unchecked Sendable` | Apple FastVLM 0.5B via MLX Swift. Single-pass grounded analysis: image + Vision tags + enrichment context → structured output. ~500MB on-demand download, memory-pressure eviction. **Must run off `@MainActor`.** |
+| **ContextQuestionService** | No actor isolation | Apple Foundation Models (`LanguageModelSession`) structured generation via `@Generable` macro. `LanguageModelSession` is a `final class` with no actor annotation — pure `async/await`. **Must run off `@MainActor`.** |
+| **FoundationModelsIntentClassifier** | No actor isolation | LLM-based intent classification for incoming items. |
+| **AestheticsScoringService** | `@unchecked Sendable` | Wraps `VNCalculateImageAestheticsScoresRequest` (Vision, iOS 18+). Vision requests support Swift concurrency natively. **Must run off `@MainActor`.** |
 
 ### 4.3 Location & Places
 
@@ -508,9 +527,12 @@ SwiftData syncs automatically to CloudKit via the `iCloud.com.secretatomics.know
 
 1. **Never compromise data integrity** — No destructive schema changes without a tested migration plan
 2. **Build stability is paramount** — Verify the project builds after any refactoring
-3. **Main thread safety** — Keep pipeline work off `@MainActor`; use `@PipelineActor` or `Task.detached`
-4. **Background ModelContext** — Create via `ModelContext(container)` with `autosaveEnabled = false` for pipeline SwiftData access; never use `mainContext` from background tasks
-5. **Error logging** — Use `do { try } catch { log }` instead of `try?` for all SwiftData saves
+3. **Main thread safety** — Keep pipeline work off `@MainActor`; use `@PipelineActor` or `Task.detached`. `LanguageModelSession`, Vision, and `IntelligenceProcessor` have no actor isolation and must not be called from `@MainActor` task closures.
+4. **Task isolation (SE-0466)** — `Task { }` inside `@MainActor` types inherits main actor isolation. Always use `Task.detached(priority: .utility)` for ML/Vision/LLM work, hopping to `@MainActor` only for UI property updates via `await MainActor.run { }`.
+5. **Background ModelContext** — Create via `ModelContext(container)` with `autosaveEnabled = false` for pipeline SwiftData access; never use `mainContext` from background tasks
+6. **Error logging** — Use `do { try } catch { log }` instead of `try?` for all SwiftData saves
+7. **Autorelease in loops** — Wrap image processing loops (`CGImage`, Vision results) in `autoreleasepool { }` to drain ObjC temporaries. Do not place `await` suspension points inside autoreleasepool blocks.
+8. **AsyncStream factory** — Use `AsyncStream.makeStream(of:)` (SE-0388, Swift 5.9+) instead of closure-based initializer for progress reporting
 
 ### 11.4 Build & Test
 
