@@ -25,6 +25,13 @@
 - **SidebarView**: Removed stale `analyzeSession` function that duplicated `SidebarViewModel.analyzeSession` with unsafe `modelContext`-in-background-Task pattern. Redirected caller to ViewModel.
 - **ContentView (SessionItemsView)**: Removed 3 stale functions (`deleteItem`, `deleteSession`, `analyzeSession`) — all duplicated ViewModel methods with unsafe patterns. Redirected callers to ViewModel's safe versions.
 
+#### FastVLM UI Freeze Fix
+- **FastVLMEnrichmentService**: Memory pressure `unloadModel()` now dispatched to `Task.detached(priority: .background)` — GPU resource deallocation was blocking UI. Model loading (`ensureLoaded()`) moved inside the detached inference task so GPU allocation never blocks the calling thread. Memory pressure dispatch queue changed from `.global()` to `.global(qos: .utility)`.
+- **MetadataPipelineService**: `cancelProcessing()` now dispatches `unloadModel()` to background instead of calling it synchronously on the main thread.
+
+#### Contact Geocode Fallback
+- **ContactService**: When `MKGeocodingRequest` fails for a contact's address (e.g., street doesn't exist in MapKit), falls back to user's current GPS location instead of silently dropping the contact.
+
 ### Xcode MCP Bridge Integration
 - **GEMINI.md**: Added "Xcode MCP Bridge (Xcode 26.3+)" section with setup, environment variables, capabilities table, and usage rules. Updated Apple Documentation Lookup rule to include bridge doc search with WWDC transcript coverage.
 - **AGENTS.md**: Added "Xcode MCP Bridge" subsection under Build, Test, and Development Commands — bridge-first build, test, preview capture, and doc search with CLI fallback.
