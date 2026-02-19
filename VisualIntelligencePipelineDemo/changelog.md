@@ -16,6 +16,15 @@
 - **Stuck queue toast**: Fixed as side effect — the concurrent crash left `isProcessingQueue` permanently true.
 - **Tests**: Added 4 regression tests (`BackgroundSafetyTests`) + 2 architecture guard tests (`ArchitectureTests`) that scan source for `processItemImmediately` calls in ViewModels.
 
+#### Pull-to-Refresh CloudKit Sync
+- **SidebarView**: Enhanced `.refreshable` to call `modelContext.save()` before processing queue, pushing local changes to CloudKit immediately.
+- **SessionItemsView (ContentView)**: Added `.refreshable` with `modelContext.save()` — previously had no pull-to-refresh support.
+- **DiverDataStore**: Documented CloudKit sync behavior — SwiftData handles `NSPersistentHistoryTrackingKey` and remote change notifications internally via `ModelContainer`.
+
+#### Stale View Code Cleanup
+- **SidebarView**: Removed stale `analyzeSession` function that duplicated `SidebarViewModel.analyzeSession` with unsafe `modelContext`-in-background-Task pattern. Redirected caller to ViewModel.
+- **ContentView (SessionItemsView)**: Removed 3 stale functions (`deleteItem`, `deleteSession`, `analyzeSession`) — all duplicated ViewModel methods with unsafe patterns. Redirected callers to ViewModel's safe versions.
+
 ### Xcode MCP Bridge Integration
 - **GEMINI.md**: Added "Xcode MCP Bridge (Xcode 26.3+)" section with setup, environment variables, capabilities table, and usage rules. Updated Apple Documentation Lookup rule to include bridge doc search with WWDC transcript coverage.
 - **AGENTS.md**: Added "Xcode MCP Bridge" subsection under Build, Test, and Development Commands — bridge-first build, test, preview capture, and doc search with CLI fallback.

@@ -33,6 +33,12 @@ public final class DiverDataStore {
     public init(container: ModelContainer) {
         self.container = container
     }
+    
+    // Note: SwiftData + CloudKit sync is automatic when the app's entitlements
+    // include a CloudKit container identifier. NSPersistentHistoryTrackingKey and
+    // remote change notifications are enabled internally by ModelContainer.
+    // @Query views auto-refresh via NSManagedObjectContextObjectsDidChange.
+    // Pull-to-refresh triggers modelContext.save() to push local changes immediately.
 
     public init(types: [any PersistentModel.Type] = DiverDataStore.coreTypes, inMemory: Bool = false, forAppGroup: Bool = true) {
         let schema = Schema(types)

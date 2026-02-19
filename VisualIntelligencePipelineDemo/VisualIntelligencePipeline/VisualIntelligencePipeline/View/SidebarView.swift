@@ -175,7 +175,13 @@ struct SidebarView: View {
         .navigationTitle("Visual Intelligence")
         .searchable(text: $viewModel.searchText, prompt: "Search items...")
         .refreshable {
+            // 1. Push any local changes to CloudKit
+            try? modelContext.save()
+            
+            // 2. Process pending queue items
             await viewModel.refresh()
+            
+            // 3. Refresh Shared with You highlights
             if #available(iOS 16.0, macOS 13.0, *) {
                 sharedWithYouManager.refreshHighlights()
             }
@@ -532,13 +538,7 @@ struct SidebarView: View {
     }
 
     
-    private func analyzeSession(_ session: SessionMetadata) {
-        Task {
-            let localPipeline = LocalPipelineService(modelContext: modelContext)
-            await localPipeline.generateAndSaveSessionSummary(sessionID: session.sessionID)
-            print("✅ Triggered analysis for session: \(session.title ?? session.sessionID)")
-        }
-    }
+
     
     @ViewBuilder
     private var intelligenceSection: some View {
@@ -847,7 +847,7 @@ extension SidebarView {
         }
         
         Button {
-            analyzeSession(session)
+            viewModel.analyzeSession(session, context: modelContext)
         } label: {
             Label("Analyze Session", systemImage: "sparkles")
         }

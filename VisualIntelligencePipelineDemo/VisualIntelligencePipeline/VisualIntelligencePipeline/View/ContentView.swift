@@ -171,7 +171,7 @@ struct SessionItemsView: View {
             Button("Cancel", role: .cancel) { }
             Button("Delete Session", role: .destructive) {
                 if let session = session {
-                    deleteSession(session)
+                    viewModel.deleteSession(session, context: modelContext)
                 }
             }
         } message: {
@@ -222,6 +222,9 @@ struct SessionItemsView: View {
                 }
             }
         }
+        .refreshable {
+            try? modelContext.save()
+        }
     }
     
     // MARK: - Session Actions Menu
@@ -243,7 +246,7 @@ struct SessionItemsView: View {
             }
             
             Button {
-                analyzeSession(session)
+                viewModel.analyzeSession(session, context: modelContext)
             } label: {
                 Label("Analyze Session", systemImage: "sparkles")
             }
@@ -270,32 +273,7 @@ struct SessionItemsView: View {
         return session.createdAt.formatted(date: .abbreviated, time: .shortened)
     }
     
-    private func deleteItem(_ item: ProcessedItem) {
-        modelContext.delete(item)
-        Task { @MainActor in
-            try? modelContext.save()
-        }
-    }
-    
-    private func deleteSession(_ session: SessionMetadata) {
-        // Delete all items in the session
-        for item in sessionItems {
-            modelContext.delete(item)
-        }
-        // Delete the session itself
-        modelContext.delete(session)
-        Task { @MainActor in
-            try? modelContext.save()
-        }
-    }
-    
-    private func analyzeSession(_ session: SessionMetadata) {
-        Task {
-            let localPipeline = LocalPipelineService(modelContext: modelContext)
-            await localPipeline.generateAndSaveSessionSummary(sessionID: session.sessionID)
-            print("✅ Triggered analysis for session: \(session.title ?? session.sessionID)")
-        }
-    }
+
 }
 
 // MARK: - Item Row Button (extracted to fix type-check)
