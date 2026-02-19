@@ -126,7 +126,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
     }
     
     private func startMemoryPressureMonitor() {
-        let source = DispatchSource.makeMemoryPressureSource(eventMask: [.warning, .critical], queue: .global())
+        let source = DispatchSource.makeMemoryPressureSource(eventMask: [.warning, .critical], queue: .global(qos: .utility))
         source.setEventHandler { [weak self] in
             guard let self else { return }
             guard !self.isLoading else {
@@ -138,8 +138,11 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
                 print("⚠️ [FastVLMService] Memory pressure detected but model retained for batch — deferring unload")
                 return
             }
-            print("⚠️ [FastVLMService] Memory pressure detected — unloading model")
-            self.unloadModel()
+            print("⚠️ [FastVLMService] Memory pressure detected — scheduling model unload")
+            // Unload on a detached task to avoid blocking any thread during GPU resource deallocation
+            Task.detached(priority: .background) { [weak self] in
+                self?.unloadModel()
+            }
         }
         source.resume()
         memoryPressureSource = source
@@ -264,12 +267,11 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
         guard Self.isAvailable else { return nil }
         
         #if canImport(MLXVLM) && !targetEnvironment(simulator)
-        let container = try await ensureLoaded()
         isLoading = true
         defer { isLoading = false }
         
-        // Run MLX inference at background priority to avoid starving the main thread.
-        // GPU/CPU-intensive model inference saturates all cores; lowering priority
+        // Run model loading AND inference at background priority to avoid starving the main thread.
+        // GPU/CPU-intensive model loading and inference saturates all cores; lowering priority
         // lets the OS scheduler keep the UI responsive.
         let capturedImage = image
         let capturedTags = visionTags
@@ -280,6 +282,15 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
             // This prevents submitting new Metal command buffers after iOS has invalidated them.
             guard !Task.isCancelled else {
                 print("⏭️ [FastVLM] Skipping inference — task cancelled (app backgrounded)")
+                return nil
+            }
+            
+            // Load model in background — GPU allocation can take 100ms+
+            let container: ModelContainer
+            do {
+                container = try await self.ensureLoaded()
+            } catch {
+                print("❌ [FastVLM] Failed to load model: \(error)")
                 return nil
             }
             

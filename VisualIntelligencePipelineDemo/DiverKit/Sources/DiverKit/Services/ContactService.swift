@@ -274,8 +274,14 @@ public final class ContactService: ContactServiceProvider, @unchecked Sendable {
                     newGeocodeCount += 1
                 }
             } catch {
-                // Skip addresses that fail to geocode
-                DiverLogger.pipeline.debug("Failed to geocode address: \(address.formattedAddress)")
+                // Fallback: use user's current GPS location so the contact still appears
+                if let ref = referenceLocation {
+                    address.location = ref
+                    address.distance = 0
+                    geocodedAddresses.append(address)
+                } else {
+                    DiverLogger.pipeline.debug("Failed to geocode address: \(address.formattedAddress)")
+                }
             }
         }
         

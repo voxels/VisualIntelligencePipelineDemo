@@ -111,9 +111,12 @@ public final class MetadataPipelineService: @unchecked Sendable {
         queueCurrentItemTitle = nil
         queueStatusMessage = nil
         emitProgress(.cancelled)
-        // Unload FastVLM from GPU — Metal buffers are invalidated in background
+        // Unload FastVLM from GPU — dispatched to background to avoid blocking main thread
+        // during GPU resource deallocation. Metal buffers are invalidated in background.
         fastVLMService?.retainModel = false
-        fastVLMService?.unloadModel()
+        Task.detached(priority: .background) { [fastVLMService] in
+            fastVLMService?.unloadModel()
+        }
         print("🛑 [MetadataPipeline] Processing cancelled (app backgrounded)")
     }
 
