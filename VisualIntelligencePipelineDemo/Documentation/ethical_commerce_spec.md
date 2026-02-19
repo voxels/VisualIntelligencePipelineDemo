@@ -1,11 +1,11 @@
 # Ethical Commerce & Micro-Decisions — Technical Specification
 
-> **Draft:** 0.2  
+> **Draft:** 0.3  
 > **Date:** 2026-02-19  
-> **Status:** Pre-implementation research spec  
+> **Status:** In-progress (single PR delivery)  
 > **Parent:** [spec.md](../spec.md) §14  
-> **Client Platforms:** iOS 26.0+, iPadOS 26.0+, visionOS 26.3+  
-> **Edge Node Platforms:** macOS 26.0+ (M-series), iPadOS 26.0+ (M-series)
+> **Client Platforms:** iOS 26.3+, iPadOS 26.3+, visionOS 26.3+  
+> **Edge Node Platforms:** macOS 26.3+ (M-series), iPadOS 26.3+ (M-series)
 
 ---
 
@@ -127,9 +127,9 @@ distributed actor InferenceService {
 
 ## 3. Features
 
-### 3.1 Product Identification & Scoring Overlay
+### 3.1 Product Identification & Multi-Strategy Scoring Overlay
 
-When the user views a physical product (via camera on iPhone/iPad or spatial tracking on Vision Pro), the system identifies it and overlays available sustainability data.
+When the user views a physical product (via camera on iPhone/iPad or spatial tracking on Vision Pro), the system identifies it and overlays scores from **all active scoring strategies simultaneously**.
 
 | Stage | Device | Technology | Latency Target |
 |-------|--------|-----------|---------------|
@@ -137,13 +137,25 @@ When the user views a physical product (via camera on iPhone/iPad or spatial tra
 | Barcode/QR scan | Client | ARKit / Vision framework | <100ms |
 | Product classification | Edge node (or client fallback) | CoreML YOLO/DETR on Neural Engine | <200ms |
 | Entity resolution (barcode → product ID) | Edge node | Local SQLite lookup + API fallback | <100ms |
+| Multi-strategy scoring | Edge node or client | `[ProductScoringStrategy]` array | <500ms total |
 | ESG data retrieval | Edge node | HTTPS API call (cached) | <500ms (cached: <10ms) |
 
+**Scoring Strategies (all active simultaneously):**
+
+| Strategy | Protocol | Dimensions | Source |
+|----------|----------|-----------|--------|
+| **ESG** | `ESGScoringStrategy` | Carbon intensity, data quality, certifications, Eco-Score | Open Food Facts, Climate TRACE |
+| **Brand Fit** | `BrandAlignmentStrategy` | Direct match, category familiarity, preference strength | `UserConcept` knowledge graph |
+| **Value** | `ValueScoringStrategy` | Price trend, forecast confidence, price position | Price APIs, nowcasting |
+| **Durability** | `DurabilityScoringStrategy` | Category longevity, brand durability, repairability, material quality | Category heuristics, EU framework |
+
+Each item carries an array of `ProductScore` — one per strategy. The overlay renders **all scores** with per-dimension breakdowns.
+
 **Overlay Output** (spatial panel on Vision Pro, card overlay on iOS/iPadOS):
+- **Per-strategy scores** with dimension bars (composite badge per strategy)
+- **Timing recommendation** — Buy now / Wait / Neutral (based on economic trends, independent of ethical scores)
 - **Data Quality Tier** (1–5, see §3.5 for PCAF explanation)
-- **Carbon intensity** (company-level, kg CO₂e per revenue unit)
-- **Certification badges** (if available: Carbon Trust, TÜV, EPD)
-- **Confidence indicator** showing data source and freshness
+- **Score summary** — SLM-generated natural language synthesis of all strategy scores
 - **"Buy" CTA** linking to preferred commerce platform (see §3.4)
 
 ### 3.2 Pricing Nowcast Overlay
@@ -159,33 +171,57 @@ When the user views a physical product (via camera on iPhone/iPad or spatial tra
 | **Output** | 14-day price trajectory estimate with confidence interval |
 | **Display** | Sparkline chart + directional indicator ("Trending ↑ 3.2% over 14 days") |
 
-### 3.3 Advisory Decisions (User-Initiated, System-Assisted)
+### 3.3 Advisory Decisions & Timing Recommendations
 
 > [!IMPORTANT]
 > The system surfaces recommendations and a commerce CTA. The user always confirms any action. No purchases are executed without explicit user tap.
 
-**Policy Configuration** (local JSON, stored per-user on edge node):
-```json
-{
-    "maxCarbonIntensity": 50.0,
-    "minDataQualityTier": 3,
-    "inflationTolerance": 5.0,
-    "preferredCertifications": ["Carbon Trust", "EPD"],
-    "preferredPlatforms": ["amazon", "thrive_market", "ebay"],
-    "monthlyBudgetLimit": 500.0
+Advisory decisions have **two independent axes**:
+1. **Strategy scores** — Per-engine recommendation (ESG, brand, value, durability) based on product characteristics
+2. **Timing recommendation** — Buy now / Wait / Neutral based on short-term economic trends (nowcasting), independent of strategy scores
+
+**Timing Outputs (economic trend-based):**
+
+| Output | Trigger | Display |
+|--------|---------|---------|
+| `BUY_NOW` | Prices trending up, high confidence | Green clock + "Prices rising — buy now" |
+| `WAIT` | Prices trending down, high confidence | Orange clock + "Price trending down — consider waiting" |
+| `NEUTRAL` | Stable prices or low confidence | Gray indicator + "Prices stable" |
+
+**Strategy Score Summaries:**
+
+Each scoring engine produces an independent `ProductScore` with an `overallScore` (0.0–1.0). The SLM (`@Generable ProductInsight`) synthesizes all strategy scores into a natural-language summary:
+
+```swift
+@Generable(description: "Per-strategy score summary")
+struct ProductInsight {
+    @Guide(description: "Score summary per strategy engine")
+    var scoreSummaries: [StrategyScoreSummary]
+    
+    @Guide(description: "Overall product assessment")
+    var overallAssessment: String
+    
+    @Guide(description: "Key differentiators")
+    var keyDifferentiators: [String]
+    
+    @Guide(description: "Brand reputation insight if known")
+    var brandInsight: String?
+}
+
+@Generable(description: "Single strategy score summary")
+struct StrategyScoreSummary {
+    @Guide(description: "Strategy name: esg, brand, value, or durability")
+    var strategyName: String
+    
+    @Guide(description: "Human-readable assessment of this score")
+    var assessment: String
+
+    @Guide(description: "Score as percentage string")
+    var scorePercent: String
 }
 ```
 
-**Advisory Outputs:**
-
-| Output | Meaning | Display |
-|--------|---------|---------|
-| `RECOMMEND` | Meets all policy criteria | Green shield + "Buy" CTA |
-| `REVIEW` | Partial match or data gaps | Yellow shield + "Review recommended" |
-| `DELAY` | Nowcast indicates unfavorable pricing | Orange clock + "Price trending down — consider waiting" |
-| `OVER_BUDGET` | Exceeds monthly spending threshold | Red indicator + "Budget alert: $X remaining this month" |
-
-**Implementation:** On-device LLM (MLX Swift, ~3B) on edge node with structured generation. Input: product classification + ESG data + nowcast + financial context. Output: advisory enum + natural-language explanation.
+**Implementation:** On-device SLM (`SystemLanguageModel`) with structured `@Generable` output. Input: multi-strategy `commerceContextString`. Output: per-strategy summaries + timing signal + explanation.
 
 ### 3.4 Commerce Path & Procurement
 
@@ -272,6 +308,132 @@ The **Partnership for Carbon Accounting Financials (PCAF)** defines a 5-tier dat
 
 **Lower tier = higher quality.** Tier 1 data is rare (<5,000 certified products globally). The system defaults to displaying Tier 3–5 data for most products, with an explicit label indicating the estimation method. The HUD never conflates estimated data with verified data.
 
+### 3.7 Scoring Strategy Catalog
+
+Each strategy implements `ProductScoringStrategy` and runs independently. Items carry scores from **all** active strategies simultaneously. Strategies are grouped by domain — each uses free APIs to liberate data that platforms currently hold hostage.
+
+#### Phase 0 (Implemented)
+
+| # | Strategy | API Source | What It Scores | Data Freedom |
+|---|----------|-----------|----------------|--------------|
+| 1 | **ESG** | Open Food Facts, Climate TRACE | Carbon intensity, certifications, Eco-Score | Unlocks sustainability data locked in corporate CSR reports |
+| 2 | **Brand Fit** | UserConcept knowledge graph | Brand match, category familiarity, preference strength | Your brand preferences belong to you, not Amazon/Google |
+| 3 | **Value** | World Bank Commodities, BLS PPI, FRED | Price trend, forecast confidence, price position | Free economic data vs paywalled price trackers |
+| 4 | **Durability** | Category heuristics, EU repairability framework | Longevity, repairability, material quality | Durability data platforms hide to drive repeat purchases |
+
+#### Phase 1a (Free API Strategies)
+
+**Consumer Protection & Safety:**
+
+| # | Strategy | API Source (Free) | What It Scores |
+|---|----------|-------------------|----------------|
+| 5 | **Product Safety** | CPSC Recalls API, FDA openFDA | Active recalls, adverse event reports, safety alerts |
+| 6 | **Chemical Safety** | EWG Skin Deep, ECHA REACH | Ingredient toxicity, carcinogen presence, endocrine disruptors |
+| 7 | **Food Safety** | FDA FSMA, USDA FSIS | Inspection history, import alerts, pathogen risk |
+| 8 | **Allergen Risk** | Open Food Facts ingredients | Allergen cross-contamination, undeclared allergens |
+
+**Nutrition & Health:**
+
+| # | Strategy | API Source (Free) | What It Scores |
+|---|----------|-------------------|----------------|
+| 9 | **Nutrition Quality** | Open Food Facts (Nutri-Score) | Sugar, sodium, fiber, protein density per 100g |
+| 10 | **Ingredient Transparency** | Open Food Facts ingredients | Additive count, E-number classification, ultra-processing |
+| 11 | **HealthKit Alignment** | Apple HealthKit (on-device) | Matches product nutrients against user's dietary goals |
+| 12 | **Glycemic Impact** | Open Food Facts + GI databases | Predicted blood sugar impact from carb/fiber ratio |
+
+**Environmental & Ethical:**
+
+| # | Strategy | API Source (Free) | What It Scores |
+|---|----------|-------------------|----------------|
+| 13 | **Water Footprint** | Water Footprint Network open data | Liters of water per unit across supply chain |
+| 14 | **Deforestation Risk** | Global Forest Watch API | Supply chain deforestation links by commodity/region |
+| 15 | **Labor Rights** | KnowTheChain, US DoL ILAB | Forced labor indicators, supply chain transparency |
+| 16 | **Animal Welfare** | Open Food Facts labels, Certified Humane | Animal testing, cage-free, cruelty-free certifications |
+| 17 | **Packaging Waste** | Open Food Facts packaging | Recyclability, plastic content, packaging-to-product ratio |
+| 18 | **Country of Origin** | UN Comtrade, Open Food Facts | Supply chain transparency, manufacturing origin |
+
+**Financial & Commerce:**
+
+| # | Strategy | API Source (Free) | What It Scores |
+|---|----------|-------------------|----------------|
+| 19 | **Historical Price** | CamelCamelCamel (scrape), Keepa (free tier) | Price vs historical average, sale detection |
+| 20 | **Cross-Platform Price** | Open pricing APIs, web scraping | Same product price comparison across platforms |
+| 21 | **Shrinkflation** | Open Food Facts weight history | Package size reductions with unchanged pricing |
+| 22 | **Subscription Trap** | App Store API, receipt analysis | Hidden recurring charges, free trial conversion rates |
+| 23 | **Warranty Value** | Manufacturer warranty databases | Warranty duration, claim process ratings |
+
+**Social & Reviews (User-Owned Data):**
+
+| # | Strategy | API Source (Free) | What It Scores |
+|---|----------|-------------------|----------------|
+| 24 | **Reddit Sentiment** | Reddit API (free tier) | Product subreddit sentiment, common complaints, praise themes |
+| 25 | **Repair Community** | iFixit API, Reddit r/repair | Repairability guides available, community repair success rate |
+| 26 | **Expert Reviews** | Wirecutter RSS, RTINGS open data | Professional recommendation status, test methodology quality |
+| 27 | **Recall History** | CPSC API, NHTSA API | Previous recalls on this brand/product line |
+
+**Media & Entertainment:**
+
+| # | Strategy | API Source (Free) | What It Scores |
+|---|----------|-------------------|----------------|
+| 28 | **Content Rating** | TMDB, OMDB | Age appropriateness, content warnings |
+| 29 | **Music Ethics** | MusicBrainz, Spotify Web API | Artist royalty transparency, label practices |
+| 30 | **Book Sourcing** | Open Library, ISBNdb | Publisher practices, author compensation model |
+
+**Privacy & Digital Rights:**
+
+| # | Strategy | API Source (Free) | What It Scores |
+|---|----------|-------------------|----------------|
+| 31 | **Data Privacy** | ToS;DR API, Mozilla Privacy Not Included | Data collection practices, tracking, sharing policies |
+| 32 | **IoT Security** | Mozilla IoT guide, CVE databases | Connected device security posture, update frequency |
+| 33 | **Right to Repair** | iFixit scores, EU repairability index | Self-repair difficulty, parts availability, tool requirements |
+
+**Government & Regulatory:**
+
+| # | Strategy | API Source (Free) | What It Scores |
+|---|----------|-------------------|----------------|
+| 34 | **EPA Compliance** | EPA ECHO, TRI | Manufacturer environmental violations, toxic releases |
+| 35 | **Import Safety** | CBP CROSS rulings, FDA Import Alerts | Import detention history, compliance violations |
+| 36 | **Energy Efficiency** | Energy Star API | Energy consumption relative to category standard |
+| 37 | **FTC Enforcement** | FTC Cases API | Deceptive marketing history, consent decrees |
+
+**Location & Context-Aware:**
+
+| # | Strategy | API Source (Free) | What It Scores |
+|---|----------|-------------------|----------------|
+| 38 | **Local Alternative** | Yelp Fusion (free), Google Places | Locally-sourced or locally-made alternatives available |
+| 39 | **Seasonal Alignment** | USDA crop calendars | Produce in/out of season for user's location |
+| 40 | **Carbon Miles** | OpenRouteService + origin data | Transportation emissions from origin to user's location |
+
+> [!NOTE]
+> Each strategy degrades gracefully when its API is unavailable. The overlay shows "Data unavailable" for that dimension rather than fabricating scores. Strategies can be enabled/disabled per user preference.
+
+### 3.8 Ownership & Purchase Tracking
+
+Users build a personal product collection by scanning tags/barcodes of items they own. This creates an **ownership relationship** that:
+- Feeds brand affinity back into the knowledge graph (auto-creates `UserConcept` with `"Brand:"` prefix)
+- Closes the RAG feedback loop (did recommendations lead to purchases?)
+- Syncs across devices via SwiftData + CloudKit
+
+**Ownership Model (`OwnedProduct` — SwiftData `@Model`):**
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `productID` | String | Links to `ProductClassification.productID` or barcode |
+| `productName` | String | Human-readable name |
+| `brand` | String? | Auto-creates `UserConcept` when set |
+| `barcode` | String? | For re-lookup and enrichment |
+| `status` | `OwnershipStatus` | `.owned`, `.considering`, `.returned`, `.wishlisted` |
+| `source` | `OutcomeSource` | `.tagScan`, `.ctaTap`, `.financeKit`, `.manual` |
+| `scoringStrategyIDs` | [String] | Which strategies were active when recommended |
+| `recommendedScore` | Double? | Composite score at recommendation time |
+| `captureItemID` | String? | Links back to originating `ProcessedItem` |
+
+**Acquisition Flows:**
+1. **Tag scan** → Camera captures barcode → pipeline creates `OwnedProduct` with `.tagScan` source
+2. **CTA tap** → User taps "Buy" in overlay → creates with `.considering` status → confirmed later
+3. **FinanceKit match** → Transaction matches pending `.considering` item → upgrades to `.owned`
+4. **Manual** → User marks existing `ProcessedItem` as "I own this"
+
 ---
 
 ## 4. Data Source Assessment
@@ -309,54 +471,52 @@ The **Partnership for Carbon Accounting Financials (PCAF)** defines a 5-tier dat
 
 ---
 
-## 5. Implementation Phases
+## 5. Implementation
 
-### Phase 0: Pure-Swift Proof of Concept (iOS/macOS)
+> [!IMPORTANT]
+> All features ship in a **single PR**. No phased releases — the full scoring pipeline, distributed actors, commerce path, and UI overlay are delivered together.
 
-> **Goal:** Validate detection → enrichment → overlay on existing hardware before investing in distributed actors or visionOS.
-
-| Step | Deliverable |
-|------|-------------|
-| 1 | Convert YOLO model to CoreML via `coremltools`. Run on iPhone/Mac Neural Engine. Measure inference latency. |
-| 2 | Integrate **Open Food Facts** free API — barcode scan → product data + Eco-Score. |
-| 3 | Integrate **Climate TRACE** API — map product category to emissions data by sector. |
-| 4 | SwiftUI overlay on AVFoundation camera feed rendering a score card with ESG data. |
-| 5 | Measure end-to-end latency: camera frame → YOLO → enrichment → overlay. Target: <500ms. |
-
-**Exit criteria:** <500ms end-to-end with real data from at least one ESG source. If >1s, reevaluate model size before proceeding.
-
-### Phase 1: Distributed Actor Edge Node
+### Core Pipeline (Stage ⑦ in `LocalPipelineService`)
 
 | Step | Deliverable |
 |------|-------------|
-| 1 | `VisualIntelligenceActorSystem` conforming to `DistributedActorSystem` — Bonjour + `NWConnection` (reference: TicTacFish `SampleLocalNetworkActorSystem`). |
-| 2 | `distributed actor InferenceService` — CoreML YOLO on Mac NE + existing pipeline Vision analysis offloading. |
-| 3 | `distributed actor NowcastingService` — DFM via Accelerate framework. |
-| 4 | macOS daemon registering Bonjour service + hosting distributed actors. |
-| 5 | iOS/iPadOS client discovering + resolving actors, sending frames, receiving results. |
-| 6 | Fallback path: client detects no edge node → runs on-device (existing behavior). |
+| 1 | `CommerceTypes.swift` (DiverShared) — 11 `Codable & Sendable` types |
+| 2 | `ProductScoringStrategy` protocol — pluggable scoring with 4 implementations |
+| 3 | `ESGScoringStrategy`, `BrandAlignmentStrategy`, `ValueScoringStrategy`, `DurabilityScoringStrategy` |
+| 4 | `ESGEnrichmentService` — Open Food Facts + Climate TRACE, 24h cache |
+| 5 | `ProductRecommendationService` — multi-strategy composite scoring + SLM advisory |
+| 6 | `@Generable` types — `AdvisorySignalOutput` (timing) + `ProductInsight` (score summaries) |
+| 7 | `PipelineContext` commerce fields + `commerceContextString` |
+| 8 | `ProcessedItem.commerceContextData` blob with computed accessor |
+| 9 | Stage ⑦ hooks in both pipeline paths (update + new-item) |
+| 10 | `ProductScoreOverlayView` — strategy-agnostic card with per-strategy dimension bars |
 
-### Phase 2: Data Enrichment & Commerce
-
-| Step | Deliverable |
-|------|-------------|
-| 1 | `ESGEnrichmentService` — Climate TRACE + Open Food Facts + OpenESG. Local cache, 24h TTL. |
-| 2 | `PricingDataService` — World Bank + BLS + FRED. SQLite time-series on edge node. |
-| 3 | `NowcastingEngine` — DFM in Swift via Accelerate (LAPACK wrappers). 14-day projections. |
-| 4 | `CommerceService` — Product-to-affiliate-link routing. Platform ranking by user preference + ethical policy. |
-| 5 | FinanceKit integration — on-device `FinancialSnapshot` from Apple Wallet. |
-| 6 | Plaid integration — OAuth2 flow, bank data cached on edge node. |
-| 7 | All services conform to protocols with mock implementations for testing. |
-
-### Phase 3: visionOS Client & AR HUD
+### Distributed Actors & Edge Node
 
 | Step | Deliverable |
 |------|-------------|
-| 1 | visionOS app target with ARKit (object + barcode tracking). |
-| 2 | `VisualIntelligenceActorSystem` client — resolve Mac edge node via Bonjour. |
-| 3 | RealityKit spatial UI:<br>— Data quality tier badge (color-coded per §3.6)<br>— 14-day price sparkline<br>— Advisory pill ("Recommended" / "Review" / "Consider waiting")<br>— "Buy on [Platform]" CTA |
-| 4 | Spatial anchoring — panels attached to detected product coordinates. |
-| 5 | Enterprise entitlements for higher-frequency object tracking if needed. |
+| 1 | `VisualIntelligenceActorSystem` — Bonjour + `NWConnection` (TLS 1.3, LAN-only) |
+| 2 | `distributed actor InferenceService` — YOLO on Mac NE + pipeline offloading |
+| 3 | `distributed actor NowcastingService` — DFM via Accelerate |
+| 4 | macOS daemon + Bonjour registration |
+| 5 | Client discovery + fallback |
+
+### Data Enrichment & Commerce
+
+| Step | Deliverable |
+|------|-------------|
+| 1 | `PricingDataService` — World Bank + BLS + FRED, SQLite cache |
+| 2 | `NowcastingEngine` — DFM in Swift via Accelerate |
+| 3 | `CommerceService` — affiliate routing filtered by ethical policy |
+| 4 | FinanceKit integration (deferred to post-MVP if needed) |
+
+### visionOS Client & AR HUD
+
+| Step | Deliverable |
+|------|-------------|
+| 1 | visionOS app target with ARKit object + barcode tracking |
+| 2 | RealityKit spatial UI — per-strategy score panels, timing pill, "Buy" CTA |
+| 3 | Spatial anchoring to detected product coordinates |
 
 ---
 

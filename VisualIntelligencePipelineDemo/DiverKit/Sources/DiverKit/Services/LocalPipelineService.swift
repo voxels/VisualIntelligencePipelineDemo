@@ -99,7 +99,9 @@ public final class LocalPipelineService {
 
         indexingService: KnowledgeGraphIndexingService? = nil,
         contextService: (any ContextProcessing)? = nil,
-        fastVLMService: (any FastVLMAnalyzing)? = nil
+        fastVLMService: (any FastVLMAnalyzing)? = nil,
+        scoringStrategies: [any ProductScoringStrategy] = [],
+        recommender: (any ProductRecommending)? = nil
     ) async throws -> ProcessedItem {
         let resolvedId = descriptor?.id ?? resolveId(for: input)
 
@@ -502,6 +504,16 @@ public final class LocalPipelineService {
                 }
             }
             
+            // Stage ⑦: Commerce Intelligence (opt-in, all active strategies)
+            if !scoringStrategies.isEmpty {
+                await self.performCommerceEnrichment(
+                    for: existing,
+                    pipelineContext: &localPipelineContext,
+                    scoringStrategies: scoringStrategies,
+                    recommender: recommender
+                )
+            }
+            
             // Extract high-level concepts (User Request: "reprocess button should run analyze context")
             if existing.webContext?.textContent != nil {
                 await self.extractConcepts(from: existing)
@@ -767,6 +779,17 @@ public final class LocalPipelineService {
                 print("📝 [FastVLM] Item \(processed.id) — statements: \(analysis.statements)")
             }
         }
+        
+        // Stage ⑦: Commerce Intelligence (opt-in, all active strategies)
+        if !scoringStrategies.isEmpty {
+            await performCommerceEnrichment(
+                for: processed,
+                pipelineContext: &pipelineContext,
+                scoringStrategies: scoringStrategies,
+                recommender: recommender
+            )
+        }
+        
         // Trigger live UI update
         do { try modelContext.save() } catch { DiverLogger.pipeline.error("Save failed (reprocess): \(error)") }
         
@@ -1846,6 +1869,218 @@ public final class LocalPipelineService {
         
         // If title is currently nil or date-based, try to set a better one based on the master item?
         // For now, we leave title management to the user or later inference.
+    }
+
+    // MARK: - Stage ⑦: Commerce Intelligence
+    
+    /// Performs opt-in commerce enrichment: product classification → multi-strategy scoring → recommendations.
+    /// Runs ALL passed strategies, collecting independent `ProductScore` per engine.
+    /// Brand affinity is used as the primary weight for composite recommendation ranking.
+    private func performCommerceEnrichment(
+        for item: ProcessedItem,
+        pipelineContext: inout PipelineContext,
+        scoringStrategies: [any ProductScoringStrategy],
+        recommender: (any ProductRecommending)?
+    ) async {
+        // Step 1: Determine product classification from available context
+        let classification: ProductClassification?
+        
+        if let barcode = pipelineContext.qrPayloads.first(where: { isBarcode($0) }) {
+            classification = ProductClassification(
+                productID: barcode,
+                name: item.title ?? "Unknown Product",
+                category: inferCategory(from: item),
+                brand: extractBrand(from: item),
+                barcode: barcode,
+                confidence: 0.9
+            )
+        } else if !pipelineContext.productConcepts.isEmpty {
+            let primaryConcept = pipelineContext.productConcepts.first ?? "product"
+            classification = ProductClassification(
+                productID: UUID().uuidString,
+                name: item.title ?? primaryConcept,
+                category: inferCategory(from: item),
+                brand: extractBrand(from: item),
+                barcode: nil,
+                confidence: 0.6
+            )
+        } else if item.categories.contains("product") || item.productMetadata != nil {
+            classification = ProductClassification(
+                productID: item.id,
+                name: item.title ?? "Detected Product",
+                category: inferCategory(from: item),
+                brand: extractBrand(from: item),
+                barcode: nil,
+                confidence: 0.4
+            )
+        } else {
+            return // No product detected
+        }
+        
+        guard let classification else { return }
+        pipelineContext.productClassification = classification
+        
+        // Step 1b: Auto-create ownership record for barcode scans
+        // Only creates for high-confidence detections (barcodes) to avoid noise
+        if classification.barcode != nil {
+            let owned = OwnedProduct(
+                productID: classification.productID,
+                productName: classification.name,
+                brand: classification.brand,
+                category: classification.category,
+                barcode: classification.barcode,
+                source: .tagScan,
+                scoringStrategyIDs: scoringStrategies.map(\.strategyID),
+                captureItemID: item.id
+            )
+            modelContext.insert(owned)
+        }
+        
+        // Step 1c: Auto-create brand UserConcept for brand tracking
+        if let brand = classification.brand, !brand.isEmpty {
+            let brandFetch = FetchDescriptor<UserConcept>(
+                predicate: #Predicate { $0.name == brand }
+            )
+            let existing = try? modelContext.fetch(brandFetch)
+            if let concept = existing?.first {
+                // Increment weight for known brands
+                concept.weight += 1.0
+            } else {
+                // Create new brand concept
+                let concept = UserConcept(
+                    name: brand,
+                    definition: "Brand: \(brand) — auto-detected from product scan",
+                    weight: 1.0
+                )
+                modelContext.insert(concept)
+            }
+        }
+        
+        // Step 2: Fetch enrichment data once (shared across strategies that need it)
+        let esgService = ESGEnrichmentService()
+        let esgEnrichment: ESGEnrichment?
+        if let barcode = classification.barcode {
+            esgEnrichment = try? await esgService.enrich(barcode: barcode)
+        } else {
+            esgEnrichment = try? await esgService.enrich(category: classification.category)
+        }
+        
+        // Step 3: Score with ALL active strategies
+        var allScores: [ProductScore] = []
+        let strategyNames = scoringStrategies.map(\.displayName)
+        
+        for strategy in scoringStrategies {
+            // Each strategy gets appropriate enrichment data
+            let enrichment: (any Sendable)?
+            switch strategy.strategyID {
+            case "esg": enrichment = esgEnrichment
+            case "value": enrichment = pipelineContext.priceTrend
+            default: enrichment = nil
+            }
+            
+            if let score = try? await strategy.score(classification, enrichment: enrichment) {
+                allScores.append(score)
+            }
+        }
+        
+        pipelineContext.productScores = allScores
+        
+        // Step 4: Derive preference weights from ownership history
+        let ownedFetch = FetchDescriptor<OwnedProduct>()
+        let ownedProducts = (try? modelContext.fetch(ownedFetch)) ?? []
+        let scoringHistory = PreferenceLearner.fetchScoringHistory(
+            ownedProducts: ownedProducts,
+            modelContext: modelContext
+        )
+        let learnedWeights = PreferenceLearner.deriveWeights(
+            from: ownedProducts,
+            allScores: scoringHistory
+        )
+        
+        // Step 5: Generate recommendations using learned weights
+        if let recommender, let primaryStrategy = scoringStrategies.first {
+            let brandAffinities = fetchBrandAffinities()
+            let recommendations = try? await recommender.recommend(
+                for: classification,
+                using: primaryStrategy,
+                brandAffinities: brandAffinities,
+                priceTrend: pipelineContext.priceTrend,
+                strategyWeights: learnedWeights
+            )
+            
+            if let recommendations, !recommendations.isEmpty {
+                pipelineContext.recommendations = recommendations
+                item.commerceContext = recommendations
+                item.processingLog.append("\(Date().formatted()): Stage ⑦: Scored by \(strategyNames.joined(separator: ", ")), \(recommendations.count) rec(s)")
+                DiverLogger.pipeline.info("🛒 Commerce: \(allScores.count) strategy scores, weights=\(learnedWeights), \(recommendations.count) rec(s) for \(classification.name)")
+            }
+        }
+        
+        // Step 6: Record historical snapshot for time-series charts
+        let snapshot = ScoreSnapshot(
+            productID: classification.productID,
+            productName: classification.name,
+            brand: classification.brand,
+            category: classification.category,
+            strategyScores: allScores.map { score in
+                StrategyScoreEntry(
+                    strategyID: score.strategyID,
+                    displayName: scoringStrategies.first { $0.strategyID == score.strategyID }?.displayName ?? score.strategyID,
+                    score: score.overallScore
+                )
+            },
+            price: pipelineContext.recommendations.first.map { Double(truncating: $0.option.price as NSDecimalNumber) },
+            currency: pipelineContext.recommendations.first?.option.currency,
+            quantity: esgEnrichment?.quantity,
+            compositeScore: pipelineContext.recommendations.first.map { Double($0.compositeScore) },
+            preferenceWeights: learnedWeights,
+            source: esgEnrichment?.source
+        )
+        modelContext.insert(snapshot)
+        DiverLogger.pipeline.info("📊 Snapshot recorded for \(classification.name) (\(allScores.count) strategies)")
+    }
+    
+    // MARK: - Commerce Helpers
+    
+    private func isBarcode(_ payload: String) -> Bool {
+        // EAN-13, UPC-A, or other barcode formats (all digits, 8-14 chars)
+        let digits = payload.filter(\.isNumber)
+        return digits.count >= 8 && digits.count <= 14 && digits.count == payload.count
+    }
+    
+    private func inferCategory(from item: ProcessedItem) -> String {
+        // Derive category from existing item classification
+        if item.categories.contains("food") { return "food" }
+        if item.categories.contains("electronics") { return "electronics" }
+        if item.categories.contains("clothing") { return "clothing" }
+        if item.categories.contains("product") { return "general" }
+        return item.categories.first ?? "general"
+    }
+    
+    private func extractBrand(from item: ProcessedItem) -> String? {
+        // Extract brand from product metadata or tags
+        if let metadata = item.productMetadata, !metadata.isEmpty {
+            return metadata.components(separatedBy: " ").first
+        }
+        return nil
+    }
+    
+    private func fetchBrandAffinities() -> [BrandProfile] {
+        // Fetch UserConcepts that represent brands (definition starts with "Brand:")
+        // This avoids a SwiftData schema change — brand concepts are identified by convention
+        let fetch = FetchDescriptor<UserConcept>()
+        guard let concepts = try? modelContext.fetch(fetch) else { return [] }
+        
+        return concepts
+            .filter { $0.definition.hasPrefix("Brand:") }
+            .map { concept in
+                BrandProfile(
+                    name: concept.name,
+                    category: nil,
+                    userAffinity: Float(min(concept.weight / 5.0, 1.0)), // Normalize weight to 0-1
+                    productCount: Int(concept.weight)
+                )
+            }
     }
 
     private func performLLMAnalysis(for item: ProcessedItem, descriptor: DiverItemDescriptor?, pipelineContext: PipelineContext) async {

@@ -73,6 +73,8 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
     public var documentContextData: Data?
     public var qrContextData: Data?
     public var fastVLMAnalysisData: Data?
+    /// Commerce intelligence: ranked recommendations from scoring + RAG pipeline
+    public var commerceContextData: Data?
     public var questions: [String] = [] 
     
     // Computed Accessors
@@ -109,6 +111,11 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
     public var fastVLMAnalysis: FastVLMAnalysis? {
         get { decode(fastVLMAnalysisData) }
         set { fastVLMAnalysisData = encode(newValue) }
+    }
+    
+    public var commerceContext: [RankedRecommendation]? {
+        get { decode(commerceContextData) }
+        set { commerceContextData = encode(newValue) }
     }
     
     private func decode<T: Codable>(_ data: Data?) -> T? {

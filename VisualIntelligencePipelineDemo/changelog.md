@@ -2,6 +2,89 @@
 
 ## 2026-02-19
 
+### Commerce Intelligence (Spec v2)
+
+#### Multi-Strategy Scoring Architecture
+- **7 scoring engines** run simultaneously per item: Ethics (ESG + 10 sub-dimensions), Brand Fit, Value, Durability, Social Proof, Health Fit, Total Cost.
+- **ESGScoringStrategy** expanded into full Ethics engine — bundles carbon intensity, data quality, certifications, Eco-Score, plus Phase 1a sub-dimensions (product safety, nutrition quality, packaging waste, data privacy, EPA compliance, energy efficiency).
+- **BrandAlignmentStrategy**: Scores by brand match, category familiarity, preference strength from `UserConcept` knowledge graph.
+- **ValueScoringStrategy**: Price trend direction, forecast confidence, price positioning.
+- **DurabilityScoringStrategy**: Category longevity, brand durability, repairability (EU framework), material quality.
+- **SocialProofScoringStrategy**: Reddit sentiment, expert review consensus, complaint/recall history, community repairability (iFixit), demand signals.
+- **HealthFitScoringStrategy**: Nutritional alignment (HealthKit), allergen safety, dietary compliance, NOVA ultra-processing detection. Non-food products get neutral pass-through.
+- **TotalCostScoringStrategy**: Energy cost (Energy Star), consumables, subscription fees, replacement cycle, resale value. Category-aware lifespan estimation.
+
+#### Open Product Database Cascade
+- **ESGEnrichmentService** cascades 4 free databases (no API key required): Open Food Facts (3M+ food) → Open Beauty Facts (cosmetics) → Open Pet Food Facts → Open Products Facts.
+- All share same API pattern (`/api/v2/product/{barcode}.json`). User-Agent header set per API guidelines.
+- **ESGEnrichment expanded** with 12 text fields: `ingredientsText`, `allergens`, `traces`, `origins`, `manufacturingPlaces`, `novaGroup`, `nutriScore`, `nutriments` (9 nutrition facts), `packagingText`, `quantity`, `genericName`, `countriesSold`, `stores`.
+- **`contextSummary` computed property** — builds SLM-ready text summary from all populated fields for richer product insights.
+
+#### Preference Learning & Ownership
+- **PreferenceLearner**: Derives per-strategy weights from `OwnedProduct` history. Squaring amplification, 5% floor per strategy, normalized to 1.0. Default equal weights across all 7 engines.
+- **OutcomeSource.shared**: New acquisition source — sharing a product with a contact is treated as strongest endorsement (1.5× weight boost in `PreferenceLearner`).
+- **`ProductRecommending` protocol** updated: accepts `strategyWeights: [String: Float]` for personalized composite scoring.
+
+#### Score History & Charts
+- **ScoreSnapshot** SwiftData `@Model` — records per-strategy scores, price, quantity, composite score, and preference weights at each pipeline run. Syncs via CloudKit.
+- **StrategyScoreEntry** — lightweight `Codable` struct for chart data points, moved to `DiverShared` for cross-module testability.
+- Pipeline `performCommerceEnrichment` auto-records a `ScoreSnapshot` after every scoring pass.
+
+#### Ownership & Purchase Tracking
+- **OwnedProduct** SwiftData `@Model` — syncs via CloudKit across devices. Records product ownership from tag scans, CTA taps, FinanceKit matches, manual marking, or sharing.
+- **PurchaseOutcome** type — captures scoring context at recommendation time for RAG validation feedback loop.
+- **Auto-create brand UserConcept** — pipeline auto-creates `UserConcept` with "Brand:" prefix when brand detected in product scan, incrementing weight for known brands.
+
+#### Core Types & Services
+- **CommerceTypes.swift** (DiverShared): 16 `Codable & Sendable` types including `PurchaseOutcome`, `OwnershipStatus`, `OutcomeSource`, `StrategyScoreEntry`.
+- **ProductScoringStrategy** protocol with `ProductRecommending`, `ESGEnriching` protocol suite.
+- **ProductRecommendationService**: Multi-strategy composite scoring + SLM advisory with learned preference weights.
+- **CommerceGenerable.swift**: `@Generable` types — `AdvisorySignalOutput` (timing), `ProductInsight` (per-strategy summaries), `StrategyScoreSummary`.
+- **Pipeline Stage ⑦**: 6-step enrichment (classify → enrich → score → learn → recommend → snapshot).
+- **ProductScoreOverlayView**: 7-engine tab UI with timing pill and "I Own This" button.
+- **CommerceTypesTests**: 11 Swift Testing tests covering all type encoding/decoding.
+- **CommerceV2Tests**: 18 Swift Testing tests covering ESGEnrichment text expansion, StrategyScoreEntry, OutcomeSource edge cases.
+- **ethical_commerce_spec.md** v0.3: 40-strategy catalog (§3.7), ownership tracking (§3.8), single-PR delivery.
+- **Xcode MCP bridge**: Configured in `mcp_config.json` alongside Cupertino CLI.
+
+#### Saliency Analysis (Vision Pipeline)
+- **IntelligenceProcessor**: Added `VNGenerateAttentionBasedSaliencyImageRequest` as 7th Vision request in fullAnalysis mode. Extracts heatmap data and salient region bounding boxes.
+- **IntelligenceResult.saliency**: New enum case wrapping `SaliencyResult` with heatmap width/height/values and normalized regions.
+- Exhaustive switch updates in `verify()` and `DiverQueueItem+Intelligence`.
+
+#### Edge Computing Types & Protocols
+- **EdgeTypes.swift**: 7 Codable types — `EdgeNodeInfo`, `VisionAnalysisResult`, `SaliencyResult`, `NormalizedRect`, `LLMAnalysisResult`, `EdgeNodeStatus`, `ModelStatus`/`ModelState`.
+- **ServiceProtocols.swift**: +3 protocols — `EdgeNodeDiscovering` (Bonjour node discovery), `CommerceRouting` (affiliate-enabled ethical platform ranking), `PriceNowcasting` (commodity price trajectory).
+- **CommerceTypes.swift**: +`EthicalPolicy` (carbon threshold, certifications, labor violations), `PlatformMatch` (ethical match score + affiliate URL).
+
+#### Government Data APIs
+- **GovernmentDataService**: Queries 4 free US gov APIs in parallel — CPSC recalls (`saferproducts.gov`), FDA openFDA enforcement, EPA ECHO facility compliance, Energy Star product database. No auth required.
+- **ESGScoringStrategy**: Live data wiring — safety uses CPSC/FDA recall counts, EPA compliance uses violation data, energy efficiency uses Energy Star certification. Graceful fallback to heuristics.
+- **SocialProofScoringStrategy**: Complaint History dimension uses live CPSC/FDA data when available.
+
+#### Commerce Data Services
+- **APIKeyService**: iOS Keychain + iCloud Keychain sync for Foursquare, Reddit, iFixit API keys.
+- **OpenESGService**: B Corp directory lookup, company-level ESG profiles.
+- **PricingDataService**: World Bank Commodities + BLS PPI data. Conforms to `PriceNowcasting`.
+- **NowcastingEngine**: Dynamic Factor Model via Accelerate vDSP — linear regression slope, weighted composite momentum, agreement-based confidence.
+- **AffiliateRoutingService**: 5 platforms (Thrive Market, Target, Amazon, Best Buy, eBay) with ethical profiles (carbon, labor, certifications). Conforms to `CommerceRouting`.
+
+#### Edge Computing Infrastructure
+- **VisualIntelligenceActorSystem**: Full `DistributedActorSystem` — `EdgeActorID`, `EdgeInvocationEncoder`/`Decoder`, `EdgeResultHandler`, `EdgeTransportProtocol`.
+- **BonjourDiscoveryService**: NWBrowser actor scanning `_visualintel._tcp`. TXT record parsing for chip family, neural engine TOPS, available models. Conforms to `EdgeNodeDiscovering`.
+- **NWTransportLayer**: TLS 1.3 via Network framework. `OSAllocatedUnfairLock` connection pool, length-prefixed framing, 50MB response limit. Conforms to `EdgeTransportProtocol`.
+- **EdgeNodeService**: 5 distributed actors (Inference, Nowcasting, Commerce, ESG, Financial) + `PipelineEdgeRouter` with TOPS-based routing and local fallback.
+
+#### Commerce UI Views
+- **OwnershipButton**: "I Own This" / "I Want This" / Considering / Returned toggle with spring animations and symbol effects.
+- **OwnedProductsView**: Brand-grouped product list with overview stats (total, brands, wishlist).
+- **ScoreHistoryChartView**: Swift Charts time-series with LineMark + AreaMark gradient, per-strategy colors.
+- **NowcastChartView**: Price trajectory with trend direction pill (Rising/Falling/Stable), confidence gauge.
+- **CommerceActionView**: Ethically-ranked platform CTAs with match score badges and affiliate deep links.
+- **EthicalPolicyConfigView**: Carbon threshold slider, labor violation toggle, certification multi-select, drag-to-reorder platform ranking.
+- **APIKeyConfigView**: Keychain API key management with iCloud sync, per-key status indicators.
+
+
 ### Crash Fixes
 
 #### WKWebView EXC_GUARD Fix

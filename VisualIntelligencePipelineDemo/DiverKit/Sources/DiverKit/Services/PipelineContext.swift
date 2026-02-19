@@ -62,6 +62,17 @@ public struct PipelineContext: Sendable, Codable {
     /// Weighted context entries from Know Maps vector space
     public var knowledgeGraphContext: [WeightedEntry] = []
     
+    // MARK: - Commerce Intelligence (Stage ⑦)
+    
+    /// Product identified via barcode, visual detection, or entity resolution
+    public var productClassification: ProductClassification?
+    /// Scores from the active ProductScoringStrategy (ESG, quality, value, etc.)
+    public var productScores: [ProductScore] = []
+    /// Economic trend data for buy/wait signal
+    public var priceTrend: PriceTrajectory?
+    /// Ranked product recommendations from RAG against platforms
+    public var recommendations: [RankedRecommendation] = []
+    
     
     // MARK: - Context Output
     
@@ -196,6 +207,37 @@ public struct PipelineContext: Sendable, Codable {
             }
             let joined = entries.joined(separator: "\n")
             parts.append("User Context/History:\n\(String(joined.prefix(600)))")
+        }
+        
+        return parts.joined(separator: "\n")
+    }
+    
+    /// Commerce-specific context string for the SLM advisory engine.
+    /// Contains product classification, scoring dimensions, brand info, and economic trends.
+    public var commerceContextString: String? {
+        guard productClassification != nil || !productScores.isEmpty || priceTrend != nil else {
+            return nil
+        }
+        
+        var parts: [String] = []
+        
+        if let product = productClassification {
+            parts.append("Product: \(product.name) (Category: \(product.category))")
+            if let brand = product.brand { parts.append("Brand: \(brand)") }
+            if let barcode = product.barcode { parts.append("Barcode: \(barcode)") }
+            parts.append("Classification Confidence: \(String(format: "%.0f%%", product.confidence * 100))")
+        }
+        
+        for score in productScores {
+            parts.append("Scoring Strategy [\(score.strategyID)]: \(String(format: "%.0f%%", score.overallScore * 100))")
+            for dim in score.dimensions {
+                parts.append("  - \(dim.name): \(String(format: "%.0f%%", dim.score * 100)) (\(dim.explanation))")
+            }
+        }
+        
+        if let trend = priceTrend {
+            parts.append("Price Trend (\(trend.horizonDays)-day): \(trend.projectedDirection.rawValue)")
+            parts.append("Trend Confidence: \(String(format: "%.0f%%", trend.confidenceInterval * 100))")
         }
         
         return parts.joined(separator: "\n")

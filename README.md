@@ -1,13 +1,13 @@
 # Visual Intelligence Pipeline
 
-**Visual Intelligence Pipeline** transforms the way you capture, organize, and understand the world around you. It combines real-time camera intelligence, rich contextual enrichment, and AI-powered semantic understanding into a single, elegant iOS experience. It also serves as a universal hub for saving and organizing links shared from Safari, TikTok, YouTube, and any app with a share sheet.
+**Visual Intelligence Pipeline** transforms the way you capture, organize, and understand the world around you. It combines real-time camera intelligence, rich contextual enrichment, AI-powered semantic understanding, and **ethical commerce intelligence** into a single, elegant multi-platform experience. It also serves as a universal hub for saving and organizing links shared from Safari, TikTok, YouTube, and any app with a share sheet.
 
-Point your camera at anything — a product on a shelf, a restaurant sign, a document, a landmark — and Visual Intelligence instantly identifies it, enriches it with contextual metadata, and organizes it into an intelligent, searchable library.
+Point your camera at anything — a product on a shelf, a restaurant sign, a document, a landmark — and Visual Intelligence instantly identifies it, enriches it with contextual metadata, scores it across ethical and economic dimensions, and organizes it into an intelligent, searchable library. An optional **M-series Mac edge node** on your home network offloads heavy ML inference for faster processing and larger models.
 
 ## Core Features
 
 ### Intelligent Sifting
-Uses Apple's Vision framework (`VNGeneratePersonInstanceMaskRequest`) to automatically detect and isolate subjects in captures. Subjects are "sifted" out from the background, producing clean cutouts with proper alpha channels — ready for sharing or further analysis. A real-time glow overlay highlights detected subjects during the camera preview.
+Uses Apple's Vision framework (`VNGenerateForegroundInstanceMaskRequest`) to automatically detect and isolate subjects in captures. Subjects are "sifted" out from the background, producing clean cutouts with proper alpha channels — ready for sharing or further analysis. A real-time glow overlay highlights detected subjects during the camera preview.
 
 ### Deep Contextual Enrichment
 Every capture is automatically enriched with layers of real-world context:
@@ -29,6 +29,21 @@ A built-in **Rebuild Library** tool (Settings > Rebuild Library) repairs orphane
 ### Context Tags & Daily Focus
 Add custom context tags (e.g., "Gift for Mom," "Home renovation ideas") to any capture. A **Daily Focus** summary aggregates the day's activity into an AI-generated brief.
 
+### Commerce Intelligence
+Products detected via barcode or visual classification are automatically scored across **7 strategies simultaneously**: Ethics (ESG + 10 sub-dimensions), Brand Fit, Value, Durability, Social Proof, Health Fit, and Total Cost of Ownership. Score data from free, open databases (Open Food Facts, Climate TRACE, gov APIs) — no paid API keys required.
+
+- **Score History** — Swift Charts visualize how product scores, prices, and your preference profile evolve over time via `ScoreSnapshot` time-series.
+- **Preference Learning** — `PreferenceLearner` derives per-strategy weights from your owned product history. Products you share with friends get 1.5× endorsement weight.
+- **"I Own This" / "I Want This"** — Track products across ownership states: owned, wishlisted, considering, or returned. All states feed the preference model.
+- **SLM Advisory** — On-device Apple Intelligence generates Buy Now / Wait / Neutral timing recommendations using enriched product context.
+
+### Edge Computing (Home Network ML Offloading)
+Any device on your home network can offload ML inference to a more powerful M-series Mac or iPad via **Swift Distributed Actors** over Bonjour. The edge node hosts larger models (FastVLM 3B+), runs nowcasting projections, and handles ESG/commerce data enrichment — while your iPhone stays responsive.
+
+- **Automatic discovery** — Bonjour-based (`_visualintel._tcp`) with TLS 1.3 transport
+- **Transparent fallback** — If no edge node is reachable, all inference runs locally on-device
+- **macOS Edge Daemon** — Standalone menu-bar app with dashboard showing connected clients, model status, inference throughput, and data cache health
+
 ### Universal Link Organization & Deep Linking
 Save links from Safari, YouTube, TikTok, or any app via the Share Sheet extension. Links are wrapped in a proprietary format (HMAC-signed, tamper-proof URLs via `DiverLinkWrapper`) and processed through the enrichment pipeline for automatic metadata extraction. The app supports both Universal Links (`https://secretatomics.com/...`) and custom scheme links (`secretatomics://...`) for deep linking. Shared links appear in Apple's **Shared with You** section via `SharedWithYouManager`.
 
@@ -42,12 +57,13 @@ The project is modularized using Swift Package Manager:
 | Module | Purpose |
 |--------|---------|
 | `VisualIntelligencePipeline/` | Main application target and UI |
-| `DiverKit/` | Core logic — ML pipeline, 36 services, 4 protocols, view models, models, storage |
+| `DiverKit/` | Core logic — ML pipeline, 46+ services, 7 protocols, view models, models, storage |
 | `DiverShared/` | Pure Swift shared data models and utilities |
 | `ActionExtension/` | Share Sheet extension for link ingestion |
 | `VisualIntelligencePipelineWidget/` | Home & Lock screen widgets |
+| `VisualIntelligenceEdge/` | macOS edge node daemon (menu bar app) |
 
-**Key Technologies:** Swift, SwiftUI, SwiftData + CloudKit, Vision, Foundation Models, MLX Swift, MapKit
+**Key Technologies:** Swift, SwiftUI, SwiftData + CloudKit, Vision, Foundation Models, MLX Swift, MapKit, Swift Charts, Swift Distributed Actors, Network framework
 
 ## Machine Learning Pipeline Architecture
 
@@ -90,6 +106,14 @@ Camera Frame
 └──────────────┬──────────────────────┘
                │
                ▼
+┌─────────────────────────────────────┐
+│  Stage 5: Commerce Intelligence     │
+│  7 scoring strategies + ESG         │
+│  enrichment + preference learning   │
+│  + SLM advisory (Buy/Wait/Neutral)  │
+└──────────────┬──────────────────────┘
+               │
+               ▼
          ProcessedItem
       (SwiftData + CloudKit)
 ```
@@ -102,7 +126,7 @@ Runs 6 Apple Vision requests in a **single pass** on the captured image:
 
 | Request | Output | Maps To |
 |---|---|---|
-| `VNGeneratePersonInstanceMaskRequest` | Foreground mask | `.siftedSubject` → peel/glow overlay |
+| `VNGenerateForegroundInstanceMaskRequest` | Foreground mask | `.siftedSubject` → peel/glow overlay |
 | `VNDetectBarcodesRequest` | QR codes, UPC/EAN | `.qr` / `.product` → child items |
 | `VNRecognizeTextRequest` (.accurate) | OCR text | `.text` → full-text search |
 | `VNClassifyImageRequest` | Semantic labels | `.semantic` → style tags |
@@ -137,7 +161,10 @@ Each enrichment service populates a typed field on `PipelineContext`. Downstream
 
 An **opt-in** multimodal vision-language model running locally via [MLX Swift](https://github.com/ml-explore/mlx-swift).
 
-- **Model:** `mlx-community/FastVLM-0.5B-bf16` (~500MB, downloaded on-demand)
+- **Model tiers** (device-dependent):
+  - **iPhone/iPad (on-device):** `mlx-community/FastVLM-0.5B-bf16` (~500MB, downloaded on-demand)
+  - **M-series Edge Node (offloaded):** FastVLM 3B+ via MLX Swift (~2GB, managed by Edge Model Manager)
+  - **Fallback:** On-device 0.5B when no edge node available
 - **Two-pass analysis:**
   1. **Image analysis** — VLM describes the image content (objects, text, activities)
   2. **Context synthesis** — VLM reads `PipelineContext.enrichmentContextString` + transcription to generate structured output
@@ -153,11 +180,12 @@ An **opt-in** multimodal vision-language model running locally via [MLX Swift](h
 Uses Apple Intelligence (`FoundationModels.LanguageModelSession`) for on-device structured generation.
 
 - **Input:** `EnrichmentData` with all context (title, OCR, location, weather, place, web, document, QR, knowledge graph)
-- **Output:** Structured `ContextAnalysis` (via `@Generable` macro):
+- **Output:** Structured `ContextAnalysis` (via `@Generable` macro, defined inline in `ContextQuestionService.swift`):
   - `summary` — concise activity summary
   - `visualStatements` + `locationStatements` — evidence-based statements
   - `purpose` — user intent
   - `tags` — descriptive labels
+- **Commerce output:** Separate `@Generable` types in `CommerceGenerable.swift`: `AdvisorySignalOutput` (timing), `StrategyScoreSummary` (multi-engine), `ProductInsight`
 - **Context chaining:** If input exceeds 3,500 chars, buffers and chains summaries to stay within token limits
 - **Fallback:** Returns `descriptionText` if SystemLanguageModel unavailable (< iOS 26)
 
@@ -171,6 +199,7 @@ Scores image quality for thumbnail selection and context weighting. As of v1.1, 
 
 - **Primary:** `VNCalculateImageAestheticsScoresRequest` (bundled into Stage 1 Vision pass)
 - **Secondary metrics:** Brightness (luminance deviation from 0.5), Contrast (luminance std dev), Sharpness (edge detection)
+- **Planned:** Saliency analysis (`VNGenerateAttentionBasedSaliencyImageRequest`) for subject importance weighting and smart crop suggestions
 - **Video support:** `AestheticsScoringService` samples up to 100 frames, scores each, deduplicates via `VNFeaturePrintObservation` similarity, returns top N diverse frames
 - **Output:** `aestheticsScore` (0.0–1.0) stored on `ProcessedItem` via `IntelligenceResult.aesthetics`
 
@@ -188,13 +217,16 @@ Scores image quality for thumbnail selection and context weighting. As of v1.1, 
 4. **Enrichment** — Location, web, music services populate `PipelineContext`
 5. **QR Enrichment** — QR URLs discovered in Stage 1 get full web enrichment (title, summary, metadata)
 6. **FastVLM** — If enabled, `FastVLMEnrichmentService.analyze()` adds multimodal context
-7. **LLM** — `ContextQuestionService.processContext()` generates summary, tags, purpose
-8. **Persist** — All results written to `ProcessedItem` (SwiftData) and synced via CloudKit
-9. **Session** — Item auto-grouped into `DiverSession` by location+time proximity
+7. **Commerce** — `performCommerceEnrichment()` runs 6-step pipeline: classify → ESG enrich → score (7 strategies) → learn preferences → recommend → record snapshot
+8. **LLM** — `ContextQuestionService.processContext()` generates summary, tags, purpose
+9. **Persist** — All results written to `ProcessedItem` (SwiftData) and synced via CloudKit
+10. **Session** — Item auto-grouped into `DiverSession` by location+time proximity
 
 **Service:** `DiverKit/Services/LocalPipelineService.swift`
 
-> **Protocol-based DI:** `LocalPipelineService` and `MetadataPipelineService` accept `(any ContextProcessing)?` and `(any FastVLMAnalyzing)?` for testability. All 4 ML service protocols are defined in `DiverKit/Protocols/ServiceProtocols.swift`.
+> **Protocol-based DI:** `LocalPipelineService` and `MetadataPipelineService` accept `(any ContextProcessing)?` and `(any FastVLMAnalyzing)?` for testability. All 7 ML/commerce service protocols are defined in `DiverKit/Protocols/`.
+
+> **Edge routing:** When an edge node is available on the local network, stages 2–5 and 7 can be transparently offloaded via Swift Distributed Actors. Fallback to on-device is automatic.
 
 ## Getting Started
 
@@ -219,11 +251,21 @@ xcodebuild test -project VisualIntelligencePipelineDemo/VisualIntelligencePipeli
 cd VisualIntelligencePipelineDemo/DiverShared && swift test
 ```
 
+## Future Plans (Spec v3)
+
+| Feature | Description | Blocker |
+|---------|-------------|---------|
+| **Financial Integration** | Apple Wallet transactions via FinanceKit + Plaid bank accounts → budget-aware purchase decisions, spending charts, budget alerts | FinanceKit managed entitlement from Apple |
+
+See the full [Spec v3 Roadmap](VisualIntelligencePipelineDemo/Documentation/spec_v3_roadmap.md) for details.
+
 ## Documentation
 
 - [App Summary](VisualIntelligencePipelineDemo/Documentation/APP_SUMMARY.md)
 - [Architecture Analysis](VisualIntelligencePipelineDemo/Documentation/analysis.md)
 - [Beta Review Notes](VisualIntelligencePipelineDemo/Documentation/BETA_REVIEW_NOTES.md)
+- [Spec v3 Roadmap](VisualIntelligencePipelineDemo/Documentation/spec_v3_roadmap.md)
+- [Privacy Policy](PRIVACY.md)
 - [Changelog](VisualIntelligencePipelineDemo/changelog.md)
 
 ## Copyright
