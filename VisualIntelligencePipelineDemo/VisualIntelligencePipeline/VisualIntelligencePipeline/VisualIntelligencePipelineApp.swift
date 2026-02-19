@@ -293,40 +293,35 @@ struct VisualIntelligencePipelineApp: App {
 
         // Use a Task for async work and .setTaskCompleted always
         let workTask = Task { @MainActor in
-            do {
-                // 1. Process Shared with You (iOS 16+)
-                // This only writes items to DiverQueueStore (disk I/O) — no GPU/ML work.
-                if #available(iOS 16.0, macOS 13.0, *) {
-                    print("🔄 [BGTask] Checking Shared with You links...")
-                    do {
-                         let queueDir = AppGroupContainer.queueDirectoryURL()!
-                         let qStore = try DiverQueueStore(directoryURL: queueDir)
-                         // Initialize temporary manager
-                         let manager = SharedWithYouManager(queueStore: qStore, pipelineService: service, isEnabled: true)
-                         
-                         if let store = VisualIntelligencePipelineApp.sharedDataStore {
-                             await manager.processUnprocessedHighlights(modelContext: store.mainContext)
-                         }
-                    } catch {
-                        print("❌ [BGTask] Failed to process Shared with You: \(error)")
-                    }
+            // 1. Process Shared with You (iOS 16+)
+            // This only writes items to DiverQueueStore (disk I/O) — no GPU/ML work.
+            if #available(iOS 16.0, macOS 13.0, *) {
+                print("🔄 [BGTask] Checking Shared with You links...")
+                do {
+                     let queueDir = AppGroupContainer.queueDirectoryURL()!
+                     let qStore = try DiverQueueStore(directoryURL: queueDir)
+                     // Initialize temporary manager
+                     let manager = SharedWithYouManager(queueStore: qStore, pipelineService: service, isEnabled: true)
+                     
+                     if let store = VisualIntelligencePipelineApp.sharedDataStore {
+                         await manager.processUnprocessedHighlights(modelContext: store.mainContext)
+                     }
+                } catch {
+                    print("❌ [BGTask] Failed to process Shared with You: \(error)")
                 }
-                
-                // NOTE: We intentionally do NOT call processPendingQueue() or
-                // refreshProcessedItems() here. Those methods trigger Vision,
-                // FastVLM (Metal/MLX), and SystemLanguageModel — all GPU-dependent.
-                // Metal command buffers are already invalidated when running as a
-                // BGAppRefreshTask, so submitting GPU work would crash.
-                //
-                // Queue items are persisted to DiverQueueStore (disk) and will be
-                // processed by the full pipeline when the app returns to foreground.
-                
-                task.setTaskCompleted(success: true)
-                print("✅ [BGTask] Background persistence completed.")
-            } catch {
-                print("❌ [BGTask] Error: \(error)")
-                task.setTaskCompleted(success: false)
             }
+            
+            // NOTE: We intentionally do NOT call processPendingQueue() or
+            // refreshProcessedItems() here. Those methods trigger Vision,
+            // FastVLM (Metal/MLX), and SystemLanguageModel — all GPU-dependent.
+            // Metal command buffers are already invalidated when running as a
+            // BGAppRefreshTask, so submitting GPU work would crash.
+            //
+            // Queue items are persisted to DiverQueueStore (disk) and will be
+            // processed by the full pipeline when the app returns to foreground.
+            
+            task.setTaskCompleted(success: true)
+            print("✅ [BGTask] Background persistence completed.")
         }
 
         // Expiration handler
