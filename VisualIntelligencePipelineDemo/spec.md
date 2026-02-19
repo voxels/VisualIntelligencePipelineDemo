@@ -405,7 +405,7 @@ struct FinancialSnapshot: Codable, Sendable {
 | Service | Responsibility |
 |---------|---------------|
 | **LinkEnrichmentService** | URL metadata extraction (title, summary, image) |
-| **WebViewLinkEnrichmentService** | WKWebView-based link metadata extraction for dynamic pages |
+| **WebViewLinkEnrichmentService** | LPMetadataProvider + URLSession HTML fetch for link metadata extraction (title, description, text content, JSON-LD) |
 | **DuckDuckGoEnrichmentService** | DuckDuckGo search for QR code URL context |
 | **DiverLinkGenerator** | HMAC-signed tamper-proof URL wrapping |
 

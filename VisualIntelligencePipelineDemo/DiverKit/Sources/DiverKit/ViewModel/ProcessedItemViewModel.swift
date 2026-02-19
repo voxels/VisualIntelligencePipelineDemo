@@ -22,8 +22,9 @@ public final class ProcessedItemViewModel: ObservableObject {
     }
     
     public func reprocessItem(_ item: ProcessedItem) {
-        Task {
-            try? await pipeline.processItemImmediately(item)
+        let itemID = item.id
+        Task.detached(priority: .utility) { [pipeline] in
+            try? await pipeline.processItemByID(itemID)
         }
     }
     

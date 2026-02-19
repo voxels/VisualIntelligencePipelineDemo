@@ -460,6 +460,145 @@ public final class MetadataPipelineService: @unchecked Sendable {
             try? await self.processPendingQueue()
         }
     }
+    
+    /// Process a single item by ID using a **private** ModelContext.
+    /// Safe to call from any isolation context — does not share state with  
+    /// the service's `activeContext`. Use this instead of `processItemImmediately`
+    /// when triggering reprocessing from UI code (e.g., after a location edit).
+    public func processItemByID(_ itemID: String) async throws {
+        let bgCtx = ModelContext(modelContainer)
+        bgCtx.autosaveEnabled = false
+        
+        let fetchDescriptor = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.id == itemID }
+        )
+        
+        guard let localItem = try bgCtx.fetch(fetchDescriptor).first else {
+            print("❌ processItemByID: Could not find item \(itemID)")
+            return
+        }
+        
+        localItem.statusRaw = ProcessingStatus.processing.rawValue
+        localItem.updatedAt = Date()
+        localItem.processingLog.append("\(Date().formatted()): Starting reprocessing via processItemByID.")
+        try? bgCtx.save()
+        
+        do {
+            let localPipeline = LocalPipelineService(modelContext: bgCtx)
+            
+            // Detect user-set location (same logic as processItemImmediately)
+            let hasUserSetLocation: Bool = {
+                guard let placeContext = localItem.placeContext else { return false }
+                if placeContext.contactIdentifier != nil { return true }
+                if let placeID = placeContext.placeID {
+                    if placeID.hasPrefix("mapkit-") || placeID.hasPrefix("mk-") || placeID == "home-location" {
+                        return true
+                    }
+                }
+                return false
+            }()
+            
+            let effectiveLocationService = hasUserSetLocation ? nil : locationService
+            
+            // Clear calculated data for fresh reprocessing
+            localItem.summary = nil
+            localItem.transcription = nil
+            localItem.tags = []
+            localItem.purposes = []
+            localItem.categories = []
+            localItem.questions = []
+            if !hasUserSetLocation {
+                localItem.placeContextData = nil
+            }
+            localItem.webContextData = nil
+            localItem.documentContextData = nil
+            localItem.qrContextData = nil
+            localItem.activityContextData = nil
+            
+            // Clear parent session summary
+            if let sessionID = localItem.sessionID {
+                let sessionFetch = FetchDescriptor<SessionMetadata>(
+                    predicate: #Predicate { $0.sessionID == sessionID }
+                )
+                if let session = try? bgCtx.fetch(sessionFetch).first {
+                    session.summary = nil
+                    session.updatedAt = Date()
+                }
+            }
+            
+            try? bgCtx.save()
+            
+            let descriptor = DiverItemDescriptor(
+                id: localItem.id,
+                url: localItem.url ?? "",
+                title: localItem.title ?? "",
+                type: DiverItemType(rawValue: localItem.entityType ?? "web") ?? .web,
+                attributionID: localItem.attributionID,
+                masterCaptureID: localItem.masterCaptureID,
+                sessionID: localItem.sessionID
+            )
+            
+            // Find or create LocalInput
+            var input: LocalInput?
+            
+            if let url = localItem.url {
+                let urlFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.url == url })
+                input = try? bgCtx.fetch(urlFetch).first
+            }
+            
+            if input == nil, let title = localItem.title {
+                let titleFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.text == title })
+                input = try? bgCtx.fetch(titleFetch).first
+            }
+            
+            if let input = input {
+                _ = try await localPipeline.process(
+                    input: input,
+                    descriptor: descriptor,
+                    enrichmentService: enrichmentService,
+                    locationService: effectiveLocationService,
+                    indexingService: indexingService,
+                    contextService: contextService
+                )
+            } else {
+                var imageData: Data? = localItem.rawPayload
+                if imageData == nil, let assetId = localItem.photosAssetIdentifier {
+                    imageData = await PhotosAssetLoader.shared.loadImageData(identifier: assetId)
+                }
+                
+                let fallbackInput = LocalInput(
+                    createdAt: localItem.createdAt,
+                    url: localItem.url,
+                    text: localItem.title,
+                    source: localItem.source ?? "reprocessing",
+                    inputType: localItem.entityType ?? "web",
+                    rawPayload: imageData
+                )
+                
+                bgCtx.insert(fallbackInput)
+                _ = try await localPipeline.process(
+                    input: fallbackInput,
+                    descriptor: descriptor,
+                    enrichmentService: enrichmentService,
+                    locationService: effectiveLocationService,
+                    indexingService: indexingService,
+                    contextService: contextService
+                )
+            }
+            
+            localItem.statusRaw = ProcessingStatus.ready.rawValue
+            localItem.processingLog.append("\(Date().formatted()): Reprocessing completed successfully.")
+            try bgCtx.save()
+            
+        } catch {
+            localItem.statusRaw = ProcessingStatus.failed.rawValue
+            localItem.failureCount += 1
+            localItem.processingLog.append("\(Date().formatted()): Reprocessing failed - \(error.localizedDescription)")
+            try? bgCtx.save()
+            print("❌ processItemByID failed for \(itemID): \(error)")
+            throw error
+        }
+    }
 
     /// Resumes processing for items that may have been interrupted (app termination, crash)
     private func resumeSuspendedQueue() async throws {

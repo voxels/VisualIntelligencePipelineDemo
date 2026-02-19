@@ -255,16 +255,15 @@ public class ReferenceDetailViewModel: ObservableObject {
     public func refreshLinkMetadata(item: ProcessedItem) {
         print("🔄 ReferenceDetailViewModel: User requested immediate link refresh for \(item.id)")
         
-        Task {
+        // Immediate visual feedback
+        item.status = .processing
+        
+        let itemID = item.id
+        Task.detached(priority: .utility) {
             do {
-                if let pipeline = Services.shared.metadataPipelineService {
-                    try await pipeline.processItemImmediately(item)
-                    print("✅ Immediate refresh triggered via PipelineService")
-                    
-                    // Optimistic UI update
-                    await MainActor.run {
-                        item.status = .processing
-                    }
+                if let pipeline = await MainActor.run(body: { Services.shared.metadataPipelineService }) {
+                    try await pipeline.processItemByID(itemID)
+                    print("✅ Immediate refresh completed for \(itemID)")
                 } else {
                     print("❌ MetadataPipelineService not available")
                 }

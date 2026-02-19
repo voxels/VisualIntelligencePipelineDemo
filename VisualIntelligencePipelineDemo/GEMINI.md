@@ -38,7 +38,7 @@ The project is modularized using Swift Package Manager:
 *   **`MetadataPipelineService`:** Converts queue items to `LocalInput` and orchestrates metadata extraction. Uses `Task.detached(priority: .utility)` for all heavy processing.
 *   **`IntelligenceProcessor`:** Runs on-device LLM prompts for concept extraction and summarization. Also runs 6 Vision requests (OCR, QR, semantic, document, sifting, aesthetics) in a single pass via `executePipeline`.
 *   **`FastVLMEnrichmentService`:** Runs Apple's FastVLM 0.5B model locally via MLX Swift. Image analysis prompt focuses on subject matter (objects, text, activities) and explicitly excludes camera/capture equipment references to prevent hallucinations.
-*   **Reprocessing:** Supports silent background reprocessing (`reprocessPipeline`) to update metadata. Reuses existing item IDs to prevent duplicates.
+*   **Reprocessing:** Supports silent background reprocessing via `processItemByID` (private `ModelContext` per call) and bulk `reprocessPipeline` to update metadata. Reuses existing item IDs to prevent duplicates.
 *   **Session Sync:** Automatically synchronizes location edits between `ProcessedItem` and its parent `DiverSession`.
 *   **Enriched Session Summaries:** `generateAndSaveSessionSummary` aggregates all item metadata (transcription, themes, tags, categories, location, web/document/QR context, FastVLM analysis, product metadata, questions, media type) for LLM summarization.
 *   **Library Maintenance (`maintainLibrary`):** A 6-step repair pipeline triggered from Settings > Rebuild Library:
@@ -135,6 +135,8 @@ cd DiverShared && swift test
     *   Keep long-running pipeline tasks off the main thread. Use `@PipelineActor` or `Task.detached` for heavy processing.
     *   **Never use `Task { }` in SwiftUI handlers** (`onAppear`, `onChange`, `onReceive`) for pipeline work — it inherits `@MainActor`. Always use `Task.detached(priority: .utility)` with explicit capture lists.
     *   **Use background `ModelContext`** for SwiftData fetches in pipeline/enrichment code. Create via `ModelContext(container)` with `autosaveEnabled = false`. Never use `dataStore.mainContext` or `manager.mainContext` from background tasks.
+    *   **Use `processItemByID` (not `processItemImmediately`)** for reprocessing from UI/ViewModel code. `processItemByID` creates a private `ModelContext` per call, preventing shared-context corruption. `processItemImmediately` is internal to `MetadataPipelineService` batch processing only.
+    *   **Never spawn N concurrent Tasks in a for-loop** that each mutate SwiftData models. Collect IDs first, then process sequentially in a single `Task.detached`.
     *   Provide immediate visual feedback on user actions even when underlying model updates are still in progress.
 
 ## Data Model Relationships
@@ -193,6 +195,7 @@ cd DiverShared && swift test
 *   **Vision framework (iOS 18+):** Native Swift concurrency support — runs naturally on background threads.
 *   **`@unchecked Sendable`:** ~20 usages across the codebase. Each must be audited to verify thread safety is enforced via locking (e.g., `OSAllocatedUnfairLock`).
 *   **`CaptureInput`:** Marked `@unchecked Sendable` because it contains `PhotosPickerItem` (not `Sendable`). Safe because it's consumed exactly once after crossing the isolation boundary.
+*   **`processItemByID` vs `processItemImmediately`:** `processItemByID` creates a private `ModelContext(modelContainer)` per call — safe from any isolation context and prevents shared-context corruption. `processItemImmediately` uses the service's shared `activeContext` and must only be called internally during batch processing (inside `processPendingQueue`'s `bgContext`). Architecture tests enforce this boundary.
 
 ### ViewModel Bloat
 *   **`VisualIntelligenceViewModel`:** ~2900 lines, 31 properties. Migrated to `@Observable` — per-property tracking eliminates `objectWillChange` over-broadcasting.

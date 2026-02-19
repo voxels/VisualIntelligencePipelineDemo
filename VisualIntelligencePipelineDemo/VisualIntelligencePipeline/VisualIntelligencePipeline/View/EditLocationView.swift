@@ -666,13 +666,14 @@ struct EditLocationView: View {
                 print("❌ Failed to save item after location update: \(error)")
             }
             
-            // 3. Trigger background reprocessing
-            Task {
-                try? await pipelineService?.processItemImmediately(item)
-            }
-            
             isUpdating = false
             dismiss()
+            
+            // 3. Trigger background reprocessing AFTER dismiss
+            let reprocessID = item.id
+            Task.detached(priority: .utility) { [pipelineService] in
+                try? await pipelineService?.processItemByID(reprocessID)
+            }
         }
     }
     
@@ -690,6 +691,7 @@ struct EditLocationView: View {
             // 2. Update children in session and trigger reprocessing
             let targetID = session.sessionID
             let descriptor = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.sessionID == targetID })
+            var itemIDs: [String] = []
             if let items = try? modelContext.fetch(descriptor) {
                 for item in items {
                     item.placeContext = candidate.placeContext
@@ -698,16 +700,22 @@ struct EditLocationView: View {
                     }
                     item.categories = candidate.categories
                     item.purposes = []
-                    
-                    Task {
-                        try? await pipelineService?.processItemImmediately(item)
-                    }
+                    itemIDs.append(item.id)
                 }
             }
             
             try? modelContext.save()
             isUpdating = false
             dismiss()
+            
+            // Reprocess all items SEQUENTIALLY in background AFTER dismiss.
+            // Each processItemByID creates its own ModelContext, avoiding
+            // the EXC_BAD_ACCESS crash from concurrent shared-context mutations.
+            Task.detached(priority: .utility) { [pipelineService] in
+                for id in itemIDs {
+                    try? await pipelineService?.processItemByID(id)
+                }
+            }
         }
     }
 

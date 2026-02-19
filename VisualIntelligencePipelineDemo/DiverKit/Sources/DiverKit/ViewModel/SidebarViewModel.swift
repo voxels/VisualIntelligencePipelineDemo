@@ -471,10 +471,11 @@ public final class SidebarViewModel {
     }
     
     public func processItemNow(_ item: ProcessedItem) {
-        Task {
+        let itemID = item.id
+        Task.detached(priority: .utility) { [pipelineService] in
             do {
-                try await pipelineService?.processItemImmediately(item)
-                print("✅ Triggered immediate processing for: \(item.displayTitle)")
+                try await pipelineService?.processItemByID(itemID)
+                print("✅ Triggered immediate processing for: \(itemID)")
             } catch {
                 print("❌ Failed to process item immediately: \(error)")
             }
@@ -489,22 +490,26 @@ public final class SidebarViewModel {
     }
     
     public func analyzeSession(_ session: SessionMetadata, context: ModelContext) {
-        Task {
-            let localPipeline = LocalPipelineService(modelContext: context)
-            await localPipeline.generateAndSaveSessionSummary(sessionID: session.sessionID)
-            print("✅ Triggered analysis for session: \(session.displayTitle)")
+        let sessionID = session.sessionID
+        let container = context.container
+        Task.detached(priority: .utility) {
+            let bgCtx = ModelContext(container)
+            bgCtx.autosaveEnabled = false
+            let localPipeline = LocalPipelineService(modelContext: bgCtx)
+            await localPipeline.generateAndSaveSessionSummary(sessionID: sessionID)
+            print("✅ Triggered analysis for session: \(sessionID)")
         }
     }
     
     public func reprocessItem(_ item: ProcessedItem) {
-        // Direct background reprocessing
-        Task {
-            // Reset status to provide immediate feedback
-            await MainActor.run {
-                 item.status = .processing
-                 item.processingLog.append("\(Date().formatted()): User requested quick reprocessing.")
-            }
-            try? await pipelineService?.processItemImmediately(item)
+        // Immediate visual feedback on main actor
+        item.status = .processing
+        item.processingLog.append("\(Date().formatted()): User requested quick reprocessing.")
+        
+        // Background reprocessing with private ModelContext
+        let itemID = item.id
+        Task.detached(priority: .utility) { [pipelineService] in
+            try? await pipelineService?.processItemByID(itemID)
         }
     }
     
@@ -521,8 +526,9 @@ public final class SidebarViewModel {
     }
     
     public func processNow(_ item: ProcessedItem) {
-        Task {
-            try? await pipelineService?.processItemImmediately(item)
+        let itemID = item.id
+        Task.detached(priority: .utility) { [pipelineService] in
+            try? await pipelineService?.processItemByID(itemID)
         }
     }
     
@@ -537,12 +543,20 @@ public final class SidebarViewModel {
             
             print("🔄 Reprocessing \(items.count) items for session \(sessionID)")
             
+            // Collect IDs and mark status immediately for visual feedback
+            var itemIDs: [String] = []
             for item in items {
-                // Mark status as processing immediately
                 item.status = .processing
-                reprocessItem(item)
+                itemIDs.append(item.id)
             }
             try context.save()
+            
+            // Process SEQUENTIALLY in background — each call creates its own ModelContext
+            Task.detached(priority: .utility) { [pipelineService] in
+                for id in itemIDs {
+                    try? await pipelineService?.processItemByID(id)
+                }
+            }
         } catch {
             print("❌ Failed to fetch session items for reprocessing: \(error)")
         }

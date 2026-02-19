@@ -554,4 +554,137 @@ final class BackgroundSafetyTests: XCTestCase {
             XCTFail("descriptorJSON should be saved")
         }
     }
+    
+    // =========================================================================
+    // MARK: - 7. ModelContext Isolation Tests (processItemByID)
+    // =========================================================================
+    //
+    // Regression tests for the EXC_BAD_ACCESS crash caused by N concurrent Tasks
+    // all calling processItemImmediately() on a shared ModelContext from
+    // EditLocationView.updateSessionLocation(). The fix: processItemByID()
+    // creates a private ModelContext per call.
+    
+    /// Verifies that processItemByID uses a private context and doesn't crash
+    /// when the item doesn't exist.
+    func testProcessItemByIDHandlesMissingItem() async {
+        // Given: A nonexistent item ID
+        let bogusID = "nonexistent-\(UUID().uuidString)"
+        
+        // When/Then: Should not crash, should return gracefully
+        do {
+            try await pipelineService.processItemByID(bogusID)
+            // No error thrown — method returns early for missing items
+        } catch {
+            XCTFail("processItemByID should not throw for missing items: \(error)")
+        }
+    }
+    
+    /// Verifies that calling processItemByID sequentially for multiple items
+    /// does not crash (regression test for shared-context EXC_BAD_ACCESS).
+    func testSequentialProcessItemByIDDoesNotCrash() async throws {
+        // Given: Multiple items in a session
+        let sessionID = "batch-session"
+        let session = makeSession(sessionID: sessionID, title: "Batch Test")
+        modelContext.insert(session)
+        
+        var itemIDs: [String] = []
+        for i in 0..<5 {
+            let item = makeProcessedItem(
+                id: "batch-\(i)",
+                url: "https://example.com/\(i)",
+                title: "Item \(i)",
+                status: .ready,
+                sessionID: sessionID
+            )
+            modelContext.insert(item)
+            itemIDs.append(item.id)
+        }
+        try modelContext.save()
+        
+        // When: Process all items sequentially via processItemByID
+        // Each call creates a private ModelContext, avoiding shared-context crashes
+        for id in itemIDs {
+            try? await pipelineService.processItemByID(id)
+        }
+        
+        // Then: All items should still exist and be in a valid state
+        let fetch = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.sessionID == sessionID }
+        )
+        let freshCtx = ModelContext(modelContainer)
+        let items = try freshCtx.fetch(fetch)
+        XCTAssertEqual(items.count, 5, "All 5 items should still exist after sequential processing")
+        
+        // Each item should be in a terminal state (ready or failed), not stuck in processing
+        for item in items {
+            XCTAssertNotEqual(item.statusRaw, ProcessingStatus.processing.rawValue,
+                             "Item \(item.id) should not be stuck in processing state")
+        }
+    }
+    
+    /// Verifies that processItemByID sets status to processing then completes
+    /// (or fails gracefully) — never leaves items stuck.
+    func testProcessItemByIDSetsTerminalStatus() async throws {
+        // Given: A ready item
+        let item = makeProcessedItem(id: "terminal-test", status: .ready)
+        modelContext.insert(item)
+        try modelContext.save()
+        
+        // When: Process it
+        try? await pipelineService.processItemByID("terminal-test")
+        
+        // Then: Item should be in a terminal state (ready or failed)
+        let freshCtx = ModelContext(modelContainer)
+        let fetch = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.id == "terminal-test" }
+        )
+        if let result = try freshCtx.fetch(fetch).first {
+            let status = result.statusRaw
+            XCTAssertTrue(
+                status == ProcessingStatus.ready.rawValue || status == ProcessingStatus.failed.rawValue,
+                "Item should be ready or failed, not stuck in processing. Got: \(status)"
+            )
+        }
+    }
+    
+    /// Stress test: simulates the exact crash scenario — multiple items processed
+    /// concurrently via separate contexts (verifying no shared-state corruption).
+    func testConcurrentProcessItemByIDWithSeparateContexts() async throws {
+        // Given: Multiple items
+        let sessionID = "stress-session"
+        let session = makeSession(sessionID: sessionID)
+        modelContext.insert(session)
+        
+        var itemIDs: [String] = []
+        for i in 0..<3 {
+            let item = makeProcessedItem(
+                id: "stress-\(i)",
+                url: "https://stress.com/\(i)",
+                title: "Stress \(i)",
+                status: .ready,
+                sessionID: sessionID
+            )
+            modelContext.insert(item)
+            itemIDs.append(item.id)
+        }
+        try modelContext.save()
+        
+        // When: Process concurrently (each has its own ModelContext, so this is safe)
+        let service = pipelineService!
+        await withTaskGroup(of: Void.self) { group in
+            for id in itemIDs {
+                group.addTask {
+                    try? await service.processItemByID(id)
+                }
+            }
+        }
+        
+        // Then: No crash, items exist in terminal states
+        let freshCtx = ModelContext(modelContainer)
+        let fetch = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.sessionID == sessionID }
+        )
+        let items = try freshCtx.fetch(fetch)
+        XCTAssertEqual(items.count, 3, "All items should survive concurrent processing")
+    }
 }

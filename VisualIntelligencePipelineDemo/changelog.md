@@ -2,6 +2,20 @@
 
 ## 2026-02-19
 
+### Crash Fixes
+
+#### WKWebView EXC_GUARD Fix
+- **WebViewLinkEnrichmentService**: Replaced offscreen `WKWebView` with `LPMetadataProvider` + `URLSession` HTML fetch. Eliminates WebKit XPC process crashes (`EXC_GUARD` in MobileSafari) caused by headless WebView lifecycle issues. Preserves `WebContext` fields (siteName, textContent, structuredData) via lightweight HTML parsing. JSON-LD extraction and 3000-char text content limit match original behavior.
+
+#### SwiftData EXC_BAD_ACCESS Fix
+- **MetadataPipelineService.processItemByID()**: New method that creates a private `ModelContext(modelContainer)` per call, safe to invoke from any isolation context. Prevents shared-context mutations that caused `Set.resize` use-after-free crashes.
+- **EditLocationView**: Fixed both `updateSessionLocation` (N concurrent Tasks → single `Task.detached` with sequential loop) and `updateItemLocation` (moved `Task` outside `MainActor.run`).
+- **SidebarViewModel**: Migrated 5 methods — `processItemNow`, `reprocessItem`, `processNow`, `reprocessSession` (had same N-concurrent-tasks crash), `analyzeSession` (now creates background ModelContext).
+- **ProcessedItemViewModel.reprocessItem**: Migrated to `processItemByID`.
+- **ReferenceDetailViewModel.refreshLinkMetadata**: Migrated to `processItemByID`.
+- **Stuck queue toast**: Fixed as side effect — the concurrent crash left `isProcessingQueue` permanently true.
+- **Tests**: Added 4 regression tests (`BackgroundSafetyTests`) + 2 architecture guard tests (`ArchitectureTests`) that scan source for `processItemImmediately` calls in ViewModels.
+
 ### Xcode MCP Bridge Integration
 - **GEMINI.md**: Added "Xcode MCP Bridge (Xcode 26.3+)" section with setup, environment variables, capabilities table, and usage rules. Updated Apple Documentation Lookup rule to include bridge doc search with WWDC transcript coverage.
 - **AGENTS.md**: Added "Xcode MCP Bridge" subsection under Build, Test, and Development Commands — bridge-first build, test, preview capture, and doc search with CLI fallback.
