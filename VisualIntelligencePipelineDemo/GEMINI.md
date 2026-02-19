@@ -113,6 +113,7 @@ cd DiverShared && swift test
     *   **Always use the Cupertino CLI** (`/opt/homebrew/bin/cupertino`) for Apple documentation queries. Prefer it over web searches for API details, concurrency patterns, framework behavior, and best practices.
     *   Available sources: `apple-docs`, `samples`, `hig`, `apple-archive`, `swift-evolution`, `swift-org`, `swift-book`, `packages`.
     *   Semantic searches: `search_symbols`, `search_property_wrappers`, `search_concurrency`, `search_conformances`.
+    *   **Xcode MCP bridge** also provides Apple doc search with WWDC transcript coverage when Xcode is running. Use it as a complement to Cupertino.
 
 3.  **NEVER Compromise Data Integrity:**
     *   **Schema Changes:** Do **NOT** rename Core Data entities (e.g., `SessionMetadata`) or perform destructive schema changes without a fully tested migration plan.
@@ -217,3 +218,36 @@ cd DiverShared && swift test
 *   **SE-0449 `nonisolated` inference cutoff (Swift 6.1):** Allows `nonisolated` on declarations to prevent global actor inference from protocols/supertypes. Applied when a struct conforming to an `@MainActor` protocol has pure-computation methods that shouldn't require main-thread execution.
 *   **SE-0461 Isolation regions:** Defines sending rules between nonisolated, actor-isolated, and `@concurrent` contexts. Governs how values cross isolation boundaries in `Task.detached` closures.
 
+## Xcode MCP Bridge (Xcode 26.3+)
+
+The Xcode MCP bridge (`xcrun mcpbridge`) exposes Xcode's internal tools to external agents via the Model Context Protocol over STDIO. When Xcode is running with a project open, the bridge auto-detects and connects.
+
+### Setup
+
+1.  **Enable in Xcode:** Settings → Intelligence → Model Context Protocol → Toggle **"Xcode Tools"** On.
+2.  **Bridge command:** `xcrun mcpbridge` (STDIO transport, JSON-RPC 2.0).
+
+### Environment Variables
+
+| Variable | Purpose |
+|---|---|
+| `MCP_XCODE_PID` | Target a specific Xcode instance by PID. Auto-detects if unset. |
+| `MCP_XCODE_SESSION_ID` | UUID identifying an Xcode tool session (optional). |
+
+### Available Capabilities
+
+| Capability | When to Use |
+|---|---|
+| **Build projects** | Prefer over raw `xcodebuild` — returns structured diagnostics (file, line, column, severity). |
+| **Read build logs** | Parse errors/warnings after builds without scraping terminal output. |
+| **Run tests** | Iterate on failures with structured results. Use for `DiverTests_iOS`, `VisualIntelligencePipeline`, and `DiverShared` targets. |
+| **Capture SwiftUI previews** | Verify UI changes visually — the only way to get preview screenshots programmatically. |
+| **Search Apple documentation** | Includes WWDC transcripts. Complements Cupertino CLI for broader coverage. |
+| **Manage project files** | Query and modify the `.xcodeproj` structure natively. |
+| **Structured diagnostics** | Receive compiler errors/warnings with file paths and line numbers. |
+
+### Rules
+
+*   **Prefer bridge for builds and tests** when Xcode is running. Fall back to CLI `xcodebuild` / `swift test` in headless/CI environments.
+*   **Use bridge preview capture** to verify SwiftUI UI changes after modifying views.
+*   **Combine with Cupertino CLI** — bridge covers WWDC transcripts, Cupertino covers structured API docs, sample code, HIG, and Swift Evolution.

@@ -1,8 +1,8 @@
 # Visual Intelligence Pipeline — Project Specification
 
-> **Version:** 1.1  
-> **Last Updated:** 2026-02-18  
-> **Platform:** iOS 26.0+  
+> **Version:** 2.0  
+> **Last Updated:** 2026-02-19  
+> **Platforms:** iOS 26.0+, iPadOS 26.0+, macOS 26.0+ (edge node), visionOS 26.3+ (future)  
 > **Bundle ID:** `com.secretatomics.VisualIntelligencePipeline`
 
 ---
@@ -16,9 +16,11 @@ Beyond the camera, it serves as a universal hub for saving and organizing links 
 ### 1.1 Core Value Propositions
 
 1. **Capture → Enrich → Understand** — A single tap triggers a multi-stage pipeline that sifts subjects from backgrounds, enriches captures with location/web/music/document context, and generates AI summaries.
-2. **Local-First Intelligence** — All ML inference runs on-device: Apple Vision framework, Apple Intelligence (Foundation Models), and FastVLM 0.5B via MLX Swift. No data leaves the device for processing.
+2. **Local-First Intelligence** — All ML inference runs on-device by default: Apple Vision framework, Apple Intelligence (Foundation Models), and FastVLM 0.5B via MLX Swift. No data leaves the device for processing unless routed to a user-owned edge node on the home network.
 3. **Universal Link Organization** — Links from any source are wrapped in tamper-proof HMAC-signed URLs, processed through the same enrichment pipeline, and surfaced alongside visual captures.
 4. **Cross-Device Sync** — SwiftData + CloudKit provides seamless, automatic sync across all devices.
+5. **Ethical Commerce Intelligence** — When viewing a physical product, the system surfaces real-time ESG sustainability data, pricing nowcasts, and a commerce CTA filtered by the user's ethical preferences. Advisory-only — the user always confirms.
+6. **Home Network ML Offloading** — Any device on the local network can transparently offload heavy ML inference (Vision analysis, SLM, FastVLM, object detection, nowcasting) to the most powerful available device via Swift distributed actors. Falls back to on-device processing when no edge node is reachable.
 
 ---
 
@@ -41,7 +43,76 @@ VisualIntelligencePipelineDemo/
 | **DiverKit** | Business logic, ML pipelines, persistence | 36 services, 4 service protocols, 4 view models, 14 models, 56 API schemas, storage layer |
 | **DiverShared** | Cross-target shared types | `AppGroupConfig`, `QueueStore`, `LinkWrapping`, `IntelligenceCapability`, `ContextSnapshot` |
 
-### 2.2 Concurrency Model
+**Future targets** (Ethical Commerce phases):
+| Target | Platform | Role |
+|--------|----------|------|
+| **VisualIntelligenceEdge** | macOS (M-series) | Edge node daemon — hosts distributed actors for ML offloading, ESG/commerce enrichment |
+| **VisualIntelligenceVision** | visionOS | AR client — spatial HUD with product overlays, RealityKit rendering |
+
+### 2.2 Multi-Platform & Edge Computing
+
+The system distributes work across Apple Silicon devices on the home network based on computational capability:
+
+| Device | Chip | Neural Engine | Role |
+|--------|------|--------------|------|
+| **Mac edge node** | M4+ | 16-core, **38 TOPS** | Heavy ML inference, nowcasting, LLM reasoning, ESG/commerce enrichment |
+| **iPad edge node** | M5+ | TBD (~40+ TOPS expected) | Same as Mac when available; also a client |
+| **Vision Pro** | M2 + R1 | M2: ~15.8 TOPS; R1: sensor fusion (12ms) | ARKit tracking, HUD rendering, lightweight on-device classification |
+| **iPhone** | A18+ | 16-core NE | Primary client — on-device inference when no edge node available |
+
+**Why offload:**
+- M4's 38 TOPS Neural Engine has ~2.4× the throughput of M2/A18, with no competition from foreground UI or OS intelligence
+- Mac supports larger memory (up to 128GB unified on M4 Max) for hosting 3B+ LLM models via MLX Swift — the iPhone's FastVLM 0.5B can be upgraded to a larger model transparently
+- Offloading preserves client battery life and UI responsiveness
+
+**Transport: Swift Distributed Actors**
+
+Communication uses the `Distributed` framework (iOS 16+ / macOS 13+, SE-0336, SE-0344):
+
+- **Discovery:** `NWBrowser` / `NWListener` (Network framework) with Bonjour service type `_visualintel._tcp`
+- **Serialization:** `Codable`-based envelope encoding (Apple's TicTacFish `WebSocketActorSystem` pattern)
+- **Connection:** `NWConnection` (TLS 1.3, LAN-only)
+
+```
+┌──────────────────────┐
+│  iPhone / iPad       │           ┌────────────────────────────┐
+│  (iOS/iPadOS Client) │◀────────▶│  Mac / iPad Edge Node      │
+├──────────────────────┤  Bonjour  │  (macOS/iPadOS Service)    │
+│  Camera / ARKit      │  + NW    ├────────────────────────────┤
+│  Lightweight CoreML  │  Framework│  distributed actor:        │
+│  Distributed Actor   │  (LAN)   │    InferenceService        │
+│    Client (resolver) │           │    NowcastingService       │
+└──────────────────────┘           │    CommerceService         │
+                                   │                            │
+┌──────────────────────┐           │  CoreML YOLO/DETR (NE)     │
+│  Apple Vision Pro    │◀────────▶│  MLX Swift LLM (~3B)       │
+│  (visionOS Client)   │  Bonjour  │  Nowcasting Engine (Swift) │
+├──────────────────────┤           └────────────┬───────────────┘
+│  ARKit Object Track  │                        │ HTTPS
+│  RealityKit HUD      │           ┌────────────▼───────────────┐
+│  Barcode Detection   │           │  External APIs             │
+└──────────────────────┘           │  (ESG, Pricing, Commerce,  │
+                                   │   Plaid, FinanceKit)       │
+                                   └────────────────────────────┘
+```
+
+**Key distributed actor interface:**
+
+```swift
+import Distributed
+
+distributed actor InferenceService {
+    typealias ActorSystem = VisualIntelligenceActorSystem
+
+    distributed func analyzeVisual(imageData: Data) async throws -> VisionAnalysisResult
+    distributed func analyzeLLM(imageData: Data, context: PipelineContext) async throws -> LLMAnalysisResult
+    distributed func classify(frameData: Data, boundingBox: CGRect) async throws -> ProductClassification
+    distributed func nowcast(commodityID: String) async throws -> PriceTrajectory
+    distributed func enrichESG(productID: String) async throws -> ESGEnrichment?
+}
+```
+
+### 2.3 Concurrency Model
 
 | Context | Mechanism | Usage |
 |---------|-----------|-------|
@@ -50,6 +121,7 @@ VisualIntelligencePipelineDemo/
 | Background SwiftData | `ModelContext(container)` with `autosaveEnabled = false` | All pipeline/enrichment SwiftData access |
 | UI updates | `@MainActor` | View models, published properties |
 | Progress reporting | `AsyncStream` (SE-0314) | Queue progress, pipeline status events |
+| Edge node transport | `distributed actor` (SE-0336) via `VisualIntelligenceActorSystem` | ML offloading, ESG/commerce enrichment over LAN |
 
 #### Threading Rules (Apple Documentation Validated)
 
@@ -65,15 +137,16 @@ VisualIntelligencePipelineDemo/
 - `VisionRequest` (Vision, iOS 18+) — Swift concurrency native. Designed for background execution.
 - `IntelligenceProcessor` — `Sendable`, no actor annotation. Can run on any thread.
 - `FastVLMEnrichmentService` — MLX Swift inference. No `@MainActor` requirement.
+- `distributed actor InferenceService` — runs on edge node; calls are `async throws` and cross the network boundary transparently.
 
 **Use `@MainActor` only for:**
 - Updating `@Published` / `@Observable` properties that drive SwiftUI views
 - Accessing UIKit/AppKit objects that require main thread
 - Brief hops via `await MainActor.run { ... }` for 1–2 property assignments
 
-### 2.3 Data Flow
+### 2.4 Data Flow
 
-The pipeline is **sequential** — each stage feeds its output into `PipelineContext`, which accumulates typed fields for downstream consumers.
+The pipeline is **sequential** — each stage feeds its output into `PipelineContext`. When an edge node is available on the home network, stages ②–⑤ can be routed to the remote `InferenceService` transparently.
 
 ```
 ┌──────────────┐    ┌──────────────────┐    ┌─────────────────────┐
@@ -82,48 +155,62 @@ The pipeline is **sequential** — each stage feeds its output into `PipelineCon
 │  / Import     │    │  (Queue → Input)  │    │  (Orchestrator)     │
 └──────────────┘    └──────────────────┘    └─────────────────────┘
                                                       │
-                                                      ▼
-                                              ┌───────────────┐
-                                         ①    │  Location      │  Pinned → EXIF → GPS
-                                              │  Resolution    │  → Session fallback
-                                              │  + Geocoding   │  → MapKit geocode
-                                              └──────┬────────┘
-                                                     ▼
-                                              ┌───────────────┐
-                                         ②    │  Vision        │  OCR, QR, visual tags,
-                                              │  Framework     │  sifting, aesthetics,
-                                              │  (6 requests)  │  document detection
-                                              └──────┬────────┘
-                                                     ▼
-                                    ┌────────────────┼────────────────┐
-                               ③    ▼                                 ▼     (parallel)
-                            ┌──────────┐                        ┌──────────┐
-                            │ Link     │                        │ Cover    │
-                            │ Metadata │                        │ Image    │
-                            └────┬─────┘                        └────┬─────┘
-                                 └───────────────┬───────────────────┘
+                                              ┌───────▼────────┐
+                                              │  Edge Decision  │  NWBrowser check:
+                                              │  (Bonjour)      │  edge node available?
+                                              └──┬──────────┬──┘
+                                          LOCAL  │          │  REMOTE
+                                                 ▼          ▼
+                                          ┌───────────────────────┐
+                                     ①    │  Location Resolution   │  Pinned → EXIF → GPS
+                                          │  + Geocoding           │  → Session fallback
+                                          └──────┬────────────────┘
                                                  ▼
-                                          ┌───────────────┐
-                                     ④    │  SLM           │  @Generable structured
-                                          │  (Foundation   │  extraction: summary,
-                                          │   Models)      │  intent, tags
-                                          └──────┬────────┘
+                                          ┌───────────────────────┐
+                                     ②    │  Vision Framework      │  OCR, QR, visual tags,
+                                          │  (6 requests)          │  sifting, aesthetics,
+                                          │  [local OR edge]       │  document detection
+                                          └──────┬────────────────┘
                                                  ▼
-                                          ┌───────────────┐
-                                     ⑤    │  FastVLM       │  Multimodal synthesis
-                                          │  (MLX Swift)   │  using image + full
-                                          │  (opt-in)      │  PipelineContext
-                                          └──────┬────────┘
-                                                 ▼
-                                          ┌───────────────┐
-                                     ⑥    │  Session       │  Cluster, merge,
-                                          │  Assignment    │  generate summary
-                                          └──────┬────────┘
-                                                 ▼
-                                          ┌───────────────┐
-                                          │  SwiftData     │
-                                          │  + CloudKit    │
-                                          └───────────────┘
+                                    ┌────────────┼────────────────┐
+                               ③    ▼                              ▼   (parallel)
+                            ┌──────────┐                     ┌──────────┐
+                            │ Link     │                     │ Cover    │
+                            │ Metadata │                     │ Image    │
+                            └────┬─────┘                     └────┬─────┘
+                                 └──────────────┬─────────────────┘
+                                                ▼
+                                         ┌───────────────┐
+                                    ④    │  SLM           │  @Generable structured
+                                         │  (Foundation   │  extraction: summary,
+                                         │   Models)      │  intent, tags
+                                         │  [local OR     │
+                                         │   edge]        │
+                                         └──────┬────────┘
+                                                ▼
+                                         ┌───────────────┐
+                                    ⑤    │  FastVLM       │  Multimodal synthesis
+                                         │  (MLX Swift)   │  (0.5B local / 3B+ edge)
+                                         │  [local OR     │
+                                         │   edge]        │
+                                         └──────┬────────┘
+                                                ▼
+                                         ┌───────────────┐
+                                    ⑥    │  Session       │  Cluster, merge,
+                                         │  Assignment    │  generate summary
+                                         └──────┬────────┘
+                                                ▼
+                                         ┌───────────────┐
+                                    ⑦    │  ESG / Commerce│  Product classification,
+                                         │  Enrichment    │  carbon scoring, nowcast,
+                                         │  (opt-in,      │  purchase options
+                                         │   edge only)   │
+                                         └──────┬────────┘
+                                                ▼
+                                         ┌───────────────┐
+                                         │  SwiftData     │
+                                         │  + CloudKit    │
+                                         └───────────────┘
 ```
 
 ---
@@ -168,6 +255,7 @@ The primary data entity for all enriched captures and links.
 
 **Context Data:** Encoded as `Data?` blobs with computed property accessors:
 - `weatherContext`, `activityContext`, `placeContext`, `webContext`, `documentContext`, `qrContext`, `fastVLMAnalysis`
+- `esgContext`, `commerceContext`, `financialContext` *(Ethical Commerce — populated when edge node enrichment runs)*
 
 ### 3.2 SessionMetadata
 
@@ -227,9 +315,56 @@ In-memory structured context aggregated during pipeline processing. Not persiste
 
 **ML fields:** `fastVLMAnalysis`, `knowledgeGraphContext` (weighted entries)
 
-Provides two serialization outputs:
+**Commerce fields** *(populated by edge node enrichment)*:
+- `productClassification` — Barcode/visual → product entity resolution
+- `esgEnrichment` — Carbon data, data quality tier, certifications
+- `priceTrajectory` — 14-day nowcast with confidence interval
+- `purchaseOptions` — Ethically-filtered commerce options with affiliate links
+- `financialSnapshot` — Budget/transaction context from FinanceKit + Plaid
+
+Provides three serialization outputs:
 - `asContextString` — Full context for SystemLanguageModel
 - `enrichmentContextString` — Priority-ordered, truncated context for FastVLM
+- `commerceContextString` — ESG + pricing + financial context for advisory engine
+
+### 3.6 Commerce & Finance Types
+
+These types support the Ethical Commerce pipeline and are shared between client and edge node via `Codable` + `Sendable`.
+
+```swift
+struct ProductClassification: Codable, Sendable {
+    let productID: String
+    let name: String
+    let category: String
+    let barcode: String?
+    let confidence: Float
+}
+
+struct ESGEnrichment: Codable, Sendable {
+    let carbonIntensity: Float?      // kg CO₂e per revenue unit
+    let dataQualityTier: Int         // 1 (verified) – 5 (sector average)
+    let certifications: [String]     // ["Carbon Trust", "EPD"]
+    let source: String               // "Climate TRACE", "Open Food Facts"
+    let retrievedAt: Date
+}
+
+struct PurchaseOption: Codable, Sendable {
+    let platform: String             // "amazon", "ebay", "thrive_market"
+    let price: Decimal
+    let currency: String
+    let carbonScore: Float?
+    let certifications: [String]
+    let affiliateURL: URL
+    let ethicalMatch: EthicalMatch   // .full, .partial, .none
+}
+
+struct FinancialSnapshot: Codable, Sendable {
+    let monthlySpendToDate: Decimal
+    let monthlyBudgetRemaining: Decimal?
+    let recentTransactions: [RecentTransaction]
+    let averageCategorySpend: Decimal?
+}
+```
 
 ---
 
@@ -239,7 +374,7 @@ Provides two serialization outputs:
 
 | Service | File | Responsibility |
 |---------|------|----------------|
-| **LocalPipelineService** | `LocalPipelineService.swift` (135KB) | Master orchestrator — ingestion, enrichment coordination, persistence, session management, reprocessing, library maintenance |
+| **LocalPipelineService** | `LocalPipelineService.swift` (135KB) | Master orchestrator — ingestion, enrichment coordination, persistence, session management, reprocessing, library maintenance. Routes stages to edge node when available. |
 | **MetadataPipelineService** | `MetadataPipelineService.swift` (47KB) | Converts queue items → `LocalInput`, dispatches metadata extraction tasks via `Task.detached` |
 | **PipelineContext** | `PipelineContext.swift` | Typed context struct aggregated across enrichment stages |
 | **PipelineActor** | `PipelineActor.swift` | Custom `@globalActor` for pipeline isolation |
@@ -249,7 +384,7 @@ Provides two serialization outputs:
 | Service | Isolation | Responsibility |
 |---------|-----------|---------------|
 | **IntelligenceProcessor** | `Sendable`, no actor | Runs 6 Vision requests in a single `executePipeline` pass (OCR, QR, semantic classification, document detection, subject sifting, aesthetics scoring). Also drives on-device LLM for concept extraction and summarization. **Must run off `@MainActor`.** |
-| **FastVLMEnrichmentService** | `@unchecked Sendable` | Apple FastVLM 0.5B via MLX Swift. Single-pass grounded analysis: image + Vision tags + enrichment context → structured output. ~500MB on-demand download, memory-pressure eviction. **Must run off `@MainActor`.** |
+| **FastVLMEnrichmentService** | `@unchecked Sendable` | Apple FastVLM 0.5B via MLX Swift. Single-pass grounded analysis: image + Vision tags + enrichment context → structured output. ~500MB on-demand download, memory-pressure eviction. On edge node: can run 3B+ models. **Must run off `@MainActor`.** |
 | **ContextQuestionService** | No actor isolation | Apple Foundation Models (`LanguageModelSession`) structured generation via `@Generable` macro. `LanguageModelSession` is a `final class` with no actor annotation — pure `async/await`. **Must run off `@MainActor`.** |
 | **FoundationModelsIntentClassifier** | No actor isolation | LLM-based intent classification for incoming items. |
 | **AestheticsScoringService** | `@unchecked Sendable` | Wraps `VNCalculateImageAestheticsScoresRequest` (Vision, iOS 18+). Vision requests support Swift concurrency natively. **Must run off `@MainActor`.** |
@@ -290,7 +425,21 @@ Provides two serialization outputs:
 |---------|---------------|
 | **DailyContextService** | "Today's Focus" daily summary generation |
 
-### 4.7 Library Maintenance Pipeline
+### 4.7 Edge Node Services (Distributed Actors)
+
+> [!NOTE]
+> These services run on the Mac/iPad edge node and are accessed by clients via `VisualIntelligenceActorSystem`. See §2.2 for transport details. All require `import Distributed`.
+
+| Service | Type | Responsibility |
+|---------|------|---------------|
+| **InferenceService** | `distributed actor` | Routes Vision analysis, SLM, and FastVLM inference to edge node Neural Engine. Runs CoreML YOLO/DETR for product detection. |
+| **NowcastingService** | `distributed actor` | Dynamic Factor Model (DFM) via Accelerate framework (BLAS/LAPACK). Produces 14-day price trajectory projections from public commodity price APIs. |
+| **CommerceService** | `distributed actor` | Matches products to purchase options filtered by user's ethical policy and platform preferences. Generates affiliate deep links. |
+| **ESGEnrichmentService** | `distributed actor` | Queries Climate TRACE, Open Food Facts, OpenESG APIs. Local cache with 24h TTL. |
+| **PricingDataService** | `distributed actor` | Consumes World Bank, BLS PPI, FRED APIs. SQLite time-series on edge node. |
+| **FinancialContextService** | `distributed actor` | Aggregates FinanceKit (on-device Apple Wallet) + Plaid (OAuth2 bank accounts) into `FinancialSnapshot`. Financial data never leaves edge node. |
+
+### 4.8 Library Maintenance Pipeline
 
 Triggered from **Settings > Rebuild Library**, the 6-step `maintainLibrary` process:
 
@@ -305,13 +454,17 @@ Triggered from **Settings > Rebuild Library**, the 6-step `maintainLibrary` proc
 
 ## 5. Enrichment Pipeline Flow
 
-When a capture or link enters the system, it proceeds through these stages **sequentially**. Each stage populates fields on a shared `PipelineContext` struct, which downstream stages read.
+When a capture or link enters the system, it proceeds through these stages **sequentially**. Each stage populates fields on a shared `PipelineContext` struct, which downstream stages read. When an edge node is discovered via Bonjour, stages ②–⑤ are transparently routed to the remote `InferenceService`; otherwise they execute locally.
 
 ```
 1. Ingestion
    └─ Camera capture / Share Sheet / Photo import / URL deep link
    └─ Item inserted with `processingStatus = "processing"`
    └─ Item saved to SwiftData immediately for live UI updates
+
+1a. Edge Decision (NWBrowser)
+   ├─ Edge node available on LAN     → route stages ②–⑤ to remote InferenceService
+   └─ No edge node                   → execute locally (existing behavior)
 
 2. Location Resolution (runs first when location is not already pinned)
    ├─ Descriptor override          (user-pinned location from UI — skip if present)
@@ -327,6 +480,7 @@ When a capture or link enters the system, it proceeds through these stages **seq
    ├─ Document segmentation        → pipelineContext.documentContent (perspective-corrected)
    ├─ Subject sifting              → item.siftedImageData (alpha-channel cutout)
    └─ Aesthetics scoring           → item.aestheticsScore
+   [local OR edge — identical Vision requests, different Neural Engine]
 
 4. Parallel Enrichment (TaskGroup — runs concurrently)
    ├─ Link metadata extraction     → pipelineContext.linkEnrichment
@@ -342,26 +496,30 @@ When a capture or link enters the system, it proceeds through these stages **seq
    │   └─ `tags`                → 2 descriptive tags
    ├─ Concept extraction        → UserConcept auto-creation with weight tracking
    └─ All outputs aggregated into `pipelineContext.enrichmentContextString` for FastVLM
+   [local OR edge]
 
 6. Stage 2: FastVLM — Grounded Image Analysis (opt-in, `FastVLMEnrichmentService`)
-   ├─ Input: raw image + Vision `visualTags` + SLM `enrichmentContextString` (summary, statements, purpose, tags) + OCR `transcription`
+   ├─ Input: raw image + Vision `visualTags` + SLM `enrichmentContextString` + OCR `transcription`
    ├─ Single-pass grounded prompt: Vision tags anchor what the model should see
-   ├─ `FastVLMAnalysis` structured output:
-   │   ├─ `imageDescription`    → multimodal description of image content
-   │   ├─ `contextSummary`      → synthesized summary (may override SLM summary)
-   │   ├─ `suggestedTitle`      → title (applied only if item has none)
-   │   ├─ `suggestedPurpose`    → intent (appended to item purposes)
-   │   ├─ `suggestedTags`       → tags (logged, not applied to UI)
-   │   └─ `statements`          → evidence statements (logged, not applied to UI)
-   └─ Constrained: 128 token cap, temperature 0.0
+   ├─ Local: FastVLM 0.5B (128 token cap, temperature 0.0)
+   ├─ Edge:  FastVLM 3B+ (expanded context, higher quality)
+   └─ `FastVLMAnalysis` structured output (same schema either path)
 
 7. Session Assignment (`syncSession`)
-   ├─ Priority 1: UI-provided `activeSessionID` (user explicitly in an active session context)
-   ├─ Priority 2: Match existing session by time proximity + location proximity + topic similarity
+   ├─ Priority 1: UI-provided `activeSessionID`
+   ├─ Priority 2: Match existing session by time + location + topic proximity
    ├─ Priority 3: Create new session if no match within thresholds
    └─ Session summary generated/updated separately (batched after queue drains)
 
-8. Persistence
+8. ESG / Commerce Enrichment (opt-in, edge node only)
+   ├─ Product classification       → pipelineContext.productClassification (YOLO/barcode)
+   ├─ ESG data retrieval           → pipelineContext.esgEnrichment (Climate TRACE, Open Food Facts)
+   ├─ Pricing nowcast              → pipelineContext.priceTrajectory (DFM, 14-day projection)
+   ├─ Financial context            → pipelineContext.financialSnapshot (FinanceKit + Plaid)
+   ├─ Commerce routing             → pipelineContext.purchaseOptions (affiliate deep links)
+   └─ Advisory decision            → RECOMMEND / REVIEW / DELAY / OVER_BUDGET
+
+9. Persistence
    ├─ processingStatus = "ready"
    ├─ SwiftData save → CloudKit sync
    └─ Input record deleted (prevents re-queue loop)
@@ -379,7 +537,7 @@ When a capture or link enters the system, it proceeds through these stages **seq
 | **VisualIntelligenceView** | Camera interface — live preview, subject glow overlay, capture controls, detection results |
 | **SidebarView** | Session-based navigation, collections, favorites, search, drag-and-drop |
 | **ReferenceDetailView** | Full item detail — media, metadata, location, enrichments, siblings, editing |
-| **SettingsView** | App configuration, library maintenance, diagnostics |
+| **SettingsView** | App configuration, library maintenance, Edge Node status, diagnostics |
 | **ResultsOverlayView** | Detection results overlay on camera preview |
 | **SiftedOverlayView** | Subject sifting glow/cutout overlay on camera preview |
 | **ContextChipBar** | Horizontal scrolling context tag chips for capture review |
@@ -399,6 +557,16 @@ When a capture or link enters the system, it proceeds through these stages **seq
 | **ReprocessMetadataView** | Metadata review during reprocessing |
 | **ShortcutGalleryView** | App Intents / Shortcuts gallery |
 | **SharedWithYouView** | iMessage Shared with You integration |
+
+**Ethical Commerce views** *(future — requires edge node)*:
+
+| View | Platform | Description |
+|------|----------|-------------|
+| **ProductScoreOverlayView** | iOS/iPadOS | Camera overlay showing ESG data quality tier badge, carbon intensity, certifications |
+| **NowcastChartView** | iOS/iPadOS | 14-day sparkline price trajectory with directional indicator |
+| **CommerceActionView** | iOS/iPadOS | "Buy on [Platform]" CTA with ethical match indicator |
+| **BudgetAlertView** | iOS/iPadOS | Financial context inline — budget remaining, category spend |
+| **SpatialProductPanelView** | visionOS | RealityKit spatial panel anchored to detected product |
 
 
 ### 6.2 View Models
@@ -445,6 +613,35 @@ Receives shared URLs and media from any app. Links are wrapped via `DiverLinkGen
 
 `SharedWithYouManager` integrates with Apple's Shared with You framework to surface links shared via iMessage, with attribution in the detail view.
 
+### 7.6 Distributed Actor Edge Node
+
+The Mac/iPad edge node registers a Bonjour service for zero-config LAN discovery:
+
+**Info.plist (edge node):**
+```xml
+<key>NSBonjourServices</key>
+<array>
+    <string>_visualintel._tcp</string>
+</array>
+```
+
+**Info.plist (client — iOS/iPadOS/visionOS):**
+```xml
+<key>NSBonjourServices</key>
+<array>
+    <string>_visualintel._tcp</string>
+</array>
+<key>NSLocalNetworkUsageDescription</key>
+<string>Connects to your Mac for faster ML processing</string>
+```
+
+**Discovery flow:**
+1. Client starts `NWBrowser(for: .bonjour(type: "_visualintel._tcp", domain: nil))`
+2. Edge node starts `NWListener` on the same Bonjour type
+3. Client resolves `InferenceService` via `VisualIntelligenceActorSystem`
+4. All subsequent `distributed func` calls are routed over TLS 1.3 `NWConnection`
+5. If Bonjour discovery times out or connection drops → graceful fallback to on-device
+
 ---
 
 ## 8. Storage & Persistence
@@ -480,28 +677,46 @@ SwiftData syncs automatically to CloudKit via the `iCloud.com.secretatomics.know
 - `documentImageData` — Perspective-corrected document scan
 - `thumbnailPaths` — File paths to aesthetics-scored session thumbnails
 
+### 8.4 Edge Node Storage
+
+The Mac/iPad edge node maintains local caches that never sync to CloudKit or leave the LAN:
+
+| Store | Technology | Contents | TTL |
+|-------|-----------|----------|-----|
+| **ESG Cache** | SQLite | Climate TRACE, Open Food Facts, OpenESG results | 24h |
+| **Price Time Series** | SQLite | World Bank, BLS PPI, FRED data points | Refreshed daily |
+| **Financial Cache** | Keychain + encrypted file | Plaid OAuth2 tokens, transaction cache | Session-based |
+| **Commerce Cache** | SQLite | Affiliate link mappings, platform configs | 7 days |
+| **Model Cache** | File system | CoreML YOLO/DETR, MLX Swift 3B+ weights | Persistent until evicted |
+
 ---
 
 ## 9. Security
 
 - **Link Integrity:** Shared URLs are wrapped with HMAC signatures via `DiverLinkGenerator` / `LinkWrapping`. Prevents URL tampering between share extension submission and pipeline ingestion.
 - **Keychain:** Authentication tokens stored via `KeychainService`.
-- **On-Device Processing:** All ML inference (Vision, Foundation Models, FastVLM) runs locally. No user data is sent to external servers for processing.
+- **On-Device Processing:** All ML inference (Vision, Foundation Models, FastVLM) runs locally by default. No user data is sent to external servers for processing.
 - **CloudKit:** End-to-end encrypted sync via Apple's CloudKit infrastructure.
+- **Edge Transport Security:** Distributed actor calls between client and edge node use TLS 1.3 over `NWConnection`, scoped to the local network. No WAN exposure. Bonjour discovery is LAN-only.
+- **Financial Data Isolation:** FinanceKit data stays on-device (Apple Wallet). Plaid data is cached only on the edge node and never forwarded to cloud services. No purchase history is stored unless the user explicitly opts in.
+- **Commerce Privacy:** Affiliate links are generated on the edge node. No behavioral tracking or purchase analytics are collected.
+- **Audit Logging:** Advisory decisions (ESG scoring, nowcast, recommendation) are logged locally on the edge node with timestamp, product ID, data sources, and recommendation — for user transparency, not analytics.
 
 ---
 
 ## 10. Platform Requirements
 
-| Requirement | Value |
-|-------------|-------|
-| **Minimum Device** | iPhone 16 (A18 chip required for Apple Intelligence and on-device LLM) |
-| **Minimum iOS** | 26.0 |
-| **Apple Intelligence** | Required for on-device LLM features (summaries, tags, intent classification) |
-| **FastVLM** | Optional — ~500MB on-demand download, auto-evicted under memory pressure |
-| **Frameworks** | Swift, SwiftUI, SwiftData, Vision, MapKit, Foundation Models, MLX Swift, AVFoundation, CoreLocation, Contacts, MusicKit |
-| **APIs** | Spotify (music matching), DuckDuckGo (link enrichment) |
-| **Entitlements** | Camera, Location, Contacts, Photo Library, App Groups, CloudKit, Shared with You | 
+| Requirement | iOS / iPadOS Client | macOS Edge Node | visionOS Client *(future)* |
+|-------------|--------------------|-----------------|-----------------------------|
+| **Minimum OS** | iOS/iPadOS 26.0 | macOS 26.0 | visionOS 26.3 |
+| **Minimum Device** | iPhone 16 / iPad (M-series) | Mac (M4+) | Apple Vision Pro |
+| **Apple Intelligence** | Required | Required | Required |
+| **FastVLM** | 0.5B (optional, ~500MB) | 3B+ (optional, ~2GB) | — |
+| **YOLO/DETR** | — | CoreML model (optional) | — |
+| **Key Frameworks** | Swift, SwiftUI, SwiftData, Vision, MapKit, Foundation Models, MLX Swift, AVFoundation, CoreLocation, Contacts, MusicKit, Distributed, Network, Charts, FinanceKit | Swift, Distributed, Network, CoreML, MLX Swift, Accelerate, Charts | Swift, SwiftUI, RealityKit, ARKit, Distributed, Network, Charts |
+| **Key APIs** | Spotify, DuckDuckGo | Climate TRACE, Open Food Facts, OpenESG, World Bank, BLS, FRED, Plaid | — |
+| **Financial** | FinanceKit (Apple Wallet) | Plaid (OAuth2 bank data) | — |
+| **Entitlements** | Camera, Location, Contacts, Photo Library, App Groups, CloudKit, Shared with You, Local Network, FinanceKit | Local Network, App Sandbox | Camera, Local Network, Enterprise (optional) |
 
 ---
 
@@ -522,6 +737,7 @@ SwiftData syncs automatically to CloudKit via the `iCloud.com.secretatomics.know
 - Use `SessionCollection` directly — typealias for `DiverCollection` (SwiftData `@Model` class retains original name for schema compatibility)
 - Use `ProcessedItem` for the primary enriched item model
 - Service names follow `<Domain>Service` or `<Domain>EnrichmentService` pattern
+- Distributed actor services follow `<Domain>Service` as `distributed actor` declarations
 
 ### 11.3 Critical Rules
 
@@ -533,6 +749,7 @@ SwiftData syncs automatically to CloudKit via the `iCloud.com.secretatomics.know
 6. **Error logging** — Use `do { try } catch { log }` instead of `try?` for all SwiftData saves
 7. **Autorelease in loops** — Wrap image processing loops (`CGImage`, Vision results) in `autoreleasepool { }` to drain ObjC temporaries. Do not place `await` suspension points inside autoreleasepool blocks.
 8. **AsyncStream factory** — Use `AsyncStream.makeStream(of:)` (SE-0388, Swift 5.9+) instead of closure-based initializer for progress reporting
+9. **Distributed actor safety** — All types crossing the `distributed func` boundary must be `Codable & Sendable`. Use `Data` for image payloads, not `UIImage` or `CGImage`.
 
 ### 11.4 Build & Test
 
@@ -576,5 +793,24 @@ cd DiverShared && swift test
 | **PipelineContext** | Typed struct aggregating all enrichment data during processing |
 | **Enrichment** | Any metadata added to a capture post-ingestion (location, web, music, AI analysis) |
 | **Daily Focus** | AI-generated daily activity brief from `DailyContextService` |
-| **FastVLM** | Apple's Fast Vision-Language Model (0.5B), run locally via MLX Swift |
+| **FastVLM** | Apple's Fast Vision-Language Model (0.5B on-device, 3B+ on edge), run via MLX Swift |
 | **masterCaptureID** | String linking sibling items captured simultaneously (photo + QR + document) |
+| **Edge Node** | Local Mac or M-series iPad hosting distributed actors for ML offloading and data enrichment |
+| **Data Quality Tier** | 1–5 rating adapted from PCAF: 1 = independently verified, 5 = sector-average estimate |
+| **Nowcasting** | Statistical technique using mixed-frequency data to estimate near-real-time economic indicators |
+| **Advisory Decision** | User-confirmed recommendation (RECOMMEND / REVIEW / DELAY / OVER_BUDGET). System assists, user acts. |
+| **Distributed Actor** | Swift `distributed actor` — cross-device actor communication via `Distributed` framework (SE-0336) |
+| **VisualIntelligenceActorSystem** | Custom `DistributedActorSystem` — Bonjour discovery + `NWConnection` TLS transport for ML offloading |
+| **Procurement API** | `CommerceService` matching products to purchase options filtered by ethical policy + platform preferences |
+| **FinanceKit** | Apple framework (iOS 17+) providing on-device access to Apple Wallet transaction data |
+| **Affiliate Routing** | Deep-link generation to user's preferred commerce platforms with revenue-share tracking |
+
+---
+
+## 14. Ethical Commerce & Micro-Decisions — Implementation Roadmap
+
+> The features described in §1.1 (value props 5–6), §2.2 (edge computing), §3.6 (commerce types), §4.7 (edge services), §5 (stage ⑧), §6.1 (commerce views), §7.6 (Bonjour), §8.4 (edge storage), and §9 (financial security) are all part of the Ethical Commerce initiative.
+>
+> For detailed implementation phases (Phase 0 PoC through Phase 3 VisionOS), data source assessment, PCAF data quality tier methodology, degraded-mode design, and procurement API architecture, see:
+>
+> **[Documentation/ethical_commerce_spec.md](Documentation/ethical_commerce_spec.md)**

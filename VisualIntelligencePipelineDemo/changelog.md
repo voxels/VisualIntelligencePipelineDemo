@@ -1,5 +1,48 @@
 # Changelog
 
+## 2026-02-19
+
+### Xcode MCP Bridge Integration
+- **GEMINI.md**: Added "Xcode MCP Bridge (Xcode 26.3+)" section with setup, environment variables, capabilities table, and usage rules. Updated Apple Documentation Lookup rule to include bridge doc search with WWDC transcript coverage.
+- **AGENTS.md**: Added "Xcode MCP Bridge" subsection under Build, Test, and Development Commands — bridge-first build, test, preview capture, and doc search with CLI fallback.
+- **CLAUDE.md**: Added matching "Xcode MCP Bridge" subsection for Claude Code/Agent compatibility.
+- **Workflows**: Created `.agents/workflows/build.md`, `test.md`, and `instruments.md` — all bridge-first with CLI fallback for headless/CI environments.
+
+### Ethical Commerce Spec Rewrite
+- **Extracted §14** from `spec.md` into standalone `Documentation/ethical_commerce_spec.md`. Section replaced with a cross-reference.
+- **Replaced Python stack** (Docker, FastAPI, LangChain, Kafka) with Apple-native architecture: Swift `Distributed` framework (Bonjour/`NWConnection`), CoreML on Neural Engine, MLX Swift for LLM inference.
+- **Multi-platform support** — clients: iOS, iPadOS, visionOS; edge nodes: macOS (M-series), iPadOS (M-series).
+- **Universal ML offloading** — all intelligence work (existing pipeline + ethical commerce) can be offloaded from any client to a more powerful device on the home network via distributed actors.
+- **Commerce path** — procurement API with ethical filtering, deep-link affiliate routing to user's preferred platforms, "Buy" CTA on product overlays.
+- **Personal finance integration** — FinanceKit (on-device Apple Wallet data) + Plaid (bank accounts via OAuth2) for budget validation and purchase planning.
+- **Advisory decisions** — user-initiated, system-assisted (RECOMMEND/REVIEW/DELAY/OVER_BUDGET). User always confirms.
+- **Real ESG data sources** for Phase 0: Climate TRACE (free), Open Food Facts (free, 3M products), OpenESG (free), World Bank Commodities (free).
+- **PCAF data quality tiers** — expanded 5-tier explanation adapted from PCAF financial methodology to consumer product context.
+- **Degraded-mode design** — explicit handling when ESG/pricing/financial data is unavailable.
+- **Added Phase 0** — pure-Swift PoC with real data sources on iOS/Mac.
+- **Removed 4 glossary terms** from `spec.md` §13 (moved to standalone document glossary).
+
+### Deep Integration — `spec.md` v2.0
+- **§1 Product Vision**: Added 2 new value propositions: Ethical Commerce Intelligence, Home Network ML Offloading.
+- **§2 Architecture**: Added §2.2 Multi-Platform & Edge Computing with device compute table, distributed actor topology diagram, `VisualIntelligenceActorSystem` interface. Added distributed actor row to concurrency model. Added edge-offload decision branch to data flow diagram.
+- **§3 Data Model**: Added `esgContext`, `commerceContext`, `financialContext` to ProcessedItem. Added ESG/commerce/financial fields to PipelineContext. New §3.6 with `ProductClassification`, `ESGEnrichment`, `PurchaseOption`, `FinancialSnapshot` type definitions.
+- **§4 Services**: Added §4.7 Edge Node Services — 6 distributed actors: `InferenceService`, `NowcastingService`, `CommerceService`, `ESGEnrichmentService`, `PricingDataService`, `FinancialContextService`.
+- **§5 Pipeline Flow**: Added stage 1a (edge decision), stage ⑧ (ESG/commerce enrichment). Annotated stages ②–⑤ with `[local OR edge]` routing.
+- **§6 UI**: Added 5 future ethical commerce views (iOS + visionOS).
+- **§7 Integration**: Added §7.6 Distributed Actor Edge Node — Bonjour registration, NWConnection, Info.plist config, discovery flow.
+- **§8 Storage**: Added §8.4 Edge Node Storage — 5 local caches (ESG, pricing, financial, commerce, model).
+- **§9 Security**: Added edge transport TLS, financial data isolation, commerce privacy, audit logging.
+- **§10 Platform**: Expanded to multi-platform table (iOS/iPadOS/macOS/visionOS) with per-platform frameworks, APIs, and entitlements.
+- **§11 Conventions**: Added critical rule #9 — distributed actor Codable/Sendable boundary safety.
+- **§13 Glossary**: Added 9 terms (Edge Node, Data Quality Tier, Nowcasting, Advisory Decision, Distributed Actor, VisualIntelligenceActorSystem, Procurement API, FinanceKit, Affiliate Routing).
+- **§14**: Updated cross-reference with section back-links to all integrated pieces.
+
+### Version Bump & Swift Charts
+- **Platform minimums**: iOS 26.0, macOS 26.0, visionOS 26.3 across `spec.md`, `ethical_commerce_spec.md`, and `DiverKit/Package.swift`.
+- **Frameworks**: Added Swift Charts and FinanceKit to platform requirements table.
+- **Swift Charts**: All statistical and chronological HUD visualizations use `Charts` framework (`LineMark`, `BarMark`, `AreaMark`).
+- **FinanceKit entitlement**: Added to iOS client entitlements list.
+
 ## 2026-02-18
 
 ### Performance Refactor — Phase 1 (Continued)

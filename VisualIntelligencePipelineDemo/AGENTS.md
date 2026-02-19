@@ -29,6 +29,16 @@ Prefer putting cross-platform/shared logic in `DiverKit` and keeping `VisualInte
     `xcodebuild -list -project VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj`
   - The primary scheme is `VisualIntelligencePipeline`.
 
+### Xcode MCP Bridge (Preferred when Xcode is running)
+
+When Xcode is running with the project open and **Settings → Intelligence → Xcode Tools** is enabled, prefer the Xcode MCP bridge over raw CLI commands:
+
+- **Build:** Use the bridge `build` tool — returns structured diagnostics (file, line, column, severity) instead of raw terminal output.
+- **Test:** Use the bridge `test` tool for `DiverTests_iOS`, `VisualIntelligencePipeline`, and `DiverShared` — enables iterating on failures with structured results.
+- **SwiftUI Previews:** Use bridge preview capture to verify UI changes visually after modifying views.
+- **Apple Docs:** Bridge doc search includes WWDC transcripts; complement with Cupertino CLI for API docs and sample code.
+- **Fallback:** Use CLI `xcodebuild` / `swift test` commands above in headless or CI environments.
+
 ## Coding Style & Naming Conventions
 
 - Swift: follow Xcode defaults (4-space indentation) and Swift API Design Guidelines.

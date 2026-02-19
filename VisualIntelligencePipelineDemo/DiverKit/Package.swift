@@ -6,8 +6,8 @@ let package = Package(
     name: "DiverKit",
     platforms: [
         .iOS("26.0"),
-        .macOS(.v15),
-        .visionOS(.v2)
+        .macOS("26.0"),
+        .visionOS("26.3")
     ],
     products: [
         .library(
