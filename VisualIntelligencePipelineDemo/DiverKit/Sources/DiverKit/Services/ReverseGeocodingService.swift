@@ -37,7 +37,7 @@ public final class ReverseGeocodingService {
         
         // Check cache first
         if let cached = geocodeCache[key], !cached.isExpired {
-            print("📍 ReverseGeocoding: Cache HIT for \(key)")
+            DiverLogger.pipeline.debug("📍 ReverseGeocoding: Cache HIT for \(key)")
             return cached.result
         }
         

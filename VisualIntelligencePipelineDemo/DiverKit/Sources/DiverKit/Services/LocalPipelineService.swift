@@ -2657,7 +2657,7 @@ public final class LocalPipelineService {
     /// Convert raw image Data to a CGImage for FastVLM multimodal analysis.
     /// Uses NSCache to avoid re-decoding the same data within a pipeline run.
     nonisolated private func createCGImage(from data: Data) -> CGImage? {
-        let cacheKey = "\(data.count)" as NSString
+        let cacheKey = "\(data.hashValue)" as NSString
         
         // Check cache first
         if let cached = cgImageCache.object(forKey: cacheKey) {
@@ -2682,7 +2682,7 @@ public final class LocalPipelineService {
 
     /// Internal test-accessible wrapper for `createCGImage(from:)`.
     /// Only visible via `@testable import DiverKit`.
-    func createCGImageForTesting(from data: Data) -> CGImage? {
+    internal func createCGImageForTesting(from data: Data) -> CGImage? {
         createCGImage(from: data)
     }
 
