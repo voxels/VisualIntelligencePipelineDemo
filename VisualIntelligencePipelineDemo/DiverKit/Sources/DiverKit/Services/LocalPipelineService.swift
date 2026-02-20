@@ -1958,11 +1958,49 @@ public final class LocalPipelineService {
         
         // Step 2: Fetch enrichment data once (shared across strategies that need it)
         let esgService = ESGEnrichmentService()
+        let govService = GovernmentDataService()
+        
+        // Step 2a: Parallel fetch — ESG product data + Government safety data
+        // Both are independent and can run concurrently
+        async let govFuture = govService.enrich(product: classification)
+        
         let esgEnrichment: ESGEnrichment?
         if let barcode = classification.barcode {
             esgEnrichment = try? await esgService.enrich(barcode: barcode)
         } else {
             esgEnrichment = try? await esgService.enrich(category: classification.category)
+        }
+        
+        let govEnrichment: GovernmentEnrichment? = await govFuture
+        
+        pipelineContext.governmentData = govEnrichment
+        item.governmentContext = govEnrichment
+        
+        if let gov = govEnrichment, gov.hasConcerns {
+            DiverLogger.pipeline.info("⚠️ Commerce: Government data flags concerns for \(classification.name) — \(gov.recalls.count) recalls, \(gov.fdaAlerts.count) FDA alerts")
+        }
+        
+        // Step 2b: Price trajectory + nowcast
+        let pricingService = PricingDataService()
+        let nowcastEngine = NowcastingEngine()
+        
+        let commodityID = mapCategoryToCommodity(classification.category)
+        if !commodityID.isEmpty {
+            if let trajectory = try? await pricingService.project(commodityID: commodityID) {
+                pipelineContext.priceTrend = trajectory
+                
+                // Run DFM nowcast on raw price series
+                let worldBankSeries = await pricingService.fetchWorldBankPrices(commodityID: commodityID)
+                let blsSeries = await pricingService.fetchBLSPPI(seriesID: mapCategoryToBLSSeries(classification.category))
+                
+                let allSeries = [worldBankSeries, blsSeries].filter { !$0.isEmpty }
+                if !allSeries.isEmpty {
+                    let nowcast = nowcastEngine.nowcast(series: allSeries)
+                    pipelineContext.nowcastResult = nowcast
+                    item.nowcastContext = nowcast
+                    DiverLogger.pipeline.info("📈 Nowcast: trend=\(nowcast.direction.rawValue), confidence=\(String(format: "%.0f%%", nowcast.confidence * 100))")
+                }
+            }
         }
         
         // Step 3: Score with ALL active strategies
@@ -1973,8 +2011,9 @@ public final class LocalPipelineService {
             // Each strategy gets appropriate enrichment data
             let enrichment: (any Sendable)?
             switch strategy.strategyID {
-            case "esg": enrichment = esgEnrichment
+            case "esg": enrichment = (esgEnrichment, govEnrichment) as (ESGEnrichment?, GovernmentEnrichment?)
             case "value": enrichment = pipelineContext.priceTrend
+            case "social": enrichment = govEnrichment  // complaint/recall history
             default: enrichment = nil
             }
             
@@ -2014,6 +2053,15 @@ public final class LocalPipelineService {
                 item.processingLog.append("\(Date().formatted()): Stage ⑦: Scored by \(strategyNames.joined(separator: ", ")), \(recommendations.count) rec(s)")
                 DiverLogger.pipeline.info("🛒 Commerce: \(allScores.count) strategy scores, weights=\(learnedWeights), \(recommendations.count) rec(s) for \(classification.name)")
             }
+        }
+        
+        // Step 5b: Affiliate routing with ethical policy
+        let affiliateService = AffiliateRoutingService()
+        let ethicalPolicy = loadEthicalPolicy()
+        if let platforms = try? await affiliateService.rankPlatforms(for: classification, policy: ethicalPolicy) {
+            pipelineContext.affiliateMatches = platforms
+            item.affiliateContext = platforms
+            DiverLogger.pipeline.info("🏪 Affiliate: \(platforms.count) platforms ranked for \(classification.name)")
         }
         
         // Step 6: Record historical snapshot for time-series charts
@@ -2081,6 +2129,49 @@ public final class LocalPipelineService {
                     productCount: Int(concept.weight)
                 )
             }
+    }
+    
+    /// Maps product category to World Bank commodity code for price tracking.
+    private func mapCategoryToCommodity(_ category: String) -> String {
+        let mapping: [String: String] = [
+            "food": "WHEAT",
+            "coffee": "COFFEE_ARABICA",
+            "electronics": "ALUMINUM",
+            "clothing": "COTTON_A_INDX",
+            "energy": "CRUDE_BRENT",
+            "metals": "GOLD",
+        ]
+        let lower = category.lowercased()
+        for (key, value) in mapping {
+            if lower.contains(key) { return value }
+        }
+        return ""
+    }
+    
+    /// Maps product category to BLS Producer Price Index series ID.
+    private func mapCategoryToBLSSeries(_ category: String) -> String {
+        let mapping: [String: String] = [
+            "food": "WPU01",          // Farm Products
+            "electronics": "WPU117",   // Electronic Components
+            "clothing": "WPU0381",     // Apparel
+            "general": "WPU00000000",  // All Commodities
+        ]
+        let lower = category.lowercased()
+        for (key, value) in mapping {
+            if lower.contains(key) { return value }
+        }
+        return "WPU00000000"
+    }
+    
+    /// Loads user's ethical purchasing policy from UserDefaults.
+    private func loadEthicalPolicy() -> EthicalPolicy {
+        let defaults = UserDefaults.standard
+        return EthicalPolicy(
+            carbonThreshold: defaults.object(forKey: "ethicalPolicy.carbonThreshold") as? Float ?? 0.5,
+            preferredCertifications: defaults.stringArray(forKey: "ethicalPolicy.certifications") ?? [],
+            platformRanking: defaults.stringArray(forKey: "ethicalPolicy.platformOrder") ?? ["thrive_market", "target", "amazon", "bestbuy", "ebay"],
+            excludeLaborViolations: defaults.bool(forKey: "ethicalPolicy.excludeLaborViolations")
+        )
     }
 
     private func performLLMAnalysis(for item: ProcessedItem, descriptor: DiverItemDescriptor?, pipelineContext: PipelineContext) async {

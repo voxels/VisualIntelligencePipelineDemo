@@ -28,6 +28,7 @@ struct VisualIntelligencePipelineApp: App {
     let dataStore: DiverDataStore
     let metadataPipelineService: MetadataPipelineService
     let keychainService: KeychainService
+    let cloudKitSyncMonitor: CloudKitSyncMonitor
 
     // This is where KnowMapsServiceContainer needs a ModelContext, it can use the DiverDataStore's container
     @State private var knowMapsServices: KnowMapsServiceContainer?
@@ -69,6 +70,11 @@ struct VisualIntelligencePipelineApp: App {
         self.dataStore = DiverDataStore(schema: fullSchema, configurations: [diverConfig])
         VisualIntelligencePipelineApp._staticDataStore = self.dataStore
         
+        // Start CloudKit sync monitoring (logs events, surfaces errors)
+        let syncMonitor = CloudKitSyncMonitor()
+        syncMonitor.start()
+        self.cloudKitSyncMonitor = syncMonitor
+        
         // Ensure UnifiedDataManager uses the SAME store (Dual Container Consolidation)
         UnifiedDataManager.shared = UnifiedDataManager(store: self.dataStore)
         
@@ -82,8 +88,11 @@ struct VisualIntelligencePipelineApp: App {
         let contactService = ContactService()
         let weatherService = WeatherEnrichmentService()
         
-        // Use placeholders for API keys for now
-        let foursquareContextService = FoursquareEnrichmentService(apiKey: "FOURSQUARE_API_KEY")
+        // Load Foursquare API key from CloudKit cache (populated by prefetchKeys on app launch).
+        // On first launch the cache may be empty — Foursquare degrades gracefully with no key.
+        let apiKeyService = APIKeyService()
+        let foursquareKey = apiKeyService.retrieve(for: .foursquare) ?? ""
+        let foursquareContextService = FoursquareEnrichmentService(apiKey: foursquareKey)
         let duckDuckGoContextService = DuckDuckGoEnrichmentService()
         let webViewService = WebViewLinkEnrichmentService()
         let appleMusicService = AppleMusicEnrichmentService()

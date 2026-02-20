@@ -1,6 +1,84 @@
 # Changelog
 
+## 2026-02-20
+
+### Modular Ranking System & Edge Inference
+
+#### Modular Commerce Ranking
+- **RankingPolicy protocol** (DiverShared/CommerceTypes.swift): Pluggable ranking system replacing hardcoded ethical-only scoring. Defines `dimensions: [RankingDimension]`, `shouldExclude()`, and `platformPreferenceBonus()`.
+- **3 policy presets**: `EthicalPolicy` (carbon/labor/certifications — default), `PriceFocusedPolicy` (price/shipping/returns), `SpeedFocusedPolicy` (delivery/stock/pickup).
+- **PlatformMatch generalized**: `matchScore` replaces `ethicalMatchScore` (backward-compatible alias retained). New `dimensionScores: [String: Float]` for per-dimension breakdown.
+- **AffiliateRoutingService**: Rewrote `rankPlatforms()` to iterate policy dimensions, build platform profile dict, and delegate filtering/scoring to the policy.
+
+#### Edge Daemon Real Inference
+- **EdgeDaemonService.processRequest**: Replaced stub with real dispatch — routes "vision", "vlm", "nowcast", "gov", "commerce" requests to `IntelligenceProcessor`, `FastVLMEnrichmentService`, `PricingDataService`/`NowcastingEngine`, `GovernmentDataService`, `AffiliateRoutingService`.
+- **EdgeInferenceActor**: Uses `IntelligenceProcessor.process(image:mode:.fullAnalysis)` and converts `[IntelligenceResult]` → `VisionAnalysisResult` for transport. VLM uses `FastVLMEnrichmentService.analyze()`.
+- **EdgeNowcastingActor**: Fetches real World Bank + BLS pricing data via `PricingDataService`.
+- **EdgeFinancialActor**: Clear FinanceKit entitlement blocker documentation (no stubs).
+- **discoverModels**: Checks for FastVLM 0.5B/1.5B/3B tiers + YOLOv8 CoreML.
+- **ModelManagerView**: Added FastVLM 3B and YOLOv8 to available models list.
+
+#### Chart & UI Fixes
+- **ReferenceDetailView**: Fixed `allScores: []` → `first.option.scores` (real pipeline data).
+- **NowcastChartView replaced**: Inline direction/confidence/projectedChange indicator — `NowcastResult` has no price data points.
+- **APIKeyConfigView removed**: Deleted NavigationLink from SettingsView (free/open data only policy).
+- **ImmersiveScoreView**: Available on iPad (rich 2D) + visionOS (spatial AR).
+
+#### Documentation
+- **edge-computing.html**: "Spatial Commerce (Multiplatform)" — iPad + visionOS columns. ModelManagerView lists all model families.
+- **wiki stat counts**: 56 services, 38 views, 36 test files.
+
+#### Final Stub Cleanup
+- **VisualIntelligencePipelineApp**: Foursquare API key loaded from Keychain via `APIKeyService.retrieve(for: .foursquare)` — degrades gracefully if not configured.
+- **ProcessedItemViewModel.shareItem**: Builds shareable content (title, summary, URL) and posts `.shareItemRequested` notification for UI layer.
+- **ProcessedItemViewModel.relatedConcepts**: Queries SwiftData for `UserConcept`s matching item tags, sorted by weight.
+- **ModelManagerView**: Real model download with URLSession progress tracking, per-model download IDs, actual storage size reporting via `ByteCountFormatter`.
+
+#### APIKeyService → CloudKit Migration
+- **APIKeyService**: Migrated from iOS Keychain to `CKContainer("iCloud.com.secretatomics.knowmaps.Keys")` private database. CKRecord per key with NSCache for fast synchronous reads. Added `prefetchKeys()` for app launch.
+- **APIKeyConfigView**: Updated to async store/delete, shows save progress spinner, `.task` lifecycle for CloudKit prefetch.
+- **VisualIntelligencePipelineApp**: Foursquare key loaded from CloudKit cache — degrades gracefully if not configured.
+
+#### Database Hardening
+- **CloudKitSyncMonitor** (NEW): Observes `NSPersistentCloudKitContainer.eventChangedNotification` for sync events. Logs setup/import/export outcomes, tracks last successful sync, posts `.syncErrorNotification` / `.syncSuccessNotification` for UI consumption.
+- **VisualIntelligencePipelineApp**: Wired `CloudKitSyncMonitor.start()` after `DiverDataStore` creation.
+- **GEMINI.md**: Added development rules 8 (SwiftData Storage), 9 (CloudKit Sync Monitoring), 10 (Sensitive Data Storage).
+
+#### @ModelActor Migration
+- **PersistenceActor** (NEW): `@ModelActor` for actor-isolated background SwiftData operations. Replaces manual `ModelContext(container)` pattern.
+- **SidebarViewModel.analyzeSession**: Migrated from manual bg context to `PersistenceActor`.
+- **ReferenceDetailViewModel.fetchScoreHistory**: Migrated from manual bg context to `PersistenceActor`.
+- **MetadataPipelineService.processItemByID**: Remains manual — complex service dependencies make actor migration impractical.
+
+#### VersionedSchema Baseline
+- **DiverSchemaMigration.swift** (NEW): V1 baseline (all 7 models). Empty migration plan — not wired into DiverDataStore. Formalizes current schema for future migration safety.
+
 ## 2026-02-19
+
+### Commerce Integration Wiring
+
+#### Pipeline Service Integration
+- **LocalPipelineService.performCommerceEnrichment**: Wired `GovernmentDataService`, `PricingDataService`, `NowcastingEngine`, and `AffiliateRoutingService` into the commerce enrichment pipeline. ESG and government data now fetched in parallel via `async let`.
+- **PipelineContext**: Added `governmentData: GovernmentEnrichment?`, `nowcastResult: NowcastResult?`, `affiliateMatches: [PlatformMatch]`.
+- **ProcessedItem**: Added 3 Data blobs + computed accessors: `governmentContext`, `nowcastContext`, `affiliateContext`.
+- **3 helper methods**: `mapCategoryToCommodity`, `mapCategoryToBLSSeries`, `loadEthicalPolicy` (UserDefaults-backed).
+
+#### Unit Tests (4 files, 24 tests)
+- **GovernmentDataServiceTests** (7 tests): URL construction, response parsing, parallel TaskGroup, hasConcerns.
+- **NowcastingEngineTests** (7 tests): Rising/falling trends, confidence bounds, empty/single edge cases, direction validation.
+- **AffiliateRoutingServiceTests** (5 tests): Default 5 platforms, strict carbon policy, preference ordering, score validation, URL generation.
+- **EdgeComputingTests** (5 tests): EdgeNodeInfo Codable, status values, VisionAnalysisResult, LLMAnalysisResult, ModelState.
+
+#### UI Integration
+- **ReferenceDetailView**: Commerce Intelligence section (82 lines) after Media Info — `ProductScoreOverlayView`, `OwnershipButton`, `NowcastChartView`, `CommerceActionView`, government safety alerts.
+- **SettingsView**: Commerce Intelligence section with 3 NavigationLinks (EthicalPolicyConfigView, APIKeyConfigView, OwnedProductsView).
+- **Xcode project**: Added all 8 Commerce view files to main target via `xcodeproj` gem.
+- **NowcastChartView**: Fixed `Decimal(double:)` init, `ForEach` Identifiable conformance.
+
+#### Documentation
+- **commerce-intelligence.html**: New wiki page covering 7 scoring engines, 9 commerce services, 8 UI components, pipeline integration.
+- **edge-computing.html**: New wiki page covering distributed actors, Bonjour, transport, macOS daemon, visionOS spatial.
+- **index.html**: Added Intelligence nav section, module cards, updated stat counts (55+ services, 32 views, 22+ tests).
 
 ### Commerce Intelligence (Spec v2)
 
@@ -83,6 +161,25 @@
 - **CommerceActionView**: Ethically-ranked platform CTAs with match score badges and affiliate deep links.
 - **EthicalPolicyConfigView**: Carbon threshold slider, labor violation toggle, certification multi-select, drag-to-reorder platform ranking.
 - **APIKeyConfigView**: Keychain API key management with iCloud sync, per-key status indicators.
+
+#### macOS Edge Daemon (8 source files)
+- **EdgeDaemonApp**: `MenuBarExtra` SwiftUI app (no dock icon, `LSUIElement`).
+- **EdgeDaemonService**: `NWListener` with TLS 1.3, Bonjour advertising (`_visualintel._tcp`), TXT records (chip/TOPS/models), length-prefixed frame protocol, `@Observable`.
+- **EdgeDaemonMenu**: Menu bar popover with stat badges, connected clients, start/stop/settings/quit.
+- **EdgeDaemonDashboardView**: Stats grid, throughput chart (Swift Charts), model list, client list.
+- **EdgeDaemonSettingsView**: 3-tab settings (General, Models, Network) with `AppStorage`.
+- **ModelManagerView**: Available/downloaded model management with download buttons.
+- **ClientListView**: Connected iOS client details.
+- **EdgeDaemonStatusBar**: SF Symbol status indicator with pulse/variableColor effects.
+
+#### visionOS Spatial Commerce (5 source files)
+- **SpatialCommerceApp**: visionOS app with `ImmersiveSpace` (mixed immersion).
+- **SpatialCommerceView**: Product detection list, immersive space toggle, recent scan display.
+- **ProductScoreAttachment**: Glass-background score card with circular ring, expandable strategy bars.
+- **SpatialProductDetector**: ARKit `SceneReconstructionProvider` anchor tracking, `@Observable`.
+- **ImmersiveScoreView**: `RealityView` with `BillboardComponent` spatial attachments floating above detected objects.
+
+> **Note:** Both targets are source-only — user must create Xcode targets and add the files.
 
 
 ### Crash Fixes

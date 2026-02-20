@@ -99,10 +99,51 @@ public enum TrendDirection: String, Codable, Sendable {
     case stable
 }
 
-// MARK: - Commerce Routing
+// MARK: - Modular Ranking System
 
-/// User's ethical filtering preferences for ranking commerce platforms.
-public struct EthicalPolicy: Codable, Sendable {
+/// A scoring dimension for platform ranking. Each dimension has a name,
+/// a weight (importance), and an evaluation function that produces a 0-1 score
+/// for a given platform profile.
+public struct RankingDimension: Codable, Sendable {
+    public let name: String         // e.g., "carbon", "labor", "price", "speed"
+    public let weight: Float        // 0.0–1.0, relative importance
+    
+    public init(name: String, weight: Float) {
+        self.name = name
+        self.weight = min(1.0, max(0.0, weight))
+    }
+}
+
+/// Protocol for any ranking policy used to score and filter commerce platforms.
+/// `EthicalPolicy` is one implementation; you can create price-focused,
+/// speed-focused, local-first, or custom bundles by conforming to this protocol.
+public protocol RankingPolicy: Codable, Sendable {
+    /// The dimensions this policy evaluates, each with a name and weight.
+    var dimensions: [RankingDimension] { get }
+    
+    /// Platform names ranked by user preference (first = most preferred).
+    var platformRanking: [String] { get }
+    
+    /// Whether a platform should be excluded entirely from results.
+    func shouldExclude(platformProfile: [String: Float], certifications: [String]) -> Bool
+    
+    /// Bonus score for user-preferred platforms (0.0–1.0).
+    func platformPreferenceBonus(for platform: String) -> Float
+}
+
+/// Default implementations for RankingPolicy.
+public extension RankingPolicy {
+    func platformPreferenceBonus(for platform: String) -> Float {
+        guard let index = platformRanking.firstIndex(of: platform) else { return 0 }
+        return Float(platformRanking.count - index) / Float(max(platformRanking.count, 1))
+    }
+}
+
+// MARK: - Ethical Policy (Default Bundle)
+
+/// Ethical filtering preferences — ranks platforms by carbon impact, labor practices,
+/// and certifications. This is the default ranking policy.
+public struct EthicalPolicy: RankingPolicy {
     /// Maximum acceptable carbon footprint score (0.0 = strictest, 1.0 = no filter).
     public let carbonThreshold: Float
     /// Preferred certification types (e.g., "Fair Trade", "B Corp", "Organic").
@@ -111,6 +152,25 @@ public struct EthicalPolicy: Codable, Sendable {
     public let platformRanking: [String]
     /// Whether to exclude platforms with known labor violations.
     public let excludeLaborViolations: Bool
+    
+    public var dimensions: [RankingDimension] {
+        [
+            RankingDimension(name: "carbon", weight: 0.3),
+            RankingDimension(name: "labor", weight: 0.3),
+            RankingDimension(name: "certifications", weight: 0.2),
+            RankingDimension(name: "preference", weight: 0.2),
+        ]
+    }
+    
+    public func shouldExclude(platformProfile: [String: Float], certifications: [String]) -> Bool {
+        if excludeLaborViolations, let labor = platformProfile["laborViolations"], labor > 0 {
+            return true
+        }
+        if let carbon = platformProfile["carbon"], carbon > carbonThreshold {
+            return true
+        }
+        return false
+    }
     
     public init(
         carbonThreshold: Float = 0.5,
@@ -125,14 +185,83 @@ public struct EthicalPolicy: Codable, Sendable {
     }
 }
 
+// MARK: - Price-Focused Policy
+
+/// Ranks platforms primarily by price competitiveness and value.
+public struct PriceFocusedPolicy: RankingPolicy {
+    public let platformRanking: [String]
+    public let maxPriceWeight: Float
+    
+    public var dimensions: [RankingDimension] {
+        [
+            RankingDimension(name: "price", weight: maxPriceWeight),
+            RankingDimension(name: "shipping", weight: 0.2),
+            RankingDimension(name: "returns", weight: 0.1),
+            RankingDimension(name: "preference", weight: 0.1),
+        ]
+    }
+    
+    public func shouldExclude(platformProfile: [String: Float], certifications: [String]) -> Bool {
+        return false // Price-focused doesn't exclude
+    }
+    
+    public init(platformRanking: [String] = [], maxPriceWeight: Float = 0.6) {
+        self.platformRanking = platformRanking
+        self.maxPriceWeight = maxPriceWeight
+    }
+}
+
+// MARK: - Speed-Focused Policy
+
+/// Ranks platforms by delivery speed and availability.
+public struct SpeedFocusedPolicy: RankingPolicy {
+    public let platformRanking: [String]
+    
+    public var dimensions: [RankingDimension] {
+        [
+            RankingDimension(name: "deliverySpeed", weight: 0.4),
+            RankingDimension(name: "inStock", weight: 0.3),
+            RankingDimension(name: "localPickup", weight: 0.2),
+            RankingDimension(name: "preference", weight: 0.1),
+        ]
+    }
+    
+    public func shouldExclude(platformProfile: [String: Float], certifications: [String]) -> Bool {
+        return false
+    }
+    
+    public init(platformRanking: [String] = []) {
+        self.platformRanking = platformRanking
+    }
+}
+
 /// A ranked commerce platform result from CommerceRouting.
 public struct PlatformMatch: Codable, Sendable, Identifiable {
     public var id: String { platform }
     public let platform: String             // e.g., "amazon", "target", "bestbuy"
-    public let ethicalMatchScore: Float     // 0.0 – 1.0
+    public let matchScore: Float            // 0.0 – 1.0 (policy-agnostic)
     public let affiliateURL: URL?
     public let matchReasons: [String]       // e.g., ["B Corp certified", "Low carbon"]
+    public let dimensionScores: [String: Float]  // Per-dimension breakdown
     
+    /// Backward-compatible alias.
+    public var ethicalMatchScore: Float { matchScore }
+    
+    public init(
+        platform: String,
+        matchScore: Float,
+        affiliateURL: URL? = nil,
+        matchReasons: [String] = [],
+        dimensionScores: [String: Float] = [:]
+    ) {
+        self.platform = platform
+        self.matchScore = matchScore
+        self.affiliateURL = affiliateURL
+        self.matchReasons = matchReasons
+        self.dimensionScores = dimensionScores
+    }
+    
+    /// Backward-compatible initializer.
     public init(
         platform: String,
         ethicalMatchScore: Float,
@@ -140,9 +269,10 @@ public struct PlatformMatch: Codable, Sendable, Identifiable {
         matchReasons: [String] = []
     ) {
         self.platform = platform
-        self.ethicalMatchScore = ethicalMatchScore
+        self.matchScore = ethicalMatchScore
         self.affiliateURL = affiliateURL
         self.matchReasons = matchReasons
+        self.dimensionScores = [:]
     }
 }
 

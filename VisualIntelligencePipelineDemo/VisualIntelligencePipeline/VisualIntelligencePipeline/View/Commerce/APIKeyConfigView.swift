@@ -2,7 +2,7 @@
 //  APIKeyConfigView.swift
 //  VisualIntelligencePipeline
 //
-//  Settings view for managing API keys stored in the Keychain.
+//  Settings view for managing API keys stored in CloudKit.
 //  Supports Foursquare, Reddit, and iFixit API keys.
 //
 
@@ -14,6 +14,7 @@ struct APIKeyConfigView: View {
     @State private var keyValues: [APIKeyService.APIKey: String] = [:]
     @State private var keyStatus: [APIKeyService.APIKey: Bool] = [:]
     @State private var showingSaveConfirmation = false
+    @State private var isSaving = false
     
     private let apiKeyService = APIKeyService()
     
@@ -51,52 +52,64 @@ struct APIKeyConfigView: View {
             } header: {
                 Text("API Keys")
             } footer: {
-                Text("Keys are stored securely in the Keychain with iCloud sync. They are never sent to our servers.")
+                Text("Keys are stored in iCloud via the Keys CloudKit container. They sync across your devices automatically.")
             }
             
             Section {
                 Button {
                     saveAllKeys()
                 } label: {
-                    Label("Save All Keys", systemImage: "key.fill")
+                    if isSaving {
+                        ProgressView()
+                    } else {
+                        Label("Save All Keys", systemImage: "key.fill")
+                    }
                 }
-                .disabled(keyValues.values.allSatisfy { $0.isEmpty })
+                .disabled(keyValues.values.allSatisfy { $0.isEmpty } || isSaving)
                 
                 Button(role: .destructive) {
                     deleteAllKeys()
                 } label: {
                     Label("Delete All Keys", systemImage: "trash")
                 }
+                .disabled(isSaving)
             }
         }
         .navigationTitle("API Keys")
-        .onAppear {
-            refreshStatus()
+        .task {
+            await refreshStatus()
         }
         .alert("Keys Saved", isPresented: $showingSaveConfirmation) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("API keys have been saved to the Keychain and will sync across your devices.")
+            Text("API keys have been saved to iCloud and will sync across your devices.")
         }
     }
     
     private func saveAllKeys() {
-        for (key, value) in keyValues where !value.isEmpty {
-            try? apiKeyService.store(key: value, for: key)
+        isSaving = true
+        Task {
+            for (key, value) in keyValues where !value.isEmpty {
+                try? await apiKeyService.store(key: value, for: key)
+            }
+            await refreshStatus()
+            isSaving = false
+            showingSaveConfirmation = true
         }
-        refreshStatus()
-        showingSaveConfirmation = true
     }
     
     private func deleteAllKeys() {
-        for key in APIKeyService.APIKey.allCases {
-            apiKeyService.delete(for: key)
+        Task {
+            for key in APIKeyService.APIKey.allCases {
+                try? await apiKeyService.delete(for: key)
+            }
+            keyValues = [:]
+            await refreshStatus()
         }
-        keyValues = [:]
-        refreshStatus()
     }
     
-    private func refreshStatus() {
+    private func refreshStatus() async {
+        await apiKeyService.prefetchKeys()
         keyStatus = apiKeyService.configurationStatus()
     }
     

@@ -72,6 +72,12 @@ public struct PipelineContext: Sendable, Codable {
     public var priceTrend: PriceTrajectory?
     /// Ranked product recommendations from RAG against platforms
     public var recommendations: [RankedRecommendation] = []
+    /// Government safety/compliance data (CPSC, FDA, EPA, Energy Star)
+    public var governmentData: GovernmentEnrichment?
+    /// Nowcast projection from DFM engine
+    public var nowcastResult: NowcastResult?
+    /// Ethical platform matches with affiliate URLs
+    public var affiliateMatches: [PlatformMatch] = []
     
     
     // MARK: - Context Output

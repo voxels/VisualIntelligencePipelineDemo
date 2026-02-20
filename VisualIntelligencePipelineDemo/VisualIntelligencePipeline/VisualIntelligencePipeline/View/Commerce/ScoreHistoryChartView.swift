@@ -8,6 +8,7 @@
 
 import SwiftUI
 import Charts
+import DiverKit
 import DiverShared
 
 /// Swift Charts time-series view for product score history.
@@ -89,13 +90,6 @@ struct ScoreHistoryChartView: View {
     }
 }
 
-/// Lightweight data struct for charting (avoids SwiftData dependency in views).
-struct ScoreSnapshotData: Identifiable, Sendable {
-    let id = UUID()
-    let date: Date
-    let score: Double
-    let strategyID: String
-}
 
 #Preview {
     ScoreHistoryChartView(

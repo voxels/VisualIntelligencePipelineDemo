@@ -35,6 +35,7 @@ The project is modularized using Swift Package Manager:
 ### Commerce Intelligence
 
 *   **7 Scoring Engines:** Products detected via barcode or classification are scored across 7 strategies simultaneously: Ethics (ESG + 10 sub-dimensions), Brand Fit, Value, Durability, Social Proof, Health Fit, Total Cost.
+*   **Modular Ranking System:** `RankingPolicy` protocol with pluggable `RankingDimension`s. 3 presets: `EthicalPolicy` (carbon/labor/certifications — default), `PriceFocusedPolicy` (price/shipping/returns), `SpeedFocusedPolicy` (delivery/stock/pickup). `AffiliateRoutingService` iterates policy dimensions dynamically.
 *   **Open Product Database Cascade:** `ESGEnrichmentService` queries 4 free Open *Facts databases (Food → Beauty → Pet Food → Products Facts) with 24h cache. Returns 12+ text fields (ingredients, allergens, NOVA processing, nutrition, packaging, origins) plus numerical scores.
 *   **Preference Learning:** `PreferenceLearner` derives per-strategy weights from `OwnedProduct` history. Sharing products (`.shared` source) gets 1.5× weight boost. Weights evolve as user's ownership patterns emerge.
 *   **Score Snapshots:** `ScoreSnapshot` SwiftData model records per-strategy scores, price, quantity, and preference weights at each pipeline run — consumed by Swift Charts for time-series visualization.
@@ -151,6 +152,22 @@ cd DiverShared && swift test
     *   **Never spawn N concurrent Tasks in a for-loop** that each mutate SwiftData models. Collect IDs first, then process sequentially in a single `Task.detached`.
     *   Provide immediate visual feedback on user actions even when underlying model updates are still in progress.
 
+8.  **SwiftData Storage Rules:**
+    *   **Never store large binary data inline on `@Model` classes.** Use `@Attribute(.externalStorage)` for `Data` properties over ~1KB (images, depth maps, payloads). SwiftData loads **all** non-external properties into memory on fetch.
+    *   **Context `Data?` blobs** (weather, place, web, commerce, etc.) are small JSON (~1KB) and acceptable inline. If any grows beyond ~10KB, migrate to `.externalStorage` or file-path reference.
+    *   **Prefer `FetchDescriptor` with `fetchLimit` and `propertiesToFetch`** over bare `@Query` for views that may display large datasets (sidebar, search results). `@Query` loads all matching objects eagerly.
+    *   **All schema changes must be lightweight** when CloudKit sync is enabled. Custom migration = end of sync. Use `VersionedSchema` + `SchemaMigrationPlan` for any model changes.
+
+9.  **CloudKit Sync Monitoring:**
+    *   **Monitor `NSPersistentCloudKitContainer.eventChangedNotification`** for sync failures. Log errors and surface critical sync issues to the user (e.g., account problems, quota exceeded).
+    *   **CloudKit throttles**: Minimum 30-second intervals between rapid sync operations. Battery, network, and system resources dynamically adjust sync frequency.
+    *   **API keys** are stored in the `iCloud.com.secretatomics.knowmaps.Keys` CloudKit container (private database). Use `APIKeyService.prefetchKeys()` on app launch to populate the NSCache for synchronous reads.
+
+10. **Sensitive Data Storage:**
+    *   **API keys and tokens** belong in CloudKit (Keys container) or Keychain — **never** in UserDefaults or plist files.
+    *   **Authentication secrets** (e.g., `diverLinkSecret`) use `KeychainService` with `kSecAttrAccessibleAfterFirstUnlock` for background task access.
+    *   **UserDefaults** is acceptable only for user preferences (theme, font size, feature flags). It loads **everything** into memory at app startup.
+
 ## Data Model Relationships
 
 *   **`masterCaptureID`** (String): Links sibling captures from the same session (e.g., a photo + its detected QR code URL + its detected document). Displayed in `ReferenceDetailView` via `CaptureSiblingsView`.
@@ -184,8 +201,7 @@ cd DiverShared && swift test
 *   `View/Commerce/ScoreHistoryChartView.swift` — Swift Charts time-series score history
 *   `View/Commerce/NowcastChartView.swift` — Price trajectory with trend pills
 *   `View/Commerce/CommerceActionView.swift` — Ethical platform ranking with affiliate CTAs
-*   `View/Commerce/EthicalPolicyConfigView.swift` — Carbon/labor/certification/platform preferences
-*   `View/Commerce/APIKeyConfigView.swift` — Keychain API key management
+*   `View/Commerce/EthicalPolicyConfigView.swift` — RankingPolicy preferences (carbon/labor/certification/platform/price/speed)
 
 ### Core Services (DiverKit)
 *   `Services/LocalPipelineService.swift` — Core pipeline orchestrator
@@ -201,7 +217,7 @@ cd DiverShared && swift test
 *   `Services/PreferenceLearner.swift` — Ownership history → learned strategy weights
 *   `Services/Scoring/` — 7 scoring engines (ESG, Brand, Value, Durability, Social, Health, TotalCost)
 *   `Services/Commerce/GovernmentDataService.swift` — CPSC, FDA, EPA, Energy Star (4 APIs, parallel)
-*   `Services/Commerce/APIKeyService.swift` — Keychain + iCloud Keychain sync
+*   `Services/Commerce/APIKeyService.swift` — CloudKit-backed key storage (iCloud.com.secretatomics.knowmaps.Keys container)
 *   `Services/Commerce/OpenESGService.swift` — B Corp directory, company-level ESG
 *   `Services/Commerce/PricingDataService.swift` — World Bank + BLS PPI (PriceNowcasting)
 *   `Services/Commerce/NowcastingEngine.swift` — Dynamic Factor Model via Accelerate vDSP
@@ -211,6 +227,8 @@ cd DiverShared && swift test
 *   `Services/Edge/NWTransportLayer.swift` — TLS 1.3, OSAllocatedUnfairLock, length-prefixed framing
 *   `Services/Edge/EdgeNodeService.swift` — 5 distributed actors + PipelineEdgeRouter
 *   `Storage/DiverDataStore.swift` — SwiftData container management (7 models incl. OwnedProduct, ScoreSnapshot)
+*   `Storage/PersistenceActor.swift` — `@ModelActor` for actor-isolated background SwiftData operations
+*   `Storage/DiverSchemaMigration.swift` — VersionedSchema baseline (V1) and migration plan
 
 ### Models (DiverKit)
 *   `Models/ProcessedItem.swift` — Primary enriched item model

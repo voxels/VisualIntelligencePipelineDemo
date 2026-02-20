@@ -98,6 +98,26 @@ struct SettingsView: View {
                     Text("Discover ways to automate Diver with the Shortcuts app and Siri.")
                 }
                 
+                // Commerce Intelligence Section
+                Section {
+                    NavigationLink {
+                        EthicalPolicyConfigView()
+                    } label: {
+                        Label("Ethical Preferences", systemImage: "leaf.fill")
+                            .foregroundStyle(.green)
+                    }                    
+                    NavigationLink {
+                        OwnedProductsView()
+                    } label: {
+                        Label("Owned Products", systemImage: "bag.fill")
+                            .foregroundStyle(.blue)
+                    }
+                } header: {
+                    Text("Commerce Intelligence")
+                } footer: {
+                    Text("Configure ethical purchasing preferences, manage API keys for product data, and view owned products.")
+                }
+                
                 // Maintenance Section
                 Section {
                     Button {

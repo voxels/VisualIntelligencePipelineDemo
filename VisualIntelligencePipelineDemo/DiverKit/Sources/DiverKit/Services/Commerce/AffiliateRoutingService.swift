@@ -100,58 +100,79 @@ public final class AffiliateRoutingService: CommerceRouting, Sendable {
         var matches: [PlatformMatch] = []
         
         for config in platforms {
-            // Skip platforms with labor violations if policy excludes them
-            if policy.excludeLaborViolations && config.ethicalProfile.knownLaborViolations {
+            // Build platform profile from known ethics data
+            let profile: [String: Float] = [
+                "carbon": config.ethicalProfile.carbonIntensity,
+                "labor": config.ethicalProfile.laborScore,
+                "laborViolations": config.ethicalProfile.knownLaborViolations ? 1.0 : 0.0,
+                "price": 0.5,           // Default neutral; real data from pricing APIs
+                "shipping": 0.5,
+                "deliverySpeed": 0.5,
+                "inStock": 0.8,
+                "localPickup": 0.3,
+                "returns": 0.5,
+            ]
+            
+            // Delegate exclusion to the policy
+            if policy.shouldExclude(
+                platformProfile: profile,
+                certifications: config.ethicalProfile.certifications
+            ) {
                 continue
             }
             
-            // Skip platforms above carbon threshold
-            if config.ethicalProfile.carbonIntensity > policy.carbonThreshold {
-                continue
-            }
-            
-            // Calculate ethical match score
-            var score: Float = 0
+            // Score using the policy's dimensions
+            var totalScore: Float = 0
+            var totalWeight: Float = 0
             var reasons: [String] = []
+            var dimensionScores: [String: Float] = [:]
             
-            // Carbon score contribution (lower is better)
-            let carbonMatch = 1.0 - config.ethicalProfile.carbonIntensity
-            score += carbonMatch * 0.3
-            if carbonMatch > 0.7 { reasons.append("Low carbon footprint") }
-            
-            // Labor score contribution
-            score += config.ethicalProfile.laborScore * 0.3
-            if config.ethicalProfile.laborScore > 0.7 { reasons.append("Good labor practices") }
-            
-            // Certification match
-            let certMatch = config.ethicalProfile.certifications.filter { cert in
-                policy.preferredCertifications.isEmpty ||
-                policy.preferredCertifications.contains(where: { cert.lowercased().contains($0.lowercased()) })
+            for dimension in policy.dimensions {
+                let dimScore: Float
+                
+                switch dimension.name {
+                case "carbon":
+                    dimScore = 1.0 - config.ethicalProfile.carbonIntensity
+                    if dimScore > 0.7 { reasons.append("Low carbon footprint") }
+                case "labor":
+                    dimScore = config.ethicalProfile.laborScore
+                    if dimScore > 0.7 { reasons.append("Good labor practices") }
+                case "certifications":
+                    let certMatch = config.ethicalProfile.certifications.filter { cert in
+                        policy.preferredCertifications.isEmpty ||
+                        policy.preferredCertifications.contains(where: { cert.lowercased().contains($0.lowercased()) })
+                    }
+                    dimScore = certMatch.isEmpty ? 0 : 1.0
+                    if !certMatch.isEmpty { reasons.append(contentsOf: certMatch) }
+                case "preference":
+                    dimScore = policy.platformPreferenceBonus(for: config.platform)
+                    if dimScore > 0 { reasons.append("User preferred") }
+                default:
+                    // For dimensions not yet data-backed (price, speed, etc.)
+                    // use the profile value if available, otherwise neutral 0.5
+                    dimScore = profile[dimension.name] ?? 0.5
+                }
+                
+                dimensionScores[dimension.name] = dimScore
+                totalScore += dimScore * dimension.weight
+                totalWeight += dimension.weight
             }
-            if !certMatch.isEmpty {
-                score += 0.2
-                reasons.append(contentsOf: certMatch)
-            }
             
-            // User preference ranking bonus
-            if let rankIndex = policy.platformRanking.firstIndex(of: config.platform) {
-                let rankBonus = Float(policy.platformRanking.count - rankIndex) / Float(max(policy.platformRanking.count, 1))
-                score += rankBonus * 0.2
-                reasons.append("User preferred")
-            }
+            let normalizedScore = totalWeight > 0 ? totalScore / totalWeight : 0
             
             // Generate affiliate URL
             let url = try? await affiliateLink(for: product, platform: config.platform)
             
             matches.append(PlatformMatch(
                 platform: config.platform,
-                ethicalMatchScore: min(1.0, score),
+                matchScore: min(1.0, normalizedScore),
                 affiliateURL: url,
-                matchReasons: reasons
+                matchReasons: reasons,
+                dimensionScores: dimensionScores
             ))
         }
         
-        // Sort by ethical match score, highest first
-        return matches.sorted { $0.ethicalMatchScore > $1.ethicalMatchScore }
+        // Sort by match score, highest first
+        return matches.sorted { $0.matchScore > $1.matchScore }
     }
 }

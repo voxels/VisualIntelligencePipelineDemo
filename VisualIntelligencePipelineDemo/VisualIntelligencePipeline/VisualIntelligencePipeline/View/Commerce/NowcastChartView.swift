@@ -44,7 +44,7 @@ struct NowcastChartView: View {
             } else {
                 Chart {
                     // Historical data points
-                    ForEach(trajectory.dataPoints) { point in
+                    ForEach(trajectory.dataPoints, id: \.date) { point in
                         LineMark(
                             x: .value("Date", point.date),
                             y: .value("Price", NSDecimalNumber(decimal: point.value).doubleValue)
@@ -127,7 +127,7 @@ struct NowcastChartView: View {
             dataPoints: (0..<6).map { i in
                 PriceDataPoint(
                     date: Calendar.current.date(byAdding: .month, value: -i, to: .now)!,
-                    value: Decimal(double: 95.0 + Double.random(in: -10...10))
+                    value: Decimal(95 + Int.random(in: -10...10))
                 )
             },
             projectedDirection: .rising,

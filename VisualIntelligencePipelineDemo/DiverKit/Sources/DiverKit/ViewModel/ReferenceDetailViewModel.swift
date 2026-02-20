@@ -6,12 +6,27 @@
 //
 
 import SwiftUI
+import SwiftData
 import DiverShared
 #if canImport(UIKit)
 import UIKit
 #elseif canImport(AppKit)
 import AppKit
 #endif
+
+/// Lightweight view-safe struct for score history chart data.
+public struct ScoreSnapshotData: Identifiable, Sendable {
+    public var id: String { "\(strategyID)-\(date.timeIntervalSince1970)" }
+    public let date: Date
+    public let score: Double
+    public let strategyID: String
+    
+    public init(date: Date, score: Double, strategyID: String) {
+        self.date = date
+        self.score = score
+        self.strategyID = strategyID
+    }
+}
 
 @MainActor
 public class ReferenceDetailViewModel: ObservableObject {
@@ -280,6 +295,25 @@ public class ReferenceDetailViewModel: ObservableObject {
             #elseif os(macOS)
             NSWorkspace.shared.open(url)
             #endif
+        }
+    }
+    
+    // MARK: - Score History
+    
+    @Published public var scoreSnapshots: [ScoreSnapshotData] = []
+    
+    /// Fetches ScoreSnapshot records for a product and maps to chart-ready data.
+    /// Uses DiverPersistenceActor for proper actor-isolated SwiftData access.
+    public func fetchScoreHistory(productID: String) {
+        guard let container = Services.shared.modelContext?.container else { return }
+        
+        Task.detached(priority: .utility) { [weak self] in
+            let actor = PersistenceActor(modelContainer: container)
+            let data = (try? await actor.fetchScoreHistory(productID: productID)) ?? []
+            
+            await MainActor.run { [weak self] in
+                self?.scoreSnapshots = data
+            }
         }
     }
 }

@@ -7,13 +7,15 @@
 //
 
 import SwiftUI
+import SwiftData
+import DiverKit
 import DiverShared
 
 /// Owned products list grouped by brand with preference insights.
 struct OwnedProductsView: View {
-    let products: [OwnedProductData]
+    @Query(sort: \OwnedProduct.acquiredAt, order: .reverse) private var products: [OwnedProduct]
     
-    private var groupedByBrand: [(brand: String, products: [OwnedProductData])] {
+    private var groupedByBrand: [(brand: String, products: [OwnedProduct])] {
         let grouped = Dictionary(grouping: products) { $0.brand ?? "Unknown" }
         return grouped.map { (brand: $0.key, products: $0.value) }
             .sorted { $0.products.count > $1.products.count }
@@ -71,7 +73,7 @@ struct OwnedProductsView: View {
                                 .frame(width: 24)
                             
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(product.name)
+                                Text(product.productName)
                                     .font(.subheadline.weight(.medium))
                                 
                                 if let category = product.category {
@@ -124,22 +126,8 @@ struct OwnedProductsView: View {
     }
 }
 
-/// Lightweight data struct for owned products display (avoids SwiftData in views).
-struct OwnedProductData: Identifiable, Sendable {
-    let id: String
-    let name: String
-    let brand: String?
-    let category: String?
-    let status: OwnershipStatus
-}
-
 #Preview {
     NavigationStack {
-        OwnedProductsView(products: [
-            OwnedProductData(id: "1", name: "AirPods Pro 2", brand: "Apple", category: "electronics", status: .owned),
-            OwnedProductData(id: "2", name: "MacBook Pro 16\"", brand: "Apple", category: "electronics", status: .owned),
-            OwnedProductData(id: "3", name: "Standing Desk", brand: "FlexiSpot", category: "furniture", status: .owned),
-            OwnedProductData(id: "4", name: "Aeropress", brand: "AeroPress", category: "kitchen", status: .wishlisted),
-        ])
+        OwnedProductsView()
     }
 }

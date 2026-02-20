@@ -89,7 +89,7 @@ public protocol EdgeNodeDiscovering: Sendable {
 
 /// Protocol for routing product purchases through affiliate deep links.
 /// Implementations resolve a product to platform-specific purchase URLs
-/// with affiliate tracking and ethical filtering.
+/// with affiliate tracking and policy-driven ranking.
 public protocol CommerceRouting: Sendable {
     /// Generate an affiliate deep link for a product on a specific platform.
     /// - Parameters:
@@ -98,11 +98,11 @@ public protocol CommerceRouting: Sendable {
     /// - Returns: A deep link URL with affiliate tracking, or nil if unavailable
     func affiliateLink(for product: ProductClassification, platform: String) async throws -> URL?
     
-    /// Rank available platforms for a product by ethical match score.
+    /// Rank available platforms for a product using any ranking policy.
     /// - Parameters:
     ///   - product: The classified product
-    ///   - policy: User's ethical filtering preferences
-    /// - Returns: Platforms sorted best-first with match scores
+    ///   - policy: Any ranking policy (ethical, price, speed, custom)
+    /// - Returns: Platforms sorted best-first with match scores and dimension breakdowns
     func rankPlatforms(for product: ProductClassification, policy: EthicalPolicy) async throws -> [PlatformMatch]
 }
 
