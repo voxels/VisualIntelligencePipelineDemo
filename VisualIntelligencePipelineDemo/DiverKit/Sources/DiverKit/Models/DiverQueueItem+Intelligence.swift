@@ -1,10 +1,8 @@
 import Foundation
 import DiverShared
 
-extension DiverQueueItem {
-    public static func items(intelligenceResults: [IntelligenceResult], capturedImage: Data? = nil, siftedImage: Data? = nil, attachments: [Data]? = nil, purpose: String? = nil, purposes: Set<String> = [], sessionID: String? = nil, contextImageURL: URL? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil, depthPayload: Data? = nil, attachmentDepthPayloads: [Data?]? = nil) -> [DiverQueueItem] {
-
-        var items: [DiverQueueItem] = []
+public extension DiverQueueItem {
+    public static func items(intelligenceResults: [IntelligenceResult], capturedImage: Data? = nil, siftedImage: Data? = nil, attachments: [Data]? = nil, purpose: String? = nil, purposes: Set<String> = [], sessionID: String? = nil, contextImageURL: URL? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil, depthPayload: Data? = nil, attachmentDepthPayloads: [Data?]? = nil, siftedMask: Data? = nil) -> [DiverQueueItem] {        var items: [DiverQueueItem] = []
         
         let masterID = UUID().uuidString
         var fullText = ""
@@ -222,7 +220,8 @@ extension DiverQueueItem {
             placeID: placeID,
             latitude: latitude,
             longitude: longitude,
-            purposes: purposes
+            purposes: purposes,
+            siftedMask: siftedMask
         )
         
         items.append(DiverQueueItem(

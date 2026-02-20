@@ -70,25 +70,25 @@ A built-in **Rebuild Library** tool (Settings > Rebuild Library) repairs orphane
 
 Save links from Safari, YouTube, TikTok, or any app via the Share Sheet extension. Links are wrapped in a proprietary format (HMAC-signed, tamper-proof URLs via `DiverLinkWrapper`) and processed through the enrichment pipeline. Supports Universal Links and custom scheme links for deep linking and Shared with You integration.
 
-### Context Tags & Daily Focus
+### Context Tags, Daily Focus & Agentic Chat
 
-Add custom context tags to captures. A **Daily Focus** summary aggregates the day's activity into an AI-generated brief.
+Add custom context tags to captures. A **Daily Focus** summary aggregates the day's activity into an AI-generated brief. You can also converse directly with your visual memory via an integrated **Agentic Chat** interface powered by the FastVLM/SLM system and CLaRa.
 
 ### Siri, Shortcuts & Widgets
 
-Fully integrated with Apple's system — 5 App Intents, pre-built shortcut templates, and Home & Lock screen widgets.
+Fully integrated with Apple's system — 6 App Intents, pre-built shortcut templates, and Home & Lock screen widgets.
 
 ---
 
 ## 🏗️ Architecture Highlights
 
-- **Modular Swift Packages** — `DiverKit` (ML & pipeline orchestration, 46+ services, 7 protocols), `DiverShared` (data models & utilities), and the main app target.
+- **Modular Swift Packages** — `DiverKit` (ML & pipeline orchestration, 61 services, 18 protocols), `DiverShared` (data models & utilities), and the main app target.
 - **Local-First with Sync** — SwiftData persistence backed by CloudKit for seamless cross-device access.
 - **On-Device ML** — Apple Vision (6 request types per pass), FastVLM via MLX Swift, Apple Intelligence via Foundation Models.
 - **Edge Computing** — Swift Distributed Actors over Bonjour for transparent ML offloading to M-series Macs.
 - **Commerce Intelligence** — 7 scoring strategies, Open *Facts cascade, preference learning, score snapshots.
 - **Queue-Based Reliability** — File-based queue ensures no capture or link is ever lost.
-- **Protocol-Based DI** — 7 service protocols (`IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`, `ProductScoringStrategy`, `ProductRecommending`, `ESGEnriching`) enable mock injection for testing.
+- **Protocol-Based DI** — 18 service protocols (`IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`, `ProductScoringStrategy`, `ProductRecommending`, `ESGEnriching`, etc) enable mock injection for testing.
 
 ---
 

@@ -134,9 +134,35 @@ struct VisualIntelligencePipelineApp: App {
         let localPipeline = LocalPipelineService(modelContext: dataStore.mainContext)
         Services.shared.localPipelineService = localPipeline
 
+        // Initialize Edge Discovery and Agentic Search
+        let discoveryService = BonjourDiscoveryService()
+        let transportLayer = NWTransportLayer(localNodeName: UIDevice.current.name)
+        let actorSystem = VisualIntelligenceActorSystem(transport: transportLayer)
+        let edgeRouter = PipelineEdgeRouter(discoveryService: discoveryService)
+        
+        // Native Edge Node checking for iOS devices
+        let memoryGB = Double(ProcessInfo.processInfo.physicalMemory) / 1024.0 / 1024.0 / 1024.0
+        let isCapableiPadOrMac = memoryGB >= 7.0 // Allow 8GB devices
+        
+        if isCapableiPadOrMac {
+            print("🚀 [VisualIntelligencePipelineApp] Device is M-series capable (\(String(format: "%.1f", memoryGB)) GB RAM). Starting local headless edge nodes.")
+            // Instantiate actors locally
+            _ = EdgeAgenticSearchActor(actorSystem: actorSystem)
+        }
+        
+        let searchService = AgenticSearchService(router: edgeRouter, system: actorSystem)
+        Services.shared.agenticSearchService = searchService
+        Services.shared.edgeRouter = edgeRouter
+        Services.shared.actorSystem = actorSystem
+        
+        Task {
+            await discoveryService.startDiscovery()
+            print("🚀 Started Bonjour Edge Discovery")
+        }
+
         // Relationship reconciliation runs via maintainLibrary (Settings > Rebuild Library)
         // Not called at launch to avoid SQLite contention with initial UI rendering
-
+        
         // Initialize KeychainService with app group
         self.keychainService = KeychainService(service: KeychainService.ServiceIdentifier.diver, accessGroup: AppGroupConfig.default.keychainAccessGroup)
 

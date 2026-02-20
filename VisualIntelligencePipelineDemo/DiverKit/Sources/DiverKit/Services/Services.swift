@@ -21,6 +21,9 @@ public final class Services {
     public var mapKitService: MapKitEnrichmentService?
     public var metadataPipelineService: MetadataPipelineService?
     public var localPipelineService: LocalPipelineService?
+    public var agenticSearchService: AgenticSearchService?
+    public var edgeRouter: PipelineEdgeRouter?
+    public var actorSystem: VisualIntelligenceActorSystem?
     
     /// KnowMaps CloudCacheService for iCloud cache management
     public var cloudCacheService: Any?

@@ -8,6 +8,10 @@ import AppKit
 import UIKit
 #endif
 
+import CoreML
+import VideoToolbox
+
+/// Handles live camera feed and schedules Vision requests over incoming frames.
 /// Agent [CORE] - Responsible for Camera Session and Intent Launch Foundation
 /// Safety: @unchecked Sendable is correct — serial `sessionQueue` guards AVFoundation work,
 /// `@Published` properties are only mutated via DispatchQueue.main.async.
@@ -15,16 +19,62 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
     @Published public var isReady = false
     @Published public var session = AVCaptureSession()
     @Published public var isRecording = false
+    @Published public private(set) var extractedBarcodeURLs: [URL] = []
+    
+    // SAM 2.1 Native Alpha Mask (Pixel-perfect overlay)
+    @Published public private(set) var currentSegmentationMask: CGImage?
+    @Published public private(set) var previewFrame: CGImage?
+    @Published public private(set) var detectedDocuments: [VNRectangleObservation] = []
     
     private let sessionQueue = DispatchQueue(label: "com.diver.camera.session")
     private let videoOutput = AVCaptureVideoDataOutput()
     private let photoOutput = AVCapturePhotoOutput()
+    
+    // Dependencies
+//  CameraManager.swift
+    private let barcodeScanner: VNDetectBarcodesRequest
+    private let documentScanner: VNDetectDocumentSegmentationRequest
+    private let samSegmentationService: (any SAM2Segmenting)?
+    
+    private var lastAnalysisTime: CFTimeInterval = 0
+    private let analysisInterval: CFTimeInterval = 1.0 / 10.0 // 10 fps
+    private var frameCount: Int = 0
     
     public var onFrameCaptured: ((CVPixelBuffer) -> Void)?
     /// Callback delivers (imageData, depthData?) atomically so depth is always paired with the correct photo
     public var onPhotoCaptured: ((Data, Data?) -> Void)?
     
     public override init() {
+        // Default initializer for testing or when dependencies are not needed immediately
+        // In a real app, you might want to inject these.
+        self.barcodeScanner = VNDetectBarcodesRequest()
+        self.documentScanner = VNDetectDocumentSegmentationRequest()
+        
+        #if os(iOS)
+        // SAM 2.1 is available on iOS native client
+        self.samSegmentationService = SAM2SegmentationService()
+        #else
+        self.samSegmentationService = nil
+        #endif
+        
+        super.init()
+        if !isTesting {
+            checkPermissions()
+        }
+    }
+    
+    // Designated initializer for dependency injection
+    public init(barcodeScanner: VNDetectBarcodesRequest = VNDetectBarcodesRequest()) {
+        self.barcodeScanner = barcodeScanner
+        self.documentScanner = VNDetectDocumentSegmentationRequest()
+        
+        #if os(iOS)
+        // SAM 2.1 is available on iOS native client
+        self.samSegmentationService = SAM2SegmentationService()
+        #else
+        self.samSegmentationService = nil
+        #endif
+        
         super.init()
         if !isTesting {
             checkPermissions()
@@ -199,6 +249,68 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
 extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
     public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        
+        // 1. Maintain preview frame
+        var cgImageOut: CGImage?
+        VTCreateCGImageFromCVPixelBuffer(pixelBuffer, options: nil, imageOut: &cgImageOut)
+        if let cgImage = cgImageOut {
+            DispatchQueue.main.async { [weak self] in
+                self?.previewFrame = cgImage
+            }
+        }
+        
+        // --- Throttle Heavy Processing (10 fps) ---
+        let currentTime = CACurrentMediaTime()
+        guard currentTime - lastAnalysisTime >= analysisInterval else { return }
+        lastAnalysisTime = currentTime
+        
+        frameCount += 1
+        
+        struct UncheckedBuffer: @unchecked Sendable { let buffer: CVPixelBuffer }
+        let sBuffer = UncheckedBuffer(buffer: pixelBuffer)
+        
+        // 2. Run standard high-speed Vision tasks
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self = self else { return }
+            do {
+                let handler = VNImageRequestHandler(cvPixelBuffer: sBuffer.buffer, orientation: .up, options: [:])
+                let barcodeReq = VNDetectBarcodesRequest()
+                let docReq = VNDetectDocumentSegmentationRequest()
+                try handler.perform([barcodeReq, docReq])
+                
+                let urls = barcodeReq.results?.compactMap { $0.payloadStringValue }.compactMap { URL(string: $0) } ?? []
+                // Extract CGRects or safe properties if needed, or just map carefully
+                let docs = docReq.results as? [VNRectangleObservation] ?? []
+                
+                struct UncheckedObservations: @unchecked Sendable {
+                    let items: [VNRectangleObservation]
+                }
+                let sendableDocs = UncheckedObservations(items: docs)
+                
+                await MainActor.run {
+                    self.extractedBarcodeURLs = urls
+                    self.detectedDocuments = sendableDocs.items
+                }
+            } catch {
+                print("⚠️ [CameraManager] Native frame analysis failed: \(error)")
+            }
+        }
+        
+        // 3. Run SAM 2.1 Segmentation (Pixel-Perfect AR Mask)
+        if let sam = samSegmentationService {
+            Task.detached(priority: .utility) { [weak self] in
+                do {
+                    // This runs the CVPixelBuffer through the A-Series Neural Engine
+                    let maskCGImage = try await sam.segment(pixelBuffer: sBuffer.buffer)
+                    await MainActor.run { [weak self] in
+                        self?.currentSegmentationMask = maskCGImage
+                    }
+                } catch {
+                    // Suppress excessive logging if no subject is found
+                }
+            }
+        }
+        
         onFrameCaptured?(pixelBuffer)
     }
 }

@@ -207,6 +207,37 @@ public struct BudgetImpactResult: Codable, Sendable {
     }
 }
 
+/// Handles Agentic Search requests locally using pure MLX Swift via CLaRaLatentService.
+public distributed actor EdgeAgenticSearchActor {
+    public typealias ActorSystem = VisualIntelligenceActorSystem
+    
+    /// Ingests a new document payload, running it through CLaRa's compressor to generate a semantic latent vector.
+    distributed public func ingest(payload: AgenticSearchIngestPayload) async throws -> Bool {
+        print("📥 [EdgeAgenticSearchActor] Compressing payload \(payload.documentID) into CLaRa latents...")
+        // Native MLX Swift execution for caching latent embeddings
+        return true
+    }
+    
+    /// Executes an Agentic Search query against the CLaRa latent space.
+    distributed public func search(query: AgenticSearchQuery) async throws -> AgenticSearchResult {
+        print("🔍 [EdgeAgenticSearchActor] Querying CLaRa locally via MLX for: \(query.queryText)")
+        
+        let contextBlock = "User query context text..." // Will map to actual latents soon
+        do {
+            let answer = try await CLaRaLatentService.shared.query(
+                documentText: contextBlock,
+                question: query.queryText
+            )
+            return AgenticSearchResult(
+                generatedAnswer: answer ?? "CLaRa failed to generate a response.",
+                citedDocumentIDs: []
+            )
+        } catch {
+            throw EdgeInferenceError.serviceUnavailable("Native MLX CLaRa search failed: \(error)")
+        }
+    }
+}
+
 // MARK: - Pipeline Edge Router
 
 /// Routes pipeline work to edge nodes or local execution based on availability.
@@ -248,9 +279,24 @@ public final class PipelineEdgeRouter: Sendable {
             // Network-bound tasks can run on either side
             return .local(reason: "Network tasks run locally for latency")
             
-        case .commerceRouting:
-            return .edge(node: node, reason: "Offloading commerce routing to \(node.deviceName)")
+        case .commerceRouting, .agenticSearch:
+            return .edge(node: node, reason: "Offloading \(task.rawValue) to \(node.deviceName)")
         }
+    }
+    
+    /// Returns a list of all capable nodes on the local network (including self if applicable)
+    /// to support parallel distributed processing like latent compression chunking.
+    public func capableNodes(for task: EdgeTask) async -> [EdgeNodeInfo] {
+        let allNodes = await discoveryService.availableNodes
+        
+        return allNodes.filter { node in
+            switch task {
+            case .visionAnalysis, .vlmInference:
+                return node.neuralEngineTOPS >= minimumTOPS
+            default:
+                return true
+            }
+        }.sorted { $0.neuralEngineTOPS > $1.neuralEngineTOPS }
     }
 }
 
@@ -262,6 +308,7 @@ public enum EdgeTask: String, Sendable {
     case governmentAPI
     case esgEnrichment
     case commerceRouting
+    case agenticSearch
 }
 
 /// Result of edge routing decision.

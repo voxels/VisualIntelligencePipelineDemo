@@ -28,6 +28,8 @@ public struct FastVLMAnalysis: Codable, Sendable, Equatable {
     public let suggestedTags: [String]
     /// Combined context statements (visual + location + enrichment unified)
     public let statements: [String]
+    /// The HuggingFace ID or local identifier of the model used to generate this
+    public let modelID: String?
     
     public init(
         imageDescription: String? = nil,
@@ -35,7 +37,8 @@ public struct FastVLMAnalysis: Codable, Sendable, Equatable {
         suggestedTitle: String? = nil,
         suggestedPurpose: String? = nil,
         suggestedTags: [String] = [],
-        statements: [String] = []
+        statements: [String] = [],
+        modelID: String? = nil
     ) {
         self.imageDescription = imageDescription
         self.contextSummary = contextSummary
@@ -43,6 +46,7 @@ public struct FastVLMAnalysis: Codable, Sendable, Equatable {
         self.suggestedPurpose = suggestedPurpose
         self.suggestedTags = suggestedTags
         self.statements = statements
+        self.modelID = modelID
     }
 }
 
@@ -57,10 +61,31 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
     
     // MARK: - Configuration
     
-    /// HuggingFace model identifier for Apple FastVLM 0.5B (~500MB, optimized for on-device inference)
-    public static let modelID = "mlx-community/FastVLM-0.5B-bf16"
-    
-    /// UserDefaults key for opt-in toggle
+    /// HuggingFace model identifier for Apple FastVLM.
+    /// Dynamically resolves to the highest tier model downloaded by the user via EdgeDaemon,
+    /// or falls back to the default 0.5B model.
+    public static var modelID: String {
+        let modelsDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first?.appendingPathComponent("Models/FastVLM")
+        
+        guard let dir = modelsDir else { return "mlx-community/FastVLM-0.5B-bf16" }
+        
+        let tiers = [
+            ("7B", "apple/FastVLM/7B"),
+            ("1.5B", "apple/FastVLM/1.5B"),
+            ("0.5B", "apple/FastVLM/0.5B")
+        ]
+        
+        for (folder, hfPath) in tiers {
+            let configPath = dir.appendingPathComponent("\(folder)/config.json").path
+            if FileManager.default.fileExists(atPath: configPath) {
+                print("🧠 [FastVLMService] Resolved best available model: \(hfPath)")
+                return hfPath
+            }
+        }
+        
+        return "mlx-community/FastVLM-0.5B-bf16"
+    }
     private static let enabledKey = "fastvlm_enrichment_enabled"
     
     /// Whether the user has enabled FastVLM enrichment in Settings
@@ -92,11 +117,20 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
     /// Instance-level availability check (protocol conformance)
     public var isAvailable: Bool { Self.isAvailable }
     
-    /// HuggingFace Hub cache directory for this model
-    /// defaultHubApi sets downloadBase = cachesDirectory; localRepoLocation = downloadBase/models/<id>
+    /// The directory where the active model is stored.
     private static var modelCacheDirectory: URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let activeID = Self.modelID
+        
+        // If it's our downloaded Apple FastVLM models, they live in Models/FastVLM/Tier
+        if activeID.starts(with: "apple/FastVLM/") {
+            let tier = activeID.replacingOccurrences(of: "apple/FastVLM/", with: "")
+            return appSupport.appendingPathComponent("Models/FastVLM/\(tier)")
+        }
+        
+        // Fallback MLX cache directory for the built-in 0.5B community model
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
-        return caches.appendingPathComponent("models/\(modelID)", isDirectory: true)
+        return caches.appendingPathComponent("models/\(activeID)", isDirectory: true)
     }
     
     // MARK: - Model State (Cached)
@@ -178,9 +212,19 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
         GPU.set(cacheLimit: 256 * 1024 * 1024)
         
         print("📦 [FastVLMService] Loading model into GPU memory...")
-        let modelConfig = ModelConfiguration(id: Self.modelID)
+        
+        let config: ModelConfiguration
+        if Self.modelID.starts(with: "apple/FastVLM/") {
+            // Use local weights directory for the downloaded EdgeDaemon models
+            config = ModelConfiguration(
+                directory: Self.modelCacheDirectory
+            )
+        } else {
+            config = ModelConfiguration(id: Self.modelID)
+        }
+        
         self.container = try await VLMModelFactory.shared.loadContainer(
-            configuration: modelConfig
+            configuration: config
         )
         print("✅ [FastVLMService] Model loaded and cached in GPU memory")
         #else
@@ -213,9 +257,15 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
         #if canImport(MLXVLM) && !targetEnvironment(simulator)
         print("📥 [FastVLMService] Starting model download: \(Self.modelID)")
         
-        let modelConfig = ModelConfiguration(id: Self.modelID)
+        let config: ModelConfiguration
+        if Self.modelID.starts(with: "apple/FastVLM/") {
+            config = ModelConfiguration(directory: Self.modelCacheDirectory)
+        } else {
+            config = ModelConfiguration(id: Self.modelID)
+        }
+        
         self.container = try await VLMModelFactory.shared.loadContainer(
-            configuration: modelConfig
+            configuration: config
         ) { update in
             Task { @MainActor in
                 progress(update.fractionCompleted)
@@ -321,16 +371,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
             guard let analysisText else { return nil }
             
             // Parse structured fields from FastVLM output
-            let parsed = parseStructuredOutput(analysisText)
-            
-            return FastVLMAnalysis(
-                imageDescription: parsed.summary,
-                contextSummary: parsed.summary ?? analysisText,
-                suggestedTitle: parsed.title,
-                suggestedPurpose: parsed.purpose,
-                suggestedTags: parsed.tags,
-                statements: parsed.statements
-            )
+            return Self.parseStructuredOutput(analysisText)
         }.value
         
         print("✅ [FastVLMService] Grounded analysis complete — hasImage: \(image != nil), visionTags: \(visionTags.count), result: \(result != nil)")
@@ -343,19 +384,11 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
     
     // MARK: - Analysis Methods
     
-    #if canImport(MLXVLM) && !targetEnvironment(simulator)
-    /// Single-pass grounded image analysis: sends the image to the VLM alongside
-    /// Vision framework tags as anchoring context to prevent hallucination.
-    private func runGroundedAnalysis(
-        image: CGImage,
+    public static func buildGroundedPrompt(
         visionTags: [String],
         enrichmentContext: String,
-        transcription: String?,
-        container: ModelContainer
-    ) async throws -> String? {
-        print("🧠 [FastVLMService] Starting grounded image analysis (tags: \(visionTags.count))")
-        
-        // Build grounded prompt — anchor the model with what Vision already confirmed
+        transcription: String?
+    ) -> String {
         var prompt = """
         Analyze this image and provide a structured description.
         """
@@ -387,7 +420,27 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
         Only describe what you can directly see. Do not speculate. If unsure, say "unknown".
         """
         
-        let finalPrompt = prompt
+        return prompt
+    }
+    
+    #if canImport(MLXVLM) && !targetEnvironment(simulator)
+    /// Single-pass grounded image analysis: sends the image to the VLM alongside
+    /// Vision framework tags as anchoring context to prevent hallucination.
+    private func runGroundedAnalysis(
+        image: CGImage,
+        visionTags: [String],
+        enrichmentContext: String,
+        transcription: String?,
+        container: ModelContainer
+    ) async throws -> String? {
+        print("🧠 [FastVLMService] Starting grounded image analysis (tags: \(visionTags.count))")
+        
+        let finalPrompt = Self.buildGroundedPrompt(
+            visionTags: visionTags,
+            enrichmentContext: enrichmentContext,
+            transcription: transcription
+        )
+
         let result: String = try await container.perform { context in
             let ciImage = CIImage(cgImage: image)
             let imageInput = UserInput.Image.ciImage(ciImage)
@@ -412,15 +465,12 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
         print("✅ [FastVLMService] Grounded image analysis: \(trimmed.count) chars")
         return trimmed
     }
+    #endif
     
-    /// Text-only fallback for items without images (links, QR codes, etc.)
-    private func runTextOnlyAnalysis(
+    public static func buildTextOnlyPrompt(
         enrichmentContext: String,
-        transcription: String?,
-        container: ModelContainer
-    ) async throws -> String? {
-        print("🧠 [FastVLMService] Starting text-only analysis (no image)")
-        
+        transcription: String?
+    ) -> String {
         var prompt = """
         Analyze the following data about a captured item.
         
@@ -438,7 +488,23 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
             prompt += "\n\nOCR Text:\n\(String(transcription.prefix(500)))"
         }
         
-        let finalPrompt = prompt
+        return prompt
+    }
+
+    #if canImport(MLXVLM) && !targetEnvironment(simulator)
+    /// Text-only fallback for items without images (links, QR codes, etc.)
+    private func runTextOnlyAnalysis(
+        enrichmentContext: String,
+        transcription: String?,
+        container: ModelContainer
+    ) async throws -> String? {
+        print("🧠 [FastVLMService] Starting text-only analysis (no image)")
+        
+        let finalPrompt = Self.buildTextOnlyPrompt(
+            enrichmentContext: enrichmentContext,
+            transcription: transcription
+        )
+
         let result: String = try await container.perform { context in
             let lmInput = try await context.processor.prepare(input: UserInput(prompt: finalPrompt))
             let params = GenerateParameters(maxTokens: 128, temperature: 0.0)
@@ -474,10 +540,15 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
     }
     
     /// Parse FastVLM's structured text output into typed fields
-    private func parseStructuredOutput(_ text: String?) -> ParsedOutput {
-        guard let text, !text.isEmpty else { return ParsedOutput() }
+    public static func parseStructuredOutput(_ text: String?) -> FastVLMAnalysis? {
+        guard let text, !text.isEmpty else { return nil }
         
-        var result = ParsedOutput()
+        var title: String?
+        var summary: String?
+        var purpose: String?
+        var tags: [String] = []
+        var statements: [String] = []
+        
         let lines = text.components(separatedBy: "\n")
         var inStatements = false
         
@@ -485,17 +556,17 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             
             if trimmed.hasPrefix("TITLE:") {
-                result.title = trimmed.replacingOccurrences(of: "TITLE:", with: "").trimmingCharacters(in: .whitespaces)
+                title = trimmed.replacingOccurrences(of: "TITLE:", with: "").trimmingCharacters(in: .whitespaces)
                 inStatements = false
             } else if trimmed.hasPrefix("SUMMARY:") {
-                result.summary = trimmed.replacingOccurrences(of: "SUMMARY:", with: "").trimmingCharacters(in: .whitespaces)
+                summary = trimmed.replacingOccurrences(of: "SUMMARY:", with: "").trimmingCharacters(in: .whitespaces)
                 inStatements = false
             } else if trimmed.hasPrefix("PURPOSE:") {
-                result.purpose = trimmed.replacingOccurrences(of: "PURPOSE:", with: "").trimmingCharacters(in: .whitespaces)
+                purpose = trimmed.replacingOccurrences(of: "PURPOSE:", with: "").trimmingCharacters(in: .whitespaces)
                 inStatements = false
             } else if trimmed.hasPrefix("TAGS:") {
                 let tagString = trimmed.replacingOccurrences(of: "TAGS:", with: "").trimmingCharacters(in: .whitespaces)
-                result.tags = tagString
+                tags = tagString
                     .replacingOccurrences(of: "[", with: "")
                     .replacingOccurrences(of: "]", with: "")
                     .components(separatedBy: ",")
@@ -507,12 +578,20 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
             } else if inStatements && trimmed.hasPrefix("- ") {
                 let statement = String(trimmed.dropFirst(2)).trimmingCharacters(in: .whitespaces)
                 if !statement.isEmpty {
-                    result.statements.append(statement)
+                    statements.append(statement)
                 }
             }
         }
         
-        return result
+        return FastVLMAnalysis(
+            imageDescription: summary,
+            contextSummary: summary ?? text,
+            suggestedTitle: title,
+            suggestedPurpose: purpose,
+            suggestedTags: tags,
+            statements: statements,
+            modelID: Self.modelID
+        )
     }
     
     // MARK: - Errors

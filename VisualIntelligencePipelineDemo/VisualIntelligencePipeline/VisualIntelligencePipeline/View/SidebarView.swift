@@ -56,6 +56,9 @@ struct SidebarView: View {
     @State private var sessionToRename: SessionMetadata?
     @State private var newSessionTitle = ""
     
+    // Agentic Search State
+    @State private var showingAgenticChat = false
+    
     // MARK: - Queries
     @Query(sort: \ProcessedItem.updatedAt, order: .reverse)
     private var allItems: [ProcessedItem]
@@ -132,6 +135,10 @@ struct SidebarView: View {
     
     var body: some View {
         List(selection: $selectedSession) {
+            
+            // Agentic Search Entry Point
+            agenticSearchSection
+            
             // Intelligence Actions
             intelligenceSection
             
@@ -409,6 +416,27 @@ struct SidebarView: View {
         } message: {
             if let error = viewModel.importError {
                 Text(error)
+            }
+        }
+        .fullScreenCover(isPresented: $showingAgenticChat) {
+            if let searchService = Services.shared.agenticSearchService {
+                AgenticChatView(viewModel: AgenticChatViewModel(searchService: searchService))
+            } else {
+                Text("Agentic Search Service Unavailable")
+                    .onTapGesture { showingAgenticChat = false }
+            }
+        }
+    }
+    
+    private var agenticSearchSection: some View {
+        Section {
+            Button {
+                showingAgenticChat = true
+            } label: {
+                Label("Chat with Librarian", systemImage: "sparkles")
+                    .foregroundStyle(.blue)
+                    .font(.headline)
+                    .padding(.vertical, 4)
             }
         }
     }

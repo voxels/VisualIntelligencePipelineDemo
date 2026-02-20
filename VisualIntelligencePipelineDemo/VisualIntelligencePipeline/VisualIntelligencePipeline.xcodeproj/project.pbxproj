@@ -93,6 +93,7 @@
 		703C31A9FC71D8132CF9C709 /* KnowMapsServiceContainerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87AB3C01B38C1569F168108F /* KnowMapsServiceContainerTests.swift */; };
 		70F3ADB8AADAD2E6219F3B28 /* DiverQueueProcessingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6B202E6BE357E18D064F157 /* DiverQueueProcessingService.swift */; };
 		7A97FA6E7E545D294AF576AF /* TestAnalyticsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B43CAFE7C5D15E858C87F0 /* TestAnalyticsService.swift */; };
+		7B14DD609BD7112195745F97 /* AskCLaRaIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2139A1D545B91132ED9E969D /* AskCLaRaIntent.swift */; };
 		80AC4EEEB3A14D7CA15C48F3 /* OwnershipButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DB7DAEECE404B3CAD0DDA94 /* OwnershipButton.swift */; };
 		8730250FFD9A0747B80E3ECB /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DE51F7E92601A1166CD41ED /* SidebarView.swift */; };
 		8AFE84DBA42574005824F667 /* APIKeyConfigView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A755F6678D5B2C3D82F3B422 /* APIKeyConfigView.swift */; };
@@ -110,7 +111,9 @@
 		AA000006AA000006AA000006 /* DailySummaryCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000006BB000006BB000006 /* DailySummaryCard.swift */; };
 		AA000007AA000007AA000007 /* SidebarSessionRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB000007BB000007BB000007 /* SidebarSessionRow.swift */; };
 		B09BCE7E7643773C073D55F5 /* NowcastChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BAF27458691FB56507071BE /* NowcastChartView.swift */; };
+		C7868F79DDCCEA3E273D5DBD /* AgenticChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA488565B244F25F01457FB5 /* AgenticChatView.swift */; };
 		C801C970A6F920AD638CB380 /* CloudKitTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C6CAD26DB5DBCD80179B1F /* CloudKitTestSupport.swift */; };
+		CD35BBBDF2075D336FB66866 /* AskCLaRaIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2139A1D545B91132ED9E969D /* AskCLaRaIntent.swift */; };
 		D39E055BB52C5B748AAC3627 /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = 13F65F202B46C02117A3AE0B /* DiverShared */; };
 		D6AEB6F12EF360FD129E9480 /* ScoreHistoryChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FA236814E7611941004C9B /* ScoreHistoryChartView.swift */; };
 		DC3753D760527A132BD7BD79 /* ProductScoreAttachment.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6891DA15160E67D217E6153 /* ProductScoreAttachment.swift */; };
@@ -221,6 +224,7 @@
 		1E9ED83E2F13E00B0022F6EA /* ReprocessingWizardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReprocessingWizardView.swift; sourceTree = "<group>"; };
 		1E9ED83F2F13E00B0022F6EA /* ReprocessMetadataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReprocessMetadataView.swift; sourceTree = "<group>"; };
 		1E9ED8402F13E00B0022F6EA /* RichWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichWebView.swift; sourceTree = "<group>"; };
+		2139A1D545B91132ED9E969D /* AskCLaRaIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AskCLaRaIntent.swift; sourceTree = "<group>"; };
 		2D476721579A13301A52E5DB /* VisualIntelligencePipelineLockScreenWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = VisualIntelligencePipelineLockScreenWidget.swift; path = VisualIntelligencePipelineWidget/VisualIntelligencePipelineLockScreenWidget.swift; sourceTree = "<group>"; };
 		302C82230AAB7048E4F825EA /* KnowMapsAdapterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowMapsAdapterTests.swift; sourceTree = "<group>"; };
 		30C6CAD26DB5DBCD80179B1F /* CloudKitTestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitTestSupport.swift; sourceTree = "<group>"; };
@@ -247,6 +251,7 @@
 		A6891DA15160E67D217E6153 /* ProductScoreAttachment.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProductScoreAttachment.swift; sourceTree = "<group>"; };
 		A6B202E6BE357E18D064F157 /* DiverQueueProcessingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiverQueueProcessingService.swift; sourceTree = "<group>"; };
 		A755F6678D5B2C3D82F3B422 /* APIKeyConfigView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = APIKeyConfigView.swift; sourceTree = "<group>"; };
+		AA488565B244F25F01457FB5 /* AgenticChatView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AgenticChatView.swift; sourceTree = "<group>"; };
 		B2BC0702F99CC4FE6C5A23AA /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = VisualIntelligencePipelineWidget/Assets.xcassets; sourceTree = "<group>"; };
 		BA1288C9971571FCEEEC7C26 /* OwnedProductsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OwnedProductsView.swift; sourceTree = "<group>"; };
 		BA5F7ECEBD4A56317495CB23 /* KnowMapsCacheStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowMapsCacheStoreTests.swift; sourceTree = "<group>"; };
@@ -384,6 +389,7 @@
 				1E03CF642EFB20310020DAA5 /* SaveLinkIntent.swift */,
 				1E03CF652EFB20310020DAA5 /* SearchLinksIntent.swift */,
 				1E03CF662EFB20310020DAA5 /* ShareLinkIntent.swift */,
+				2139A1D545B91132ED9E969D /* AskCLaRaIntent.swift */,
 			);
 			path = Intents;
 			sourceTree = "<group>";
@@ -618,6 +624,7 @@
 				6CDDCCF965B4759AEBA1940F /* LinkPreviewView.swift */,
 				1E6E585C2F160AA700CA4385 /* QueueProgressView.swift */,
 				9339F941243924232EE1E8D9 /* Commerce */,
+				AA488565B244F25F01457FB5 /* AgenticChatView.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -724,6 +731,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = DC012D005E4E1297F8A83D47 /* Build configuration list for PBXNativeTarget "VisualIntelligencePipeline" */;
 			buildPhases = (
+				AD365C92C542E6D8217058EB /* Download SAM 2.1 CoreML */,
 				39039BF8536FC14F06DE92B5 /* Sources */,
 				4D650BAB0C1BFFEDC6DDCD27 /* Resources */,
 				7A8F49C64BB0F2AD921C3802 /* Frameworks */,
@@ -870,6 +878,27 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		AD365C92C542E6D8217058EB /* Download SAM 2.1 CoreML */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Download SAM 2.1 CoreML";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Scripts/download_sam_ios.sh\"";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		1E03CF212EFAE80F0020DAA5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -882,6 +911,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CD35BBBDF2075D336FB66866 /* AskCLaRaIntent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -950,6 +980,8 @@
 				DC3753D760527A132BD7BD79 /* ProductScoreAttachment.swift in Sources */,
 				A5E8CDE8BC1BFFDC555157B7 /* SpatialProductDetector.swift in Sources */,
 				626CBA7CA1D6B6D5376D4F85 /* SpatialScoreOverlayView.swift in Sources */,
+				7B14DD609BD7112195745F97 /* AskCLaRaIntent.swift in Sources */,
+				C7868F79DDCCEA3E273D5DBD /* AgenticChatView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

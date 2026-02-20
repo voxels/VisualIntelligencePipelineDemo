@@ -358,8 +358,23 @@ struct VisualIntelligenceCameraLayer: View {
     var viewModel: VisualIntelligenceViewModel
     
     var body: some View {
-        CameraPreviewView(session: viewModel.cameraManager.session)
-            .ignoresSafeArea()
+        ZStack {
+            CameraPreviewView(session: viewModel.cameraManager.session)
+                .ignoresSafeArea()
+            
+            // SAM 2.1 Pixel-Perfect Structural Mask Overlay
+            if let mask = viewModel.cameraManager.currentSegmentationMask {
+                Image(decorative: mask, scale: 1.0)
+                    .resizable()
+                    .renderingMode(.template)
+                    .aspectRatio(contentMode: .fill) // Matches the camera preview scale
+                    .foregroundStyle(.yellow.opacity(0.35)) // Target-locked UI style
+                    .ignoresSafeArea()
+                    .transition(AnyTransition.opacity.animation(.easeInOut(duration: 0.15)))
+                    .allowsHitTesting(false) // Let touches pass through to shutters/gestures
+            }
+        }
+        .animation(.default, value: viewModel.cameraManager.currentSegmentationMask != nil)
     }
 }
 

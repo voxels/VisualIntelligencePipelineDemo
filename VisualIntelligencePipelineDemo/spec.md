@@ -56,13 +56,13 @@ The system distributes work across Apple Silicon devices on the home network bas
 | Device | Chip | Neural Engine | Role |
 |--------|------|--------------|------|
 | **Mac edge node** | M4+ | 16-core, **38 TOPS** | Heavy ML inference, nowcasting, LLM reasoning, ESG/commerce enrichment |
-| **iPad edge node** | M5+ | TBD (~40+ TOPS expected) | Same as Mac when available; also a client |
-| **Vision Pro** | M2 + R1 | M2: ~15.8 TOPS; R1: sensor fusion (12ms) | ARKit tracking, HUD rendering, lightweight on-device classification |
+| **iPad edge node** | M-series | Varies | Can run headless edge services natively within the app (MLX Swift) — identical to Mac |
+| **Vision Pro** | M2 + R1 | M2: ~15.8 TOPS | ARKit tracking, HUD rendering, lightweight on-device classification |
 | **iPhone** | A18+ | 16-core NE | Primary client — on-device inference when no edge node available |
 
-**Why offload:**
-- M4's 38 TOPS Neural Engine has ~2.4× the throughput of M2/A18, with no competition from foreground UI or OS intelligence
-- Mac supports larger memory (up to 128GB unified on M4 Max) for hosting 3B+ LLM models via MLX Swift — the iPhone's FastVLM 0.5B can be upgraded to a larger model transparently
+**Why offload to Mac or iPad:**
+- M-series devices share Unified Memory up to 128GB, allowing them to host 7B+ parameter models (CLaRa, FastVLM) locally via MLX Swift.
+- The iOS/iPadOS app checks for M-series capabilities (`os(iOS)` & 8GB+ RAM) on launch and can spin up the `EdgeAgenticSearchActor` as a headless background processor within the local `VisualIntelligenceActorSystem`, avoiding Python process limits.
 - Offloading preserves client battery life and UI responsiveness
 
 **Transport: Swift Distributed Actors**

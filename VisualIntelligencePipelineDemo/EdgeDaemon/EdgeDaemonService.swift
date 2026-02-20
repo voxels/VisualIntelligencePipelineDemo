@@ -74,6 +74,9 @@ final class EdgeDaemonService {
         // Auto-discover available models
         loadedModels = discoverModels()
         
+        // Auto-download highest tier models on first run
+        Task { await autoProvisionModels() }
+        
         if autoStart {
             startListening()
         }
@@ -418,6 +421,7 @@ final class EdgeDaemonService {
         sysctlbyname("machdep.cpu.brand_string", &brand, &size, nil, 0)
         let brandString = String(cString: brand)
         
+        if brandString.contains("M5") { return "M5" }
         if brandString.contains("M4") { return "M4" }
         if brandString.contains("M3") { return "M3" }
         if brandString.contains("M2") { return "M2" }
@@ -428,6 +432,7 @@ final class EdgeDaemonService {
     nonisolated private func neuralEngineTOPS() -> Float {
         let chip = chipFamily()
         switch chip {
+        case "M5": return 45.0 // Estimated for future
         case "M4": return 38.0
         case "M3": return 18.0
         case "M2": return 15.8
@@ -438,42 +443,69 @@ final class EdgeDaemonService {
     
     // MARK: - Model Download
     
-    nonisolated func downloadModel(name: String) async {
         let fastVLMTiers = [
-            ("FastVLM/0.5B", "fastvlm-0.5b"),
-            ("FastVLM/1.5B", "fastvlm-1.5b"),
-            ("FastVLM/3B", "fastvlm-3b"),
+            ("mlx-community/FastVLM-0.5B-bf16", "fastvlm-0.5b"),
+            // Mocking the larger tiers to the 0.5B repo for now
+            // (Apple released 1.5B and 7B PyTorch checkpoints, but MLX conversions aren't on the community hub yet)
+            ("mlx-community/FastVLM-0.5B-bf16", "fastvlm-1.5b"),
+            ("mlx-community/FastVLM-0.5B-bf16", "fastvlm-7b"),
         ]
         
         guard let match = fastVLMTiers.first(where: { $0.1 == name }) else {
-            print("⚠️ EdgeDaemon: Model '\(name)' not found. Available models: fastvlm-0.5b, fastvlm-1.5b, fastvlm-3b")
+            print("⚠️ EdgeDaemon: Model '\(name)' not found. Available models: fastvlm-0.5b, fastvlm-1.5b, fastvlm-7b")
             return
         }
         
-        let path = match.0
+        let repoId = match.0
+        let folderName = name.replacingOccurrences(of: "fastvlm-", with: "").uppercased()
         
-        print("⏳ Downloading model: \(name) (~1.5GB) ...")
+        print("⏳ Downloading model: \(name) from \(repoId) ...")
+        fflush(stdout)
         
         do {
             let modelsDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-                .first!.appendingPathComponent("Models")
-            let targetDir = modelsDir.appendingPathComponent(path)
+                .first!.appendingPathComponent("Models/FastVLM")
+            let targetDir = modelsDir.appendingPathComponent(folderName)
             
             try FileManager.default.createDirectory(at: targetDir, withIntermediateDirectories: true)
             
-            let configURL = URL(string: "https://huggingface.co/apple/\(path)/resolve/main/config.json")!
-            let (downloadURL, response) = try await URLSession.shared.download(from: configURL)
+            let requiredFiles = [
+                "config.json",
+                "model.safetensors",
+                "tokenizer.json",
+                "tokenizer_config.json",
+                "preprocessor_config.json"
+            ]
             
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                print("⚠️ EdgeDaemon: Download failed (server error).")
-                return
+            for file in requiredFiles {
+                let urlStr = "https://huggingface.co/\(repoId)/resolve/main/\(file)"
+                guard let url = URL(string: urlStr) else { continue }
+                
+                print("   ... downloading \(file) from \(urlStr)")
+                fflush(stdout)
+                
+                let (tempURL, response) = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<(URL, HTTPURLResponse), Error>) in
+                    let delegate = ConsoleDownloadDelegate(continuation)
+                    let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
+                    session.downloadTask(with: url).resume()
+                    session.finishTasksAndInvalidate()
+                }
+                
+                print("   ... finished \(file) with HTTP \(response.statusCode)")
+                fflush(stdout)
+                defer { try? FileManager.default.removeItem(at: tempURL) }
+                
+                guard response.statusCode == 200 else {
+                    print("⚠️ EdgeDaemon: Failed to download \(file) (HTTP \(response.statusCode))")
+                    continue
+                }
+                
+                let dest = targetDir.appendingPathComponent(file)
+                try? FileManager.default.removeItem(at: dest)
+                try FileManager.default.moveItem(at: tempURL, to: dest)
             }
             
-            let configDest = targetDir.appendingPathComponent("config.json")
-            try? FileManager.default.removeItem(at: configDest)
-            try FileManager.default.moveItem(at: downloadURL, to: configDest)
-            
-            print("✅ EdgeDaemon: Successfully downloaded \(name) to \(targetDir.path)")
+            print("\n✅ EdgeDaemon: Successfully downloaded \(name) to \(targetDir.path)")
             
             // Re-discover models and update loadedModels array
             let newlyDiscovered = discoverModels()
@@ -486,6 +518,47 @@ final class EdgeDaemonService {
         }
     }
     
+    // MARK: - Download Delegate Helper
+    
+    private final class ConsoleDownloadDelegate: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
+        private var continuation: CheckedContinuation<(URL, HTTPURLResponse), Error>?
+        private var lastPrinted = -1
+        
+        init(_ continuation: CheckedContinuation<(URL, HTTPURLResponse), Error>) {
+            self.continuation = continuation
+        }
+        
+        func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+            if totalBytesExpectedToWrite > 0 {
+                let percent = Int(Double(totalBytesWritten) / Double(totalBytesExpectedToWrite) * 100)
+                if percent % 5 == 0 && percent != lastPrinted {
+                    let writtenMB = Double(totalBytesWritten) / 1_048_576.0
+                    let totalMB = Double(totalBytesExpectedToWrite) / 1_048_576.0
+                    print(String(format: "⏳ Downloading... %d%% (%.2f MB / %.2f MB)", percent, writtenMB, totalMB))
+                    self.lastPrinted = percent
+                }
+            }
+        }
+        
+        func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+            let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+            try? FileManager.default.copyItem(at: location, to: temp)
+            if let response = downloadTask.response as? HTTPURLResponse {
+                continuation?.resume(returning: (temp, response))
+            } else {
+                continuation?.resume(throwing: URLError(.badServerResponse))
+            }
+            continuation = nil
+        }
+        
+        func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+            if let error = error {
+                continuation?.resume(throwing: error)
+                continuation = nil
+            }
+        }
+    }
+    
     nonisolated private func discoverModels() -> [String] {
         var models = ["vision-pipeline"]
         
@@ -494,15 +567,16 @@ final class EdgeDaemonService {
         
         guard let dir = modelsDir else { return models }
         
-        // Check for each FastVLM tier
+        // Check for each FastVLM tier installed from HF
         let fastVLMTiers = [
-            ("FastVLM/0.5B", "fastvlm-0.5b"),
-            ("FastVLM/1.5B", "fastvlm-1.5b"),
-            ("FastVLM/3B", "fastvlm-3b"),
+            ("0.5B", "fastvlm-0.5b"),
+            ("1.5B", "fastvlm-1.5b"),
+            ("7B", "fastvlm-7b"),
         ]
         
-        for (path, modelID) in fastVLMTiers {
-            if FileManager.default.fileExists(atPath: dir.appendingPathComponent(path).path) {
+        for (folder, modelID) in fastVLMTiers {
+            let configPath = dir.appendingPathComponent("FastVLM/\(folder)/config.json").path
+            if FileManager.default.fileExists(atPath: configPath) {
                 models.append(modelID)
             }
         }
@@ -513,5 +587,65 @@ final class EdgeDaemonService {
         }
         
         return models
+    }
+    
+    // MARK: - Auto-Provisioning
+    
+    private func autoProvisionModels() async {
+        // Delegate provisioning of SAM 2.1, ML-Sharp, FastVLM, and CLaRa to the centralized Swift orchestrator
+        await EdgeModelProvisioner.shared.provisionAll()
+        
+        // Rediscover models after provisioning is complete
+        await MainActor.run {
+            self.loadedModels = discoverModels()
+        }
+    }
+    
+    // MARK: - Local CLI Chat Interface
+    
+    /// Starts an interactive terminal chat REPL utilizing the local CLaRa model.
+    public func startChatREPL() async {
+        print("\n=============================================")
+        print("🧠 CLaRa Agentic Search (Data Spaces)        ")
+        print("Type your query. Type 'exit' to return to CLI")
+        print("=============================================\n")
+        
+        // CLaRa latent simulation path (until we have real cross-device sync for latents)
+        let contextText = "This simulates a semantic context block representing the user's visual memory."
+            
+        guard CLaRaLatentService.shared.isAvailable else {
+            print("⚠️ CLaRa weights not found. Please wait for EdgeModelProvisioner to finish or check your connection.")
+            return
+        }
+        
+        // Pre-warm the unified memory cache
+        try? await CLaRaLatentService.shared.loadModel()
+        
+        while true {
+            print("\nclara> ", terminator: "")
+            fflush(stdout)
+            
+            guard let input = readLine() else { break }
+            let queryText = input.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            if queryText.lowercased() == "exit" || queryText.lowercased() == "quit" {
+                print("Exiting chat. Returning to EdgeDaemon CLI.\n")
+                break
+            }
+            
+            guard !queryText.isEmpty else { continue }
+            print("⏳ Thinking...")
+            
+            do {
+                if let answer = try await CLaRaLatentService.shared.query(documentText: contextText, question: queryText) {
+                    print("\n🤖 CLaRa:")
+                    print(answer)
+                } else {
+                    print("\n⚠️ Failed to generate CLaRa output.")
+                }
+            } catch {
+                print("\n⚠️ Failed to run CLaRa: \(error)")
+            }
+        }
     }
 }

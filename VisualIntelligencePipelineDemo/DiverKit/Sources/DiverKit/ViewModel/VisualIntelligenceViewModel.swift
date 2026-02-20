@@ -1744,13 +1744,15 @@ public class VisualIntelligenceViewModel {
         imageToSave = capturedImage
         #endif
         
-        // Capture sifted image from VM state
         var siftedImg: PlatformImage? = nil
         #if canImport(UIKit)
         siftedImg = self.siftedImage
         #elseif canImport(AppKit)
         siftedImg = self.siftedImage
         #endif
+        
+        let samMask = self.cameraManager.currentSegmentationMask
+
         
         let sessionImgs = self.sessionImages
         let sessionID = self.activeSessionID
@@ -1817,15 +1819,29 @@ public class VisualIntelligenceViewModel {
             let normalizedSifted = siftedImg?.normalizedOrientation()
             let siftedData = normalizedSifted?.pngData()
             
+            var samMaskData: Data? = nil
+            if let cgMask = samMask {
+                let uiMask = UIImage(cgImage: cgMask, scale: 1.0, orientation: .up)
+                samMaskData = uiMask.pngData()
+            }
+            
             // Also normalize attachment images
             let attachmentData = sessionImgs.compactMap { $0.fixedOrientation().jpegData(compressionQuality: 0.8) }
             #elseif canImport(AppKit)
             let capturedData = imageToSave?.tiffRepresentation
             let siftedData = siftedImg?.tiffRepresentation
+            
+            var samMaskData: Data? = nil
+            if let cgMask = samMask {
+                let nsMask = NSImage(cgImage: cgMask, size: .zero)
+                samMaskData = nsMask.tiffRepresentation
+            }
+            
             let attachmentData = sessionImgs.compactMap { $0.tiffRepresentation }
             #else
             let capturedData: Data? = nil
             let siftedData: Data? = nil
+            let samMaskData: Data? = nil
             let attachmentData: [Data]? = nil
             #endif
             
@@ -1897,7 +1913,7 @@ public class VisualIntelligenceViewModel {
             
             // 3. Create Intelligent Queue Items (Master + Children)
             do {
-                let queueItems = DiverQueueItem.items(intelligenceResults: currentResults, capturedImage: capturedData, siftedImage: siftedData, attachments: attachmentData, purposes: purposes, sessionID: sessionID, contextImageURL: contextImageURL, placeID: capturePlaceID, latitude: captureCoordinate?.latitude, longitude: captureCoordinate?.longitude, locationName: selectedPlaceTitle, depthPayload: primaryDepth, attachmentDepthPayloads: allDepthData)
+                let queueItems = DiverQueueItem.items(intelligenceResults: currentResults, capturedImage: capturedData, siftedImage: siftedData, attachments: attachmentData, purposes: purposes, sessionID: sessionID, contextImageURL: contextImageURL, placeID: capturePlaceID, latitude: captureCoordinate?.latitude, longitude: captureCoordinate?.longitude, locationName: selectedPlaceTitle, depthPayload: primaryDepth, attachmentDepthPayloads: allDepthData, siftedMask: samMaskData)
                 
                 for item in queueItems {
                     print("💾 [DIAG] Enqueuing item id=\(item.descriptor.id), sessionID=\(item.descriptor.sessionID ?? "NIL"), purposes=\(item.descriptor.purposes)")

@@ -137,9 +137,9 @@ cd DiverShared && swift test
 ## Development Conventions
 
 *   **SwiftUI:** Views are organized in `VisualIntelligencePipeline/VisualIntelligencePipeline/View/`.
-*   **View Models:** Located in `DiverKit/Sources/DiverKit/ViewModel/` — `VisualIntelligenceViewModel`, `SidebarViewModel`, `ReferenceDetailViewModel`, `ProcessedItemViewModel`.
+*   **View Models:** Located in `DiverKit/Sources/DiverKit/ViewModel/` — `VisualIntelligenceViewModel`, `SidebarViewModel`, `ReferenceDetailViewModel`, `ProcessedItemViewModel`, `AgenticChatViewModel`.
 *   **Protocols:** 18 protocols across `DiverKit/Sources/DiverKit/Protocols/` and inline in service files — `IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`, `ProductScoringStrategy`, `ProductRecommending`, `ESGEnriching`, `EdgeNodeDiscovering`, `CommerceRouting`, `PriceNowcasting`, `ContactServiceProvider`, `KnowledgeGraphIndexingService`, `LinkEnrichmentService`, `ContextualEnrichmentService`, `EdgeTransportProtocol`, `KnowledgeGraphRetrievalService`, `LocationProvider`.
-*   **Services:** Located in `DiverKit/Sources/DiverKit/Services/` — 57 services (40 core + 6 commerce + 4 edge + 7 scoring) covering camera, enrichment, pipeline, location, commerce scoring, edge computing, government APIs, and more.
+*   **Services:** Located in `DiverKit/Sources/DiverKit/Services/` — 61 services covering camera, enrichment, pipeline, location, commerce scoring, edge computing, government APIs, agentic search, and more.
 *   **Commerce Services:** Located in `DiverKit/Sources/DiverKit/Services/Commerce/` — `GovernmentDataService`, `APIKeyService`, `OpenESGService`, `PricingDataService`, `NowcastingEngine`, `AffiliateRoutingService`.
 *   **Edge Services:** Located in `DiverKit/Sources/DiverKit/Services/Edge/` — `VisualIntelligenceActorSystem`, `BonjourDiscoveryService`, `NWTransportLayer`, `EdgeNodeService` (5 distributed actors).
 *   **Scoring Engines:** Located in `DiverKit/Sources/DiverKit/Services/Scoring/` — 7 strategy implementations conforming to `ProductScoringStrategy`.
@@ -217,7 +217,7 @@ cd DiverShared && swift test
 
 ## Key Files
 
-### App & UI (41 views)
+### App & UI (42 views)
 *   `VisualIntelligencePipelineApp.swift` — App entry point, service initialization, foreground/background lifecycle
 *   `View/VisualIntelligenceView.swift` — Camera and capture UI
 *   `View/SidebarView.swift` — Main navigation sidebar (942 lines, delegates to 7 child views in `View/Sidebar/`)
@@ -243,6 +243,7 @@ cd DiverShared && swift test
 *   `View/SessionLocationBar.swift` — Session location display bar
 *   `View/SharedWithYouView.swift` — Shared With You content
 *   `View/ShortcutGalleryView.swift` — Shortcuts gallery
+*   `View/AgenticChatView.swift` — Interactive chat view for querying library via CLaRa
 *   `View/Commerce/ProductScoreOverlayView.swift` — 7-engine score overlay with timing pill
 *   `View/Commerce/OwnershipButton.swift` — "I Own This" / "I Want This" toggle with spring animations
 *   `View/Commerce/OwnedProductsView.swift` — Brand-grouped owned products list

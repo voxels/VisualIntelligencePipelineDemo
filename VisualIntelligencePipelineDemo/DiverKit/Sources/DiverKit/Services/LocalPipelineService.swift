@@ -183,6 +183,9 @@ public final class LocalPipelineService {
             if existing.sessionID == nil {
                 existing.sessionID = descriptor?.sessionID
             }
+            if existing.siftedMask == nil, let mask = descriptor?.siftedMask {
+                existing.siftedMask = mask
+            }
             
             // CRITICAL: Ensure session is synced immediately for existing items too
             self.syncSession(for: existing)
@@ -483,38 +486,84 @@ public final class LocalPipelineService {
             }
             
             // Stage 2: FastVLM analysis (enriches/overrides SLM output with multimodal understanding)
-            if let fastVLMService, fastVLMService.isAvailable {
-                let image: CGImage? = {
-                    guard let imageData = rawPayload ?? existing.rawPayload else { return nil }
-                    return createCGImage(from: imageData)
-                }()
-                
-                if let analysis = try? await fastVLMService.analyze(
+        if let fastVLMService, fastVLMService.isAvailable {
+            let image: CGImage? = {
+                guard let imageData = rawPayload ?? existing.rawPayload else { return nil }
+                return createCGImage(from: imageData)
+            }()
+            
+            var analysis: FastVLMAnalysis? = nil
+            let router = await MainActor.run { Services.shared.edgeRouter }
+            let system = await MainActor.run { Services.shared.actorSystem }
+            
+            if let router = router, let system = system, let imageData = rawPayload ?? existing.rawPayload {
+                let decision = await router.shouldOffload(task: .vlmInference)
+                if case .edge(let node, _) = decision {
+                    do {
+                        let identity = EdgeActorID(id: "EdgeInference", nodeName: node.deviceName)
+                        let edgeActor = try EdgeInferenceActor.resolve(id: identity, using: system)
+                        
+                        let prompt: String
+                        if let _ = image {
+                            prompt = FastVLMEnrichmentService.buildGroundedPrompt(
+                                visionTags: localPipelineContext.visualTags,
+                                enrichmentContext: localPipelineContext.enrichmentContextString,
+                                transcription: existing.transcription
+                            )
+                        } else {
+                            prompt = FastVLMEnrichmentService.buildTextOnlyPrompt(
+                                enrichmentContext: localPipelineContext.enrichmentContextString,
+                                transcription: existing.transcription
+                            )
+                        }
+                        
+                        let resultText = try await edgeActor.runVLM(imageData: imageData, prompt: prompt)
+                        analysis = FastVLMAnalysis(
+                            imageDescription: resultText.imageDescription,
+                            contextSummary: resultText.summary,
+                            suggestedTitle: nil,
+                            suggestedPurpose: resultText.purpose,
+                            suggestedTags: resultText.tags,
+                            statements: resultText.statements,
+                            modelID: "EdgeInference"
+                        )
+                        DiverLogger.pipeline.info("🚀 [LocalPipeline] FastVLM offloaded to \(node.deviceName)")
+                    } catch {
+                        DiverLogger.pipeline.error("⚠️ [LocalPipeline] FastVLM offload failed, falling back to local: \(error)")
+                    }
+                }
+            }
+            
+            if analysis == nil {
+                analysis = try? await fastVLMService.analyze(
                     image: image,
                     visionTags: localPipelineContext.visualTags,
                     enrichmentContext: localPipelineContext.enrichmentContextString,
                     transcription: existing.transcription
-                ) {
-                    localPipelineContext.fastVLMAnalysis = analysis
-                    existing.fastVLMAnalysis = analysis
-                    existing.processingLog.append("\(Date().formatted()): FastVLM: grounded analysis complete")
-                    
-                    // Apply accurate fields
-                    if let title = analysis.suggestedTitle, existing.title == nil || existing.title?.isEmpty == true {
-                        existing.title = title
-                    }
-                    if let purpose = analysis.suggestedPurpose {
-                        if !existing.purposes.contains(purpose) {
-                            existing.purposes.append(purpose)
-                        }
-                    }
-                    
-                    // Log remaining fields for debugging
-                    print("📝 [FastVLM] Item \(existing.id) — contextSummary: \(analysis.contextSummary ?? "nil")")
-                    print("📝 [FastVLM] Item \(existing.id) — suggestedTags: \(analysis.suggestedTags)")
-                    print("📝 [FastVLM] Item \(existing.id) — statements: \(analysis.statements)")
-                }
+                )
             }
+            
+            if let finalAnalysis = analysis {
+                localPipelineContext.fastVLMAnalysis = finalAnalysis
+                existing.fastVLMAnalysis = finalAnalysis
+                existing.processingLog.append("\(Date().formatted()): FastVLM: grounded analysis complete")
+                
+                // Apply accurate fields
+                if let title = finalAnalysis.suggestedTitle, existing.title == nil || existing.title?.isEmpty == true {
+                    existing.title = title
+                }
+                if let purpose = finalAnalysis.suggestedPurpose {
+                    if !existing.purposes.contains(purpose) {
+                        existing.purposes.append(purpose)
+                    }
+                }
+                
+                // Log remaining fields for debugging
+                print("📝 [FastVLM] Item \(existing.id) — contextSummary: \(finalAnalysis.contextSummary ?? "nil")")
+                print("📝 [FastVLM] Item \(existing.id) — suggestedTags: \(finalAnalysis.suggestedTags)")
+                print("📝 [FastVLM] Item \(existing.id) — statements: \(finalAnalysis.statements)")
+            }
+        }
             
             // Stage ⑦: Commerce Intelligence (opt-in, all active strategies)
             if !scoringStrategies.isEmpty {
@@ -570,6 +619,7 @@ public final class LocalPipelineService {
             attributionID: descriptor?.attributionID,
             masterCaptureID: descriptor?.masterCaptureID,
             sessionID: descriptor?.sessionID,
+            siftedMask: descriptor?.siftedMask,
             photosAssetIdentifier: descriptor?.photosAssetIdentifier,
             categories: descriptor?.categories ?? [],
             location: descriptor?.location,
@@ -1479,6 +1529,48 @@ public final class LocalPipelineService {
             results = try await Task.detached(priority: .userInitiated) {
                 // Bail if cancelled (e.g. app backgrounded) before submitting GPU work
                 guard !Task.isCancelled else { return [IntelligenceResult]() }
+                
+                let router = await MainActor.run { Services.shared.edgeRouter }
+                let system = await MainActor.run { Services.shared.actorSystem }
+                
+                if let router = router, let system = system {
+                    let decision = await router.shouldOffload(task: .visionAnalysis)
+                    if case .edge(let node, _) = decision {
+                        do {
+                            let identity = EdgeActorID(id: "EdgeInference", nodeName: node.deviceName)
+                            let edgeActor = try EdgeInferenceActor.resolve(id: identity, using: system)
+                            let visionResult = try await edgeActor.analyzeImage(capturedData)
+                            DiverLogger.pipeline.info("🚀 [LocalPipeline] Vision Analysis offloaded to \(node.deviceName)")
+                            
+                            var edgeResults: [IntelligenceResult] = []
+                            if let text = visionResult.ocrText, !text.isEmpty {
+                                edgeResults.append(.text(text, nil))
+                            }
+                            for qr in visionResult.qrURLs {
+                                if let url = URL(string: qr) {
+                                    edgeResults.append(.qr(url))
+                                }
+                            }
+                            for tag in visionResult.semanticTags {
+                                edgeResults.append(.semantic(tag, confidence: 0.99))
+                            }
+                            if visionResult.hasDocument {
+                                edgeResults.append(.document(VNRectangleObservation(), text: nil, label: "Document", rectifiedImage: nil))
+                            }
+                            if visionResult.hasForegroundSubject {
+                                // Omitted: VNInstanceMaskObservation can't be easily reconstituted. FastVLM handles descriptions.
+                            }
+                            if let score = visionResult.aestheticsScore {
+                                edgeResults.append(.aesthetics(score: score))
+                            }
+                            // Omitted: SaliencyResult map types differ and are purely analytical right now
+                            
+                            return edgeResults
+                        } catch {
+                            DiverLogger.pipeline.error("⚠️ [LocalPipeline] Edge offload failed, falling back to local: \(error)")
+                        }
+                    }
+                }
                 
                 let processor = IntelligenceProcessor()
                 

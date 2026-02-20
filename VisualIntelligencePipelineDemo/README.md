@@ -26,8 +26,8 @@ Captures are automatically grouped by location and time into cohesive **sessions
 ### Library Maintenance
 A built-in **Rebuild Library** tool (Settings > Rebuild Library) repairs orphaned items, recovers stuck processing states, consolidates fragmented sessions, reconciles relationships, and regenerates all session summaries — with live progress status.
 
-### Context Tags & Daily Focus
-Add custom context tags (e.g., "Gift for Mom," "Home renovation ideas") to any capture. A **Daily Focus** summary aggregates the day's activity into an AI-generated brief.
+### Context Tags, Daily Focus & Agentic Chat
+Add custom context tags (e.g., "Gift for Mom," "Home renovation ideas") to any capture. A **Daily Focus** summary aggregates the day's activity into an AI-generated brief. You can also chat directly with your library via an built-in **Agentic Chat** interface powered by the FastVLM/SLM system.
 
 ### Commerce Intelligence
 Products detected via barcode or visual classification are automatically scored across **7 strategies simultaneously**: Ethics (ESG + 10 sub-dimensions), Brand Fit, Value, Durability, Social Proof, Health Fit, and Total Cost of Ownership. Score data from free, open databases (Open Food Facts, Climate TRACE, gov APIs) — no paid API keys required.
@@ -51,7 +51,7 @@ Any device on your home network can offload ML inference to a more powerful M-se
 Save links from Safari, YouTube, TikTok, or any app via the Share Sheet extension. Links are wrapped in a proprietary format (HMAC-signed, tamper-proof URLs via `DiverLinkWrapper`) and processed through the enrichment pipeline for automatic metadata extraction. The app supports both Universal Links (`https://secretatomics.com/...`) and custom scheme links (`secretatomics://...`) for deep linking. Shared links appear in Apple's **Shared with You** section via `SharedWithYouManager`.
 
 ### Siri, Shortcuts & Widgets
-Fully integrated with Apple's system — 5 App Intents (Save, Share, Search, Get Recent, Open), pre-built shortcut templates, and Home & Lock screen widgets.
+Fully integrated with Apple's system — 6 App Intents (Save, Share, Search, Get Recent, Open, Ask CLaRa), pre-built shortcut templates, and Home & Lock screen widgets.
 
 ## Architecture
 
@@ -60,7 +60,7 @@ The project is modularized using Swift Package Manager:
 | Module | Purpose |
 |--------|---------|
 | `VisualIntelligencePipeline/` | Main application target and UI |
-| `DiverKit/` | Core logic — ML pipeline, 55+ services, 7 protocols, view models, models, storage |
+| `DiverKit/` | Core logic — ML pipeline, 61 services, 18 protocols, view models, models, storage |
 | `DiverShared/` | Pure Swift shared data models and utilities |
 | `ActionExtension/` | Share Sheet extension for link ingestion |
 | `VisualIntelligencePipelineWidget/` | Home & Lock screen widgets |

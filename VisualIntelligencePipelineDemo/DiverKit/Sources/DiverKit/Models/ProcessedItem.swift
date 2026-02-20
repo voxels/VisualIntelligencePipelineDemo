@@ -17,6 +17,8 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
     public var rawPayload: Data?
     @Attribute(.externalStorage)
     public var depthPayload: Data?
+    @Attribute(.externalStorage)
+    public var siftedMask: Data?
 
     // Phase 1 additions
     // Phase 1 additions
@@ -177,6 +179,7 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
         attributionID: String? = nil,
         masterCaptureID: String? = nil,
         sessionID: String? = nil,
+        siftedMask: Data? = nil,
         transcription: String? = nil,
         visualTags: [String] = [],
         mediaType: String? = nil,
@@ -219,6 +222,7 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
         self.attributionID = attributionID
         self.masterCaptureID = masterCaptureID
         self.sessionID = sessionID
+        self.siftedMask = siftedMask
         self.transcription = transcription
         self.visualTags = visualTags
         self.mediaType = mediaType

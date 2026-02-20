@@ -42,6 +42,7 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
     public var isFavorite: Bool = false
     public var purposes: Set<String> = []
     public var processingLog: [String] = []
+    public let siftedMask: Data?
 
     
     public var tags: [String] { styleTags }
@@ -70,7 +71,8 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
         longitude: Double? = nil,
         isFavorite: Bool = false,
         purposes: Set<String> = [],
-        processingLog: [String] = []
+        processingLog: [String] = [],
+        siftedMask: Data? = nil
     ) {
         self.id = id
         self.url = url
@@ -94,6 +96,7 @@ public struct DiverItemDescriptor: Codable, Equatable, Hashable, Sendable {
         self.longitude = longitude
         self.isFavorite = isFavorite
         self.processingLog = processingLog
+        self.siftedMask = siftedMask
         
         // Migrate legacy purpose if needed
         var combined = purposes

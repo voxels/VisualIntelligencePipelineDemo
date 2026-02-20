@@ -2,6 +2,13 @@
 
 ## 2026-02-20
 
+### Distributed Edge Processing & AppIntents
+- **Pipeline Edge Offloading**: Fully implemented stateless edge offloading in `LocalPipelineService`. It queries `PipelineEdgeRouter` to dynamically decide whether to run `FastVLMEnrichmentService` and Vision frameworks locally or distribute them via `EdgeInferenceActor`.
+- **Swift 6 Concurrency Fixes**: Refactored `CameraManager` and pipeline callbacks to operate asynchronously using `@unchecked Sendable` structs (`UncheckedObservations`, `UncheckedBuffer`) as boundary bridges to resolve compilation failures.
+- **AppIntents Integration**: Created `AskCLaRaIntent`, exposing Siri-based deep linking for memory search. Fixed widget target compilation to cleanly include the intent.
+- **App Architecture**: Plumbed `BonjourDiscoveryService` and `NWTransportLayer` through `VisualIntelligencePipelineApp` app delegate for discovering edge nodes and TLS transport.
+- **AgenticChatView**: Integrated `AgenticChatView` and `AgenticChatViewModel` to provide an interactive chat interface to the library, resolving UI index and scope compilation errors.
+
 ### EdgeDaemon & SpatialCommerce Standalone Projects
 - **EdgeDaemon**: Generated standalone macOS Xcode project via `xcodegen`. Menu bar app (LSUIElement) with Bonjour advertising on port 8847. Routes Vision, FastVLM, Nowcast, and GovernmentData requests from iOS clients. **Builds successfully for macOS.**
 - **SpatialCommerce**: Generated standalone visionOS Xcode project via `xcodegen`. Uses DiverShared for commerce types (no DiverKit dependency). Requires visionOS 26.3+ SDK.

@@ -58,6 +58,16 @@ struct DiverShortcuts: AppShortcutsProvider {
                 ],
                 shortTitle: "Intelligence Scan",
                 systemImageName: "sparkles.tv.fill"
+            ),
+            AppShortcut(
+                intent: AskCLaRaIntent(),
+                phrases: [
+                    "Ask CLaRa in ${applicationName}",
+                    "Ask ${applicationName} [question]",
+                    "Search visual memory with ${applicationName} for [question]"
+                ],
+                shortTitle: "Ask CLaRa",
+                systemImageName: "brain.head.profile"
             )
         ]
     }
