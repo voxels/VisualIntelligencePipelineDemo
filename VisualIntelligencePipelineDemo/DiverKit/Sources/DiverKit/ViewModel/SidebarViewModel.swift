@@ -493,11 +493,8 @@ public final class SidebarViewModel {
         let sessionID = session.sessionID
         let container = context.container
         Task.detached(priority: .utility) {
-            let bgCtx = ModelContext(container)
-            bgCtx.autosaveEnabled = false
-            let localPipeline = LocalPipelineService(modelContext: bgCtx)
-            await localPipeline.generateAndSaveSessionSummary(sessionID: sessionID)
-            print("✅ Triggered analysis for session: \(sessionID)")
+            let actor = PersistenceActor(modelContainer: container)
+            await actor.analyzeSession(sessionID: sessionID)
         }
     }
     

@@ -2,7 +2,7 @@
 
 > **Version:** 2.0  
 > **Last Updated:** 2026-02-19  
-> **Platforms:** iOS 26.0+, iPadOS 26.0+, macOS 26.0+ (edge node), visionOS 26.3+ (future)  
+> **Platforms:** iOS 26.3+, iPadOS 26.3+, macOS 26.3+ (edge node), visionOS 26.3+ (future)  
 > **Bundle ID:** `com.secretatomics.VisualIntelligencePipeline`
 
 ---

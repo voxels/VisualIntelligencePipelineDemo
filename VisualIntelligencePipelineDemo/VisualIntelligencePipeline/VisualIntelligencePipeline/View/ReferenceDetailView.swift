@@ -376,6 +376,130 @@ struct ReferenceDetailContent: View {
                     // Divider removed
                 }
                 
+                // Commerce Intelligence Section
+                if item.productMetadata != nil || item.commerceContext != nil {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: "cart.fill")
+                                .foregroundStyle(.green)
+                            Text("Commerce Intelligence")
+                                .font(.title3)
+                                .bold()
+                        }
+                        
+                        // Product Score Overlay
+                        if let recommendations = item.commerceContext, let first = recommendations.first {
+                            ProductScoreOverlayView(
+                                recommendation: first,
+                                allScores: first.option.scores,
+                                insight: nil,
+                                advisorySignal: nil,
+                                advisoryExplanation: nil
+                            )
+                        }
+                        
+                        // Ownership Button
+                        OwnershipButton(
+                            productName: item.title ?? "Product",
+                            barcode: item.productMetadata
+                        )
+                        
+                        // Score History Chart
+                        if !viewModel.scoreSnapshots.isEmpty {
+                            ScoreHistoryChartView(
+                                snapshots: viewModel.scoreSnapshots,
+                                strategyID: "esg"
+                            )
+                        }
+                        
+                        // Nowcast Result (direction + confidence)
+                        if let nowcast = item.nowcastContext {
+                            HStack(spacing: 12) {
+                                Image(systemName: nowcast.direction == .rising ? "arrow.up.right.circle.fill" :
+                                        nowcast.direction == .falling ? "arrow.down.right.circle.fill" :
+                                        "equal.circle.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(nowcast.direction == .rising ? .green :
+                                                        nowcast.direction == .falling ? .red : .secondary)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Price Trend: \(nowcast.direction.rawValue.capitalized)")
+                                        .font(.subheadline.weight(.medium))
+                                    Text("Confidence: \(Int(nowcast.confidence * 100))%")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                Text(String(format: "%+.1f%%", nowcast.projectedChange * 100))
+                                    .font(.headline.monospacedDigit())
+                                    .foregroundStyle(nowcast.projectedChange > 0 ? .red : .green)
+                            }
+                            .padding()
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        }
+                        
+                        // Commerce Action (Affiliate Links)
+                        if let platforms = item.affiliateContext, !platforms.isEmpty {
+                            CommerceActionView(platforms: platforms)
+                        }
+                        
+                        // Government Safety Alerts
+                        if let gov = item.governmentContext, gov.hasConcerns {
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(.orange)
+                                    Text("Safety Alerts")
+                                        .font(.subheadline.weight(.semibold))
+                                }
+                                
+                                ForEach(gov.recalls) { recall in
+                                    HStack(alignment: .top) {
+                                        Image(systemName: "arrow.uturn.backward.circle.fill")
+                                            .foregroundStyle(.red)
+                                            .font(.caption)
+                                        VStack(alignment: .leading) {
+                                            Text(recall.title)
+                                                .font(.caption.weight(.medium))
+                                            if let hazard = recall.hazard {
+                                                Text(hazard)
+                                                    .font(.caption2)
+                                                    .foregroundStyle(.secondary)
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                ForEach(gov.fdaAlerts) { alert in
+                                    HStack(alignment: .top) {
+                                        Image(systemName: "cross.circle.fill")
+                                            .foregroundStyle(.orange)
+                                            .font(.caption)
+                                        VStack(alignment: .leading) {
+                                            Text("FDA \(alert.classification)")
+                                                .font(.caption.weight(.medium))
+                                            Text(alert.reason)
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                                .lineLimit(2)
+                                        }
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                        }
+                    }
+                    .detailCardStyle()
+                    .onAppear {
+                        if let barcode = item.productMetadata {
+                            viewModel.fetchScoreHistory(productID: barcode)
+                        }
+                    }
+                }
+                
                 // EXIF Metadata Section (Camera, Exposure, etc.)
                 EXIFMetadataSection(item: item)
                 

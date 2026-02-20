@@ -230,19 +230,24 @@ final class PipelinePerformanceTests: XCTestCase {
     /// Measures CGImage decode performance for repeated decode of same data.
     /// Second decode should be a cache hit (NSCache).
     /// Run on device with Instruments Allocations to verify no duplicate decode buffers.
-    func testCGImageDecodeCacheHit() throws {
+    func testCGImageDecodeCacheHit() async throws {
         let pipeline = LocalPipelineService(modelContext: modelContext)
         
         // Create a small valid PNG image (1x1 pixel red)
         let pngData = createMinimalPNG()
         
         // First decode: cache miss (populates cache)
-        let first = pipeline.createCGImageForTesting(from: pngData)
+        let first = await pipeline.createCGImageForTesting(from: pngData)
         XCTAssertNotNil(first, "First decode should succeed")
         
         // Second decode: cache hit (should be faster)
         measure {
-            let _ = pipeline.createCGImageForTesting(from: pngData)
+            let exp = expectation(description: "decode")
+            Task {
+                let _ = await pipeline.createCGImageForTesting(from: pngData)
+                exp.fulfill()
+            }
+            wait(for: [exp], timeout: 5)
         }
     }
     

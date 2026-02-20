@@ -15,6 +15,7 @@ public enum IntelligenceResult {
     case document(VNRectangleObservation, text: String?, label: String?, rectifiedImage: Data? = nil)
     case purpose(statements: [String])
     case aesthetics(score: Float)
+    case saliency(SaliencyResult)
     
     case richWeb(url: URL, data: EnrichmentData)
     
@@ -66,6 +67,10 @@ extension IntelligenceResult: Hashable {
         case .aesthetics(let score):
             hasher.combine(8)
             hasher.combine(score)
+        case .saliency(let result):
+            hasher.combine(10)
+            hasher.combine(result.width)
+            hasher.combine(result.height)
         case .richWeb(let url, let data):
             hasher.combine(9)
             hasher.combine(url)
@@ -84,6 +89,7 @@ extension IntelligenceResult: Hashable {
         case (.document(let o1, let t1, let l1, let r1), .document(let o2, let t2, let l2, let r2)): return o1 === o2 && t1 == t2 && l1 == l2 && r1 == r2
         case (.purpose(let s1), .purpose(let s2)): return s1 == s2
         case (.aesthetics(let s1), .aesthetics(let s2)): return s1 == s2
+        case (.saliency(let r1), .saliency(let r2)): return r1.width == r2.width && r1.height == r2.height
         case (.richWeb(let u1, let d1), .richWeb(let u2, let d2)): return u1 == u2 && d1.title == d2.title
         default: return false
         }
@@ -109,6 +115,7 @@ extension IntelligenceResult {
             return prefix + (label?.capitalized ?? "Scanned")
         case .purpose(let statements): return statements.first ?? "Purpose"
         case .aesthetics: return "Quality Score"
+        case .saliency: return "Saliency Map"
         }
     }
     
@@ -134,6 +141,7 @@ extension IntelligenceResult {
             }
             return "Suggested Purpose"
         case .aesthetics(let score): return String(format: "%.0f%%", score * 100)
+        case .saliency(let result): return "\(result.salientRegions.count) region(s)"
         }
     }
     
@@ -162,6 +170,7 @@ extension IntelligenceResult {
         case .document: return "doc.text.below.ecg.fill" // More distinct document icon
         case .purpose: return "sparkles.rectangle.stack"
         case .aesthetics: return "sparkle.magnifyingglass"
+        case .saliency: return "eye.trianglebadge.exclamationmark"
         }
     }
     
@@ -216,6 +225,7 @@ extension IntelligenceResult {
         case .semantic: return 4
         case .siftedSubject: return 5
         case .aesthetics: return 6
+        case .saliency: return 6  // Same priority as aesthetics
         }
     }
 }
@@ -271,6 +281,7 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
          var textRequest: VNRecognizeTextRequest?
          var classificationRequest: VNClassifyImageRequest?
          var documentRequest: VNDetectDocumentSegmentationRequest?
+         var saliencyRequest: VNGenerateAttentionBasedSaliencyImageRequest?
          
          if mode == .fullAnalysis {
              print("🧠 IntelligenceProcessor: Starting Full Analysis (Single Pass)")
@@ -284,7 +295,10 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
              let dr = VNDetectDocumentSegmentationRequest()
              documentRequest = dr
              
-             allRequests.append(contentsOf: [tr, cr, dr])
+             let sr = VNGenerateAttentionBasedSaliencyImageRequest()
+             saliencyRequest = sr
+             
+             allRequests.append(contentsOf: [tr, cr, dr, sr])
          }
          
          // Run ALL requests in a single perform() call — Vision parallelizes internally
@@ -355,6 +369,50 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
          // Return early if Live Mode
          if mode == .liveSifting {
              return finalResults
+         }
+         
+         // --- Process Saliency Results ---
+         if let observation = saliencyRequest?.results?.first {
+             let pixelBuffer = observation.pixelBuffer
+             CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+             defer { CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly) }
+             
+             let width = CVPixelBufferGetWidth(pixelBuffer)
+             let height = CVPixelBufferGetHeight(pixelBuffer)
+             let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
+             
+             if let baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer) {
+                 let floatBuffer = baseAddress.assumingMemoryBound(to: Float.self)
+                 var heatmap: [Float] = []
+                 heatmap.reserveCapacity(width * height)
+                 
+                 for y in 0..<height {
+                     let rowStart = baseAddress.advanced(by: y * bytesPerRow).assumingMemoryBound(to: Float.self)
+                     for x in 0..<width {
+                         heatmap.append(rowStart[x])
+                     }
+                 }
+                 
+                 // Extract salient region bounding boxes
+                 let salientRegions: [NormalizedRect] = observation.salientObjects?.map { obj in
+                     let box = obj.boundingBox
+                     return NormalizedRect(
+                         x: Float(box.origin.x),
+                         y: Float(box.origin.y),
+                         width: Float(box.width),
+                         height: Float(box.height)
+                     )
+                 } ?? []
+                 
+                 let result = SaliencyResult(
+                     width: width,
+                     height: height,
+                     heatmap: heatmap,
+                     salientRegions: salientRegions
+                 )
+                 finalResults.append(.saliency(result))
+                 print("👁️ Saliency: \(width)x\(height) heatmap, \(salientRegions.count) salient region(s)")
+             }
          }
          
          // --- Process Full Analysis Results ---
@@ -538,6 +596,8 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
                         break // Skip existing purpose results
                     case .aesthetics(let score):
                         contextParts.append("Image Quality: \(String(format: "%.0f%%", score * 100))")
+                    case .saliency(let result):
+                        contextParts.append("Saliency: \(result.salientRegions.count) region(s)")
                     }
                 }
                 

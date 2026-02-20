@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commerce Intelligence — Visual Intelligence Wiki</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="layout">
+
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1>Visual Intelligence Pipeline</h1>
+                <div class="version">v1.2 Developer Wiki</div>
+            </div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search types…"
+                    oninput="filterSidebar(this.value)"></div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Overview</div>
+                <a class="sidebar-link" href="index.html">Home</a>
+                <a class="sidebar-link" href="architecture.html">Architecture</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Modules</div>
+                <a class="sidebar-link" href="divershared.html">DiverShared</a>
+                <a class="sidebar-link" href="diverkit-models.html">DiverKit — Models</a>
+                <a class="sidebar-link" href="diverkit-services.html">DiverKit — Services</a>
+                <a class="sidebar-link" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
+                <a class="sidebar-link" href="diverkit-core.html">DiverKit — Core</a>
+                <a class="sidebar-link" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
+                <a class="sidebar-link" href="app-views.html">App — Views</a>
+                <a class="sidebar-link" href="app-services.html">App — Services</a>
+                <a class="sidebar-link" href="app-intents.html">App — Intents &amp; Widgets</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Intelligence</div>
+                <a class="sidebar-link active" href="commerce-intelligence.html">Commerce Intelligence</a>
+                <a class="sidebar-link" href="edge-computing.html">Edge Computing</a>
+            </div>
+        </nav>
+
+        <main class="main">
+            <div class="breadcrumb"><a href="index.html">Wiki</a> › Commerce Intelligence</div>
+
+            <h1 class="page-title">Commerce Intelligence</h1>
+            <p class="page-subtitle">7-engine product scoring, modular ranking policies, government safety APIs, price
+                nowcasting, and
+                affiliate routing — all running on-device with free/open data.</p>
+
+            <div class="section">
+                <h2 class="section-title">Architecture</h2>
+                <div
+                    style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius); padding:24px; font-family:'JetBrains Mono',monospace; font-size:12px; line-height:2.2; color:var(--text-secondary);">
+                    <span style="color:var(--accent-cyan);">Barcode / Visual Classification</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+                    <span style="color:var(--accent-green);">ESGEnrichmentService</span> — 4 Open *Facts databases<br>
+                    <span style="color:var(--accent-blue);">GovernmentDataService</span> — CPSC, FDA, EPA, Energy
+                    Star<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;↓ (parallel)<br>
+                    <span style="color:var(--accent-orange);">7 Scoring Strategies</span> — ESG, Brand, Value,
+                    Durability, Social, Health, TotalCost<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+                    <span style="color:var(--accent-purple);">PreferenceLearner</span> → Personalized weights from
+                    ownership history<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+                    <span style="color:var(--accent-green);">ProductRecommendationService</span> + SLM Advisory<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+                    <span style="color:var(--accent-cyan);">PricingDataService + NowcastingEngine</span> — DFM
+                    projection<br>
+                    <span style="color:var(--accent-blue);">AffiliateRoutingService</span> — 5 platforms, ranked by
+                    <code>RankingPolicy</code> dimensions<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+                    <span style="color:var(--accent-green);">ScoreSnapshot</span> → SwiftData + CloudKit sync
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Scoring Engines</h2>
+                <table class="type-table">
+                    <thead>
+                        <tr>
+                            <th>Strategy</th>
+                            <th>File</th>
+                            <th>Key Dimensions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ESGScoringStrategy</code></td>
+                            <td>Scoring/ESGScoringStrategy.swift</td>
+                            <td>Carbon intensity, data quality, certifications, Eco-Score, product safety, nutrition,
+                                packaging, EPA compliance, energy efficiency</td>
+                        </tr>
+                        <tr>
+                            <td><code>BrandAlignmentStrategy</code></td>
+                            <td>Scoring/BrandAlignmentStrategy.swift</td>
+                            <td>Brand match, category familiarity, preference strength (UserConcept weights)</td>
+                        </tr>
+                        <tr>
+                            <td><code>ValueScoringStrategy</code></td>
+                            <td>Scoring/ValueScoringStrategy.swift</td>
+                            <td>Price trend direction, forecast confidence, price positioning</td>
+                        </tr>
+                        <tr>
+                            <td><code>DurabilityScoringStrategy</code></td>
+                            <td>Scoring/DurabilityScoringStrategy.swift</td>
+                            <td>Category longevity, brand durability, repairability (EU framework), material quality
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>SocialProofScoringStrategy</code></td>
+                            <td>Scoring/SocialProofScoringStrategy.swift</td>
+                            <td>Reddit sentiment, expert reviews, complaint/recall history, iFixit repairability</td>
+                        </tr>
+                        <tr>
+                            <td><code>HealthFitScoringStrategy</code></td>
+                            <td>Scoring/HealthFitScoringStrategy.swift</td>
+                            <td>Nutritional alignment, allergen safety, dietary compliance, NOVA processing</td>
+                        </tr>
+                        <tr>
+                            <td><code>TotalCostScoringStrategy</code></td>
+                            <td>Scoring/TotalCostScoringStrategy.swift</td>
+                            <td>Energy cost, consumables, subscriptions, replacement cycle, resale value</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Commerce Services</h2>
+                <table class="type-table">
+                    <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Data Source</th>
+                            <th>Protocol</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>GovernmentDataService</code></td>
+                            <td>CPSC Recalls, FDA openFDA, EPA ECHO, Energy Star SODA</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><code>ESGEnrichmentService</code></td>
+                            <td>4 Open *Facts databases (Food, Beauty, Pet Food, Products)</td>
+                            <td><code>ESGEnriching</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>PricingDataService</code></td>
+                            <td>World Bank Commodities, BLS Producer Price Index</td>
+                            <td><code>PriceNowcasting</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>NowcastingEngine</code></td>
+                            <td>Accelerate vDSP (DFM linear regression)</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><code>AffiliateRoutingService</code></td>
+                            <td>5 platforms: Thrive, Target, Amazon, Best Buy, eBay</td>
+                            <td><code>CommerceRouting</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>APIKeyService</code></td>
+                            <td>iOS Keychain + iCloud Keychain sync</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><code>OpenESGService</code></td>
+                            <td>B Corp directory</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><code>PreferenceLearner</code></td>
+                            <td>OwnedProduct history</td>
+                            <td>—</td>
+                        </tr>
+                        <tr>
+                            <td><code>ProductRecommendationService</code></td>
+                            <td>Multi-strategy composite + SLM</td>
+                            <td><code>ProductRecommending</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">UI Components</h2>
+                <table class="type-table">
+                    <thead>
+                        <tr>
+                            <th>View</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ProductScoreOverlayView</code></td>
+                            <td>7-engine tab UI with composite score ring and timing pill</td>
+                        </tr>
+                        <tr>
+                            <td><code>OwnershipButton</code></td>
+                            <td>"I Own This" toggle with spring animations, 4 states</td>
+                        </tr>
+                        <tr>
+                            <td><code>ScoreHistoryChartView</code></td>
+                            <td>Swift Charts time-series with per-strategy colors</td>
+                        </tr>
+                        <tr>
+                            <td><code>NowcastChartView</code></td>
+                            <td>Price trajectory with trend direction pill and confidence gauge</td>
+                        </tr>
+                        <tr>
+                            <td><code>CommerceActionView</code></td>
+                            <td>Ethically-ranked platform CTAs with affiliate deep links</td>
+                        </tr>
+                        <tr>
+                            <td><code>EthicalPolicyConfigView</code></td>
+                            <td>RankingPolicy preferences: carbon, labor, certifications, platform ranking, price, speed
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>OwnedProductsView</code></td>
+                            <td>Brand-grouped product list with overview stats</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Pipeline Integration</h2>
+                <p style="color:var(--text-secondary); font-size:14px;">Commerce enrichment runs as <strong>Stage
+                        ⑦</strong> in <code>LocalPipelineService.performCommerceEnrichment</code>:</p>
+                <ol style="color:var(--text-secondary); font-size:14px; line-height:2;">
+                    <li>Classify product (barcode or visual detection)</li>
+                    <li>Parallel fetch: ESG data + Government safety data (<code>async let</code>)</li>
+                    <li>Price trajectory + DFM nowcast (World Bank + BLS PPI)</li>
+                    <li>Score with all active strategies (7 engines)</li>
+                    <li>Learn preference weights from ownership history</li>
+                    <li>Generate ranked recommendations + SLM advisory</li>
+                    <li>Affiliate routing with <code>RankingPolicy</code> dimensions (ethical, price, speed)</li>
+                    <li>Record ScoreSnapshot for time-series charts</li>
+                </ol>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        function filterSidebar(query) {
+            const links = document.querySelectorAll('.sidebar-link');
+            const q = query.toLowerCase();
+            links.forEach(link => {
+                const text = link.textContent.toLowerCase();
+                link.style.display = (!q || text.includes(q)) ? 'block' : 'none';
+            });
+        }
+    </script>
+</body>
+
+</html>

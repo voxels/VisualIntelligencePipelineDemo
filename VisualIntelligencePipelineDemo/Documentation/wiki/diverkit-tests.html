@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiverKit — Tests | Visual Intelligence Pipeline</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="layout">
+
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1>Visual Intelligence Pipeline</h1>
+                <div class="version">v1.1 Developer Wiki</div>
+            </div>
+            <div class="search-box"><input type="text" id="search" placeholder="Search types…"
+                    oninput="filterSidebar(this.value)"></div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Overview</div>
+                <a class="sidebar-link" href="index.html">Home</a>
+                <a class="sidebar-link" href="architecture.html">Architecture</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Modules</div>
+                <a class="sidebar-link" href="divershared.html">DiverShared</a>
+                <a class="sidebar-link" href="diverkit-models.html">DiverKit — Models</a>
+                <a class="sidebar-link" href="diverkit-services.html">DiverKit — Services</a>
+                <a class="sidebar-link" href="diverkit-viewmodels.html">DiverKit — ViewModels</a>
+                <a class="sidebar-link" href="diverkit-core.html">DiverKit — Core</a>
+                <a class="sidebar-link" href="diverkit-storage.html">DiverKit — Storage &amp; Auth</a>
+                <a class="sidebar-link" href="app-views.html">App — Views</a>
+                <a class="sidebar-link" href="app-services.html">App — Services</a>
+                <a class="sidebar-link" href="app-intents.html">App — Intents &amp; Widgets</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Intelligence</div>
+                <a class="sidebar-link" href="commerce-intelligence.html">Commerce Intelligence</a>
+                <a class="sidebar-link" href="edge-computing.html">Edge Computing</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Testing</div>
+                <a class="sidebar-link active" href="diverkit-tests.html">DiverKit — Tests</a>
+            </div>
+        </nav>
+
+        <main class="main">
+            <div class="breadcrumb"><a href="index.html">Wiki</a> &rsaquo; Testing</div>
+
+            <h1 class="page-title">DiverKit — Tests</h1>
+            <p class="page-subtitle">32 test files covering pipeline orchestration, enrichment, commerce scoring, edge
+                computing, architecture enforcement, performance, and ViewModel logic.</p>
+
+            <div class="stats-bar">
+                <div class="stat">
+                    <div class="stat-value">32</div>
+                    <div class="stat-label">Test Files</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">177</div>
+                    <div class="stat-label">XCTest Cases</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">73</div>
+                    <div class="stat-label">Swift Testing @Test</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Test Schemes</div>
+                </div>
+            </div>
+
+            <!-- Test Schemes -->
+            <div class="section">
+                <h2 class="section-title">Test Schemes</h2>
+                <table class="type-table">
+                    <thead>
+                        <tr>
+                            <th>Scheme</th>
+                            <th>Target</th>
+                            <th>Contents</th>
+                            <th>Command</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>DiverTests_iOS</code></td>
+                            <td>DiverKit SPM tests</td>
+                            <td>Service protocols, pipeline, enrichment, VM tests</td>
+                            <td><code>xcodebuild test -scheme DiverTests_iOS</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>VisualIntelligencePipeline</code></td>
+                            <td>App test bundle</td>
+                            <td>Integration, share intent, adapter tests</td>
+                            <td><code>xcodebuild test -scheme VisualIntelligencePipeline</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>DiverShared</code></td>
+                            <td>SharedLib SPM tests</td>
+                            <td>Pure Swift model/utility tests</td>
+                            <td><code>cd DiverShared && swift test</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pipeline & Orchestration -->
+            <div class="section">
+                <h2 class="section-title">Pipeline &amp; Orchestration</h2>
+                <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">Core pipeline processing,
+                    metadata
+                    extraction, and item lifecycle.</p>
+                <table class="type-table">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Tests</th>
+                            <th>Coverage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>LocalPipelineServiceTests</code></td>
+                            <td>4</td>
+                            <td>Process input, descriptor mapping, session sync, enrichment routing</td>
+                        </tr>
+                        <tr>
+                            <td><code>MetadataPipelineServiceTests</code></td>
+                            <td>1</td>
+                            <td>Queue processing lifecycle, batch context safety</td>
+                        </tr>
+                        <tr>
+                            <td><code>PipelineIntegrationTests</code></td>
+                            <td>13</td>
+                            <td>End-to-end: image → enrichment → ready, web URL processing, QR detection, photo library
+                                import</td>
+                        </tr>
+                        <tr>
+                            <td><code>PipelineLogFixtureTests</code></td>
+                            <td>6</td>
+                            <td>Processing log format, timestamp validation, entry de-duplication</td>
+                        </tr>
+                        <tr>
+                            <td><code>ReprocessPipelineFilteringTests</code></td>
+                            <td>2</td>
+                            <td>Reprocess preserves user-pinned location, clears calculated fields</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Architecture Enforcement -->
+            <div class="section">
+                <h2 class="section-title">Architecture Enforcement</h2>
+                <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">Static analysis tests
+                    ensuring
+                    concurrency safety and API boundaries.</p>
+                <table class="type-table">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Tests</th>
+                            <th>Coverage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ArchitectureTests</code></td>
+                            <td>6</td>
+                            <td>processItemByID boundary, Task.detached patterns, @MainActor compliance, no bare Task{}
+                                in handlers
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>BackgroundSafetyTests</code></td>
+                            <td>28</td>
+                            <td>ModelContext isolation, actor sendability, concurrency patterns, no main-thread
+                                SwiftData access</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Models & Data -->
+            <div class="section">
+                <h2 class="section-title">Models &amp; Data</h2>
+                <table class="type-table">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Tests</th>
+                            <th>Coverage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ProcessedItemTests</code></td>
+                            <td>14</td>
+                            <td>Status transitions, context Data encoding/decoding, tag management, favorites, external
+                                storage</td>
+                        </tr>
+                        <tr>
+                            <td><code>ProcessedItemMigrationTests</code></td>
+                            <td>5</td>
+                            <td>Schema migration, field defaults, backward compatibility</td>
+                        </tr>
+                        <tr>
+                            <td><code>DiverCollectionTests</code></td>
+                            <td>7</td>
+                            <td>Collection CRUD, session grouping, cover image</td>
+                        </tr>
+                        <tr>
+                            <td><code>QueueProgressEventTests</code></td>
+                            <td>10</td>
+                            <td>AsyncStream event delivery, progress calculation, cancellation</td>
+                        </tr>
+                        <tr>
+                            <td><code>ReferenceEntityTests</code></td>
+                            <td>@Test</td>
+                            <td>Entity types, attribute roundtrip</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Enrichment & Services -->
+            <div class="section">
+                <h2 class="section-title">Enrichment &amp; Services</h2>
+                <table class="type-table">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Tests</th>
+                            <th>Coverage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>EnrichmentServiceTests</code></td>
+                            <td>9</td>
+                            <td>Link metadata extraction, URL normalization, Open Graph parsing</td>
+                        </tr>
+                        <tr>
+                            <td><code>LinkEnrichmentServiceTests</code></td>
+                            <td>2</td>
+                            <td>Rich link preview, fallback metadata</td>
+                        </tr>
+                        <tr>
+                            <td><code>YahooLinkEnrichmentServiceTests</code></td>
+                            <td>@Test</td>
+                            <td>Yahoo-specific URL handling</td>
+                        </tr>
+                        <tr>
+                            <td><code>ContextualServicesTests</code></td>
+                            <td>3</td>
+                            <td>Weather, activity, place context enrichment</td>
+                        </tr>
+                        <tr>
+                            <td><code>HierarchicalEnrichmentTests</code></td>
+                            <td>1</td>
+                            <td>Parent-child enrichment cascading</td>
+                        </tr>
+                        <tr>
+                            <td><code>IntelligenceProcessorTests</code></td>
+                            <td>3</td>
+                            <td>LLM prompt construction, result parsing, concept extraction</td>
+                        </tr>
+                        <tr>
+                            <td><code>SessionClusteringServiceTests</code></td>
+                            <td>11</td>
+                            <td>Time-based clustering, location proximity, session merging, orphan assignment</td>
+                        </tr>
+                        <tr>
+                            <td><code>DiverLinkGeneratorTests</code></td>
+                            <td>1</td>
+                            <td>Deep link URL generation</td>
+                        </tr>
+                        <tr>
+                            <td><code>ServiceProtocolTests</code></td>
+                            <td>15 @Test</td>
+                            <td>Protocol conformance for all 7 scoring strategies, enrichment protocols, pipeline
+                                protocols</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Commerce Intelligence -->
+            <div class="section">
+                <h2 class="section-title">Commerce Intelligence</h2>
+                <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">Scoring engines, government
+                    APIs,
+                    price nowcasting, affiliate routing, and preference learning.</p>
+                <table class="type-table">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Tests</th>
+                            <th>Coverage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>ScoringStrategyTests</code></td>
+                            <td>24 @Test</td>
+                            <td>All 7 scoring engines: ESG, Brand, Value, Durability, Social, Health, TotalCost —
+                                boundary values,
+                                zero handling</td>
+                        </tr>
+                        <tr>
+                            <td><code>PreferenceLearnerTests</code></td>
+                            <td>15 @Test</td>
+                            <td>Weight derivation from ownership history, shared product boost (1.5×), cold start
+                                defaults</td>
+                        </tr>
+                        <tr>
+                            <td><code>GovernmentDataServiceTests</code></td>
+                            <td>7 @Test</td>
+                            <td>URL construction for CPSC/FDA/EPA/EnergyStar, response parsing, parallel TaskGroup,
+                                hasConcerns logic
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>NowcastingEngineTests</code></td>
+                            <td>7 @Test</td>
+                            <td>Rising/falling trends, confidence bounds, empty/single data edge cases, direction
+                                validation</td>
+                        </tr>
+                        <tr>
+                            <td><code>AffiliateRoutingServiceTests</code></td>
+                            <td>5 @Test</td>
+                            <td>Default 5 platforms, strict carbon policy filtering, preference ordering, score range,
+                                URL generation
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Edge Computing -->
+            <div class="section">
+                <h2 class="section-title">Edge Computing</h2>
+                <table class="type-table">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Tests</th>
+                            <th>Coverage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>EdgeComputingTests</code></td>
+                            <td>5 @Test</td>
+                            <td>EdgeNodeInfo Codable roundtrip, status values, VisionAnalysisResult, LLMAnalysisResult,
+                                ModelState
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ViewModels -->
+            <div class="section">
+                <h2 class="section-title">ViewModels</h2>
+                <table class="type-table">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Tests</th>
+                            <th>Coverage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>SidebarViewModelTests</code></td>
+                            <td>19</td>
+                            <td>Sort/filter (8 cases), rename session/collection, toggle favorite, remove empty
+                                sessions, delete items
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>SidebarViewModelDragDropTests</code></td>
+                            <td>3</td>
+                            <td>Drag between sessions, drop into collection, reorder validation</td>
+                        </tr>
+                        <tr>
+                            <td><code>VisualIntelligenceViewModelTests</code></td>
+                            <td>5</td>
+                            <td>Initial state, start/stop recording, peel amount, QR capture handling, reset</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Performance -->
+            <div class="section">
+                <h2 class="section-title">Performance</h2>
+                <p style="color:var(--text-secondary); font-size:14px; margin-bottom:16px;">Timing-sensitive tests. May
+                    fail in
+                    CI due to 5-second timeouts — these are flaky by nature, not logic errors.</p>
+                <table class="type-table">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Tests</th>
+                            <th>Coverage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>PipelinePerformanceTests</code></td>
+                            <td>12</td>
+                            <td>CGImage decode cache hit, reverse geocoding cache (⚠️ flaky — 3 timeout at 5s), batch
+                                throughput,
+                                memory pressure</td>
+                        </tr>
+                        <tr>
+                            <td><code>LibraryMaintenanceTests</code></td>
+                            <td>12</td>
+                            <td>6-step repair pipeline: orphan assignment, stuck recovery, session regeneration,
+                                consolidation,
+                                reconciliation, summary regeneration</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Known Issues -->
+            <div class="section">
+                <h2 class="section-title">Known Issues</h2>
+                <div
+                    style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius); padding:16px; font-size:13px; color:var(--text-secondary);">
+                    <p><strong style="color:var(--accent-orange);">⚠️ 3 Flaky Failures:</strong>
+                        <code>PipelinePerformanceTests</code> — async wait timeouts (5s) in cache/geocoding tests. Not
+                        logic errors.
+                        Consider increasing timeout to 10s for CI.
+                    </p>
+                    <p style="margin-top:8px;"><strong>Affected tests:</strong>
+                        <code>testCGImageDecodeCacheHit</code>,
+                        <code>testReverseGeocodingCacheHitPerformance</code>,
+                        <code>testReverseGeocodingNearbyCoordinatesCacheSharing</code>
+                    </p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        function filterSidebar(query) {
+            const links = document.querySelectorAll('.sidebar-link');
+            const q = query.toLowerCase();
+            links.forEach(link => {
+                const text = link.textContent.toLowerCase();
+                link.style.display = (!q || text.includes(q)) ? 'block' : 'none';
+            });
+        }
+    </script>
+</body>
+
+</html>

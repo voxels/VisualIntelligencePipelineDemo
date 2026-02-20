@@ -32,11 +32,21 @@ The project is modularized using Swift Package Manager:
 *   **AI-Powered Understanding:** LLM-generated summaries, purpose identification, concept tagging, and daily focus briefs via `SystemLanguageModel`.
 *   **Session Management:** Captures are auto-grouped by location and time into `DiverSession`s with AI-generated summaries. Sessions support bulk location editing via `EditSessionLocationView`.
 
+### Commerce Intelligence
+
+*   **7 Scoring Engines:** Products detected via barcode or classification are scored across 7 strategies simultaneously: Ethics (ESG + 10 sub-dimensions), Brand Fit, Value, Durability, Social Proof, Health Fit, Total Cost.
+*   **Modular Ranking System:** `RankingPolicy` protocol with pluggable `RankingDimension`s. 3 presets: `EthicalPolicy` (carbon/labor/certifications — default), `PriceFocusedPolicy` (price/shipping/returns), `SpeedFocusedPolicy` (delivery/stock/pickup). `AffiliateRoutingService` iterates policy dimensions dynamically.
+*   **Open Product Database Cascade:** `ESGEnrichmentService` queries 4 free Open *Facts databases (Food → Beauty → Pet Food → Products Facts) with 24h cache. Returns 12+ text fields (ingredients, allergens, NOVA processing, nutrition, packaging, origins) plus numerical scores.
+*   **Preference Learning:** `PreferenceLearner` derives per-strategy weights from `OwnedProduct` history. Sharing products (`.shared` source) gets 1.5× weight boost. Weights evolve as user's ownership patterns emerge.
+*   **Score Snapshots:** `ScoreSnapshot` SwiftData model records per-strategy scores, price, quantity, and preference weights at each pipeline run — consumed by Swift Charts for time-series visualization.
+*   **Free/Open Data Only:** No paid APIs. All data from ODbL/CC0 databases, gov APIs (CPSC, FDA, EPA, Energy Star), and free tiers (Reddit, iFixit).
+*   **SLM Advisory:** `ProductRecommendationService` generates timing recommendations (Buy Now / Wait / Neutral) via `SystemLanguageModel` using enriched `contextSummary` from product databases.
+
 ### Pipeline Services
 
 *   **`LocalPipelineService`:** The core orchestrator. Handles ingestion, enrichment, and persistence.
 *   **`MetadataPipelineService`:** Converts queue items to `LocalInput` and orchestrates metadata extraction. Uses `Task.detached(priority: .utility)` for all heavy processing.
-*   **`IntelligenceProcessor`:** Runs on-device LLM prompts for concept extraction and summarization. Also runs 6 Vision requests (OCR, QR, semantic, document, sifting, aesthetics) in a single pass via `executePipeline`.
+*   **`IntelligenceProcessor`:** Runs on-device LLM prompts for concept extraction and summarization. Also runs 7 Vision requests (OCR, QR, semantic, document, sifting, aesthetics, saliency) in a single pass via `executePipeline`.
 *   **`FastVLMEnrichmentService`:** Runs Apple's FastVLM 0.5B model locally via MLX Swift. Image analysis prompt focuses on subject matter (objects, text, activities) and explicitly excludes camera/capture equipment references to prevent hallucinations.
 *   **Reprocessing:** Supports silent background reprocessing via `processItemByID` (private `ModelContext` per call) and bulk `reprocessPipeline` to update metadata. Reuses existing item IDs to prevent duplicates.
 *   **Session Sync:** Automatically synchronizes location edits between `ProcessedItem` and its parent `DiverSession`.
@@ -94,8 +104,11 @@ cd DiverShared && swift test
 
 *   **SwiftUI:** Views are organized in `VisualIntelligencePipeline/VisualIntelligencePipeline/View/`.
 *   **View Models:** Located in `DiverKit/Sources/DiverKit/ViewModel/` — `VisualIntelligenceViewModel`, `SidebarViewModel`, `ReferenceDetailViewModel`, `ProcessedItemViewModel`.
-*   **Protocols:** Located in `DiverKit/Sources/DiverKit/Protocols/` — `IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`.
-*   **Services:** Located in `DiverKit/Sources/DiverKit/Services/` — 36 services covering camera, enrichment, pipeline, location, and more.
+*   **Protocols:** Located in `DiverKit/Sources/DiverKit/Protocols/` — `IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`, `ProductScoringStrategy`, `ProductRecommending`, `ESGEnriching`, `EdgeNodeDiscovering`, `CommerceRouting`, `PriceNowcasting`.
+*   **Services:** Located in `DiverKit/Sources/DiverKit/Services/` — 55+ services covering camera, enrichment, pipeline, location, commerce scoring, edge computing, government APIs, and more.
+*   **Commerce Services:** Located in `DiverKit/Sources/DiverKit/Services/Commerce/` — `GovernmentDataService`, `APIKeyService`, `OpenESGService`, `PricingDataService`, `NowcastingEngine`, `AffiliateRoutingService`.
+*   **Edge Services:** Located in `DiverKit/Sources/DiverKit/Services/Edge/` — `VisualIntelligenceActorSystem`, `BonjourDiscoveryService`, `NWTransportLayer`, `EdgeNodeService` (5 distributed actors).
+*   **Scoring Engines:** Located in `DiverKit/Sources/DiverKit/Services/Scoring/` — 7 strategy implementations conforming to `ProductScoringStrategy`.
 *   **Test Mocks:** Located in `DiverKit/Tests/DiverKitTests/Mocks/` — `MockFastVLMService` (conforms to `FastVLMAnalyzing`), `MockEnrichmentService`, etc.
 *   **Swift Packages:** Shared code modularized into `DiverKit` and `DiverShared`.
 *   **Asynchronous Operations:** Uses `async/await` throughout for network requests, ML inference, and file I/O.
@@ -139,6 +152,22 @@ cd DiverShared && swift test
     *   **Never spawn N concurrent Tasks in a for-loop** that each mutate SwiftData models. Collect IDs first, then process sequentially in a single `Task.detached`.
     *   Provide immediate visual feedback on user actions even when underlying model updates are still in progress.
 
+8.  **SwiftData Storage Rules:**
+    *   **Never store large binary data inline on `@Model` classes.** Use `@Attribute(.externalStorage)` for `Data` properties over ~1KB (images, depth maps, payloads). SwiftData loads **all** non-external properties into memory on fetch.
+    *   **Context `Data?` blobs** (weather, place, web, commerce, etc.) are small JSON (~1KB) and acceptable inline. If any grows beyond ~10KB, migrate to `.externalStorage` or file-path reference.
+    *   **Prefer `FetchDescriptor` with `fetchLimit` and `propertiesToFetch`** over bare `@Query` for views that may display large datasets (sidebar, search results). `@Query` loads all matching objects eagerly.
+    *   **All schema changes must be lightweight** when CloudKit sync is enabled. Custom migration = end of sync. Use `VersionedSchema` + `SchemaMigrationPlan` for any model changes.
+
+9.  **CloudKit Sync Monitoring:**
+    *   **Monitor `NSPersistentCloudKitContainer.eventChangedNotification`** for sync failures. Log errors and surface critical sync issues to the user (e.g., account problems, quota exceeded).
+    *   **CloudKit throttles**: Minimum 30-second intervals between rapid sync operations. Battery, network, and system resources dynamically adjust sync frequency.
+    *   **API keys** are stored in the `iCloud.com.secretatomics.knowmaps.Keys` CloudKit container (private database). Use `APIKeyService.prefetchKeys()` on app launch to populate the NSCache for synchronous reads.
+
+10. **Sensitive Data Storage:**
+    *   **API keys and tokens** belong in CloudKit (Keys container) or Keychain — **never** in UserDefaults or plist files.
+    *   **Authentication secrets** (e.g., `diverLinkSecret`) use `KeychainService` with `kSecAttrAccessibleAfterFirstUnlock` for background task access.
+    *   **UserDefaults** is acceptable only for user preferences (theme, font size, feature flags). It loads **everything** into memory at app startup.
+
 ## Data Model Relationships
 
 *   **`masterCaptureID`** (String): Links sibling captures from the same session (e.g., a photo + its detected QR code URL + its detected document). Displayed in `ReferenceDetailView` via `CaptureSiblingsView`.
@@ -166,6 +195,13 @@ cd DiverShared && swift test
 *   `View/SettingsView.swift` — App settings and library maintenance UI
 *   `View/QueueProgressView.swift` — Pipeline queue processing progress
 *   `View/ReprocessingWizardView.swift` — Guided reprocessing workflow
+*   `View/Commerce/ProductScoreOverlayView.swift` — 7-engine score overlay with timing pill
+*   `View/Commerce/OwnershipButton.swift` — "I Own This" / "I Want This" toggle with spring animations
+*   `View/Commerce/OwnedProductsView.swift` — Brand-grouped owned products list
+*   `View/Commerce/ScoreHistoryChartView.swift` — Swift Charts time-series score history
+*   `View/Commerce/NowcastChartView.swift` — Price trajectory with trend pills
+*   `View/Commerce/CommerceActionView.swift` — Ethical platform ranking with affiliate CTAs
+*   `View/Commerce/EthicalPolicyConfigView.swift` — RankingPolicy preferences (carbon/labor/certification/platform/price/speed)
 
 ### Core Services (DiverKit)
 *   `Services/LocalPipelineService.swift` — Core pipeline orchestrator
@@ -176,7 +212,23 @@ cd DiverShared && swift test
 *   `Services/SessionClusteringService.swift` — Time/location-based session grouping
 *   `Services/CameraManager.swift` — AVFoundation camera management
 *   `Services/DailyContextService.swift` — Daily focus summary generation
-*   `Storage/DiverDataStore.swift` — SwiftData container management
+*   `Services/ESGEnrichmentService.swift` — 4-database Open *Facts cascade + Climate TRACE
+*   `Services/ProductRecommendationService.swift` — Multi-strategy composite scoring + SLM advisory
+*   `Services/PreferenceLearner.swift` — Ownership history → learned strategy weights
+*   `Services/Scoring/` — 7 scoring engines (ESG, Brand, Value, Durability, Social, Health, TotalCost)
+*   `Services/Commerce/GovernmentDataService.swift` — CPSC, FDA, EPA, Energy Star (4 APIs, parallel)
+*   `Services/Commerce/APIKeyService.swift` — CloudKit-backed key storage (iCloud.com.secretatomics.knowmaps.Keys container)
+*   `Services/Commerce/OpenESGService.swift` — B Corp directory, company-level ESG
+*   `Services/Commerce/PricingDataService.swift` — World Bank + BLS PPI (PriceNowcasting)
+*   `Services/Commerce/NowcastingEngine.swift` — Dynamic Factor Model via Accelerate vDSP
+*   `Services/Commerce/AffiliateRoutingService.swift` — 5 platforms, ethical profiles (CommerceRouting)
+*   `Services/Edge/VisualIntelligenceActorSystem.swift` — Custom DistributedActorSystem
+*   `Services/Edge/BonjourDiscoveryService.swift` — NWBrowser actor, Bonjour TXT records
+*   `Services/Edge/NWTransportLayer.swift` — TLS 1.3, OSAllocatedUnfairLock, length-prefixed framing
+*   `Services/Edge/EdgeNodeService.swift` — 5 distributed actors + PipelineEdgeRouter
+*   `Storage/DiverDataStore.swift` — SwiftData container management (7 models incl. OwnedProduct, ScoreSnapshot)
+*   `Storage/PersistenceActor.swift` — `@ModelActor` for actor-isolated background SwiftData operations
+*   `Storage/DiverSchemaMigration.swift` — VersionedSchema baseline (V1) and migration plan
 
 ### Models (DiverKit)
 *   `Models/ProcessedItem.swift` — Primary enriched item model
@@ -185,6 +237,10 @@ cd DiverShared && swift test
 *   `Models/UserConcept.swift` — Concept/tag model
 *   `Models/AestheticsTypes.swift` — Image quality scoring types
 *   `Models/QueueProgressEvent.swift` — AsyncStream event enum for queue progress delivery
+*   `Models/OwnedProduct.swift` — Product ownership tracking (CloudKit synced)
+*   `Models/ScoreSnapshot.swift` — Time-series score history for Swift Charts
+*   `Models/CommerceGenerable.swift` — `@Generable` types for SLM commerce prompts
+*   `Models/EdgeTypes.swift` — Edge computing types: `EdgeNodeInfo`, `VisionAnalysisResult`, `SaliencyResult`, `LLMAnalysisResult`, `EdgeNodeStatus`, `ModelStatus`
 
 ## Code Cleanliness & Known Technical Debt
 
@@ -205,7 +261,7 @@ cd DiverShared && swift test
 ### Service Coupling
 *   **`MetadataPipelineService`:** Views directly read mutable progress properties (`isProcessingQueue`, `queueTotalCount`, etc.). AsyncStream-based `progressStream` added alongside for incremental migration to `for await` event delivery.
 *   **`Services.shared`:** Global singleton accessed from `@MainActor` context. Accesses from `Task.detached` must use `await MainActor.run { Services.shared.someService }`.
-*   **Protocol extraction needed:** `FastVLMEnrichmentService`, `ContextQuestionService`, `AestheticsService`, `IntelligenceProcessor` — extract protocols for testability and dependency injection.
+*   **Protocol extraction complete:** `ProductScoringStrategy`, `ProductRecommending`, `ESGEnriching` — all commerce services use protocol-based DI. Remaining: `IntelligenceProcessor`.
 
 ### Performance Debt
 *   **Apple's 100ms hang threshold:** Per Apple's "Improving App Responsiveness" guide, any main-thread delay >100ms is noticeable. Less than half that time is available for app work due to event handling and rendering overhead.

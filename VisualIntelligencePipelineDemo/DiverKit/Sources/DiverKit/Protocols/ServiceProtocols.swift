@@ -56,3 +56,66 @@ public protocol FastVLMAnalyzing: AnyObject, Sendable {
         transcription: String?
     ) async throws -> FastVLMAnalysis?
 }
+
+// MARK: - EdgeNodeDiscovering
+
+/// Protocol for discovering and managing edge node connections on the local network.
+/// Implementations use Bonjour (NWBrowser/NWListener) to find available M-series
+/// Mac or iPad edge nodes for ML offloading.
+public protocol EdgeNodeDiscovering: Sendable {
+    /// Currently discovered edge nodes on the local network.
+    var availableNodes: [EdgeNodeInfo] { get async }
+    
+    /// The currently connected edge node, if any.
+    var connectedNode: EdgeNodeInfo? { get async }
+    
+    /// Whether an edge node is currently connected and available for inference.
+    var isEdgeNodeConnected: Bool { get async }
+    
+    /// Start scanning for edge nodes via Bonjour.
+    func startDiscovery() async
+    
+    /// Stop scanning.
+    func stopDiscovery() async
+    
+    /// Connect to a specific edge node.
+    func connect(to node: EdgeNodeInfo) async throws
+    
+    /// Disconnect from the current edge node.
+    func disconnect() async
+}
+
+// MARK: - CommerceRouting
+
+/// Protocol for routing product purchases through affiliate deep links.
+/// Implementations resolve a product to platform-specific purchase URLs
+/// with affiliate tracking and policy-driven ranking.
+public protocol CommerceRouting: Sendable {
+    /// Generate an affiliate deep link for a product on a specific platform.
+    /// - Parameters:
+    ///   - product: The classified product to route
+    ///   - platform: Target commerce platform (e.g., "amazon", "target", "bestbuy")
+    /// - Returns: A deep link URL with affiliate tracking, or nil if unavailable
+    func affiliateLink(for product: ProductClassification, platform: String) async throws -> URL?
+    
+    /// Rank available platforms for a product using any ranking policy.
+    /// - Parameters:
+    ///   - product: The classified product
+    ///   - policy: Any ranking policy (ethical, price, speed, custom)
+    /// - Returns: Platforms sorted best-first with match scores and dimension breakdowns
+    func rankPlatforms(for product: ProductClassification, policy: EthicalPolicy) async throws -> [PlatformMatch]
+}
+
+// MARK: - PriceNowcasting
+
+/// Protocol for economic trend projection using Dynamic Factor Models.
+/// Implementations use Accelerate (BLAS/LAPACK, vDSP) for computation.
+public protocol PriceNowcasting: Sendable {
+    /// Generate a price trajectory projection for a commodity.
+    /// - Parameters:
+    ///   - commodityID: Identifier for the commodity/product category
+    ///   - horizonDays: Number of days to project forward (default: 14)
+    /// - Returns: Price trajectory with data points and projected direction
+    func project(commodityID: String, horizonDays: Int) async throws -> PriceTrajectory
+}
+

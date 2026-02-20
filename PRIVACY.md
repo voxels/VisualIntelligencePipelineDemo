@@ -19,10 +19,28 @@ All of the intelligence features in Visual Intelligence—including subject lift
 *   **Local Storage:** All your captures, sessions, and collections are stored securely in your device's local container or your personal iCloud container (if enabled by you for sync). We have no access to this data.
 
 ## 3. Third-Party Services
-Visual Intelligence interacts with selected third-party services *only* to provide specific enrichment features at your explicit request.
+Visual Intelligence interacts with selected third-party services *only* to provide specific enrichment features. All queries are anonymous — no user accounts, no tracking cookies, no personal data transmitted.
 
-*   **Apple Maps:** Used to provide location names and addresses. Location data is processed on-device and requests are anonymized by Apple.
-*   **WeatherKit:** Used to fetch current weather conditions for your captures. Location data sent to Apple is anonymized.
+### Location & Maps
+*   **Apple Maps (MapKit):** Used to provide location names and addresses via reverse geocoding. Location data is processed on-device and requests are anonymized by Apple.
+*   **Foursquare Places API:** Available in the location editing UI for manual venue searches. Queries include coordinates and search terms only — no user identifiers. Not used during automatic pipeline processing.
+
+### Product & Sustainability Data
+*   **Open Food Facts** (`world.openfoodfacts.org`): Barcode lookups for food products — ingredients, nutrition, Nutri-Score, NOVA processing level, Eco-Score. Free, open-source database (ODbL license). Queries contain barcode numbers only.
+*   **Open Beauty Facts** (`world.openbeautyfacts.org`): Barcode lookups for cosmetics and personal care products. Same API pattern, same license.
+*   **Open Pet Food Facts** (`world.openpetfoodfacts.org`): Barcode lookups for pet food products. Same API pattern, same license.
+*   **Open Products Facts** (`world.openproductsfacts.org`): Barcode lookups for general consumer products. Same API pattern, same license.
+*   **Climate TRACE** (`climatetrace.org`): Sector-level carbon emissions data. Queries contain sector/country identifiers only — no personal data.
+
+### Government & Public Data (Planned)
+*   **CPSC Recalls API** (`cpsc.gov`): US product safety recalls. Public data, no authentication.
+*   **FDA openFDA** (`open.fda.gov`): Drug and food recall data. Public data, no authentication.
+*   **EPA ECHO** (`echo.epa.gov`): Environmental compliance data. Public data, no authentication.
+*   **Energy Star** (`energystar.gov`): Energy efficiency ratings. Public data, no authentication.
+
+### Community & Reviews (Planned)
+*   **Reddit API** (`reddit.com`): Anonymous product sentiment search. API key required (stored in your Keychain, synced via iCloud Keychain). No Reddit account data accessed.
+*   **iFixit API** (`ifixit.com`): Repairability scores and guides. Free tier, no user data transmitted.
 
 We do not use any third-party analytics SDKs (e.g., Google Analytics, Facebook Pixel, Mixpanel).
 

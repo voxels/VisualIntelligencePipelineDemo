@@ -36,13 +36,48 @@ public final class ProcessedItemViewModel: ObservableObject {
     }
     
     public func shareItem(_ item: ProcessedItem) {
-        // Implementation for sharing logic (e.g. creating a shared link or exporting PDF)
-        // This is a placeholder for actual sharing logic extracted from Views
+        // Build shareable content from the item
+        var shareItems: [Any] = []
+        
+        if let title = item.title {
+            shareItems.append(title)
+        }
+        
+        if let summary = item.summary {
+            shareItems.append(summary)
+        }
+        
+        if let urlString = item.url, let url = URL(string: urlString) {
+            shareItems.append(url)
+        }
+        
+        // Post notification for the UI layer to present the share sheet
+        NotificationCenter.default.post(
+            name: .shareItemRequested,
+            object: nil,
+            userInfo: ["shareItems": shareItems, "itemID": item.id]
+        )
     }
     
     /// Returns a list of related concepts for an item, sorted by weight.
     public func relatedConcepts(for item: ProcessedItem) -> [UserConcept] {
-        // Business logic to extract and sort concepts
-        return [] // Placeholder
+        let tags = item.tags
+        guard !tags.isEmpty else { return [] }
+        
+        // Fetch all concepts from the context and match by tag overlap
+        let descriptor = FetchDescriptor<UserConcept>()
+        let allConcepts = (try? modelContext.fetch(descriptor)) ?? []
+        
+        return allConcepts
+            .filter { concept in
+                tags.contains(where: { tag in
+                    concept.name.localizedCaseInsensitiveContains(tag)
+                })
+            }
+            .sorted { ($0.weight) > ($1.weight) }
     }
+}
+
+public extension Notification.Name {
+    static let shareItemRequested = Notification.Name("shareItemRequested")
 }
