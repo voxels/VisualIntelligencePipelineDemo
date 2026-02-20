@@ -49,7 +49,7 @@ public final class PricingDataService: PriceNowcasting, Sendable {
     
     /// Fetch commodity price data from World Bank.
     /// API: https://documents.worldbank.org/en/publication/documents-reports/api
-    func fetchWorldBankPrices(commodityID: String) async -> [PriceDataPoint] {
+    public func fetchWorldBankPrices(commodityID: String) async -> [PriceDataPoint] {
         // World Bank commodity price "Pink Sheet" data
         guard let url = URL(string: "https://api.worldbank.org/v2/country/all/indicator/FP.CPI.TOTL.ZG?format=json&per_page=12&date=2024:2026") else {
             return generateSyntheticData(commodityID: commodityID)
@@ -87,7 +87,7 @@ public final class PricingDataService: PriceNowcasting, Sendable {
     
     /// Fetch Producer Price Index data from BLS.
     /// API: https://www.bls.gov/developers/
-    func fetchBLSPPI(seriesID: String) async -> [PriceDataPoint] {
+    public func fetchBLSPPI(seriesID: String) async -> [PriceDataPoint] {
         guard let url = URL(string: "https://api.bls.gov/publicAPI/v2/timeseries/data/\(seriesID)?latest=true") else {
             return []
         }

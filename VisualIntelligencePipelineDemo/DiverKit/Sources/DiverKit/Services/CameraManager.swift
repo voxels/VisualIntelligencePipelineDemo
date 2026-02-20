@@ -82,6 +82,7 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
             
             // Prefer depth-capable device (dual/triple/LiDAR), fall back to wide-angle
             let videoDevice: AVCaptureDevice? = {
+                #if os(iOS)
                 if let triple = AVCaptureDevice.default(.builtInTripleCamera, for: .video, position: .back) {
                     return triple
                 }
@@ -91,6 +92,7 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
                 if let dual = AVCaptureDevice.default(.builtInDualCamera, for: .video, position: .back) {
                     return dual
                 }
+                #endif
                 return AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
             }()
             
@@ -116,6 +118,7 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
                 self.photoOutput.isHighResolutionCaptureEnabled = true
             }
             
+            #if os(iOS)
             // Select a device format that supports depth data.
             // Use .inputPriority so we can set the format directly instead of relying on presets.
             self.session.sessionPreset = .inputPriority
@@ -149,6 +152,7 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
             } else {
                 print("📐 Depth data delivery not supported (no depth-capable format found)")
             }
+            #endif
             
             self.session.commitConfiguration()
         }
@@ -182,9 +186,11 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
         settings.isHighResolutionPhotoEnabled = true
         
         // Request depth data if available
+        #if os(iOS)
         if photoOutput.isDepthDataDeliverySupported {
             settings.isDepthDataDeliveryEnabled = true
         }
+        #endif
         
         photoOutput.capturePhoto(with: settings, delegate: self)
     }
@@ -207,6 +213,7 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
         
         // Extract depth data atomically with the photo
         var depthPNG: Data? = nil
+        #if os(iOS)
         if let depthData = photo.depthData {
             let depthMap = depthData.converting(toDepthDataType: kCVPixelFormatType_DepthFloat32).depthDataMap
             let ciImage = CIImage(cvPixelBuffer: depthMap)
@@ -217,6 +224,7 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
                 print("📐 Depth map captured: \(depthPNG!.count) bytes")
             }
         }
+        #endif
         
         // Deliver both atomically
         onPhotoCaptured?(imageData, depthPNG)

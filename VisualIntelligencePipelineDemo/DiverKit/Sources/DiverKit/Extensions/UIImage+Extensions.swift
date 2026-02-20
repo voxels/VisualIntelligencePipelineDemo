@@ -1,3 +1,4 @@
+#if canImport(UIKit)
 import UIKit
 import ImageIO
 
@@ -54,3 +55,4 @@ public extension UIImage {
         return UIImage(data: data)
     }
 }
+#endif

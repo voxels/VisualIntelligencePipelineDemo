@@ -10,6 +10,7 @@
 import Foundation
 import Network
 import Observation
+import ImageIO
 import DiverKit
 import DiverShared
 
@@ -23,6 +24,7 @@ enum DaemonStatus: String, Sendable {
 }
 
 /// Core edge daemon service managing Bonjour advertising and request routing.
+@MainActor
 @Observable
 final class EdgeDaemonService {
     
@@ -77,7 +79,7 @@ final class EdgeDaemonService {
             let listener = try NWListener(using: params, on: NWEndpoint.Port(rawValue: port)!)
             
             // Advertise via Bonjour with TXT record metadata
-            let txtRecord = NWTXTRecord()
+            var txtRecord = NWTXTRecord()
             txtRecord["chip"] = chipFamily()
             txtRecord["tops"] = String(format: "%.0f", neuralEngineTOPS())
             txtRecord["models"] = loadedModels.joined(separator: ",")
@@ -85,11 +87,11 @@ final class EdgeDaemonService {
             listener.service = NWListener.Service(
                 name: Host.current().localizedName ?? "Mac Edge Node",
                 type: serviceType,
-                txtRecord: txtRecord.rawData.map { NWTXTRecord($0) } ?? NWTXTRecord()
+                txtRecord: txtRecord
             )
             
             listener.stateUpdateHandler = { [weak self] state in
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     self?.handleListenerState(state)
                 }
             }
@@ -137,11 +139,11 @@ final class EdgeDaemonService {
         }
     }
     
-    private func handleNewConnection(_ connection: NWConnection) {
+    nonisolated private func handleNewConnection(_ connection: NWConnection) {
         let clientName = connection.endpoint.debugDescription
         
         connection.stateUpdateHandler = { [weak self] state in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 switch state {
                 case .ready:
                     self?.connectedClients.append(clientName)
@@ -159,7 +161,7 @@ final class EdgeDaemonService {
         receiveMessages(on: connection)
     }
     
-    private func receiveMessages(on connection: NWConnection) {
+    nonisolated private func receiveMessages(on connection: NWConnection) {
         // Read length-prefixed frames (matching NWTransportLayer protocol)
         connection.receive(minimumIncompleteLength: 4, maximumLength: 4) { [weak self] content, _, _, error in
             guard let self, let header = content, header.count == 4, error == nil else { return }
@@ -174,7 +176,7 @@ final class EdgeDaemonService {
             ) { [weak self] body, _, _, error in
                 guard let self, let body, error == nil else { return }
                 
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     self.totalRequests += 1
                     self.status = .processing
                 }
@@ -216,7 +218,7 @@ final class EdgeDaemonService {
         let node: String
     }
     
-    private func processRequest(_ data: Data) async -> Data {
+    nonisolated private func processRequest(_ data: Data) async -> Data {
         // Parse the request envelope
         guard let request = try? JSONDecoder().decode(EdgeRequest.self, from: data) else {
             // Legacy format: target + payload (length-prefixed)
@@ -277,17 +279,17 @@ final class EdgeDaemonService {
                 let pricingService = PricingDataService()
                 let engine = NowcastingEngine()
                 
-                let worldBank = await pricingService.fetchWorldBankPrices(commodityID: params.commodityID)
-                let bls = await pricingService.fetchBLSPPI(seriesID: params.commodityID)
-                let series = [worldBank, bls].filter { !$0.isEmpty }
+                let worldBank: [PriceDataPoint] = await pricingService.fetchWorldBankPrices(commodityID: params.commodityID)
+                let bls: [PriceDataPoint] = await pricingService.fetchBLSPPI(seriesID: params.commodityID)
+                let series: [[PriceDataPoint]] = [worldBank, bls].filter { !$0.isEmpty }
                 let nowcast = engine.nowcast(series: series, horizonDays: params.horizonDays)
                 
-                let allPoints = (worldBank + bls).sorted { $0.date < $1.date }
+                let allPoints = (worldBank + bls).sorted(by: { $0.date < $1.date })
                 let trajectory = PriceTrajectory(
                     commodityID: params.commodityID,
                     dataPoints: allPoints,
                     projectedDirection: nowcast.direction,
-                    confidenceInterval: nowcast.confidence,
+                    confidenceInterval: nowcast.confidence,  // NowcastResult.confidence
                     horizonDays: params.horizonDays
                 )
                 resultData = try JSONEncoder().encode(trajectory)
@@ -326,7 +328,7 @@ final class EdgeDaemonService {
     }
     
     /// Legacy frame format fallback: [4-byte target length][target string][payload]
-    private func processLegacyRequest(_ data: Data) async -> Data {
+    nonisolated private func processLegacyRequest(_ data: Data) async -> Data {
         guard data.count >= 4 else { return Data() }
         
         let targetLength = data.prefix(4).withUnsafeBytes { $0.load(as: UInt32.self).bigEndian }
@@ -342,7 +344,7 @@ final class EdgeDaemonService {
     }
     
     /// Convert [IntelligenceResult] → VisionAnalysisResult for network transport.
-    private func convertToVisionResult(_ results: [IntelligenceResult]) -> VisionAnalysisResult {
+    nonisolated private func convertToVisionResult(_ results: [IntelligenceResult]) -> VisionAnalysisResult {
         var ocrText: String? = nil
         var qrURLs: [String] = []
         var semanticTags: [String] = []
@@ -397,7 +399,7 @@ final class EdgeDaemonService {
     
     // MARK: - System Info
     
-    private func chipFamily() -> String {
+    nonisolated private func chipFamily() -> String {
         var size = 0
         sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)
         var brand = [CChar](repeating: 0, count: size)
@@ -411,7 +413,7 @@ final class EdgeDaemonService {
         return "Apple Silicon"
     }
     
-    private func neuralEngineTOPS() -> Float {
+    nonisolated private func neuralEngineTOPS() -> Float {
         let chip = chipFamily()
         switch chip {
         case "M4": return 38.0
@@ -422,7 +424,7 @@ final class EdgeDaemonService {
         }
     }
     
-    private func discoverModels() -> [String] {
+    nonisolated private func discoverModels() -> [String] {
         var models = ["vision-pipeline"]
         
         let modelsDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)

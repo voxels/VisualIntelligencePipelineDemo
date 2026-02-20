@@ -2163,14 +2163,14 @@ public final class LocalPipelineService {
         return "WPU00000000"
     }
     
-    /// Loads user's ethical purchasing policy from UserDefaults.
+    /// Loads user's ethical purchasing policy from SwiftData (synced via CloudKit).
     private func loadEthicalPolicy() -> EthicalPolicy {
-        let defaults = UserDefaults.standard
+        let settings = EthicalPolicySettings.current(in: modelContext)
         return EthicalPolicy(
-            carbonThreshold: defaults.object(forKey: "ethicalPolicy.carbonThreshold") as? Float ?? 0.5,
-            preferredCertifications: defaults.stringArray(forKey: "ethicalPolicy.certifications") ?? [],
-            platformRanking: defaults.stringArray(forKey: "ethicalPolicy.platformOrder") ?? ["thrive_market", "target", "amazon", "bestbuy", "ebay"],
-            excludeLaborViolations: defaults.bool(forKey: "ethicalPolicy.excludeLaborViolations")
+            carbonThreshold: settings.carbonThreshold,
+            preferredCertifications: settings.certifications,
+            platformRanking: settings.platformRanking,
+            excludeLaborViolations: settings.excludeLaborViolations
         )
     }
 

@@ -1,5 +1,6 @@
 import Foundation
 import CoreGraphics
+import CoreImage
 import Dispatch
 #if canImport(UIKit)
 import UIKit

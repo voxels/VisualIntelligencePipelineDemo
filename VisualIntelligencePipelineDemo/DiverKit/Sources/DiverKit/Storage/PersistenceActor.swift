@@ -14,6 +14,7 @@
 
 import Foundation
 import SwiftData
+import DiverShared
 
 /// Actor-isolated background SwiftData operations.
 /// The @ModelActor macro auto-generates a ModelContainer property and
@@ -28,6 +29,20 @@ public actor PersistenceActor {
         let localPipeline = LocalPipelineService(modelContext: modelContext)
         await localPipeline.generateAndSaveSessionSummary(sessionID: sessionID)
         print("✅ PersistenceActor: Analyzed session \(sessionID)")
+    }
+    
+    // MARK: - Ethical Policy Settings
+    
+    /// Fetches or creates the singleton EthicalPolicySettings and returns a Sendable `EthicalPolicy`.
+    /// Safe to call from any isolation context — `EthicalPolicy` conforms to `Sendable`.
+    public func fetchOrCreatePolicySettings() -> EthicalPolicy {
+        let settings = EthicalPolicySettings.current(in: modelContext)
+        return EthicalPolicy(
+            carbonThreshold: settings.carbonThreshold,
+            preferredCertifications: settings.certifications,
+            platformRanking: settings.platformRanking,
+            excludeLaborViolations: settings.excludeLaborViolations
+        )
     }
     
     // MARK: - Score History

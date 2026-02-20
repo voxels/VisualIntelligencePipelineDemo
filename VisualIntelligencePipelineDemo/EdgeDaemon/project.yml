@@ -1,0 +1,50 @@
+name: EdgeDaemon
+options:
+  bundleIdPrefix: com.secretatomics.visualintelligence
+  deploymentTarget:
+    macOS: "26.0"
+  xcodeVersion: "26.0"
+  createIntermediateGroups: true
+  defaultConfig: Debug
+
+packages:
+  DiverKit:
+    path: ../DiverKit
+  DiverShared:
+    path: ../DiverShared
+
+targets:
+  EdgeDaemon:
+    type: application
+    platform: macOS
+    sources:
+      - path: .
+        excludes:
+          - project.yml
+          - "*.xcodeproj"
+          - "*.xcworkspace"
+    dependencies:
+      - package: DiverKit
+      - package: DiverShared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.secretatomics.visualintelligence.edgedaemon
+        PRODUCT_NAME: EdgeDaemon
+        SWIFT_VERSION: "6.0"
+        MACOSX_DEPLOYMENT_TARGET: "26.0"
+        INFOPLIST_FILE: Info.plist
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: EdgeDaemon.entitlements
+        DEVELOPMENT_TEAM: ""
+        ENABLE_HARDENED_RUNTIME: YES
+        SWIFT_STRICT_CONCURRENCY: complete
+
+schemes:
+  EdgeDaemon:
+    build:
+      targets:
+        EdgeDaemon: all
+    run:
+      config: Debug
+    profile:
+      config: Release

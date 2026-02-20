@@ -1955,6 +1955,7 @@ public class VisualIntelligenceViewModel {
         self.rectifiedDocumentText = text
         
         // Prefer the pre-rectified image from IntelligenceProcessor if available
+        #if canImport(UIKit)
         if let data = rectifiedImageData, let image = UIImage(data: data) {
             print("📐 handleDocumentSelection: Using pre-rectified image \(image.size), orientation=\(image.imageOrientation.rawValue)")
             // Normalize orientation — the JPEG from DocumentManager may carry EXIF rotation
@@ -1962,6 +1963,14 @@ public class VisualIntelligenceViewModel {
             self.showingDocumentView = true
             return
         }
+        #elseif canImport(AppKit)
+        if let data = rectifiedImageData, let image = NSImage(data: data) {
+            print("📐 handleDocumentSelection: Using pre-rectified image \(image.size)")
+            self.rectifiedDocument = image
+            self.showingDocumentView = true
+            return
+        }
+        #endif
         print("📐 handleDocumentSelection: No pre-rectified data, using fallback rectification")
         
         // Fallback: rectify from captured image (for cases without pre-rectified data)
