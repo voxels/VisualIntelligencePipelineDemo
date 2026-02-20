@@ -5,6 +5,9 @@
       location = "group:VisualIntelligencePipelineDemo/VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj">
    </FileRef>
    <FileRef
+      location = "group:VisualIntelligencePipelineDemo/EdgeDaemon/EdgeDaemon.xcodeproj">
+   </FileRef>
+   <FileRef
       location = "group:Know-Maps/Know-Maps/Know Maps.xcodeproj">
    </FileRef>
 </Workspace>

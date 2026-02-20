@@ -4,17 +4,26 @@
 //
 //  Settings view for configuring the user's ethical purchasing preferences.
 //  Controls carbon threshold, certifications, platform ranking, and labor filtering.
+//  Settings are persisted via SwiftData and synced across devices via CloudKit.
 //
 
 import SwiftUI
+import SwiftData
+import DiverKit
 import DiverShared
 
 /// Ethical policy configuration for commerce routing.
+/// Settings are persisted via SwiftData and synced across devices via CloudKit.
 struct EthicalPolicyConfigView: View {
-    @State private var carbonThreshold: Float = 0.5
-    @State private var excludeLaborViolations = false
-    @State private var certifications: [String] = []
-    @State private var platformRanking: [String] = ["thrive_market", "target", "bestbuy", "ebay", "amazon"]
+    @Environment(\.modelContext) private var modelContext
+    @Query private var allSettings: [EthicalPolicySettings]
+    
+    private var settings: EthicalPolicySettings {
+        if let existing = allSettings.first {
+            return existing
+        }
+        return EthicalPolicySettings.current(in: modelContext)
+    }
     
     private let availableCertifications = [
         "B Corp", "Fair Trade", "Organic", "Carbon Neutral",
@@ -32,7 +41,10 @@ struct EthicalPolicyConfigView: View {
                             .font(.subheadline.weight(.semibold))
                     }
                     
-                    Slider(value: $carbonThreshold, in: 0...1, step: 0.1)
+                    Slider(value: Binding(
+                        get: { settings.carbonThreshold },
+                        set: { settings.carbonThreshold = $0; save() }
+                    ), in: 0...1, step: 0.1)
                         .tint(carbonColor)
                     
                     HStack {
@@ -54,7 +66,10 @@ struct EthicalPolicyConfigView: View {
             }
             
             Section {
-                Toggle(isOn: $excludeLaborViolations) {
+                Toggle(isOn: Binding(
+                    get: { settings.excludeLaborViolations },
+                    set: { settings.excludeLaborViolations = $0; save() }
+                )) {
                     Label("Exclude Labor Violations", systemImage: "person.badge.shield.checkmark.fill")
                 }
                 .tint(.orange)
@@ -69,7 +84,7 @@ struct EthicalPolicyConfigView: View {
                     HStack {
                         Text(cert)
                         Spacer()
-                        if certifications.contains(cert) {
+                        if settings.certifications.contains(cert) {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
                         }
@@ -77,11 +92,12 @@ struct EthicalPolicyConfigView: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         withAnimation {
-                            if certifications.contains(cert) {
-                                certifications.removeAll { $0 == cert }
+                            if settings.certifications.contains(cert) {
+                                settings.certifications.removeAll { $0 == cert }
                             } else {
-                                certifications.append(cert)
+                                settings.certifications.append(cert)
                             }
+                            save()
                         }
                     }
                 }
@@ -92,7 +108,7 @@ struct EthicalPolicyConfigView: View {
             }
             
             Section {
-                ForEach(platformRanking, id: \.self) { platform in
+                ForEach(settings.platformRanking, id: \.self) { platform in
                     HStack {
                         Image(systemName: "line.3.horizontal")
                             .foregroundStyle(.secondary)
@@ -100,7 +116,8 @@ struct EthicalPolicyConfigView: View {
                     }
                 }
                 .onMove { from, to in
-                    platformRanking.move(fromOffsets: from, toOffset: to)
+                    settings.platformRanking.move(fromOffsets: from, toOffset: to)
+                    save()
                 }
             } header: {
                 Text("Platform Preference Order")
@@ -111,17 +128,30 @@ struct EthicalPolicyConfigView: View {
         .navigationTitle("Ethical Policy")
     }
     
+    // MARK: - Persistence
+    
+    private func save() {
+        settings.updatedAt = Date()
+        do {
+            try modelContext.save()
+        } catch {
+            print("⚠️ EthicalPolicyConfigView: Failed to save settings: \(error)")
+        }
+    }
+    
+    // MARK: - Helpers
+    
     private var carbonColor: Color {
-        if carbonThreshold <= 0.3 { return .green }
-        if carbonThreshold <= 0.6 { return .orange }
+        if settings.carbonThreshold <= 0.3 { return .green }
+        if settings.carbonThreshold <= 0.6 { return .orange }
         return .red
     }
     
     private var carbonLabel: String {
-        if carbonThreshold <= 0.2 { return "Very Strict" }
-        if carbonThreshold <= 0.4 { return "Strict" }
-        if carbonThreshold <= 0.6 { return "Moderate" }
-        if carbonThreshold <= 0.8 { return "Relaxed" }
+        if settings.carbonThreshold <= 0.2 { return "Very Strict" }
+        if settings.carbonThreshold <= 0.4 { return "Strict" }
+        if settings.carbonThreshold <= 0.6 { return "Moderate" }
+        if settings.carbonThreshold <= 0.8 { return "Relaxed" }
         return "No Filter"
     }
     
@@ -141,4 +171,5 @@ struct EthicalPolicyConfigView: View {
     NavigationStack {
         EthicalPolicyConfigView()
     }
+    .modelContainer(for: EthicalPolicySettings.self, inMemory: true)
 }

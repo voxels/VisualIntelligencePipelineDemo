@@ -387,8 +387,17 @@ struct ReferenceDetailContent: View {
                                 .bold()
                         }
                         
-                        // Product Score Overlay
+                        // Compact Score Card (at-a-glance summary)
                         if let recommendations = item.commerceContext, let first = recommendations.first {
+                            ProductScoreAttachment(
+                                productName: first.option.productName,
+                                compositeScore: first.compositeScore,
+                                strategyScores: first.option.scores.map { ($0.strategyID.capitalized, $0.overallScore) },
+                                recommendation: first.compositeScore >= 0.7 ? "Buy Now" :
+                                    first.compositeScore >= 0.4 ? "Consider" : "Wait"
+                            )
+                            
+                            // Full Strategy Breakdown
                             ProductScoreOverlayView(
                                 recommendation: first,
                                 allScores: first.option.scores,

@@ -6,8 +6,10 @@ This project, **Visual Intelligence Pipeline**, is an iOS application for captur
 
 The project is modularized using Swift Package Manager:
 
-*   `VisualIntelligencePipeline/` — Main application target and UI.
-*   `DiverKit/` — Core logic: ML, pipeline orchestration, services, and view models.
+*   `VisualIntelligencePipeline/` — Main iOS application target and UI.
+*   `EdgeDaemon/` — Standalone macOS menu bar app for edge ML inference (Bonjour-advertised node).
+*   `SpatialCommerce/` — Standalone visionOS app for spatial commerce experiences.
+*   `DiverKit/` — Core logic: ML, pipeline orchestration, services, and view models. Cross-platform (iOS, macOS, visionOS).
 *   `DiverShared/` — Pure Swift shared data models and utilities.
 
 **Key Technologies:**
@@ -61,6 +63,8 @@ The project is modularized using Swift Package Manager:
 
 ## Building and Running
 
+### iOS App (Main)
+
 1.  **Open the project in Xcode:**
     ```bash
     open VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj
@@ -68,10 +72,40 @@ The project is modularized using Swift Package Manager:
 2.  **Select a target:** Choose the `VisualIntelligencePipeline` scheme.
 3.  **Run the application:** `Cmd+R`. Requires iOS 26.0+ for Apple Intelligence features.
 
+### EdgeDaemon (macOS Menu Bar App)
+
+```bash
+# Generate project (requires xcodegen: brew install xcodegen)
+cd EdgeDaemon && xcodegen generate && cd ..
+
+# Build for macOS
+xcodebuild -project EdgeDaemon/EdgeDaemon.xcodeproj \
+  -scheme EdgeDaemon -destination 'platform=macOS' build
+```
+
+*   LSUIElement menu bar app — no dock icon.
+*   Bonjour-advertises as `_visualintel._tcp` on port 8847.
+*   Routes Vision, FastVLM, Nowcast, and GovernmentData requests from iOS clients.
+
+### SpatialCommerce (visionOS App)
+
+```bash
+# Generate project (requires xcodegen)
+cd SpatialCommerce && xcodegen generate && cd ..
+
+# Build for visionOS Simulator
+xcodebuild -project SpatialCommerce/SpatialCommerce.xcodeproj \
+  -scheme SpatialCommerce \
+  -destination 'platform=visionOS Simulator,name=Apple Vision Pro' build
+```
+
+*   Requires visionOS 26.3+ SDK.
+*   Uses DiverShared for commerce types (no DiverKit dependency).
+
 ### Testing
 
-> **Note:** `swift test` does not work for DiverKit — it compiles for macOS which lacks UIKit.
-> Always use `xcodebuild test` with an iOS Simulator destination.
+> **Note:** `swift test` does not work for DiverKit tests — they require iOS Simulator destination.
+> DiverKit itself compiles on macOS (platform guards added for UIKit-specific APIs).
 
 ```bash
 # Build for iOS Simulator
@@ -104,8 +138,8 @@ cd DiverShared && swift test
 
 *   **SwiftUI:** Views are organized in `VisualIntelligencePipeline/VisualIntelligencePipeline/View/`.
 *   **View Models:** Located in `DiverKit/Sources/DiverKit/ViewModel/` — `VisualIntelligenceViewModel`, `SidebarViewModel`, `ReferenceDetailViewModel`, `ProcessedItemViewModel`.
-*   **Protocols:** Located in `DiverKit/Sources/DiverKit/Protocols/` — `IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`, `ProductScoringStrategy`, `ProductRecommending`, `ESGEnriching`, `EdgeNodeDiscovering`, `CommerceRouting`, `PriceNowcasting`.
-*   **Services:** Located in `DiverKit/Sources/DiverKit/Services/` — 55+ services covering camera, enrichment, pipeline, location, commerce scoring, edge computing, government APIs, and more.
+*   **Protocols:** 18 protocols across `DiverKit/Sources/DiverKit/Protocols/` and inline in service files — `IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`, `ProductScoringStrategy`, `ProductRecommending`, `ESGEnriching`, `EdgeNodeDiscovering`, `CommerceRouting`, `PriceNowcasting`, `ContactServiceProvider`, `KnowledgeGraphIndexingService`, `LinkEnrichmentService`, `ContextualEnrichmentService`, `EdgeTransportProtocol`, `KnowledgeGraphRetrievalService`, `LocationProvider`.
+*   **Services:** Located in `DiverKit/Sources/DiverKit/Services/` — 57 services (40 core + 6 commerce + 4 edge + 7 scoring) covering camera, enrichment, pipeline, location, commerce scoring, edge computing, government APIs, and more.
 *   **Commerce Services:** Located in `DiverKit/Sources/DiverKit/Services/Commerce/` — `GovernmentDataService`, `APIKeyService`, `OpenESGService`, `PricingDataService`, `NowcastingEngine`, `AffiliateRoutingService`.
 *   **Edge Services:** Located in `DiverKit/Sources/DiverKit/Services/Edge/` — `VisualIntelligenceActorSystem`, `BonjourDiscoveryService`, `NWTransportLayer`, `EdgeNodeService` (5 distributed actors).
 *   **Scoring Engines:** Located in `DiverKit/Sources/DiverKit/Services/Scoring/` — 7 strategy implementations conforming to `ProductScoringStrategy`.
@@ -183,25 +217,43 @@ cd DiverShared && swift test
 
 ## Key Files
 
-### App & UI
+### App & UI (41 views)
 *   `VisualIntelligencePipelineApp.swift` — App entry point, service initialization, foreground/background lifecycle
 *   `View/VisualIntelligenceView.swift` — Camera and capture UI
-*   `View/SidebarView.swift` — Main navigation sidebar (889 lines, delegates to 7 child views in `View/Sidebar/`)
+*   `View/SidebarView.swift` — Main navigation sidebar (942 lines, delegates to 7 child views in `View/Sidebar/`)
 *   `View/Sidebar/` — Extracted child views: `SessionRowLabel`, `SidebarSessionRow`, `ItemRow`, `ItemRowWithActions`, `ThumbnailView`, `DailySummaryCard`, `ItemIconConfig`
 *   `View/ReferenceDetailView.swift` — Item detail view (media info, aesthetics score, capture siblings, references)
-*   `View/CaptureReviewView.swift` — Post-capture review
+*   `View/ContentView.swift` — Root content view
 *   `View/EditLocationView.swift` — Location editing for individual items
 *   `View/EditSessionLocationView.swift` — Bulk location editing for sessions
 *   `View/SettingsView.swift` — App settings and library maintenance UI
 *   `View/QueueProgressView.swift` — Pipeline queue processing progress
 *   `View/ReprocessingWizardView.swift` — Guided reprocessing workflow
+*   `View/ReprocessMetadataView.swift` — Metadata reprocessing UI
+*   `View/ResultsOverlayView.swift` — Detection results overlay
+*   `View/SiftedOverlayView.swift` — Sifted subject overlay
+*   `View/AppleMusicReferenceView.swift` — Apple Music rich link preview
+*   `View/ConceptListView.swift` — Concept tag list
+*   `View/ConceptWeightingSection.swift` — Concept weight adjustments
+*   `View/ContextChipBar.swift` — Context tag chip bar
+*   `View/DiverAppAttributionView.swift` — App attribution
+*   `View/LinkPreviewView.swift` — Rich link preview
+*   `View/PlaceSelectionMapView.swift` — Map-based place picker
+*   `View/RichWebView.swift` — Web content viewer
+*   `View/SessionLocationBar.swift` — Session location display bar
+*   `View/SharedWithYouView.swift` — Shared With You content
+*   `View/ShortcutGalleryView.swift` — Shortcuts gallery
 *   `View/Commerce/ProductScoreOverlayView.swift` — 7-engine score overlay with timing pill
 *   `View/Commerce/OwnershipButton.swift` — "I Own This" / "I Want This" toggle with spring animations
 *   `View/Commerce/OwnedProductsView.swift` — Brand-grouped owned products list
 *   `View/Commerce/ScoreHistoryChartView.swift` — Swift Charts time-series score history
 *   `View/Commerce/NowcastChartView.swift` — Price trajectory with trend pills
 *   `View/Commerce/CommerceActionView.swift` — Ethical platform ranking with affiliate CTAs
-*   `View/Commerce/EthicalPolicyConfigView.swift` — RankingPolicy preferences (carbon/labor/certification/platform/price/speed)
+*   `View/Commerce/EthicalPolicyConfigView.swift` — RankingPolicy preferences (carbon/labor/certification/platform/price/speed). Persisted via SwiftData `EthicalPolicySettings` model, syncs across devices via CloudKit.
+*   `View/Commerce/APIKeyConfigView.swift` — API key configuration UI
+*   `View/Commerce/Spatial/ProductScoreAttachment.swift` — visionOS score attachment
+*   `View/Commerce/Spatial/SpatialProductDetector.swift` — AR product detection
+*   `View/Commerce/Spatial/SpatialScoreOverlayView.swift` — Spatial score overlay
 
 ### Core Services (DiverKit)
 *   `Services/LocalPipelineService.swift` — Core pipeline orchestrator
@@ -226,14 +278,20 @@ cd DiverShared && swift test
 *   `Services/Edge/BonjourDiscoveryService.swift` — NWBrowser actor, Bonjour TXT records
 *   `Services/Edge/NWTransportLayer.swift` — TLS 1.3, OSAllocatedUnfairLock, length-prefixed framing
 *   `Services/Edge/EdgeNodeService.swift` — 5 distributed actors + PipelineEdgeRouter
-*   `Storage/DiverDataStore.swift` — SwiftData container management (7 models incl. OwnedProduct, ScoreSnapshot)
+*   `Storage/DiverDataStore.swift` — SwiftData container management (8 models incl. OwnedProduct, ScoreSnapshot, EthicalPolicySettings)
 *   `Storage/PersistenceActor.swift` — `@ModelActor` for actor-isolated background SwiftData operations
 *   `Storage/DiverSchemaMigration.swift` — VersionedSchema baseline (V1) and migration plan
+*   `Storage/DataSeeder.swift` — Initial data seeding
+*   `Storage/ReferencePayloadStore.swift` — Reference payload persistence
+*   `Storage/StorageClient.swift` — Storage access client
+*   `Storage/UnifiedDataManager.swift` — Unified data management layer
 
-### Models (DiverKit)
+### Models (DiverKit — 20 files)
 *   `Models/ProcessedItem.swift` — Primary enriched item model
 *   `Models/DiverSession.swift` — Session grouping model
 *   `Models/DiverCollection.swift` — User-created collections
+*   `Models/DiverObject.swift` — Base object model
+*   `Models/DiverQueueItem+Intelligence.swift` — Queue item intelligence extensions
 *   `Models/UserConcept.swift` — Concept/tag model
 *   `Models/AestheticsTypes.swift` — Image quality scoring types
 *   `Models/QueueProgressEvent.swift` — AsyncStream event enum for queue progress delivery
@@ -241,6 +299,14 @@ cd DiverShared && swift test
 *   `Models/ScoreSnapshot.swift` — Time-series score history for Swift Charts
 *   `Models/CommerceGenerable.swift` — `@Generable` types for SLM commerce prompts
 *   `Models/EdgeTypes.swift` — Edge computing types: `EdgeNodeInfo`, `VisionAnalysisResult`, `SaliencyResult`, `LLMAnalysisResult`, `EdgeNodeStatus`, `ModelStatus`
+*   `Models/EthicalPolicySettings.swift` — Persisted ethical policy preferences
+*   `Models/JSONCoding.swift` — JSON coding helpers
+*   `Models/JobProgress.swift` — Pipeline job progress tracking
+*   `Models/LocalInput.swift` — Local pipeline input type
+*   `Models/ProcessingStatus.swift` — Item processing status enum
+*   `Models/SSEEvent.swift` — Server-sent event model
+*   `Models/TikTokMetadata.swift` — TikTok link metadata
+*   `Models/TypeAliases.swift` — Cross-module type aliases
 
 ## Code Cleanliness & Known Technical Debt
 
@@ -249,14 +315,14 @@ cd DiverShared && swift test
 *   **`LanguageModelSession`:** `final class` with no actor isolation — safe to run from any thread.
 *   **`IntelligenceProcessor`:** `Sendable` with no actor isolation — must not be called from `@MainActor` tasks.
 *   **Vision framework (iOS 18+):** Native Swift concurrency support — runs naturally on background threads.
-*   **`@unchecked Sendable`:** ~20 usages across the codebase. Each must be audited to verify thread safety is enforced via locking (e.g., `OSAllocatedUnfairLock`).
+*   **`@unchecked Sendable`:** ~36 usages across the codebase. Each must be audited to verify thread safety is enforced via locking (e.g., `OSAllocatedUnfairLock`).
 *   **`CaptureInput`:** Marked `@unchecked Sendable` because it contains `PhotosPickerItem` (not `Sendable`). Safe because it's consumed exactly once after crossing the isolation boundary.
 *   **`processItemByID` vs `processItemImmediately`:** `processItemByID` creates a private `ModelContext(modelContainer)` per call — safe from any isolation context and prevents shared-context corruption. `processItemImmediately` uses the service's shared `activeContext` and must only be called internally during batch processing (inside `processPendingQueue`'s `bgContext`). Architecture tests enforce this boundary.
 
 ### ViewModel Bloat
-*   **`VisualIntelligenceViewModel`:** ~2900 lines, 31 properties. Migrated to `@Observable` — per-property tracking eliminates `objectWillChange` over-broadcasting.
-*   **`SidebarViewModel`:** ~1200 lines, 22 properties. Migrated to `@Observable`.
-*   **`SidebarView`:** 945 lines (decomposed from ~1450; 7 child views extracted to `View/Sidebar/`).
+*   **`VisualIntelligenceViewModel`:** ~2909 lines, 31 properties. Migrated to `@Observable` — per-property tracking eliminates `objectWillChange` over-broadcasting.
+*   **`SidebarViewModel`:** ~1224 lines, 22 properties. Migrated to `@Observable`.
+*   **`SidebarView`:** 942 lines (decomposed from ~1450; 7 child views extracted to `View/Sidebar/`).
 
 ### Service Coupling
 *   **`MetadataPipelineService`:** Views directly read mutable progress properties (`isProcessingQueue`, `queueTotalCount`, etc.). AsyncStream-based `progressStream` added alongside for incremental migration to `for await` event delivery.

@@ -28,6 +28,7 @@ public struct VisualIntelligenceView: View {
     @State private var isEnteringCustomContext = false
     @State private var showingFullScreenReview = false
     @State private var showingIntelligenceView = false
+    @State private var showingSpatialAR = false
     @State private var customContextText = ""
     
     public init() {}
@@ -183,6 +184,7 @@ public struct VisualIntelligenceView: View {
             isEnteringCustomContext: $isEnteringCustomContext,
             showingFullScreenReview: $showingFullScreenReview,
             showingIntelligenceView: $showingIntelligenceView,
+            showingSpatialAR: $showingSpatialAR,
             orientation: orientation,
             onResultSelected: { result in
                 handleResultSelection(result)
@@ -366,6 +368,7 @@ struct VisualIntelligenceHUD: View {
     @Binding var isEnteringCustomContext: Bool
     @Binding var showingFullScreenReview: Bool
     @Binding var showingIntelligenceView: Bool
+    @Binding var showingSpatialAR: Bool
     let orientation: UIDeviceOrientation
     let onResultSelected: (IntelligenceResult) -> Void
     
@@ -488,9 +491,23 @@ struct VisualIntelligenceHUD: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.leading, 30)
+            
+            // AR Mode Button
+            Button {
+                showingSpatialAR = true
+            } label: {
+                Image(systemName: "cube.transparent")
+                    .font(.title3).foregroundStyle(.white).padding(12).glass(cornerRadius: 25)
+                    .rotationEffect(angleForOrientation(orientation))
+            }
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .padding(.trailing, 30)
         }
         .padding(.bottom, 30)
         .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
+        .sheet(isPresented: $showingSpatialAR) {
+            SpatialScoreOverlayView()
+        }
     }
     
     private func angleForOrientation(_ orientation: UIDeviceOrientation) -> Angle {
@@ -1231,6 +1248,11 @@ struct IntelligenceResultsView: View {
                             if !detectedButtons.isEmpty {
                                 buttonSection(title: "DETECTED", buttons: detectedButtons, columns: 2)
                             }
+                            
+                            // Commerce Intelligence Section
+                            if hasCommerceData {
+                                commerceSection
+                            }
                         }
                         .padding(.horizontal, 20)
                     }
@@ -1493,6 +1515,40 @@ struct IntelligenceResultsView: View {
         return buttons
     }
     
+    // MARK: - Commerce Intelligence
+    
+    private var hasCommerceData: Bool {
+        viewModel.results.contains { if case .product = $0 { return true }; return false }
+    }
+    
+    @ViewBuilder
+    private var commerceSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "cart.fill")
+                    .foregroundStyle(.green)
+                Text("COMMERCE")
+                    .font(.caption.bold())
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+            
+            // Extract product info from results
+            let productResult = viewModel.results.first { if case .product = $0 { return true }; return false }
+            if case .product(let code, _, _) = productResult {
+                ProductScoreAttachment(
+                    productName: "Product (\(code))",
+                    compositeScore: 0.0,
+                    strategyScores: [],
+                    recommendation: "Scoring…"
+                )
+                
+                OwnershipButton(
+                    productName: "Product",
+                    barcode: code
+                )
+            }
+        }
+    }
     @ViewBuilder
     private func buttonSection(title: String, buttons: [(String, String, () -> Void)], columns: Int, isContext: Bool = false) -> some View {
         VStack(alignment: .leading, spacing: 12) {
