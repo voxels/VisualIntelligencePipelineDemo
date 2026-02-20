@@ -239,6 +239,8 @@ Scores image quality for thumbnail selection and context weighting. As of v1.1, 
 
 ## Testing
 
+**250 tests** across 32 test files (177 XCTest + 73 Swift Testing `@Test`).
+
 ```bash
 # Build for iOS Simulator
 xcodebuild -project VisualIntelligencePipelineDemo/VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj \
@@ -253,6 +255,71 @@ xcodebuild test -project VisualIntelligencePipelineDemo/VisualIntelligencePipeli
 # Run DiverShared package tests (pure Swift, no UIKit)
 cd VisualIntelligencePipelineDemo/DiverShared && swift test
 ```
+
+### Current Coverage
+
+| Area | Test Files | Tests | Status |
+|------|-----------|-------|--------|
+| Pipeline & Orchestration | 5 | 26 | ✅ |
+| Architecture / Concurrency | 2 | 34 | ✅ |
+| Models & Data | 5 | 36+ | ✅ |
+| Enrichment & Services | 8 | 30+ | ✅ |
+| Commerce Intelligence | 5 | 58 | ✅ |
+| Edge Computing | 1 | 5 | ✅ |
+| ViewModels | 3 | 27 | ✅ |
+| Performance | 2 | 24 | ⚠️ 3 flaky |
+
+### Future Test Plans
+
+**Priority 1 — Data integrity & sync** (highest risk if untested):
+
+| Service | Test Focus |
+|---------|-----------|
+| `CloudKitSyncMonitor` | Event parsing, error detection, notification posting, edge cases (nil userInfo) |
+| `PersistenceActor` | Actor isolation, concurrent fetch safety, modelContext lifecycle |
+| `DiverSchemaMigration` | V1 model list matches DiverDataStore.coreTypes |
+| `APIKeyService` | CloudKit store/retrieve roundtrip, cache invalidation, prefetch, no-network fallback |
+
+**Priority 2 — Enrichment services** (critical pipeline path):
+
+| Service | Test Focus |
+|---------|-----------|
+| `FastVLMEnrichmentService` | Prompt construction, result parsing, hallucination guard (no camera terms) |
+| `ESGEnrichmentService` | 4-database cascade (Food → Beauty → Pet → Products), 24h cache, barcode lookup |
+| `ProductRecommendationService` | Composite scoring, SLM prompt construction, timing recommendation logic |
+| `LocationService` / `ReverseGeocodingService` | EXIF priority, contact detection, user-pinned persistence |
+| `DailyContextService` | Daily summary aggregation, session filtering, LLM prompt construction |
+
+**Priority 3 — Camera & import** (hardware-dependent, harder to mock):
+
+| Service | Test Focus |
+|---------|-----------|
+| `CameraManager` | Session configuration, orientation handling, photo output delegate |
+| `PhotoLibraryImportService` | Asset loading, EXIF extraction, batch import |
+| `DocumentManager` | Perspective correction, save path, file cleanup |
+
+**Priority 4 — Network enrichment** (requires mock HTTP):
+
+| Service | Test Focus |
+|---------|-----------|
+| `FoursquareEnrichmentService` | URL construction, response parsing, no-API-key graceful degradation |
+| `MapKitEnrichmentService` | Search result mapping, coordinate handling |
+| `OpenESGService` | B Corp directory parsing, company-level ESG mapping |
+| `PricingDataService` | World Bank + BLS PPI response parsing, commodity mapping |
+| `SpotifyService` | Track matching, metadata extraction |
+| `WeatherEnrichmentService` | Weather data parsing, context snapshot creation |
+
+**Priority 5 — Edge & transport** (requires multi-process test harness):
+
+| Service | Test Focus |
+|---------|-----------|
+| `VisualIntelligenceActorSystem` | Actor registration, message routing |
+| `BonjourDiscoveryService` | Service publishing, peer discovery, TXT record parsing |
+| `NWTransportLayer` | TLS 1.3 handshake, length-prefixed framing, reconnection |
+
+**Known Flaky Tests** — `PipelinePerformanceTests`: 3 cache/geocoding tests timeout at 5 seconds. Consider increasing timeout to 10s for CI environments.
+
+See the [Test Documentation Wiki](VisualIntelligencePipelineDemo/Documentation/wiki/diverkit-tests.html) for detailed per-file coverage.
 
 ## Future Plans (Spec v3)
 
