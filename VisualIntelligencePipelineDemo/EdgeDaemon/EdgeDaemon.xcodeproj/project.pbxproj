@@ -7,32 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1213FC7BCE21F2E2122CC907 /* EdgeDaemonSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_7886B178-56D8-46C6-8558-422D6D091610" /* EdgeDaemonSettingsView.swift */; };
-		2C87B99BC88BFA4E788965A9 /* EdgeDaemonDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_8F304E3B-35F5-43F0-B51A-C57D73C936C7" /* EdgeDaemonDashboardView.swift */; };
-		4403C0AB255C2634DF5F626D /* EdgeDaemonStatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_68BF9788-4456-4C6D-A163-50DFA8BB9204" /* EdgeDaemonStatusBar.swift */; };
 		723F7E7F7ABAA483B9B3427B /* DiverKit in Frameworks */ = {isa = PBXBuildFile; productRef = E6DD6FED5917D8D5EC96638B /* DiverKit */; };
-		730DA693CCA15488746C36F9 /* EdgeDaemonMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_944355F2-63E5-4C94-8CDC-9AD1DA2C94AB" /* EdgeDaemonMenu.swift */; };
-		A2207B515D870AA8A59BC49B /* EdgeDaemonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_7A5C0014-9D95-4AF3-8174-97019183A0E6" /* EdgeDaemonApp.swift */; };
+		845AD3F37CAFA5760D1B5A29 /* EdgeDaemonCLI.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_04CE204E-D099-44E2-AC3A-C2D131E57FDC" /* EdgeDaemonCLI.swift */; };
 		AA2FF8F5DB9E83001C2228B6 /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = E2DDBB02337B8C0B60CFE562 /* DiverShared */; };
-		B216071B5CBD1E72DE1BAB6C /* ModelManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_06548F5B-12F1-498B-BBFE-12BA04DA4FFD" /* ModelManagerView.swift */; };
-		BF00FF60FEE2F50A6AD5AC54 /* ClientListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_72F163F9-870A-488A-9909-DA9C80969A5E" /* ClientListView.swift */; };
-		C7E7581976F2CFAE7ACC72E3 /* EdgeDaemonService.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_E4B61D98-D3E4-47C1-B1B7-2EC07D7B3A3A" /* EdgeDaemonService.swift */; };
+		D677BB62FC173644A04D2F5B /* run_daemon.sh in Resources */ = {isa = PBXBuildFile; fileRef = "TEMP_E99F0F53-9235-421E-8F49-9DCB39407637" /* run_daemon.sh */; };
+		FF43DAE1FF4EDE448BAC616B /* EdgeDaemonService.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_6B0C071A-8C9E-4D93-84F2-8EA44EA8946B" /* EdgeDaemonService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A9BE75782C00C424EA827524 /* EdgeDaemon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EdgeDaemon.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9E9E32B7AAF8A6F972FD5DA8 /* EdgeDaemon */ = {isa = PBXFileReference; includeInIndex = 0; path = EdgeDaemon; sourceTree = BUILT_PRODUCTS_DIR; };
 		F45ECD9D12119E0BCB884B2B /* DiverShared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DiverShared; path = ../DiverShared; sourceTree = SOURCE_ROOT; };
 		F85E736AC35C8DF0291DC7D2 /* DiverKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DiverKit; path = ../DiverKit; sourceTree = SOURCE_ROOT; };
-		"TEMP_06548F5B-12F1-498B-BBFE-12BA04DA4FFD" /* ModelManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagerView.swift; sourceTree = "<group>"; };
-		"TEMP_2B602611-A1AC-4C6E-BBFC-333B0C5E5D2E" /* EdgeDaemon.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EdgeDaemon.entitlements; sourceTree = "<group>"; };
-		"TEMP_5855E83E-5F7E-4965-BE77-CB4753582CD5" /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		"TEMP_68BF9788-4456-4C6D-A163-50DFA8BB9204" /* EdgeDaemonStatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeDaemonStatusBar.swift; sourceTree = "<group>"; };
-		"TEMP_72F163F9-870A-488A-9909-DA9C80969A5E" /* ClientListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientListView.swift; sourceTree = "<group>"; };
-		"TEMP_7886B178-56D8-46C6-8558-422D6D091610" /* EdgeDaemonSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeDaemonSettingsView.swift; sourceTree = "<group>"; };
-		"TEMP_7A5C0014-9D95-4AF3-8174-97019183A0E6" /* EdgeDaemonApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeDaemonApp.swift; sourceTree = "<group>"; };
-		"TEMP_8F304E3B-35F5-43F0-B51A-C57D73C936C7" /* EdgeDaemonDashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeDaemonDashboardView.swift; sourceTree = "<group>"; };
-		"TEMP_944355F2-63E5-4C94-8CDC-9AD1DA2C94AB" /* EdgeDaemonMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeDaemonMenu.swift; sourceTree = "<group>"; };
-		"TEMP_E4B61D98-D3E4-47C1-B1B7-2EC07D7B3A3A" /* EdgeDaemonService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeDaemonService.swift; sourceTree = "<group>"; };
+		"TEMP_04CE204E-D099-44E2-AC3A-C2D131E57FDC" /* EdgeDaemonCLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeDaemonCLI.swift; sourceTree = "<group>"; };
+		"TEMP_6B0C071A-8C9E-4D93-84F2-8EA44EA8946B" /* EdgeDaemonService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeDaemonService.swift; sourceTree = "<group>"; };
+		"TEMP_E99F0F53-9235-421E-8F49-9DCB39407637" /* run_daemon.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = run_daemon.sh; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,7 +39,7 @@
 		5358C2C19259525698816B4C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A9BE75782C00C424EA827524 /* EdgeDaemon.app */,
+				9E9E32B7AAF8A6F972FD5DA8 /* EdgeDaemon */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -73,19 +61,12 @@
 			name = Packages;
 			sourceTree = "<group>";
 		};
-		"TEMP_B58643C9-E7C1-4CF8-A336-B33F4299F025" /* EdgeDaemon */ = {
+		"TEMP_DCE36678-F553-49E5-9D6E-936A97A972D8" /* EdgeDaemon */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_E4B61D98-D3E4-47C1-B1B7-2EC07D7B3A3A" /* EdgeDaemonService.swift */,
-				"TEMP_72F163F9-870A-488A-9909-DA9C80969A5E" /* ClientListView.swift */,
-				"TEMP_68BF9788-4456-4C6D-A163-50DFA8BB9204" /* EdgeDaemonStatusBar.swift */,
-				"TEMP_2B602611-A1AC-4C6E-BBFC-333B0C5E5D2E" /* EdgeDaemon.entitlements */,
-				"TEMP_06548F5B-12F1-498B-BBFE-12BA04DA4FFD" /* ModelManagerView.swift */,
-				"TEMP_944355F2-63E5-4C94-8CDC-9AD1DA2C94AB" /* EdgeDaemonMenu.swift */,
-				"TEMP_7A5C0014-9D95-4AF3-8174-97019183A0E6" /* EdgeDaemonApp.swift */,
-				"TEMP_8F304E3B-35F5-43F0-B51A-C57D73C936C7" /* EdgeDaemonDashboardView.swift */,
-				"TEMP_5855E83E-5F7E-4965-BE77-CB4753582CD5" /* Info.plist */,
-				"TEMP_7886B178-56D8-46C6-8558-422D6D091610" /* EdgeDaemonSettingsView.swift */,
+				"TEMP_6B0C071A-8C9E-4D93-84F2-8EA44EA8946B" /* EdgeDaemonService.swift */,
+				"TEMP_E99F0F53-9235-421E-8F49-9DCB39407637" /* run_daemon.sh */,
+				"TEMP_04CE204E-D099-44E2-AC3A-C2D131E57FDC" /* EdgeDaemonCLI.swift */,
 			);
 			path = EdgeDaemon;
 			sourceTree = "<group>";
@@ -98,6 +79,7 @@
 			buildConfigurationList = C5975BAF63E1738C9B116913 /* Build configuration list for PBXNativeTarget "EdgeDaemon" */;
 			buildPhases = (
 				23ACA5D1225F101AFE686004 /* Sources */,
+				3AA3DA0158E75798E516E189 /* Resources */,
 				D1B88DCE0661EA20E5AB3D4B /* Frameworks */,
 			);
 			buildRules = (
@@ -110,8 +92,8 @@
 				E2DDBB02337B8C0B60CFE562 /* DiverShared */,
 			);
 			productName = EdgeDaemon;
-			productReference = A9BE75782C00C424EA827524 /* EdgeDaemon.app */;
-			productType = "com.apple.product-type.application";
+			productReference = 9E9E32B7AAF8A6F972FD5DA8 /* EdgeDaemon */;
+			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
 
@@ -151,19 +133,24 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		3AA3DA0158E75798E516E189 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D677BB62FC173644A04D2F5B /* run_daemon.sh in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		23ACA5D1225F101AFE686004 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BF00FF60FEE2F50A6AD5AC54 /* ClientListView.swift in Sources */,
-				A2207B515D870AA8A59BC49B /* EdgeDaemonApp.swift in Sources */,
-				2C87B99BC88BFA4E788965A9 /* EdgeDaemonDashboardView.swift in Sources */,
-				730DA693CCA15488746C36F9 /* EdgeDaemonMenu.swift in Sources */,
-				C7E7581976F2CFAE7ACC72E3 /* EdgeDaemonService.swift in Sources */,
-				1213FC7BCE21F2E2122CC907 /* EdgeDaemonSettingsView.swift in Sources */,
-				4403C0AB255C2634DF5F626D /* EdgeDaemonStatusBar.swift in Sources */,
-				B216071B5CBD1E72DE1BAB6C /* ModelManagerView.swift in Sources */,
+				845AD3F37CAFA5760D1B5A29 /* EdgeDaemonCLI.swift in Sources */,
+				FF43DAE1FF4EDE448BAC616B /* EdgeDaemonService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -229,7 +216,6 @@
 		4668A13B267BB0EF39B7D09A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = EdgeDaemon.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -241,7 +227,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.visualintelligence.edgedaemon;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.visualintelligence.EdgeDaemon;
 				PRODUCT_NAME = EdgeDaemon;
 				SDKROOT = macosx;
 				SWIFT_STRICT_CONCURRENCY = complete;
@@ -252,7 +238,6 @@
 		A097BEBD28310AA42B33DE66 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = EdgeDaemon.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -264,7 +249,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.visualintelligence.edgedaemon;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.visualintelligence.EdgeDaemon;
 				PRODUCT_NAME = EdgeDaemon;
 				SDKROOT = macosx;
 				SWIFT_STRICT_CONCURRENCY = complete;

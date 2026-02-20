@@ -15,7 +15,7 @@ packages:
 
 targets:
   EdgeDaemon:
-    type: application
+    type: tool
     platform: macOS
     sources:
       - path: .
@@ -23,16 +23,16 @@ targets:
           - project.yml
           - "*.xcodeproj"
           - "*.xcworkspace"
+          - "*.entitlements"
+          - Info.plist
     dependencies:
       - package: DiverKit
       - package: DiverShared
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.secretatomics.visualintelligence.edgedaemon
         PRODUCT_NAME: EdgeDaemon
         SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "26.0"
-        INFOPLIST_FILE: Info.plist
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: EdgeDaemon.entitlements
         DEVELOPMENT_TEAM: ""

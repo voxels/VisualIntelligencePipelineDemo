@@ -409,17 +409,29 @@ public final class LocalPipelineService {
             // Uses ReverseGeocodingService: MKLocalSearch → CLGeocoder → Foursquare
             if let location = effectiveLocation {
                 let coords = location.coordinate
-                if let placeContext = await Self.reverseGeocode(coordinate: coords) {
-                    let placeEnrichment = EnrichmentData(
-                        title: placeContext.name,
-                        descriptionText: placeContext.address,
-                        categories: placeContext.categories,
-                        location: placeContext.address,
-                        placeContext: placeContext
+                if existing.placeContext == nil || !isUserLocationFixed {
+                    if let placeContext = await Self.reverseGeocode(coordinate: coords) {
+                        let placeEnrichment = EnrichmentData(
+                            title: placeContext.name,
+                            descriptionText: placeContext.address,
+                            categories: placeContext.categories,
+                            location: placeContext.address,
+                            placeContext: placeContext
+                        )
+                        localPipelineContext.placeEnrichment = placeEnrichment
+                        applyEnrichment(placeEnrichment, to: existing, preservePlaceIdentity: isUserLocationFixed)
+                        DiverLogger.pipeline.debug("Reverse geocoding complete (update): \(placeContext.name ?? "Unknown")")
+                    }
+                } else {
+                    DiverLogger.pipeline.debug("Skipping reverse geocoding (update) to preserve existing place context: \(existing.placeContext?.name ?? "Unknown")")
+                    let existingPlace = existing.placeContext!
+                    localPipelineContext.placeEnrichment = EnrichmentData(
+                        title: existingPlace.name,
+                        descriptionText: existingPlace.address,
+                        categories: existingPlace.categories,
+                        location: existingPlace.address ?? existing.location,
+                        placeContext: existingPlace
                     )
-                    localPipelineContext.placeEnrichment = placeEnrichment
-                    applyEnrichment(placeEnrichment, to: existing)
-                    DiverLogger.pipeline.debug("Reverse geocoding complete (update): \(placeContext.name ?? "Unknown")")
                 }
             }
             
@@ -607,8 +619,13 @@ public final class LocalPipelineService {
         var currentLocation: CLLocation? = nil
         var hasUserOverride = false
 
-        // 0. Explicit Descriptor Location (Pinned)
-        if let descLoc = descriptor?.location,
+        // 0. Explicit Descriptor Location (Pinned or Previously Set)
+        if let lat = descriptor?.latitude, let lon = descriptor?.longitude {
+             currentLocation = CLLocation(latitude: lat, longitude: lon)
+             // Treat it as an override to prevent EXIF extraction from replacing it
+             hasUserOverride = true
+             DiverLogger.pipeline.debug("Using Descriptor Coordinates (Pinned/Existing): \(lat), \(lon)")
+        } else if let descLoc = descriptor?.location,
            let components = Optional(descLoc.split(separator: ",")),
             components.count == 2,
             let lat = Double(components[0].trimmingCharacters(in: .whitespaces)),
@@ -616,10 +633,10 @@ public final class LocalPipelineService {
              
              currentLocation = CLLocation(latitude: lat, longitude: lon)
              hasUserOverride = true
-             DiverLogger.pipeline.debug("Using Descriptor Location Override (Pinned): \(lat), \(lon)")
+             DiverLogger.pipeline.debug("Using Descriptor Location Override (String Parse): \(lat), \(lon)")
         }
         
-        // 1. Try Metadata (image/video EXIF) first - explicit truth (Overrides "Home" or general GPS, but not Pinned)
+        // 1. Try Metadata (image/video EXIF) first - explicit truth (Overrides "Home" or general GPS, but not Pinned/Existing)
         if currentLocation == nil, let data = rawPayload, !isJSONData(data) {
              if let source = CGImageSourceCreateWithData(data as CFData, nil),
                 let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
@@ -685,17 +702,33 @@ public final class LocalPipelineService {
         // Runs before Vision so place context is available to all downstream stages.
         if let location = currentLocation {
             let coords = location.coordinate
-            if let placeContext = await Self.reverseGeocode(coordinate: coords) {
-                let placeEnrichment = EnrichmentData(
-                    title: placeContext.name,
-                    descriptionText: placeContext.address,
-                    categories: placeContext.categories,
-                    location: placeContext.address,
-                    placeContext: placeContext
+            
+            // If the item ALREADY has a placeContext (e.g. from a user edit that was preserved),
+            // do not aggressively reverse geocode and overwrite it!
+            if processed.placeContext == nil || !hasUserOverride {
+                if let placeContext = await Self.reverseGeocode(coordinate: coords) {
+                    let placeEnrichment = EnrichmentData(
+                        title: placeContext.name,
+                        descriptionText: placeContext.address,
+                        categories: placeContext.categories,
+                        location: placeContext.address,
+                        placeContext: placeContext
+                    )
+                    pipelineContext.placeEnrichment = placeEnrichment
+                    
+                    applyEnrichment(placeEnrichment, to: processed, preservePlaceIdentity: hasUserOverride)
+                    DiverLogger.pipeline.debug("Reverse geocoding complete: \(placeContext.name ?? "Unknown")")
+                }
+            } else {
+                DiverLogger.pipeline.debug("Skipping reverse geocoding to preserve existing place context: \(processed.placeContext?.name ?? "Unknown")")
+                let existingPlace = processed.placeContext!
+                pipelineContext.placeEnrichment = EnrichmentData(
+                    title: existingPlace.name,
+                    descriptionText: existingPlace.address,
+                    categories: existingPlace.categories,
+                    location: existingPlace.address ?? processed.location,
+                    placeContext: existingPlace
                 )
-                pipelineContext.placeEnrichment = placeEnrichment
-                applyEnrichment(placeEnrichment, to: processed)
-                DiverLogger.pipeline.debug("Reverse geocoding complete: \(placeContext.name ?? "Unknown")")
             }
         }
         

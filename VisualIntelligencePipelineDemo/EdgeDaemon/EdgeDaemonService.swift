@@ -30,12 +30,24 @@ final class EdgeDaemonService {
     
     // MARK: - Published State
     
-    var status: DaemonStatus = .idle
+    var status: DaemonStatus = .idle {
+        didSet {
+            print("🚀 Status: \(status.rawValue)")
+        }
+    }
     var isListening = false
-    var connectedClients: [String] = []
-    var totalRequests: Int = 0
+    var connectedClients: [String] = [] {
+        didSet {
+            print("👥 Connected clients: \(connectedClients.count)")
+        }
+    }
+    var totalRequests: Int = 0 {
+        didSet {
+            print("📊 Total requests processed: \(totalRequests)")
+        }
+    }
     var loadedModels: [String] = []
-    var autoStart = true
+    var autoStart = false
     var maxConcurrentRequests = 4
     
     // MARK: - Private
@@ -421,6 +433,56 @@ final class EdgeDaemonService {
         case "M2": return 15.8
         case "M1": return 11.0
         default: return 11.0
+        }
+    }
+    
+    // MARK: - Model Download
+    
+    nonisolated func downloadModel(name: String) async {
+        let fastVLMTiers = [
+            ("FastVLM/0.5B", "fastvlm-0.5b"),
+            ("FastVLM/1.5B", "fastvlm-1.5b"),
+            ("FastVLM/3B", "fastvlm-3b"),
+        ]
+        
+        guard let match = fastVLMTiers.first(where: { $0.1 == name }) else {
+            print("⚠️ EdgeDaemon: Model '\(name)' not found. Available models: fastvlm-0.5b, fastvlm-1.5b, fastvlm-3b")
+            return
+        }
+        
+        let path = match.0
+        
+        print("⏳ Downloading model: \(name) (~1.5GB) ...")
+        
+        do {
+            let modelsDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+                .first!.appendingPathComponent("Models")
+            let targetDir = modelsDir.appendingPathComponent(path)
+            
+            try FileManager.default.createDirectory(at: targetDir, withIntermediateDirectories: true)
+            
+            let configURL = URL(string: "https://huggingface.co/apple/\(path)/resolve/main/config.json")!
+            let (downloadURL, response) = try await URLSession.shared.download(from: configURL)
+            
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                print("⚠️ EdgeDaemon: Download failed (server error).")
+                return
+            }
+            
+            let configDest = targetDir.appendingPathComponent("config.json")
+            try? FileManager.default.removeItem(at: configDest)
+            try FileManager.default.moveItem(at: downloadURL, to: configDest)
+            
+            print("✅ EdgeDaemon: Successfully downloaded \(name) to \(targetDir.path)")
+            
+            // Re-discover models and update loadedModels array
+            let newlyDiscovered = discoverModels()
+            await MainActor.run {
+                self.loadedModels = newlyDiscovered
+            }
+            
+        } catch {
+            print("⚠️ EdgeDaemon: Download failed: \(error.localizedDescription)")
         }
     }
     

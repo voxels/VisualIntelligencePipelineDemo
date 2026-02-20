@@ -316,6 +316,21 @@
 - **Sidebar & Navigation**: Created `SidebarView` with session-based navigation, favorites, and collections.
 - **Build Fixes**: Resolved DiverKit build errors and improved startup performance.
 
+## 2026-02-20
+
+### Features & Refactoring
+* **EdgeDaemon CLI Migration:** Transitioned `EdgeDaemon` from a background UIElement macOS app to a standalone interactive CLI `tool`.
+* Bypasses macOS Local Network Privacy restrictions that block Bonjour mDNS advertising for ad-hoc signed apps.
+* Restored management functionality lost from UI removal by implementing a REPL prompt inside the CLI.
+* Added `run_daemon.sh` utility script to compile and launch the daemon intuitively from the terminal.
+
+### Files Changed
+* `[NEW]` `EdgeDaemonCLI.swift` — Replaces `EdgeDaemonApp.swift` as the `@main` entry point.
+* `[NEW]` `run_daemon.sh` — Terminal convenience script to build and launch the daemon.
+* `[MODIFY]` `EdgeDaemonService.swift` — Added `downloadModel(name:)`, removed `autoStart`, and integrated `print` statements for stdout tracking.
+* `[MODIFY]` `project.yml` — Changed `EdgeDaemon` target `type` to `tool` and removed Info.plist generation rules.
+* `[DELETE]` `ModelManagerView.swift`, `EdgeDaemonApp.swift`, `EdgeDaemonSettingsView.swift`, `EdgeDaemonStatusBar.swift`, `EdgeDaemonDashboardView.swift`, `EdgeDaemonMenu.swift`, `ClientListView.swift` — Removed all SwiftUI dependencies.
+
 ---
 
 ## Older Changes (Summary)
