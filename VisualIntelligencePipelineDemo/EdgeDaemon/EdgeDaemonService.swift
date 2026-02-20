@@ -159,12 +159,13 @@ final class EdgeDaemonService {
         
         connection.stateUpdateHandler = { [weak self] state in
             Task { @MainActor in
+                guard let self = self else { return }
                 switch state {
                 case .ready:
-                    self?.connectedClients.append(clientName)
+                    self.connectedClients.append(clientName)
                     print("🔗 EdgeDaemon: Client connected: \(clientName)")
                 case .cancelled, .failed:
-                    self?.connectedClients.removeAll { $0 == clientName }
+                    self.connectedClients.removeAll { $0 == clientName }
                     print("🔗 EdgeDaemon: Client disconnected: \(clientName)")
                 default:
                     break
@@ -443,6 +444,7 @@ final class EdgeDaemonService {
     
     // MARK: - Model Download
     
+    nonisolated public func downloadModel(name: String) async {
         let fastVLMTiers = [
             ("mlx-community/FastVLM-0.5B-bf16", "fastvlm-0.5b"),
             // Mocking the larger tiers to the 0.5B repo for now

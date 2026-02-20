@@ -71,7 +71,7 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
         isLoading = true
         defer { isLoading = false }
         
-        return await Task.detached(priority: .userInitiated) { [weak self] in
+        return await Task.detached(priority: .userInitiated) { [weak self] () -> String? in
             guard let self = self else { return nil }
             guard !Task.isCancelled else { return nil }
             
@@ -93,21 +93,24 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
                 Answer: 
                 """
                 
-                let lmInput = try await container.processor.prepare(input: UserInput(prompt: prompt))
-                let params = GenerateParameters(maxTokens: 256, temperature: 0.1)
-                
-                let stream = try MLXLMCommon.generate(input: lmInput, parameters: params, context: container)
-                
-                var output = ""
-                for await chunk in stream {
-                    switch chunk {
-                    case .chunk(let text):
-                        output += text
-                    default: break
+                let result: String = try await container.perform { context in
+                    let lmInput = try await context.processor.prepare(input: UserInput(prompt: prompt))
+                    let params = GenerateParameters(maxTokens: 256, temperature: 0.1)
+                    
+                    let stream = try MLXLMCommon.generate(input: lmInput, parameters: params, context: context)
+                    
+                    var output = ""
+                    for await chunk in stream {
+                        switch chunk {
+                        case .chunk(let text):
+                            output += text
+                        default: break
+                        }
                     }
+                    
+                    return output.trimmingCharacters(in: .whitespacesAndNewlines)
                 }
-                
-                return output.trimmingCharacters(in: .whitespacesAndNewlines)
+                return result
             } catch {
                 print("❌ [CLaRaLatentService] Query failed: \(error)")
                 return nil
