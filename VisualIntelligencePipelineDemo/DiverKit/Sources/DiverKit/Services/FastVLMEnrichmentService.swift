@@ -63,52 +63,66 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     
     /// HuggingFace model identifier for Apple FastVLM.
     /// Dynamically resolves to the highest tier model downloaded by the user via EdgeDaemon,
-    /// or falls back to the default 0.5B model.
+    /// or falls back to the default 0.5B model. Result is cached after first resolution.
+    nonisolated(unsafe) private static var _resolvedModelID: String?
+    
     public static var modelID: String {
-        let modelsDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-            .first?.appendingPathComponent("Models/FastVLM")
+        // Return cached result to avoid repeated resolution logging
+        if let cached = _resolvedModelID { return cached }
         
-        guard let dir = modelsDir else {
-            DiverLogger.pipeline.warning("🧠 [FastVLM] No Application Support directory — using HF Hub fallback")
-            return "mlx-community/FastVLM-0.5B-bf16"
-        }
-        
+        let resolved = resolveModelID()
+        _resolvedModelID = resolved
+        return resolved
+    }
+    
+    /// Invalidate the cached model ID (e.g., after downloading a new tier).
+    public static func invalidateModelIDCache() {
+        _resolvedModelID = nil
+    }
+    
+    private static func resolveModelID() -> String {
         let capability = CapabilityRouter.shared
         let hw = capability.currentCapability
         let aneTOPS = String(format: "%.1f", hw.neuralEngineTOPS)
         DiverLogger.pipeline.info("🧠 [FastVLM] Model resolution — chip: \(hw.chipFamily), RAM: \(hw.physicalMemoryGB)GB, ANE: \(aneTOPS) TOPS")
         
-        // 1. If we can run heavy VLM (16GB+ RAM), prefer 7B.
-        if capability.canRunHeavyVLM {
-            let config7B = dir.appendingPathComponent("7B/config.json").path
-            if FileManager.default.fileExists(atPath: config7B) {
-                DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/7B (heavy tier, \(hw.physicalMemoryGB)GB RAM)")
-                return "apple/FastVLM/7B"
-            }
-            DiverLogger.pipeline.debug("🧠 [FastVLM] 7B weights not cached at \(config7B)")
+        // 1. Check if HF Hub has the optimal model cached (UserDefaults flag set after download).
+        //    HF Hub caches models in its own directory, not in Application Support.
+        if hasOptimalModelCached {
+            let repo = optimalHuggingFaceRepo
+            DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved via HF Hub cache: \(repo)")
+            return repo
         }
         
-        // 2. If M-series with 8GB+ (M2/M3 iPad, M1 Mac), prefer 1.5B — the sweet spot.
-        if capability.canRunMediumVLM {
-            let config15B = dir.appendingPathComponent("1.5B/config.json").path
-            if FileManager.default.fileExists(atPath: config15B) {
-                DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/1.5B (medium tier, \(hw.chipFamily) \(hw.physicalMemoryGB)GB)")
-                return "apple/FastVLM/1.5B"
+        // 2. Check Application Support for locally provisioned models (e.g., from EdgeDaemon).
+        let modelsDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first?.appendingPathComponent("Models/FastVLM")
+        
+        if let dir = modelsDir {
+            if capability.canRunHeavyVLM {
+                let config7B = dir.appendingPathComponent("7B/config.json").path
+                if FileManager.default.fileExists(atPath: config7B) {
+                    DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/7B (heavy tier, \(hw.physicalMemoryGB)GB RAM)")
+                    return "apple/FastVLM/7B"
+                }
             }
-            DiverLogger.pipeline.debug("🧠 [FastVLM] 1.5B weights not cached at \(config15B)")
+            if capability.canRunMediumVLM {
+                let config15B = dir.appendingPathComponent("1.5B/config.json").path
+                if FileManager.default.fileExists(atPath: config15B) {
+                    DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/1.5B (medium tier, \(hw.chipFamily) \(hw.physicalMemoryGB)GB)")
+                    return "apple/FastVLM/1.5B"
+                }
+            }
+            if capability.canRunLightVLM {
+                let config05B = dir.appendingPathComponent("0.5B/config.json").path
+                if FileManager.default.fileExists(atPath: config05B) {
+                    DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/0.5B (light tier, \(hw.physicalMemoryGB)GB RAM)")
+                    return "apple/FastVLM/0.5B"
+                }
+            }
         }
         
-        // 3. If we can run light VLM (8GB+ RAM on any device), try 0.5B.
-        if capability.canRunLightVLM {
-            let config05B = dir.appendingPathComponent("0.5B/config.json").path
-            if FileManager.default.fileExists(atPath: config05B) {
-                DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/0.5B (light tier, \(hw.physicalMemoryGB)GB RAM)")
-                return "apple/FastVLM/0.5B"
-            }
-            DiverLogger.pipeline.debug("🧠 [FastVLM] 0.5B weights not cached at \(config05B)")
-        }
-        
-        // 4. Fallback to HF Hub download for optimal tier.
+        // 3. No cached model — will need to download from HF Hub.
         let fallback = optimalHuggingFaceRepo
         DiverLogger.pipeline.info("🧠 [FastVLM] No local weights cached — will download from HF Hub: \(fallback)")
         return fallback
@@ -137,6 +151,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     private static func markModelCached() {
         let key = "FastVLM.cachedRepo.\(optimalHuggingFaceRepo)"
         UserDefaults.standard.set(true, forKey: key)
+        invalidateModelIDCache()
         DiverLogger.pipeline.info("✅ [FastVLM] Marked model as cached: \(optimalHuggingFaceRepo)")
     }
     

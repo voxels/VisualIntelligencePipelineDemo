@@ -98,9 +98,13 @@ public final class EdgeDaemonService {
             
             // Advertise via Bonjour with TXT record metadata
             var txtRecord = NWTXTRecord()
-            txtRecord["chip"] = CapabilityRouter.shared.currentCapability.chipFamily
-            txtRecord["tops"] = String(format: "%.0f", CapabilityRouter.shared.currentCapability.neuralEngineTOPS)
+            let hw = CapabilityRouter.shared.currentCapability
+            txtRecord["chip"] = hw.chipFamily
+            txtRecord["tops"] = String(format: "%.1f", hw.neuralEngineTOPS)
+            txtRecord["ram"] = "\(hw.physicalMemoryGB)"
             txtRecord["models"] = loadedModels.joined(separator: ",")
+            
+            print("📡 EdgeDaemon TXT record: chip=\(hw.chipFamily), tops=\(hw.neuralEngineTOPS), ram=\(hw.physicalMemoryGB)GB, models=\(loadedModels.joined(separator: ","))")
             
 #if os(macOS)
             let nodeName = Host.current().localizedName ?? "Mac Edge Node"

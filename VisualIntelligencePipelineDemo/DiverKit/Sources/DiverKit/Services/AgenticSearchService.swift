@@ -69,7 +69,7 @@ public final class AgenticSearchService: AgenticSearching, Sendable {
     /// 1. Assemble context from local sources (ALL devices — pure text, no ML)
     /// 2. Route inference to EdgeDaemon (sends context via `contextPayload`) or local CLaRa
     /// 3. Return answer with ProcessedItem IDs for deep-linking to ReferenceDetailView
-    public func performSearch(query: String, topK: Int = 5) async throws -> AgenticSearchResult {
+    public func performSearch(query: String, topK: Int = 100) async throws -> AgenticSearchResult {
         DiverLogger.search.info("🔍 [AgenticSearch] Query: \(query)")
         
         // ── Step 1: Assemble context from local sources (ALL devices) ──
@@ -135,8 +135,13 @@ public final class AgenticSearchService: AgenticSearching, Sendable {
         if !claraResults.isEmpty {
             let claraContext = claraResults.map { $0.text }.joined(separator: "\n---\n")
             contextParts.append("Library Matches (\(claraResults.count) items):\n\(claraContext)")
-            // Extract ProcessedItem IDs from document chunks for deep-linking
-            matchedItemIDs.append(contentsOf: claraResults.map { $0.documentID })
+            // Extract unique ProcessedItem IDs, preserving relevance order (highest score first)
+            var seen = Set<String>()
+            for result in claraResults {
+                if seen.insert(result.documentID).inserted {
+                    matchedItemIDs.append(result.documentID)
+                }
+            }
         }
         
         // Source 2: Knowledge Graph retrieval
@@ -153,6 +158,7 @@ public final class AgenticSearchService: AgenticSearching, Sendable {
         }
         
         // Source 3: Recent library items (supplemental context)
+        // DiverDataStore is @MainActor — must access on main thread
         let libraryContext: String = await MainActor.run {
             guard let mc = Services.shared.modelContext else { return "" }
             let store = DiverDataStore(container: mc.container)

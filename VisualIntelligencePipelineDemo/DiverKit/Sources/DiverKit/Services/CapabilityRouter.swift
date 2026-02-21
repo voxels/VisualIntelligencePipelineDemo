@@ -45,17 +45,17 @@ public final class CapabilityRouter: Sendable {
     }
     
     /// M-series device with enough RAM for the 1.5B model (the sweet spot for M2/M3 iPads).
-    /// 8GB+ RAM on M-series silicon — excludes A-series iPhones.
+    /// 7GB+ RAM on M-series silicon — excludes A-series iPhones.
     public var canRunMediumVLM: Bool {
         let chip = currentCapability.chipFamily
         let isMSeries = chip.hasPrefix("M")
-        return isMSeries && currentCapability.physicalMemoryGB >= 8
+        return isMSeries && currentCapability.physicalMemoryGB >= 7
     }
     
-    /// Minimum recommended RAM to run the FastVLM 0.5B model.
-    /// Any device with 8GB+ RAM (including A18 iPhones).
+    /// Minimum recommended RAM to run the FastVLM 0.5B or CLaRa 7B model.
+    /// Any device with 7GB+ RAM (including M2 MacBook Air, A18 iPhones).
     public var canRunLightVLM: Bool {
-        return currentCapability.physicalMemoryGB >= 8
+        return currentCapability.physicalMemoryGB >= 7
     }
     
     /// Minimum recommended Neural Engine TOPS to run heavy CoreML workloads like SAM 2.1 comfortably.

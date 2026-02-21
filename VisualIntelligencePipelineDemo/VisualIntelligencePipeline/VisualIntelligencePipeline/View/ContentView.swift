@@ -18,18 +18,46 @@ struct ContentView: View {
     let pipelineService: MetadataPipelineService
     @State private var showFastVLMToast = false
     
+    /// Controls which column is shown on iPhone (compact).
+    /// When showingAgenticChat is set, we push to .content.
+    private var preferredColumn: Binding<NavigationSplitViewColumn> {
+        Binding(
+            get: {
+                if navigationManager.showingAgenticChat {
+                    return .content
+                } else if navigationManager.selectedSession != nil {
+                    return .content
+                }
+                return .sidebar
+            },
+            set: { newValue in
+                if newValue == .sidebar {
+                    navigationManager.showingAgenticChat = false
+                }
+            }
+        )
+    }
+    
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(preferredCompactColumn: preferredColumn) {
             SidebarView(
                 selectedSession: $navigationManager.selectedSession,
                 pipelineService: pipelineService
             )
         } content: {
-            SessionItemsView(
-                session: navigationManager.selectedSession,
-                selection: $navigationManager.selection,
-                pipelineService: pipelineService
-            )
+            if navigationManager.showingAgenticChat,
+               let searchService = Services.shared.agenticSearchService {
+                AgenticChatView(
+                    viewModel: AgenticChatViewModel(searchService: searchService),
+                    navigationManager: navigationManager
+                )
+            } else {
+                SessionItemsView(
+                    session: navigationManager.selectedSession,
+                    selection: $navigationManager.selection,
+                    pipelineService: pipelineService
+                )
+            }
         } detail: {
             DetailPane(selection: navigationManager.selection)
         }

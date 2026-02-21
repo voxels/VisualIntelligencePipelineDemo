@@ -206,7 +206,7 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
     ///   - query: Natural language query
     ///   - topK: Maximum number of chunks to return
     /// - Returns: Ranked list of (text, documentID, score) tuples
-    public func retrieveContext(for query: String, topK: Int = 5) -> [(text: String, documentID: String, score: Double)] {
+    public func retrieveContext(for query: String, topK: Int = 100) -> [(text: String, documentID: String, score: Double)] {
         let queryTerms = Self.tokenize(query)
         guard !queryTerms.isEmpty else { return [] }
         

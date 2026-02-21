@@ -18,4 +18,5 @@ class NavigationManager: ObservableObject {
     @Published var pendingImportItems: [PhotosPickerItem] = []
     @Published var searchQuery: String = ""
     @Published var isSearching: Bool = false
+    @Published var showingAgenticChat: Bool = false
 }

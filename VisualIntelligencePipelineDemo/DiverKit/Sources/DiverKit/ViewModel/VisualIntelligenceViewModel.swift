@@ -538,7 +538,10 @@ public class VisualIntelligenceViewModel {
                     return
                 }
                 
-                await MainActor.run { self.currentCaptureCoordinate = currentLoc.coordinate }
+                await MainActor.run {
+                    self.currentCaptureCoordinate = currentLoc.coordinate
+                    self.cameraManager.currentLocation = currentLoc
+                }
                 
                 // B. Check Contacts (Home/Work)
                 if let contactService = Services.shared.contactService {
@@ -951,6 +954,7 @@ public class VisualIntelligenceViewModel {
                     if let loc = currentLocation, !hasUserSelection {
                         await MainActor.run {
                             self.currentCaptureCoordinate = loc.coordinate
+                            self.cameraManager.currentLocation = loc
                         }
                     }
                     
@@ -1210,7 +1214,10 @@ public class VisualIntelligenceViewModel {
                     
                     let hasUserSelection = await MainActor.run { self.selectedPlace != nil }
                     if let loc = currentLocation, !hasUserSelection {
-                        await MainActor.run { self.currentCaptureCoordinate = loc.coordinate }
+                        await MainActor.run {
+                            self.currentCaptureCoordinate = loc.coordinate
+                            self.cameraManager.currentLocation = loc
+                        }
                     }
                     
                     let currentAccumulatedContexts = await MainActor.run { self.accumulatedContexts }

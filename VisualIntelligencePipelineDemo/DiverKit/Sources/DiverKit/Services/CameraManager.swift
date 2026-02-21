@@ -1,6 +1,8 @@
 import Foundation
 import AVFoundation
 import Vision
+import CoreLocation
+import ImageIO
 #if canImport(AppKit)
 import AppKit
 #endif
@@ -47,6 +49,11 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
     public var onFrameCaptured: (@MainActor @Sendable (CVPixelBuffer) -> Void)?
     /// Callback delivers (imageData, depthData?) atomically so depth is always paired with the correct photo
     public var onPhotoCaptured: (@MainActor @Sendable (Data, Data?) -> Void)?
+    
+    /// Current device location — set by VisualIntelligenceViewModel for GPS EXIF embedding.
+    /// nonisolated(unsafe) because the AVCapturePhotoCaptureDelegate reads it from a non-main queue.
+    /// CLLocation is an immutable class — safe to read across threads.
+    nonisolated(unsafe) public var currentLocation: CLLocation?
     
     public override init() {
         // Default initializer for testing or when dependencies are not needed immediately
@@ -352,10 +359,78 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
         }
         #endif
         
+        // Inject GPS EXIF metadata if location is available
+        let finalData: Data
+        if let loc = self.currentLocation {
+            finalData = Self.injectGPSMetadata(into: imageData, location: loc)
+        } else {
+            finalData = imageData
+        }
+        
         // Deliver both atomically
         Task { @MainActor [weak self] in
-            self?.onPhotoCaptured?(imageData, depthPNG)
+            self?.onPhotoCaptured?(finalData, depthPNG)
         }
+    }
+    
+    /// Injects GPS EXIF metadata into JPEG/HEIF image data using CGImageSource/CGImageDestination.
+    nonisolated private static func injectGPSMetadata(into imageData: Data, location: CLLocation) -> Data {
+        guard let source = CGImageSourceCreateWithData(imageData as CFData, nil),
+              let uti = CGImageSourceGetType(source) else {
+            return imageData
+        }
+        
+        let coord = location.coordinate
+        var gpsDict: [String: Any] = [
+            kCGImagePropertyGPSLatitude as String: abs(coord.latitude),
+            kCGImagePropertyGPSLatitudeRef as String: coord.latitude >= 0 ? "N" : "S",
+            kCGImagePropertyGPSLongitude as String: abs(coord.longitude),
+            kCGImagePropertyGPSLongitudeRef as String: coord.longitude >= 0 ? "E" : "W",
+            kCGImagePropertyGPSTimeStamp as String: Self.gpsTimeStamp(from: location.timestamp),
+            kCGImagePropertyGPSDateStamp as String: Self.gpsDateStamp(from: location.timestamp),
+        ]
+        
+        if location.altitude != 0 {
+            gpsDict[kCGImagePropertyGPSAltitude as String] = abs(location.altitude)
+            gpsDict[kCGImagePropertyGPSAltitudeRef as String] = location.altitude >= 0 ? 0 : 1
+        }
+        if location.speed >= 0 {
+            gpsDict[kCGImagePropertyGPSSpeed as String] = location.speed * 3.6 // m/s → km/h
+            gpsDict[kCGImagePropertyGPSSpeedRef as String] = "K"
+        }
+        if location.course >= 0 {
+            gpsDict[kCGImagePropertyGPSTrack as String] = location.course
+            gpsDict[kCGImagePropertyGPSTrackRef as String] = "T"
+        }
+        
+        let metadata: [String: Any] = [
+            kCGImagePropertyGPSDictionary as String: gpsDict
+        ]
+        
+        let mutableData = NSMutableData()
+        guard let dest = CGImageDestinationCreateWithData(mutableData, uti, 1, nil) else {
+            return imageData
+        }
+        CGImageDestinationAddImageFromSource(dest, source, 0, metadata as CFDictionary)
+        guard CGImageDestinationFinalize(dest) else {
+            return imageData
+        }
+        
+        return mutableData as Data
+    }
+    
+    nonisolated private static func gpsTimeStamp(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss.SSSSSS"
+        formatter.timeZone = TimeZone(abbreviation: "UTC")
+        return formatter.string(from: date)
+    }
+    
+    nonisolated private static func gpsDateStamp(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy:MM:dd"
+        formatter.timeZone = TimeZone(abbreviation: "UTC")
+        return formatter.string(from: date)
     }
 }
 

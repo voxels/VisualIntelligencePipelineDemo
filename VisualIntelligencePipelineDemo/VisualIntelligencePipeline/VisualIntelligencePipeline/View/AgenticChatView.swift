@@ -3,6 +3,8 @@
 //  VisualIntelligencePipeline
 //
 //  An iMessage-style chat interface for Agentic Search via CLaRa.
+//  Lives in the content (middle) pane of the NavigationSplitView.
+//  Tapping cited items navigates to their ReferenceDetailView in the detail pane.
 //
 
 import SwiftUI
@@ -11,87 +13,93 @@ import DiverKit
 
 struct AgenticChatView: View {
     @StateObject var viewModel: AgenticChatViewModel
-    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var navigationManager: NavigationManager
     @Query private var allItems: [ProcessedItem]
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: 16) {
-                            ForEach(viewModel.messages) { message in
-                                MessageBubble(message: message, allItems: allItems)
-                                    .id(message.id)
-                            }
-                            
-                            if viewModel.isThinking {
-                                HStack {
-                                    ProgressView()
-                                        .padding()
-                                        .background(Color(UIColor.secondarySystemBackground))
-                                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                                    Spacer()
+        VStack(spacing: 0) {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        ForEach(viewModel.messages) { message in
+                            MessageBubble(
+                                message: message,
+                                allItems: allItems,
+                                onItemTapped: { item in
+                                    navigationManager.selection = item
                                 }
-                                .padding(.horizontal)
-                                .id("thinking")
-                            }
+                            )
+                            .id(message.id)
                         }
-                        .padding(.vertical)
+                        
+                        if viewModel.isThinking {
+                            HStack {
+                                ProgressView()
+                                    .padding(12)
+                                    .background(Color(UIColor.secondarySystemBackground))
+                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                Spacer()
+                            }
+                            .padding(.horizontal)
+                            .id("thinking")
+                        }
                     }
-                    .onChange(of: viewModel.messages) { oldValue, newValue in
+                    .padding(.vertical)
+                }
+                .onChange(of: viewModel.messages) { oldValue, newValue in
+                    withAnimation {
+                        if let last = newValue.last {
+                            proxy.scrollTo(last.id, anchor: .bottom)
+                        }
+                    }
+                }
+                .onChange(of: viewModel.isThinking) { oldValue, newValue in
+                    if newValue {
                         withAnimation {
-                            if let last = newValue.last {
-                                proxy.scrollTo(last.id, anchor: .bottom)
-                            }
-                        }
-                    }
-                    .onChange(of: viewModel.isThinking) { oldValue, newValue in
-                        if newValue {
-                            withAnimation {
-                                proxy.scrollTo("thinking", anchor: .bottom)
-                            }
+                            proxy.scrollTo("thinking", anchor: .bottom)
                         }
                     }
                 }
-                
-                Divider()
-                
-                if let error = viewModel.errorMessage {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .padding(.top, 8)
-                }
-                
-                HStack(alignment: .bottom) {
-                    TextField("Ask your library...", text: $viewModel.inputText, axis: .vertical)
-                        .lineLimit(1...5)
-                        .padding(12)
-                        .background(Color(UIColor.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                        .onSubmit {
-                            viewModel.sendMessage()
-                        }
-                    
-                    Button {
-                        viewModel.sendMessage()
-                    } label: {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.system(size: 32))
-                            .foregroundStyle(viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
-                    }
-                    .disabled(viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isThinking)
-                }
-                .padding()
             }
-            .navigationTitle("Agentic Search")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
-                        dismiss()
+            
+            Divider()
+            
+            if let error = viewModel.errorMessage {
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .padding(.top, 8)
+            }
+            
+            HStack(alignment: .bottom) {
+                TextField("Ask your library...", text: $viewModel.inputText, axis: .vertical)
+                    .lineLimit(1...5)
+                    .padding(12)
+                    .background(Color(UIColor.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .onSubmit {
+                        viewModel.sendMessage()
                     }
+                
+                Button {
+                    viewModel.sendMessage()
+                } label: {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 32))
+                        .foregroundStyle(viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .blue)
+                }
+                .disabled(viewModel.inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || viewModel.isThinking)
+            }
+            .padding()
+        }
+        .navigationTitle("CLaRa")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button {
+                    navigationManager.showingAgenticChat = false
+                } label: {
+                    Label("Back", systemImage: "chevron.left")
                 }
             }
         }
@@ -101,6 +109,8 @@ struct AgenticChatView: View {
 fileprivate struct MessageBubble: View {
     let message: AgenticChatMessage
     let allItems: [ProcessedItem]
+    let onItemTapped: (ProcessedItem) -> Void
+    @State private var sourcesExpanded = false
     
     var body: some View {
         HStack {
@@ -111,29 +121,71 @@ fileprivate struct MessageBubble: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(message.text)
                     .foregroundStyle(message.isUser ? .white : .primary)
+                    .textSelection(.enabled)
                 
-                if !message.citedDocumentIDs.isEmpty {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Sources:")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        
-                        ForEach(message.citedDocumentIDs, id: \.self) { docID in
-                            if let item = allItems.first(where: { $0.id == docID }) {
-                                HStack {
-                                    Image(systemName: "doc.text")
-                                        .font(.caption)
-                                    Text(item.title ?? "Untitled Document")
-                                        .font(.caption)
-                                        .lineLimit(1)
-                                }
-                                .padding(6)
-                                .background(Color(UIColor.tertiarySystemGroupedBackground))
-                                .cornerRadius(8)
-                            }
-                        }
+                if !message.isUser, !message.citedDocumentIDs.isEmpty {
+                    let matchedItems = message.citedDocumentIDs.compactMap { docID in
+                        allItems.first(where: { $0.id == docID })
                     }
-                    .padding(.top, 4)
+                    
+                    if !matchedItems.isEmpty {
+                        DisclosureGroup(isExpanded: $sourcesExpanded) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                ForEach(matchedItems) { item in
+                                    Button {
+                                        onItemTapped(item)
+                                    } label: {
+                                        HStack(spacing: 8) {
+                                            if let data = item.rawPayload,
+                                               let uiImage = UIImage(data: data) {
+                                                Image(uiImage: uiImage)
+                                                    .resizable()
+                                                    .aspectRatio(contentMode: .fill)
+                                                    .frame(width: 32, height: 32)
+                                                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                                            } else {
+                                                Image(systemName: "doc.text")
+                                                    .font(.caption)
+                                                    .frame(width: 32, height: 32)
+                                                    .background(Color(UIColor.tertiarySystemGroupedBackground))
+                                                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                                            }
+                                            
+                                            VStack(alignment: .leading, spacing: 1) {
+                                                Text(item.title ?? "Untitled")
+                                                    .font(.caption)
+                                                    .fontWeight(.medium)
+                                                    .lineLimit(1)
+                                                if let location = item.location, !location.isEmpty {
+                                                    Text(location)
+                                                        .font(.caption2)
+                                                        .foregroundStyle(.secondary)
+                                                        .lineLimit(1)
+                                                }
+                                            }
+                                            
+                                            Spacer()
+                                            
+                                            Image(systemName: "chevron.right")
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        .padding(8)
+                                        .background(Color(UIColor.tertiarySystemGroupedBackground))
+                                        .cornerRadius(10)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        } label: {
+                            Label("\(matchedItems.count) Sources", systemImage: "doc.on.doc")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.blue)
+                        }
+                        .tint(.blue)
+                        .padding(.top, 4)
+                    }
                 }
             }
             .padding(12)

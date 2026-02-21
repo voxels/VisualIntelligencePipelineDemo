@@ -2,6 +2,26 @@
 
 ## 2026-02-21
 
+### CLaRa RAG Pipeline & Agentic Chat UI
+- **Context-First Query Architecture**: Rewrote `AgenticSearchService` — context assembly (document index + Knowledge Graph + recent items) always runs first on ALL devices. Inference routes to EdgeDaemon (sends assembled context via `contextPayload`) or local CLaRa as fallback. Fixes the critical bug where CLaRa returned generic answers because the EdgeDaemon had no library context.
+- **Enriched Document Ingestion**: `CLaRaLatentService.composeDocument` now decodes and indexes 7 context blobs (place, web, weather, document, QR, FastVLM analysis, questions) from `DiverShared.ContextSnapshot` types. Items are indexed immediately after pipeline processing via both `processItemImmediately` and `processItemByID`.
+- **Deep-Linkable Citations**: `AgenticSearchResult.citedDocumentIDs` now returns ProcessedItem IDs from the local document index. Tapping a citation in the chat navigates to the item's `ReferenceDetailView`.
+- **EdgeDaemon Context Payload**: Added `contextPayload: String?` to `AgenticSearchQuery`. `EdgeAgenticSearchActor.search` prefers client-supplied context over its own empty `DiverDataStore`.
+- **Agentic Chat in Content Pane**: Moved `AgenticChatView` from `.fullScreenCover` to the middle pane of `NavigationSplitView` on iPad. On iPhone (compact width), presented as a `.sheet`. Citations show thumbnails and are tappable for navigation.
+- **RAM Threshold Lowered**: `CapabilityRouter.canRunLightVLM` threshold reduced from 8GB to 7GB — enables CLaRa and FastVLM on M2 MacBook Air (7.3GB) and A17 Pro/A18 iPhones (8GB).
+- **Conditional Chat Button**: "Chat with Librarian" sidebar button only appears when `CLaRaLatentService.isAvailable` or an `AgenticSearchService` exists.
+- **Context Retrieval Limit**: Increased `topK` default from 5 to 100 in `retrieveContext` and `performSearch` — CLaRa now retrieves up to 100 matching chunks per query.
+- **FastVLM Re-Download Fix**: `hasOptimalModelCached` now uses a `UserDefaults` flag instead of checking a non-existent directory. Prevents re-downloading on every app launch.
+
+### Edge Node Routing & GPS EXIF
+- **EdgeDaemon TXT Record Fix**: Added missing `ram` key to Bonjour TXT record in `EdgeDaemonService.startListening()`. iOS clients previously saw 0GB RAM for all edge nodes. Changed TOPS format from `%.0f` to `%.1f` for precision.
+- **Bonjour Debug Logging**: Added startup log in `EdgeDaemonService` showing published TXT record values (chip, tops, ram, models). Added parsed TXT log in `BonjourDiscoveryService` for each discovered node.
+- **GPS EXIF Injection**: `CameraManager.photoOutput` now injects a full `{GPS}` EXIF dictionary (latitude, longitude, altitude, speed, course, UTC timestamps) into every captured photo using `CGImageSource`/`CGImageDestination`. Preserves all existing camera EXIF metadata (device model, lens, exposure, ISO, dimensions).
+- **Camera Location Wiring**: Added `CameraManager.currentLocation: CLLocation?` (`nonisolated(unsafe)` for thread-safe delegate access). Wired at 3 location update points in `VisualIntelligenceViewModel` (`locateContextOnLoad`, enrichment pipeline, `enrichContent`).
+- **FastVLM Model Resolution**: Reordered `resolveModelID()` to check HuggingFace Hub cache (via `hasOptimalModelCached` flag) first, then local `config.json`, then fallback to download. Cached resolved model ID in static `_resolvedModelID` to prevent repeated resolution and logging spam.
+- **Edge VLM RAM Threshold**: Lowered `canRunMediumVLM` from 8GB to 7GB (enables M2 iPad 1.5B model). Lowered edge node VLM offload threshold from 8GB to 7GB in both `EdgeNodeService.shouldOffload` and `LocalPipelineService`.
+- **CLaRa Citation Deduplication**: `AgenticSearchService.assembleContext` now deduplicates document IDs (highest Jaccard score wins) while preserving relevance order.
+
 ### Architectural Specification (V3)
 - **UI & HW Decoupling**: Updated `spec.md` to V3, formally separating User Interface forms (iPhone, visionOS) from Hardware ML capabilities, introducing the `CapabilityRouter` strategy.
 - **Transient Edge Payloads**: Enforced strict `autoreleasepool` Unified Memory constraints for the Mac Edge Node so transient image frames are never written to disk.

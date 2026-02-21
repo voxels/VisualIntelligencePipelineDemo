@@ -56,9 +56,6 @@ struct SidebarView: View {
     @State private var sessionToRename: SessionMetadata?
     @State private var newSessionTitle = ""
     
-    // Agentic Search State
-    @State private var showingAgenticChat = false
-    
     // MARK: - Queries
     @Query(sort: \ProcessedItem.updatedAt, order: .reverse)
     private var allItems: [ProcessedItem]
@@ -418,25 +415,20 @@ struct SidebarView: View {
                 Text(error)
             }
         }
-        .fullScreenCover(isPresented: $showingAgenticChat) {
-            if let searchService = Services.shared.agenticSearchService {
-                AgenticChatView(viewModel: AgenticChatViewModel(searchService: searchService))
-            } else {
-                Text("Agentic Search Service Unavailable")
-                    .onTapGesture { showingAgenticChat = false }
-            }
-        }
     }
     
+    @ViewBuilder
     private var agenticSearchSection: some View {
-        Section {
-            Button {
-                showingAgenticChat = true
-            } label: {
-                Label("Chat with Librarian", systemImage: "sparkles")
-                    .foregroundStyle(.blue)
-                    .font(.headline)
-                    .padding(.vertical, 4)
+        if CLaRaLatentService.shared.isAvailable || Services.shared.agenticSearchService != nil {
+            Section {
+                Button {
+                    navigationManager.showingAgenticChat = true
+                } label: {
+                    Label("Chat with Librarian", systemImage: "sparkles")
+                        .foregroundStyle(.blue)
+                        .font(.headline)
+                        .padding(.vertical, 4)
+                }
             }
         }
     }

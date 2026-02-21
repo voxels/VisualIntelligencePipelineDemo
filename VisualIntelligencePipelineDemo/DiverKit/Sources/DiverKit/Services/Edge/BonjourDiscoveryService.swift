@@ -156,7 +156,7 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
             // Parse TXT record metadata
             let metadata = parseTXTRecord(from: result.metadata)
             
-            return EdgeNodeInfo(
+            let nodeInfo = EdgeNodeInfo(
                 deviceName: name,
                 chipFamily: metadata["chip"] ?? "Unknown",
                 neuralEngineTOPS: Float(metadata["tops"] ?? "0") ?? 0,
@@ -164,6 +164,8 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
                 availableModels: metadata["models"]?.components(separatedBy: ",") ?? [],
                 isAvailable: true
             )
+            print("🔍 BonjourDiscovery: Parsed TXT for \(name) — chip=\(nodeInfo.chipFamily), tops=\(nodeInfo.neuralEngineTOPS), ram=\(nodeInfo.physicalMemoryGB)GB, models=\(nodeInfo.availableModels)")
+            return nodeInfo
         }
         
         let sortedNodes = discoveredNodes.sorted { $0.neuralEngineTOPS > $1.neuralEngineTOPS }
