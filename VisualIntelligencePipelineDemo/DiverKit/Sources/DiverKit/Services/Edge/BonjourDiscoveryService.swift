@@ -186,14 +186,23 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
     /// Parse Bonjour TXT record entries.
     private func parseTXTRecord(from metadata: NWBrowser.Result.Metadata?) -> [String: String] {
         guard let metadata = metadata,
-              case .bonjour(let txtRecord) = metadata else { return [:] }
+              case .bonjour(let txtRecord) = metadata else {
+            print("⚠️ BonjourDiscovery: No TXT metadata — metadata is nil or not bonjour")
+            return [:]
+        }
         
         var dict: [String: String] = [:]
         
-        // NWTXTRecord supports dictionary-style access
+        // Debug: dump TXT record description and all known keys
+        print("🔍 BonjourDiscovery: TXT record = \(String(describing: txtRecord))")
+        
+        // Try standard NWTXTRecord subscript access
         for key in ["chip", "tops", "ram", "models"] {
             if let value = txtRecord[key] {
                 dict[key] = value
+                print("🔍 BonjourDiscovery: TXT[\(key)] = \(value)")
+            } else {
+                print("⚠️ BonjourDiscovery: TXT[\(key)] = nil")
             }
         }
         
