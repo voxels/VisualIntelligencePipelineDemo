@@ -448,6 +448,28 @@ public final class MetadataPipelineService: @unchecked Sendable {
             localItem.processingLog.append("\(Date().formatted()): Processing completed successfully.")
             try activeContext.save()
             
+            // Ingest into CLaRa's in-memory document index for immediate RAG searchability
+            CLaRaLatentService.shared.ingestProcessedItem(
+                id: localItem.id,
+                title: localItem.title,
+                summary: localItem.summary,
+                transcription: localItem.transcription,
+                tags: localItem.tags,
+                visualTags: localItem.visualTags,
+                categories: localItem.categories,
+                location: localItem.location,
+                purposes: localItem.purposes,
+                productMetadata: localItem.productMetadata,
+                url: localItem.url,
+                placeContextData: localItem.placeContextData,
+                webContextData: localItem.webContextData,
+                weatherContextData: localItem.weatherContextData,
+                documentContextData: localItem.documentContextData,
+                qrContextData: localItem.qrContextData,
+                fastVLMAnalysisData: localItem.fastVLMAnalysisData,
+                questions: localItem.questions
+            )
+            
         } catch {
             // Handle errors - don't leave item stuck in processing state
             localItem.statusRaw = ProcessingStatus.failed.rawValue
@@ -592,6 +614,28 @@ public final class MetadataPipelineService: @unchecked Sendable {
             localItem.statusRaw = ProcessingStatus.ready.rawValue
             localItem.processingLog.append("\(Date().formatted()): Reprocessing completed successfully.")
             try bgCtx.save()
+            
+            // Ingest into CLaRa's in-memory document index for immediate RAG searchability
+            CLaRaLatentService.shared.ingestProcessedItem(
+                id: localItem.id,
+                title: localItem.title,
+                summary: localItem.summary,
+                transcription: localItem.transcription,
+                tags: localItem.tags,
+                visualTags: localItem.visualTags,
+                categories: localItem.categories,
+                location: localItem.location,
+                purposes: localItem.purposes,
+                productMetadata: localItem.productMetadata,
+                url: localItem.url,
+                placeContextData: localItem.placeContextData,
+                webContextData: localItem.webContextData,
+                weatherContextData: localItem.weatherContextData,
+                documentContextData: localItem.documentContextData,
+                qrContextData: localItem.qrContextData,
+                fastVLMAnalysisData: localItem.fastVLMAnalysisData,
+                questions: localItem.questions
+            )
             
         } catch {
             localItem.statusRaw = ProcessingStatus.failed.rawValue

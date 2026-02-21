@@ -16,11 +16,17 @@ import CloudKit
 /// Thread-safe: all CloudKit operations are atomic.
 public final class APIKeyService: Sendable {
     
-    /// Known API key identifiers for commerce services.
+    /// Known API key identifiers for commerce and affiliate services.
     public enum APIKey: String, CaseIterable, Sendable {
         case foursquare = "com.secretatomics.vi.foursquare"
         case reddit = "com.secretatomics.vi.reddit"
         case ifixit = "com.secretatomics.vi.ifixit"
+        // Affiliate program tags (stored via Settings > API Keys)
+        case amazonAssociates = "com.secretatomics.vi.affiliate.amazon"
+        case ebayPartnerNetwork = "com.secretatomics.vi.affiliate.ebay"
+        case targetPartners = "com.secretatomics.vi.affiliate.target"
+        case bestBuyAffiliate = "com.secretatomics.vi.affiliate.bestbuy"
+        case thriveMarketReferral = "com.secretatomics.vi.affiliate.thrive"
     }
     
     /// CloudKit container identifier for key storage.

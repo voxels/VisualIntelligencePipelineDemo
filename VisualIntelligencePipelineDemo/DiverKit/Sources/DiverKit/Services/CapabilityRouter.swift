@@ -39,11 +39,21 @@ public final class CapabilityRouter: Sendable {
     // MARK: - Local ML Capabilities
     
     /// Minimum recommended RAM to run large FastVLM (7B+) models locally in MLX Swift.
+    /// Requires 16GB+ RAM — M4 Pro Mac, M4 iPad Pro (16GB config), etc.
     public var canRunHeavyVLM: Bool {
         return currentCapability.physicalMemoryGB >= 16
     }
     
+    /// M-series device with enough RAM for the 1.5B model (the sweet spot for M2/M3 iPads).
+    /// 8GB+ RAM on M-series silicon — excludes A-series iPhones.
+    public var canRunMediumVLM: Bool {
+        let chip = currentCapability.chipFamily
+        let isMSeries = chip.hasPrefix("M")
+        return isMSeries && currentCapability.physicalMemoryGB >= 8
+    }
+    
     /// Minimum recommended RAM to run the FastVLM 0.5B model.
+    /// Any device with 8GB+ RAM (including A18 iPhones).
     public var canRunLightVLM: Bool {
         return currentCapability.physicalMemoryGB >= 8
     }

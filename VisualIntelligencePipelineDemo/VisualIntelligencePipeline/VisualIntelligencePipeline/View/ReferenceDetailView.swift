@@ -149,10 +149,26 @@ struct ReferenceDetailContent: View {
                     }
                     
                     if let summary = item.summary {
-                        Text(summary)
+                        let parsed = parseSummaryModelBadge(from: summary)
+                        Text(parsed.text)
                             .font(.body)
                             .foregroundStyle(.primary)
                             .padding(.top, 4)
+                            
+                        if let badge = parsed.badge {
+                            HStack {
+                                Image(systemName: "sparkles")
+                                    .font(.caption2)
+                                Text(badge)
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                            }
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(.ultraThinMaterial, in: Capsule())
+                            .padding(.top, 2)
+                        }
                     }
                     
                     // Divider removed
@@ -785,6 +801,25 @@ struct ReferenceDetailContent: View {
             .background(Color(normalize(color: .secondarySystemGroupedBackground)))
             .cornerRadius(12)
             .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+    }
+    
+    /// Parses `[Model: ModelName]` from the end of the summary.
+    private func parseSummaryModelBadge(from summary: String) -> (text: String, badge: String?) {
+        let pattern = #"^\s*(.*?)\s*\[Model:\s*(.*?)\]\s*$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]) else {
+            return (summary, nil)
+        }
+        
+        let nsString = summary as NSString
+        let results = regex.matches(in: summary, range: NSRange(location: 0, length: nsString.length))
+        
+        if let match = results.first, match.numberOfRanges == 3 {
+             let cleanedText = nsString.substring(with: match.range(at: 1))
+             let modelBadge = nsString.substring(with: match.range(at: 2))
+             return (cleanedText, modelBadge)
+        }
+        
+        return (summary, nil)
     }
 }
 

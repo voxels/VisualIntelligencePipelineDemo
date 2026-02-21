@@ -196,10 +196,15 @@ public struct AgenticSearchIngestPayload: Codable, Sendable {
 public struct AgenticSearchQuery: Codable, Sendable {
     public let queryText: String
     public let topK: Int
+    /// Pre-assembled context from the client's local document index.
+    /// The EdgeDaemon uses this as the document text for CLaRa inference,
+    /// so the model answers based on the user's actual library content.
+    public let contextPayload: String?
     
-    public init(queryText: String, topK: Int = 5) {
+    public init(queryText: String, topK: Int = 5, contextPayload: String? = nil) {
         self.queryText = queryText
         self.topK = topK
+        self.contextPayload = contextPayload
     }
 }
 

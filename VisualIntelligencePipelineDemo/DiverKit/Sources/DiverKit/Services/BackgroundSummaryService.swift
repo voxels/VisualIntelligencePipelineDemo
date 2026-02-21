@@ -113,7 +113,7 @@ public actor BackgroundSummaryService {
           do {
             let newSummary = try await edgeActor.summarize(text: textToSummarize)
             if !Task.isCancelled {
-              item.summary = newSummary
+              item.summary = "\(newSummary) [Model: Edge-FastVLM]"
               item.updatedAt = Date()
               item.processingLog.append(
                 "\(Date().formatted()): Summary silently upgraded by Edge Context Actor")
@@ -187,7 +187,7 @@ public actor BackgroundSummaryService {
           do {
             let newSummary = try await edgeActor.summarize(text: textToSummarize)
             if !Task.isCancelled {
-              session.summary = newSummary
+              session.summary = "\(newSummary) [Model: Edge-FastVLM]"
               session.updatedAt = Date()
               try modelContext.save()
               print(

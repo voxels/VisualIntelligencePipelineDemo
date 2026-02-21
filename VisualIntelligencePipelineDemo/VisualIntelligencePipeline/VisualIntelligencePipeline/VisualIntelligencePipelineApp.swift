@@ -251,10 +251,44 @@ struct VisualIntelligencePipelineApp: App {
                     
                     // Wire FastVLM enrichment (opt-in, model downloaded separately)
                     if FastVLMEnrichmentService.isEnabled {
-                        metadataPipelineService.fastVLMService = FastVLMEnrichmentService()
+                        let fastVLMService = FastVLMEnrichmentService()
+                        metadataPipelineService.fastVLMService = fastVLMService
+                        
+                        // Auto-download the optimal model tier in the background if not cached
+                        if !FastVLMEnrichmentService.hasOptimalModelCached {
+                            Task.detached(priority: .background) {
+                                do {
+                                    try await fastVLMService.downloadOptimalModel { progress in
+                                        // Progress is logged by DiverLogger inside the service
+                                    }
+                                } catch {
+                                    DiverLogger.pipeline.error("❌ [FastVLM] Background auto-download failed: \(error)")
+                                }
+                            }
+                        }
                     }
 
-                    // Initialize SharedWithYouManager (iOS 16+, macOS 13+)
+                    // Pre-download CLaRa model for agentic search (M-series / 8GB+ devices)
+                    if CLaRaLatentService.shared.isAvailable && !CLaRaLatentService.shared.hasModelCached {
+                        Task.detached(priority: .background) {
+                            do {
+                                try await CLaRaLatentService.shared.downloadModel { progress in
+                                    // Progress is logged by DiverLogger inside the service
+                                }
+                            } catch {
+                                DiverLogger.pipeline.error("❌ [CLaRa] Background auto-download failed: \(error)")
+                            }
+                        }
+                    }
+                    
+                    // Populate CLaRa's in-memory document index from the full library.
+                    // This is pure text processing — works on all devices.
+                    // The index is used for RAG retrieval when querying CLaRa locally
+                    // or when sending context to the EdgeDaemon.
+                    Task.detached(priority: .utility) {
+                        CLaRaLatentService.shared.populateIndex(container: dataStore.container)
+                    }
+
                     if #available(iOS 16.0, macOS 13.0, *) {
                         if sharedWithYouManager == nil {
                             let queueDirectory = AppGroupContainer.queueDirectoryURL()!

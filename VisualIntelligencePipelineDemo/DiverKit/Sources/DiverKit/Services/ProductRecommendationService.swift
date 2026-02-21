@@ -54,14 +54,24 @@ public final class ProductRecommendationService: ProductRecommending, @unchecked
         
         // For Phase 0, we return the product itself as the primary recommendation.
         // In Phase 2, this will be expanded with RAG search against platform APIs.
+        // Generate a real affiliate URL using the routing service
+        let affiliateRouter = AffiliateRoutingService()
+        let rankedPlatforms = try? await affiliateRouter.rankPlatforms(
+            for: product,
+            policy: EthicalPolicy()
+        )
+        let topPlatform = rankedPlatforms?.first
+        let fallbackURL = try? await affiliateRouter.affiliateLink(for: product, platform: "target")
+        let affiliateURL: URL? = topPlatform?.affiliateURL ?? fallbackURL
+        
         let option = PurchaseOption(
-            platform: "detected",
+            platform: topPlatform?.platform ?? "detected",
             productName: product.name,
             brand: product.brand,
             price: 0, // Price not available from detection alone
             currency: "USD",
             scores: [productScore],
-            affiliateURL: URL(string: "https://example.com")! // Placeholder
+            affiliateURL: affiliateURL ?? URL(string: "https://www.target.com/s?searchTerm=\(product.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? product.name)")!
         )
         
         let recommendation = RankedRecommendation(

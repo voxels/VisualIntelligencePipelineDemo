@@ -226,20 +226,26 @@ public distributed actor EdgeAgenticSearchActor {
         return true
     }
     
-    /// Executes an Agentic Search query against the CLaRa latent space.
+    /// Executes an Agentic Search query against CLaRa on the Edge node.
+    /// Prefers the client's pre-assembled `contextPayload` (from its local document index)
+    /// over building context locally (the EdgeDaemon may not have the user's library).
     distributed public func search(query: AgenticSearchQuery) async throws -> AgenticSearchResult {
         print("🔍 [EdgeAgenticSearchActor] Querying CLaRa locally via MLX for: \(query.queryText)")
         
-        var contextBlock = "User query context text..."
-        
-        // Retrieve all items from local data store to feed as context
-        let contextStr: String = await MainActor.run {
-            guard let mc = Services.shared.modelContext else { return "" }
-            let store = DiverDataStore(container: mc.container)
-            return store.generateAgenticContextString(limit: 30)
-        }
-        if !contextStr.isEmpty {
-            contextBlock = contextStr
+        // Use the client's pre-assembled context if available (contains indexed library items)
+        let contextBlock: String
+        if let clientContext = query.contextPayload, !clientContext.isEmpty {
+            print("📋 [EdgeAgenticSearchActor] Using client context (\(clientContext.count) chars)")
+            contextBlock = clientContext
+        } else {
+            // Fallback: build context from EdgeDaemon's own data (may be empty)
+            print("⚠️ [EdgeAgenticSearchActor] No client context — building from local data")
+            let localContext: String = await MainActor.run {
+                guard let mc = Services.shared.modelContext else { return "" }
+                let store = DiverDataStore(container: mc.container)
+                return store.generateAgenticContextString(limit: 30)
+            }
+            contextBlock = localContext.isEmpty ? "No context available." : localContext
         }
         
         do {
@@ -249,7 +255,7 @@ public distributed actor EdgeAgenticSearchActor {
             )
             return AgenticSearchResult(
                 generatedAnswer: answer ?? "CLaRa failed to generate a response.",
-                citedDocumentIDs: []
+                citedDocumentIDs: []  // Citations are assembled on the client side
             )
         } catch {
             throw EdgeInferenceError.serviceUnavailable("Native MLX CLaRa search failed: \(error)")
@@ -262,16 +268,22 @@ public distributed actor EdgeContextActor {
     public typealias ActorSystem = VisualIntelligenceActorSystem
     
     distributed public func summarize(text: String) async throws -> String {
-        print("🧠 [EdgeContextActor] Summarizing text (\(text.count) characters)...")
-        if ContextQuestionService.isAvailable {
-            let service = ContextQuestionService()
-            // We strip any existing tags context service might add, and append our own Edge tag
-            var summary = try await service.summarizeText(text)
-            summary = summary.replacingOccurrences(of: " [Model: SystemLanguageModel-iOS26]", with: "")
-            return "\(summary) [Model: Edge-ContextQuestionService]"
+        print("🧠 [EdgeContextActor] Summarizing text (\(text.count) characters) using FastVLM...")
+        if FastVLMEnrichmentService.isAvailable {
+            let service = FastVLMEnrichmentService()
+            let analysis = try await service.analyze(
+                image: nil,
+                visionTags: [],
+                enrichmentContext: text,
+                transcription: nil
+            )
+            if let result = analysis?.contextSummary, !result.isEmpty {
+                return result
+            }
+            return "\(String(text.prefix(200)))..."
         } else {
             // Fallback
-            return "\(String(text.prefix(200)))... [Model: Edge-Heuristic]"
+            return "\(String(text.prefix(200)))..."
         }
     }
 }

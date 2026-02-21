@@ -7,6 +7,7 @@
 //
 //  Ranks platforms by ethical match based on user's EthicalPolicy preferences
 //  and generates affiliate-tracked URLs for supported platforms.
+//  Affiliate tags are loaded from APIKeyService (CloudKit-backed, syncs across devices).
 //
 
 import Foundation
@@ -14,15 +15,17 @@ import DiverShared
 
 /// Routes product purchases through affiliate deep links with ethical filtering.
 /// Conforms to CommerceRouting protocol.
+///
+/// Affiliate tags are loaded from `APIKeyService` (CloudKit private database)
+/// at init time. Configure tags in Settings > API Keys.
 public final class AffiliateRoutingService: CommerceRouting, Sendable {
     
-    /// Affiliate tag/ID per platform (stored in UserDefaults or via APIKeyService).
+    /// Per-platform config with ethical profile and affiliate URL builder.
     private struct AffiliateConfig: Sendable {
         let platform: String
-        let baseSearchURL: String
-        let affiliateParam: String?
         let affiliateTag: String?
         let ethicalProfile: PlatformEthics
+        let buildURL: @Sendable (String, String?) -> URL?
     }
     
     /// Known ethical profile for a commerce platform.
@@ -33,46 +36,78 @@ public final class AffiliateRoutingService: CommerceRouting, Sendable {
         let knownLaborViolations: Bool
     }
     
-    /// Static platform registry with ethical profiles.
-    private let platforms: [AffiliateConfig] = [
-        AffiliateConfig(
-            platform: "thrive_market",
-            baseSearchURL: "https://thrivemarket.com/search?search=",
-            affiliateParam: nil,
-            affiliateTag: nil,
-            ethicalProfile: PlatformEthics(carbonIntensity: 0.2, laborScore: 0.9, certifications: ["B Corp", "Carbon Neutral"], knownLaborViolations: false)
-        ),
-        AffiliateConfig(
-            platform: "target",
-            baseSearchURL: "https://www.target.com/s?searchTerm=",
-            affiliateParam: nil,
-            affiliateTag: nil,
-            ethicalProfile: PlatformEthics(carbonIntensity: 0.5, laborScore: 0.6, certifications: [], knownLaborViolations: false)
-        ),
-        AffiliateConfig(
-            platform: "amazon",
-            baseSearchURL: "https://www.amazon.com/s?k=",
-            affiliateParam: "tag",
-            affiliateTag: nil,
-            ethicalProfile: PlatformEthics(carbonIntensity: 0.7, laborScore: 0.3, certifications: [], knownLaborViolations: true)
-        ),
-        AffiliateConfig(
-            platform: "bestbuy",
-            baseSearchURL: "https://www.bestbuy.com/site/searchpage.jsp?st=",
-            affiliateParam: nil,
-            affiliateTag: nil,
-            ethicalProfile: PlatformEthics(carbonIntensity: 0.5, laborScore: 0.5, certifications: ["Energy Star Partner"], knownLaborViolations: false)
-        ),
-        AffiliateConfig(
-            platform: "ebay",
-            baseSearchURL: "https://www.ebay.com/sch/i.html?_nkw=",
-            affiliateParam: "mkcid",
-            affiliateTag: nil,
-            ethicalProfile: PlatformEthics(carbonIntensity: 0.3, laborScore: 0.5, certifications: [], knownLaborViolations: false)
-        )
-    ]
+    /// Platform registry — built at init with live affiliate tags from CloudKit cache.
+    private let platforms: [AffiliateConfig]
     
-    public init() {}
+    public init() {
+        let apiKeys = APIKeyService()
+        
+        // Load affiliate tags from CloudKit cache (populated by prefetchKeys on app launch).
+        // Returns nil if user hasn't configured a tag — links still work, just unattributed.
+        let amazonTag = apiKeys.retrieve(for: .amazonAssociates)
+        let ebayTag = apiKeys.retrieve(for: .ebayPartnerNetwork)
+        let targetTag = apiKeys.retrieve(for: .targetPartners)
+        let bestBuyTag = apiKeys.retrieve(for: .bestBuyAffiliate)
+        let thriveTag = apiKeys.retrieve(for: .thriveMarketReferral)
+        
+        self.platforms = [
+            // --- Thrive Market (B Corp, highest ethical score) ---
+            AffiliateConfig(
+                platform: "thrive_market",
+                affiliateTag: thriveTag,
+                ethicalProfile: PlatformEthics(carbonIntensity: 0.2, laborScore: 0.9, certifications: ["B Corp", "Carbon Neutral"], knownLaborViolations: false),
+                buildURL: { searchTerm, tag in
+                    var urlStr = "https://thrivemarket.com/search?search=\(searchTerm)"
+                    if let tag { urlStr += "&refer=\(tag)" }
+                    return URL(string: urlStr)
+                }
+            ),
+            // --- Target (Impact Radius affiliate program) ---
+            AffiliateConfig(
+                platform: "target",
+                affiliateTag: targetTag,
+                ethicalProfile: PlatformEthics(carbonIntensity: 0.5, laborScore: 0.6, certifications: [], knownLaborViolations: false),
+                buildURL: { searchTerm, tag in
+                    var urlStr = "https://www.target.com/s?searchTerm=\(searchTerm)"
+                    if let tag { urlStr += "&afid=\(tag)" }
+                    return URL(string: urlStr)
+                }
+            ),
+            // --- Amazon (Amazon Associates) ---
+            AffiliateConfig(
+                platform: "amazon",
+                affiliateTag: amazonTag,
+                ethicalProfile: PlatformEthics(carbonIntensity: 0.7, laborScore: 0.3, certifications: [], knownLaborViolations: true),
+                buildURL: { searchTerm, tag in
+                    var urlStr = "https://www.amazon.com/s?k=\(searchTerm)"
+                    if let tag { urlStr += "&tag=\(tag)" }
+                    return URL(string: urlStr)
+                }
+            ),
+            // --- Best Buy (Impact Radius / CJ Affiliate) ---
+            AffiliateConfig(
+                platform: "bestbuy",
+                affiliateTag: bestBuyTag,
+                ethicalProfile: PlatformEthics(carbonIntensity: 0.5, laborScore: 0.5, certifications: ["Energy Star Partner"], knownLaborViolations: false),
+                buildURL: { searchTerm, tag in
+                    var urlStr = "https://www.bestbuy.com/site/searchpage.jsp?st=\(searchTerm)"
+                    if let tag { urlStr += "&irclickid=\(tag)" }
+                    return URL(string: urlStr)
+                }
+            ),
+            // --- eBay (eBay Partner Network) ---
+            AffiliateConfig(
+                platform: "ebay",
+                affiliateTag: ebayTag,
+                ethicalProfile: PlatformEthics(carbonIntensity: 0.3, laborScore: 0.5, certifications: [], knownLaborViolations: false),
+                buildURL: { searchTerm, tag in
+                    var urlStr = "https://www.ebay.com/sch/i.html?_nkw=\(searchTerm)&mkcid=1"
+                    if let tag { urlStr += "&campid=\(tag)" }
+                    return URL(string: urlStr)
+                }
+            )
+        ]
+    }
     
     // MARK: - CommerceRouting
     
@@ -86,14 +121,7 @@ public final class AffiliateRoutingService: CommerceRouting, Sendable {
             return nil
         }
         
-        var urlString = config.baseSearchURL + encoded
-        
-        // Append affiliate tag if configured
-        if let param = config.affiliateParam, let tag = config.affiliateTag {
-            urlString += "&\(param)=\(tag)"
-        }
-        
-        return URL(string: urlString)
+        return config.buildURL(encoded, config.affiliateTag)
     }
     
     public func rankPlatforms(for product: ProductClassification, policy: EthicalPolicy) async throws -> [PlatformMatch] {

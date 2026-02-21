@@ -68,30 +68,121 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         let modelsDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
             .first?.appendingPathComponent("Models/FastVLM")
         
-        guard let dir = modelsDir else { return "mlx-community/FastVLM-0.5B-bf16" }
+        guard let dir = modelsDir else {
+            DiverLogger.pipeline.warning("🧠 [FastVLM] No Application Support directory — using HF Hub fallback")
+            return "mlx-community/FastVLM-0.5B-bf16"
+        }
         
         let capability = CapabilityRouter.shared
+        let hw = capability.currentCapability
+        let aneTOPS = String(format: "%.1f", hw.neuralEngineTOPS)
+        DiverLogger.pipeline.info("🧠 [FastVLM] Model resolution — chip: \(hw.chipFamily), RAM: \(hw.physicalMemoryGB)GB, ANE: \(aneTOPS) TOPS")
         
-        // 1. If we can run heavy VLM (16GB+ RAM), prefer 7B, then fallback.
+        // 1. If we can run heavy VLM (16GB+ RAM), prefer 7B.
         if capability.canRunHeavyVLM {
             let config7B = dir.appendingPathComponent("7B/config.json").path
             if FileManager.default.fileExists(atPath: config7B) {
-                print("🧠 [FastVLMService] Resolved heavy model capability: apple/FastVLM/7B")
+                DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/7B (heavy tier, \(hw.physicalMemoryGB)GB RAM)")
                 return "apple/FastVLM/7B"
             }
+            DiverLogger.pipeline.debug("🧠 [FastVLM] 7B weights not cached at \(config7B)")
         }
         
-        // 2. If we can run light VLM (8GB+ RAM), or as a fallback for 7B, try 0.5B.
+        // 2. If M-series with 8GB+ (M2/M3 iPad, M1 Mac), prefer 1.5B — the sweet spot.
+        if capability.canRunMediumVLM {
+            let config15B = dir.appendingPathComponent("1.5B/config.json").path
+            if FileManager.default.fileExists(atPath: config15B) {
+                DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/1.5B (medium tier, \(hw.chipFamily) \(hw.physicalMemoryGB)GB)")
+                return "apple/FastVLM/1.5B"
+            }
+            DiverLogger.pipeline.debug("🧠 [FastVLM] 1.5B weights not cached at \(config15B)")
+        }
+        
+        // 3. If we can run light VLM (8GB+ RAM on any device), try 0.5B.
         if capability.canRunLightVLM {
             let config05B = dir.appendingPathComponent("0.5B/config.json").path
             if FileManager.default.fileExists(atPath: config05B) {
-                print("🧠 [FastVLMService] Resolved light model capability: apple/FastVLM/0.5B")
+                DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/0.5B (light tier, \(hw.physicalMemoryGB)GB RAM)")
                 return "apple/FastVLM/0.5B"
+            }
+            DiverLogger.pipeline.debug("🧠 [FastVLM] 0.5B weights not cached at \(config05B)")
+        }
+        
+        // 4. Fallback to HF Hub download for optimal tier.
+        let fallback = optimalHuggingFaceRepo
+        DiverLogger.pipeline.info("🧠 [FastVLM] No local weights cached — will download from HF Hub: \(fallback)")
+        return fallback
+    }
+    
+    // MARK: - HuggingFace Repo Mapping (MLX-format weights)
+    
+    /// Maps hardware capability to the best MLX-format HuggingFace repo.
+    /// These are pre-converted MLX checkpoints — no PyTorch→MLX conversion needed at runtime.
+    public static var optimalHuggingFaceRepo: String {
+        let capability = CapabilityRouter.shared
+        if capability.canRunHeavyVLM { return "mlx-community/FastVLM-7B-bf16" }
+        if capability.canRunMediumVLM { return "apple/FastVLM-1.5B-int8" }
+        return "mlx-community/FastVLM-0.5B-bf16"
+    }
+    
+    /// Whether the optimal model for this device is already cached locally.
+    /// Uses a UserDefaults flag set after successful download — the HF Hub
+    /// caches models in its own directory, not in Application Support.
+    public static var hasOptimalModelCached: Bool {
+        let key = "FastVLM.cachedRepo.\(optimalHuggingFaceRepo)"
+        return UserDefaults.standard.bool(forKey: key)
+    }
+    
+    /// Mark the optimal model as cached after successful download.
+    private static func markModelCached() {
+        let key = "FastVLM.cachedRepo.\(optimalHuggingFaceRepo)"
+        UserDefaults.standard.set(true, forKey: key)
+        DiverLogger.pipeline.info("✅ [FastVLM] Marked model as cached: \(optimalHuggingFaceRepo)")
+    }
+    
+    /// Downloads the optimal model tier for this device's hardware in the background.
+    /// Safe to call at app launch — no-ops if the optimal model is already cached.
+    /// - Parameter progress: Callback with download progress (0.0 to 1.0)
+    public func downloadOptimalModel(progress: @escaping @Sendable (Double) -> Void) async throws {
+        let hw = CapabilityRouter.shared.currentCapability
+        DiverLogger.pipeline.info("📥 [FastVLM] Download check — chip: \(hw.chipFamily), RAM: \(hw.physicalMemoryGB)GB, optimal: \(Self.optimalHuggingFaceRepo)")
+        
+        guard !Self.hasOptimalModelCached else {
+            DiverLogger.pipeline.info("✅ [FastVLM] Optimal model already cached — no download needed")
+            progress(1.0)
+            return
+        }
+        
+        #if canImport(MLXVLM) && !targetEnvironment(simulator)
+        let repo = Self.optimalHuggingFaceRepo
+        DiverLogger.pipeline.info("📥 [FastVLM] Starting background download: \(repo) for \(hw.chipFamily) (\(hw.physicalMemoryGB)GB)")
+        
+        let config = ModelConfiguration(id: repo)
+        let startTime = Date()
+        
+        // VLMModelFactory downloads from HF Hub and caches locally
+        _ = try await VLMModelFactory.shared.loadContainer(
+            configuration: config
+        ) { update in
+            let pct = update.fractionCompleted * 100
+            Task { @MainActor in
+                progress(update.fractionCompleted)
+            }
+            // Log at 10% intervals to avoid spamming
+            let pctInt = Int(pct)
+            if pctInt % 10 == 0 {
+                let pctStr = String(format: "%.0f%%", pct)
+                DiverLogger.pipeline.info("📥 [FastVLM] Download progress: \(pctStr) — \(repo)")
             }
         }
         
-        // 3. Fallback to default community model if local weights aren't downloaded or RAM is too low.
-        return "mlx-community/FastVLM-0.5B-bf16"
+        let elapsed = String(format: "%.1f", Date().timeIntervalSince(startTime))
+        DiverLogger.pipeline.info("✅ [FastVLM] Download complete: \(repo) in \(elapsed)s")
+        Self.markModelCached()
+        #else
+        DiverLogger.pipeline.warning("⚠️ [FastVLM] MLXVLM not available on this platform — cannot download")
+        throw FastVLMError.notSupported
+        #endif
     }
     private static let enabledKey = "fastvlm_enrichment_enabled"
     

@@ -44,21 +44,121 @@ public final class DiverDataStore {
     // Pull-to-refresh triggers modelContext.save() to push local changes immediately.
     
     public func generateAgenticContextString(limit: Int = 30) -> String {
+        var sections: [String] = []
+        
+        // --- Section 1: Recent Library Items ---
         let descriptor = FetchDescriptor<ProcessedItem>()
-        guard let items = try? mainContext.fetch(descriptor) else { return "" }
-        
-        let recentText = items
-            .sorted(by: { $0.createdAt > $1.createdAt })
-            .prefix(limit)
-            .compactMap { item -> String? in
-                let title = item.title ?? "Untitled"
-                let text = item.summary ?? item.transcription ?? ""
-                if text.isEmpty { return nil }
-                return "\(title): \(text)"
+        if let items = try? mainContext.fetch(descriptor), !items.isEmpty {
+            let recentText = items
+                .sorted(by: { $0.createdAt > $1.createdAt })
+                .prefix(limit)
+                .compactMap { item -> String? in
+                    var components: [String] = []
+                    
+                    let title = item.title ?? "Untitled"
+                    components.append("Title: \(title)")
+                    
+                    if let location = item.placeContext?.name, !location.isEmpty {
+                        components.append("Location: \(location)")
+                    }
+                    
+                    if let weather = item.weatherContext?.condition, !weather.isEmpty {
+                        components.append("Weather: \(weather)")
+                    }
+                    
+                    if let activity = item.activityContext?.type, !activity.isEmpty {
+                        components.append("Activity: \(activity.capitalized)")
+                    }
+                    
+                    let tags = Array(Set(item.visualTags + item.tags + item.categories + item.purposes)).sorted()
+                    if !tags.isEmpty {
+                        components.append("Tags: \(tags.joined(separator: ", "))")
+                    }
+                    
+                    let text = item.summary ?? item.transcription ?? ""
+                    if !text.isEmpty {
+                        components.append("Details: \(String(text.prefix(200)))")
+                    }
+                    
+                    if components.isEmpty { return nil }
+                    return components.joined(separator: " | ")
+                }
+                .joined(separator: "\n---\n")
+            
+            if !recentText.isEmpty {
+                sections.append("Recent Library Items:\n\(recentText)")
             }
-            .joined(separator: "\n---\n")
+        }
         
-        return recentText.isEmpty ? "" : "Here is my recent library context:\n" + recentText
+        // --- Section 2: User Interests (UserConcept weights) ---
+        let conceptDescriptor = FetchDescriptor<UserConcept>(
+            sortBy: [SortDescriptor(\.weight, order: .reverse)]
+        )
+        if let concepts = try? mainContext.fetch(conceptDescriptor), !concepts.isEmpty {
+            let conceptEntries = concepts.prefix(20).map { concept in
+                var entry = "\(concept.name) (weight: \(String(format: "%.1f", concept.weight)))"
+                if !concept.definition.isEmpty {
+                    entry += " — \(String(concept.definition.prefix(80)))"
+                }
+                return "- \(entry)"
+            }.joined(separator: "\n")
+            sections.append("User Interests & Concepts:\n\(conceptEntries)")
+        }
+        
+        // --- Section 3: Owned Products ---
+        let productDescriptor = FetchDescriptor<OwnedProduct>(
+            sortBy: [SortDescriptor(\.acquiredAt, order: .reverse)]
+        )
+        if let products = try? mainContext.fetch(productDescriptor), !products.isEmpty {
+            let productEntries = products.prefix(15).map { product in
+                var entry = product.productName
+                if let brand = product.brand, !brand.isEmpty { entry += " by \(brand)" }
+                if let category = product.category, !category.isEmpty { entry += " [\(category)]" }
+                entry += " (\(product.status.rawValue))"
+                if let score = product.recommendedScore {
+                    entry += " score: \(String(format: "%.0f%%", score * 100))"
+                }
+                return "- \(entry)"
+            }.joined(separator: "\n")
+            sections.append("Owned Products:\n\(productEntries)")
+        }
+        
+        // --- Section 4: Commerce Scoring Intelligence ---
+        var snapshotDescriptor = FetchDescriptor<ScoreSnapshot>(
+            sortBy: [SortDescriptor(\.recordedAt, order: .reverse)]
+        )
+        snapshotDescriptor.fetchLimit = 30
+        if let snapshots = try? mainContext.fetch(snapshotDescriptor), !snapshots.isEmpty {
+            // Group by productID and keep only the latest per product
+            var latestByProduct: [String: ScoreSnapshot] = [:]
+            for snapshot in snapshots {
+                if latestByProduct[snapshot.productID] == nil {
+                    latestByProduct[snapshot.productID] = snapshot
+                }
+            }
+            
+            let scoreEntries = latestByProduct.values
+                .sorted { ($0.compositeScore ?? 0) > ($1.compositeScore ?? 0) }
+                .prefix(10)
+                .map { snapshot in
+                    var entry = snapshot.productName
+                    if let brand = snapshot.brand { entry += " (\(brand))" }
+                    if let score = snapshot.compositeScore {
+                        entry += " — composite: \(String(format: "%.0f%%", score * 100))"
+                    }
+                    let strategies = snapshot.strategyScores
+                        .map { "\($0.strategyID): \(String(format: "%.0f%%", $0.score * 100))" }
+                        .joined(separator: ", ")
+                    if !strategies.isEmpty { entry += " [\(strategies)]" }
+                    return "- \(entry)"
+                }.joined(separator: "\n")
+            
+            if !scoreEntries.isEmpty {
+                sections.append("Commerce Score Intelligence:\n\(scoreEntries)")
+            }
+        }
+        
+        return sections.isEmpty ? "" : sections.joined(separator: "\n\n")
     }
 
     public init(types: [any PersistentModel.Type] = DiverDataStore.coreTypes, inMemory: Bool = false, forAppGroup: Bool = true) {

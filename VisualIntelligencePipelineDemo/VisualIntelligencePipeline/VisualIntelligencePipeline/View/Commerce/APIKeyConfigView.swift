@@ -118,6 +118,12 @@ struct APIKeyConfigView: View {
         case .foursquare: return "map.fill"
         case .reddit: return "text.bubble.fill"
         case .ifixit: return "wrench.and.screwdriver.fill"
+        // Affiliate programs
+        case .amazonAssociates: return "cart.fill"
+        case .ebayPartnerNetwork: return "tag.fill"
+        case .targetPartners: return "target"
+        case .bestBuyAffiliate: return "desktopcomputer"
+        case .thriveMarketReferral: return "leaf.fill"
         }
     }
     
@@ -126,6 +132,11 @@ struct APIKeyConfigView: View {
         case .foursquare: return .blue
         case .reddit: return .orange
         case .ifixit: return .green
+        case .amazonAssociates: return .yellow
+        case .ebayPartnerNetwork: return .red
+        case .targetPartners: return .red
+        case .bestBuyAffiliate: return .blue
+        case .thriveMarketReferral: return .green
         }
     }
     
@@ -134,6 +145,11 @@ struct APIKeyConfigView: View {
         case .foursquare: return "Foursquare"
         case .reddit: return "Reddit"
         case .ifixit: return "iFixit"
+        case .amazonAssociates: return "Amazon Associates"
+        case .ebayPartnerNetwork: return "eBay Partner Network"
+        case .targetPartners: return "Target Affiliate"
+        case .bestBuyAffiliate: return "Best Buy Affiliate"
+        case .thriveMarketReferral: return "Thrive Market Referral"
         }
     }
     
@@ -142,6 +158,11 @@ struct APIKeyConfigView: View {
         case .foursquare: return "Used for venue-level location search in the editing UI."
         case .reddit: return "Used for community sentiment analysis in Social Proof scoring."
         case .ifixit: return "Used for repair guide lookup in Community Repairability scoring."
+        case .amazonAssociates: return "Your Amazon Associates tag (e.g. mysite-20). Sign up at affiliate-program.amazon.com"
+        case .ebayPartnerNetwork: return "Your eBay Partner Network Campaign ID. Sign up at partnernetwork.ebay.com"
+        case .targetPartners: return "Your Target affiliate ID from Impact Radius. Apply at partners.target.com"
+        case .bestBuyAffiliate: return "Your Best Buy click ID from Impact Radius. Apply at partners.bestbuy.com"
+        case .thriveMarketReferral: return "Your Thrive Market referral code. Found in your account settings."
         }
     }
 }

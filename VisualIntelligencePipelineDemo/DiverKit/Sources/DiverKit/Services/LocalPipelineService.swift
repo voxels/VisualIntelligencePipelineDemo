@@ -558,6 +558,13 @@ public final class LocalPipelineService {
                     }
                 }
                 
+                if let contextSummary = finalAnalysis.contextSummary, !contextSummary.isEmpty {
+                    // Prepend or overwrite the summary with the rich context from FastVLM
+                    // FastVLMAnalysis natively tracks modelID, so conditionally use it.
+                    let badgeModel = finalAnalysis.modelID ?? "FastVLM"
+                    existing.summary = "\(contextSummary) [Model: \(badgeModel)]"
+                }
+                
                 // Log remaining fields for debugging
                 print("📝 [FastVLM] Item \(existing.id) — contextSummary: \(finalAnalysis.contextSummary ?? "nil")")
                 print("📝 [FastVLM] Item \(existing.id) — suggestedTags: \(finalAnalysis.suggestedTags)")
@@ -900,6 +907,11 @@ public final class LocalPipelineService {
                     if !processed.purposes.contains(purpose) {
                         processed.purposes.append(purpose)
                     }
+                }
+                
+                if let contextSummary = analysis.contextSummary, !contextSummary.isEmpty {
+                    let badgeModel = analysis.modelID ?? "FastVLM"
+                    processed.summary = "\(contextSummary) [Model: \(badgeModel)]"
                 }
                 
                 // Log remaining fields for debugging
@@ -2459,7 +2471,7 @@ public final class LocalPipelineService {
             
             // Update summary with LLM refinement if available
             if let s = summary, !s.isEmpty {
-                item.summary = s
+                item.summary = "\(s) [Model: SystemLanguageModel-iOS26]"
                 item.processingLog.append("\(Date().formatted()): LLM updated summary: \(s.prefix(50))...")
             }
             
@@ -2765,13 +2777,46 @@ public final class LocalPipelineService {
                 }
             }
             
-            // 2. Fallback to Local Apple Intelligence or Heuristics
+            // 2. Fallback to Local Summary Generation
             if !summaryGenerated {
-                if ContextQuestionService.isAvailable {
+                if FastVLMEnrichmentService.isAvailable {
+                    let service = FastVLMEnrichmentService()
+                    // Select the best representative image from session items
+                    // (highest aesthetics score, or first item with rawPayload)
+                    let bestImageItem = sortedItems
+                        .sorted { ($0.aestheticsScore ?? 0) > ($1.aestheticsScore ?? 0) }
+                        .first { $0.rawPayload != nil }
+                    let representativeImage: CGImage? = bestImageItem.flatMap { item in
+                        guard let data = item.rawPayload else { return nil }
+                        return self.createCGImage(from: data)
+                    }
+                    let visionTags = bestImageItem?.visualTags ?? []
+                    let analysis = try? await service.analyze(
+                        image: representativeImage,
+                        visionTags: visionTags,
+                        enrichmentContext: combinedText,
+                        transcription: nil
+                    )
+                    if let result = analysis?.contextSummary, !result.isEmpty {
+                        let modelBadge = analysis?.modelID ?? FastVLMEnrichmentService.modelID
+                        summary = "\(result) [Model: \(modelBadge)]"
+                        summaryGenerated = true
+                        DiverLogger.pipeline.info("✅ generated summary for session \(sessionID) using local FastVLM (\(modelBadge))")
+                    }
+                }
+                
+                if !summaryGenerated && ContextQuestionService.isAvailable {
                     let service = ContextQuestionService()
                     summary = try await service.summarizeText(combinedText)
+                    // Ensure local LLM gets its badge too if missing
+                    if !summary.contains("[Model:") {
+                        summary = "\(summary) [Model: SystemLanguageModel-iOS26]"
+                    }
+                    summaryGenerated = true
                     DiverLogger.pipeline.info("✅ generated summary for session \(sessionID) using SystemLanguageModel")
-                } else {
+                } 
+                
+                if !summaryGenerated {
                      let titleList = sortedItems
                          .compactMap { $0.title }
                          .filter { $0 != "Untitled" && $0 != "Visual Capture" && !$0.isEmpty }

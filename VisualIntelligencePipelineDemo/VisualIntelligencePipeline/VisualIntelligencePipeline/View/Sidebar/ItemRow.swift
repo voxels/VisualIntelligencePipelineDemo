@@ -48,9 +48,26 @@ struct ItemRow: View {
                             .foregroundStyle(.tertiary)
                     }
                 } else {
-                    Text(formattedDate)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                    if let summary = item.summary, !summary.isEmpty {
+                        let parsed = parseSummaryModelBadge(from: summary)
+                        Text(parsed.text)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            
+                        if let badge = parsed.badge {
+                            Text(badge)
+                                .font(.system(size: 8, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 2)
+                                .background(.ultraThinMaterial, in: Capsule())
+                        }
+                    } else {
+                        Text(formattedDate)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
             }
             
@@ -64,6 +81,25 @@ struct ItemRow: View {
             }
         }
         .contentShape(Rectangle())
+    }
+    
+    /// Parses `[Model: ModelName]` from the end of the summary.
+    private func parseSummaryModelBadge(from summary: String) -> (text: String, badge: String?) {
+        let pattern = #"^\s*(.*?)\s*\[Model:\s*(.*?)\]\s*$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]) else {
+            return (summary, nil)
+        }
+        
+        let nsString = summary as NSString
+        let results = regex.matches(in: summary, range: NSRange(location: 0, length: nsString.length))
+        
+        if let match = results.first, match.numberOfRanges == 3 {
+             let cleanedText = nsString.substring(with: match.range(at: 1))
+             let modelBadge = nsString.substring(with: match.range(at: 2))
+             return (cleanedText, modelBadge)
+        }
+        
+        return (summary, nil)
     }
     
     @ViewBuilder
