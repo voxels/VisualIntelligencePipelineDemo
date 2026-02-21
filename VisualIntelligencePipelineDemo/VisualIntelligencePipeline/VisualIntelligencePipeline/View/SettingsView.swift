@@ -350,55 +350,26 @@ struct SettingsView: View {
 
         Task {
             do {
-                // 0. Clear the DiverQueueStore (processing queue)
-                try? sharedWithYouManager.clearQueueStore()
-                print("✅ Cleared DiverQueueStore")
-                
-                // 1. Clear Main App Group Container (Documents, Queue, etc.)
-                if let appGroupURL = try? AppGroupContainer.containerURL() {
-                    let fileManager = FileManager.default
-                    // We specifically target the 'Documents' and 'Queue' folders where source files live.
-                    let targetDirs = ["Documents", "Queue", "SourceImages", "Snapshots"]
-                    
-                    for dirName in targetDirs {
-                        let dirURL = appGroupURL.appendingPathComponent(dirName, isDirectory: true)
-                        if fileManager.fileExists(atPath: dirURL.path) {
-                             try? fileManager.removeItem(at: dirURL)
-                             print("✅ Deleted AppGroup Directory: \(dirName)")
+                try await StorageClient.deleteDatabase(
+                    context: modelContext,
+                    clearQueueStore: { try? sharedWithYouManager.clearQueueStore() },
+                    additionalModels: [UserCachedRecord.self, RecommendationData.self],
+                    appLevelPurge: {
+                        Task { @MainActor in
+                            try? modelContext.delete(model: UserCachedRecord.self)
+                            try? modelContext.delete(model: RecommendationData.self)
                         }
-                    }
-                    
-                    // Also clear root files that look like orphaned images or JSON
-                    if let contents = try? fileManager.contentsOfDirectory(at: appGroupURL, includingPropertiesForKeys: nil) {
-                        for url in contents {
-                            if ["jpg", "jpeg", "png", "json", "txt"].contains(url.pathExtension.lowercased()) {
-                                try? fileManager.removeItem(at: url)
+                        
+                        if let cacheService = Services.shared.cloudCacheService as? CloudCacheService {
+                            do {
+                                try await cacheService.deleteAllUserCachedGroups()
+                                print("✅ Deleted all user cached groups via CloudCacheService")
+                            } catch {
+                                print("⚠️ CloudCacheService deletion failed: \(error.localizedDescription)")
                             }
                         }
                     }
-                }
-                
-                // 2. Delete all main entities
-                try modelContext.delete(model: ProcessedItem.self)
-                try modelContext.delete(model: LocalInput.self)
-                try modelContext.delete(model: UserConcept.self)
-                
-                // 3. Delete sessions and collections
-                try modelContext.delete(model: SessionMetadata.self)
-                try modelContext.delete(model: SessionCollection.self)
-                
-                // 4. Delete KnowMaps cache/models (if present)
-                try modelContext.delete(model: UserCachedRecord.self)
-                try modelContext.delete(model: RecommendationData.self)
-
-                try modelContext.save()
-                
-                // Give CloudKit time to sync deletions
-                print("⏳ Waiting for CloudKit sync...")
-                try await Task.sleep(for: .seconds(2))
-                
-                // Fallback: Purge CloudKit zone directly for orphaned records
-                await purgeCloudKitZone()
+                )
 
                 await MainActor.run {
                     isClearing = false
@@ -447,46 +418,7 @@ struct SettingsView: View {
         }
     }
     
-    /// Purges CloudKit zone data for orphaned records that SwiftData deletion missed
-    private func purgeCloudKitZone() async {
-        // 1. Use proper KnowMaps API to delete user cached records
-        if let cacheService = Services.shared.cloudCacheService as? CloudCacheService {
-            do {
-                try await cacheService.deleteAllUserCachedGroups()
-                print("✅ Deleted all user cached groups via CloudCacheService")
-            } catch {
-                print("⚠️ CloudCacheService deletion failed: \(error.localizedDescription)")
-            }
-        }
-        
-        // 2. Also purge direct CloudKit records for orphaned SwiftData entities
-        let container = CKContainer(identifier: "iCloud.com.secretatomics.knowmaps.Cache")
-        let database = container.privateCloudDatabase
-        
-        // Query and delete all records of each type
-        let recordTypes = ["CD_ProcessedItem", "CD_SessionMetadata", "CD_UserConcept", "CD_LocalInput", "CD_SessionCollection"]
-        
-        for recordType in recordTypes {
-            do {
-                let query = CKQuery(recordType: recordType, predicate: NSPredicate(value: true))
-                let (results, _) = try await database.records(matching: query)
-                
-                let recordIDs = results.compactMap { try? $0.1.get().recordID }
-                
-                if !recordIDs.isEmpty {
-                    let (_, deleteErrors) = try await database.modifyRecords(saving: [], deleting: recordIDs)
-                    if deleteErrors.isEmpty {
-                        print("✅ Purged \(recordIDs.count) CloudKit records of type: \(recordType)")
-                    } else {
-                        print("⚠️ Partial delete for \(recordType): \(deleteErrors)")
-                    }
-                }
-            } catch {
-                // Record type may not exist in this container, which is fine
-                print("ℹ️ CloudKit purge for \(recordType): \(error.localizedDescription)")
-            }
-        }
-    }
+
     private func exportProcessingLogs() {
         Task {
             do {

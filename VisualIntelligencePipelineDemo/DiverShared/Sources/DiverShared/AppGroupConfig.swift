@@ -50,6 +50,19 @@ public enum AppGroupContainer {
         }
         return url
     }
+    
+    /// Upgrades an existing directory (or creates it) with FileProtectionType.complete.
+    /// This ensures hardware-accelerated AES encryption tied to the user's passcode.
+    public static func ensureProtectedDirectory(at url: URL, fileManager: FileManager = .default) throws {
+        if !fileManager.fileExists(atPath: url.path) {
+            try fileManager.createDirectory(at: url, withIntermediateDirectories: true, attributes: [
+                .protectionKey: FileProtectionType.complete
+            ])
+        } else {
+            // Apply protective attributes if it already exists
+            try fileManager.setAttributes([.protectionKey: FileProtectionType.complete], ofItemAtPath: url.path)
+        }
+    }
 
     public static func dataStoreURL(
         config: AppGroupConfig = .default,
@@ -70,7 +83,7 @@ public enum AppGroupContainer {
             let baseURL = try containerURL(config: config, urlProvider: urlProvider)
             let queueURL = baseURL.appendingPathComponent("Queue", isDirectory: true)
             if createDirectories {
-                try fileManager.createDirectory(at: queueURL, withIntermediateDirectories: true)
+                try ensureProtectedDirectory(at: queueURL, fileManager: fileManager)
             }
             return queueURL
         }

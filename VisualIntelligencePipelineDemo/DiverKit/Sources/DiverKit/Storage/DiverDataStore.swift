@@ -51,8 +51,12 @@ public final class DiverDataStore {
             configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         } else if forAppGroup {
             do {
-                let appGroupURL = try AppGroupContainer.dataStoreURL()
-                configuration = ModelConfiguration(schema: schema, url: appGroupURL)
+                let appGroupURL = try AppGroupContainer.containerURL()
+                // Ensure the base AppGroup directory requires full device unlock to access
+                try AppGroupContainer.ensureProtectedDirectory(at: appGroupURL)
+                
+                let storeURL = try AppGroupContainer.dataStoreURL()
+                configuration = ModelConfiguration(schema: schema, url: storeURL)
             }
             catch {
                 fatalError("DiverDataStore: Failed to get App Group URL or create ModelConfiguration: \(error)")
