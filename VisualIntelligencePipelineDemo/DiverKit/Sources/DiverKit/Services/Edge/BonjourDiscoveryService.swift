@@ -79,7 +79,7 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
         
         browser.browseResultsChangedHandler = { [weak self] results, changes in
             Task { [weak self] in
-                await self?.handleResultsChanged(results: results, changes: changes)
+                await self?.handleResultsChanged(results: results, changes: changes, retryCount: 0)
             }
         }
         
@@ -129,7 +129,8 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
     
     private func handleResultsChanged(
         results: Set<NWBrowser.Result>,
-        changes: Set<NWBrowser.Result.Change>
+        changes: Set<NWBrowser.Result.Change>,
+        retryCount: Int
     ) {
         // Local device names to ignore
 #if os(macOS)
@@ -188,19 +189,16 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
         
         print("🔍 BonjourDiscovery: \(discoveredNodes.count) node(s) found")
         
-        // TXT records resolve asynchronously over mDNS. If any node had nil/empty metadata,
-        // schedule a delayed re-process — by then the TXT should be resolved.
-        if hasNilMetadata {
-            let cachedResults = results
+        // TXT records resolve asynchronously over mDNS. If any node had nil metadata,
+        // do one delayed retry using the browser's LIVE results (not cached snapshots).
+        if hasNilMetadata && retryCount == 0 {
             Task { [weak self] in
-                try? await Task.sleep(for: .seconds(2))
+                try? await Task.sleep(for: .seconds(3))
                 guard let self else { return }
-                // Only re-process if we still have unresolved nodes
-                let hasUnresolved = await self.discoveredNodes.contains(where: { $0.chipFamily == "Unknown" })
-                if hasUnresolved {
-                    print("🔄 BonjourDiscovery: Re-processing results after TXT resolution delay...")
-                    await self.handleResultsChanged(results: cachedResults, changes: [])
-                }
+                guard let liveBrowser = await self.browser else { return }
+                let liveResults = liveBrowser.browseResults
+                print("🔄 BonjourDiscovery: One-time TXT retry with \(liveResults.count) live result(s)...")
+                await self.handleResultsChanged(results: liveResults, changes: [], retryCount: 1)
             }
         }
     }
