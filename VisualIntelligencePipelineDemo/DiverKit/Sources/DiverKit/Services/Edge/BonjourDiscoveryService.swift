@@ -186,14 +186,47 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
     /// Parse Bonjour TXT record entries.
     private func parseTXTRecord(from metadata: NWBrowser.Result.Metadata?) -> [String: String] {
         guard let metadata = metadata,
-              case .bonjour(let txtRecord) = metadata else { return [:] }
+              case .bonjour(let txtRecord) = metadata else {
+            print("⚠️ BonjourDiscovery: No TXT metadata — metadata is nil or not bonjour")
+            return [:]
+        }
         
         var dict: [String: String] = [:]
         
-        // NWTXTRecord supports dictionary-style access
+        // Debug: dump raw TXT record content
+        let rawData = txtRecord.rawValue
+        print("🔍 BonjourDiscovery: Raw TXT record (\(rawData.count) bytes): \(String(data: rawData, encoding: .utf8) ?? "<binary>")")
+        
+        // Try standard NWTXTRecord subscript access
         for key in ["chip", "tops", "ram", "models"] {
             if let value = txtRecord[key] {
                 dict[key] = value
+                print("🔍 BonjourDiscovery: TXT[\(key)] = \(value)")
+            } else {
+                print("⚠️ BonjourDiscovery: TXT[\(key)] = nil")
+            }
+        }
+        
+        // If primary access failed, try parsing raw data manually
+        // DNS-SD TXT format: each entry is length-prefixed "key=value"
+        if dict.isEmpty && rawData.count > 1 {
+            print("🔍 BonjourDiscovery: Falling back to manual TXT parsing...")
+            var offset = 0
+            while offset < rawData.count {
+                let len = Int(rawData[offset])
+                offset += 1
+                guard offset + len <= rawData.count else { break }
+                let entry = rawData[offset..<(offset + len)]
+                if let str = String(data: entry, encoding: .utf8) {
+                    let parts = str.split(separator: "=", maxSplits: 1)
+                    if parts.count == 2 {
+                        let key = String(parts[0])
+                        let value = String(parts[1])
+                        dict[key] = value
+                        print("🔍 BonjourDiscovery: Manual TXT[\(key)] = \(value)")
+                    }
+                }
+                offset += len
             }
         }
         
