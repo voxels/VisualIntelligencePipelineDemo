@@ -98,8 +98,8 @@ public final class EdgeDaemonService {
             
             // Advertise via Bonjour with TXT record metadata
             var txtRecord = NWTXTRecord()
-            txtRecord["chip"] = chipFamily()
-            txtRecord["tops"] = String(format: "%.0f", neuralEngineTOPS())
+            txtRecord["chip"] = CapabilityRouter.shared.currentCapability.chipFamily
+            txtRecord["tops"] = String(format: "%.0f", CapabilityRouter.shared.currentCapability.neuralEngineTOPS)
             txtRecord["models"] = loadedModels.joined(separator: ",")
             
 #if os(macOS)
@@ -479,39 +479,6 @@ public final class EdgeDaemonService {
     private struct CommerceRequest: Codable {
         let product: ProductClassification
         let policy: EthicalPolicy
-    }
-    
-    // MARK: - System Info
-    
-    nonisolated private func chipFamily() -> String {
-#if os(macOS)
-        var size = 0
-        sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)
-        var brand = [CChar](repeating: 0, count: size)
-        sysctlbyname("machdep.cpu.brand_string", &brand, &size, nil, 0)
-        let brandString = String(cString: brand)
-        
-        if brandString.contains("M5") { return "M5" }
-        if brandString.contains("M4") { return "M4" }
-        if brandString.contains("M3") { return "M3" }
-        if brandString.contains("M2") { return "M2" }
-        if brandString.contains("M1") { return "M1" }
-        return "Apple Silicon"
-#else
-        return "Apple Silicon"
-#endif
-    }
-    
-    nonisolated private func neuralEngineTOPS() -> Float {
-        let chip = chipFamily()
-        switch chip {
-        case "M5": return 45.0 // Estimated for future
-        case "M4": return 38.0
-        case "M3": return 18.0
-        case "M2": return 15.8
-        case "M1": return 11.0
-        default: return 11.0
-        }
     }
     
     // MARK: - Model Download

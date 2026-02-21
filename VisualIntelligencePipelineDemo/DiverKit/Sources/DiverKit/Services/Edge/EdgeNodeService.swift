@@ -25,9 +25,12 @@ public distributed actor EdgeInferenceActor {
     private let processor = IntelligenceProcessor()
     
     distributed public func analyzeImage(_ imageData: Data) async throws -> VisionAnalysisResult {
-        guard let cgImageSource = CGImageSourceCreateWithData(imageData as CFData, nil),
-              let cgImage = CGImageSourceCreateImageAtIndex(cgImageSource, 0, nil) else {
-            throw EdgeInferenceError.invalidImageData
+        let cgImage: CGImage = try autoreleasepool {
+            guard let cgImageSource = CGImageSourceCreateWithData(imageData as CFData, nil),
+                  let img = CGImageSourceCreateImageAtIndex(cgImageSource, 0, nil) else {
+                throw EdgeInferenceError.invalidImageData
+            }
+            return img
         }
         
         // Run the same full analysis pipeline used on-device
@@ -75,9 +78,12 @@ public distributed actor EdgeInferenceActor {
     }
     
     distributed public func runVLM(imageData: Data, prompt: String) async throws -> LLMAnalysisResult {
-        guard let cgImageSource = CGImageSourceCreateWithData(imageData as CFData, nil),
-              let cgImage = CGImageSourceCreateImageAtIndex(cgImageSource, 0, nil) else {
-            throw EdgeInferenceError.invalidImageData
+        let cgImage: CGImage = try autoreleasepool {
+            guard let cgImageSource = CGImageSourceCreateWithData(imageData as CFData, nil),
+                  let img = CGImageSourceCreateImageAtIndex(cgImageSource, 0, nil) else {
+                throw EdgeInferenceError.invalidImageData
+            }
+            return img
         }
         
         // Run Vision analysis first (same as pipeline does)
@@ -247,9 +253,6 @@ public final class PipelineEdgeRouter: Sendable {
     
     private let discoveryService: any EdgeNodeDiscovering
     
-    /// Minimum neural engine TOPS required for inference offloading.
-    private let minimumTOPS: Float = 10.0
-    
     public init(discoveryService: any EdgeNodeDiscovering) {
         self.discoveryService = discoveryService
     }
@@ -266,8 +269,16 @@ public final class PipelineEdgeRouter: Sendable {
         // Check if edge node has the capability
         switch task {
         case .visionAnalysis, .vlmInference:
-            guard node.neuralEngineTOPS >= minimumTOPS else {
-                return .local(reason: "Edge node TOPS (\(node.neuralEngineTOPS)) below threshold (\(minimumTOPS))")
+            // Offload if the connected node has better capability, or if we lack local heavy vision.
+            let localTOPS = CapabilityRouter.shared.currentCapability.neuralEngineTOPS
+            let needsOffload = !CapabilityRouter.shared.canRunHeavyVision || node.neuralEngineTOPS > localTOPS
+            
+            guard needsOffload else {
+                return .local(reason: "Local node has sufficient or better capability (\(localTOPS) TOPS)")
+            }
+            
+            guard node.neuralEngineTOPS >= 10.0 else {
+                return .local(reason: "Edge node TOPS (\(node.neuralEngineTOPS)) too low for heavy inference")
             }
             return .edge(node: node, reason: "Offloading to \(node.deviceName) (\(node.chipFamily), \(node.neuralEngineTOPS) TOPS)")
             
@@ -292,7 +303,7 @@ public final class PipelineEdgeRouter: Sendable {
         return allNodes.filter { node in
             switch task {
             case .visionAnalysis, .vlmInference:
-                return node.neuralEngineTOPS >= minimumTOPS
+                return node.neuralEngineTOPS >= 10.0
             default:
                 return true
             }
