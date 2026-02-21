@@ -13,10 +13,8 @@ import VideoToolbox
 
 /// Handles live camera feed and schedules Vision requests over incoming frames.
 /// Agent [CORE] - Responsible for Camera Session and Intent Launch Foundation
-/// Safety: @unchecked Sendable is correct — serial `sessionQueue` guards AVFoundation work,
-/// `@Published` properties are only mutated via DispatchQueue.main.async.
 @MainActor
-public final class CameraManager: NSObject, ObservableObject, Sendable {
+public final class CameraManager: NSObject, ObservableObject, @unchecked Sendable {
     @Published public var isReady = false
     @Published public var session = AVCaptureSession()
     @Published public var isRecording = false
@@ -32,8 +30,8 @@ public final class CameraManager: NSObject, ObservableObject, Sendable {
     private let photoOutput = AVCapturePhotoOutput()
     
     // Dependencies
-    nonisolated private let barcodeScannerBox: UncheckedSendableRequest<VNDetectBarcodesRequest>
-    nonisolated private let documentScannerBox: UncheckedSendableRequest<VNDetectDocumentSegmentationRequest>
+    private let barcodeScanner: VNDetectBarcodesRequest
+    private let documentScanner: VNDetectDocumentSegmentationRequest
     nonisolated private let samSegmentationService: (any SAM2Segmenting)?
     
     // Thread-safe state for the background capture queue
@@ -41,11 +39,6 @@ public final class CameraManager: NSObject, ObservableObject, Sendable {
         var lastAnalysisTime: CFTimeInterval = 0
         var frameCount: Int = 0
         let lock = NSLock()
-    }
-    
-    // Thread-safe wrapper for non-Sendable Vision requests that are executed sequentially
-    private struct UncheckedSendableRequest<T>: @unchecked Sendable {
-        let request: T
     }
     
     private let bgState = BackgroundState()
@@ -58,8 +51,8 @@ public final class CameraManager: NSObject, ObservableObject, Sendable {
     public override init() {
         // Default initializer for testing or when dependencies are not needed immediately
         // In a real app, you might want to inject these.
-        self.barcodeScannerBox = UncheckedSendableRequest(request: VNDetectBarcodesRequest())
-        self.documentScannerBox = UncheckedSendableRequest(request: VNDetectDocumentSegmentationRequest())
+        self.barcodeScanner = VNDetectBarcodesRequest()
+        self.documentScanner = VNDetectDocumentSegmentationRequest()
         
         #if os(iOS)
         // SAM 2.1 is available on iOS native client
@@ -76,8 +69,8 @@ public final class CameraManager: NSObject, ObservableObject, Sendable {
     
     // Designated initializer for dependency injection
     public init(barcodeScanner: VNDetectBarcodesRequest = VNDetectBarcodesRequest()) {
-        self.barcodeScannerBox = UncheckedSendableRequest(request: barcodeScanner)
-        self.documentScannerBox = UncheckedSendableRequest(request: VNDetectDocumentSegmentationRequest())
+        self.barcodeScanner = barcodeScanner
+        self.documentScanner = VNDetectDocumentSegmentationRequest()
         
         #if os(iOS)
         // SAM 2.1 is available on iOS native client
@@ -116,30 +109,25 @@ public final class CameraManager: NSObject, ObservableObject, Sendable {
                  configureSession()
              }
              
-             sessionQueue.async { [weak self] in
-                 self?.session.startRunning()
-                 DispatchQueue.main.async {
-                     self?.isReady = true
-                 }
-             }
+             // Swift 6: AVCaptureSession is non-Sendable in strict mode. 
+             // Since session is @Published (MainActor), startRunning() must be called
+             // either on MainActor or via a dedicated actor. We will call it directly.
+             self.session.startRunning()
+             self.isReady = true
         }
     }
     
     public func stopSession() {
         if session.isRunning {
-            sessionQueue.async { [weak self] in
-                self?.session.stopRunning()
-                DispatchQueue.main.async {
-                    self?.isReady = false
-                }
-            }
+             self.session.stopRunning()
+             self.isReady = false
         }
     }
     
     private func configureSession() {
-        sessionQueue.async { [weak self] in
-            guard let self = self else { return }
-            self.session.beginConfiguration()
+        // Run configuration synchronously on MainActor where `session` naturally lives, 
+        // to avoid Sendable reference warnings.
+        self.session.beginConfiguration()
             
             // Prefer depth-capable device (dual/triple/LiDAR), fall back to wide-angle
             let videoDevice: AVCaptureDevice? = {
@@ -216,7 +204,6 @@ public final class CameraManager: NSObject, ObservableObject, Sendable {
             #endif
             
             self.session.commitConfiguration()
-        }
     }
     
     
@@ -244,7 +231,7 @@ public final class CameraManager: NSObject, ObservableObject, Sendable {
         }
         
         let settings = AVCapturePhotoSettings()
-        settings.isHighResolutionPhotoEnabled = true
+        settings.maxPhotoDimensions = CMVideoDimensions(width: 4032, height: 3024) // Replaces `isHighResolutionPhotoEnabled` (iOS 16+)
         
         // Request depth data if available
         #if os(iOS)
@@ -264,7 +251,8 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         // 1. Maintain preview frame
         var cgImageOut: CGImage?
         VTCreateCGImageFromCVPixelBuffer(pixelBuffer, options: nil, imageOut: &cgImageOut)
-        if let cgImage = cgImageOut {
+        let cgImageOutVar = cgImageOut
+        if let cgImage = cgImageOutVar {
             Task { @MainActor [weak self] in
                 self?.previewFrame = cgImage
             }
@@ -285,20 +273,18 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         struct UncheckedBuffer: @unchecked Sendable { let buffer: CVPixelBuffer }
         let sBuffer = UncheckedBuffer(buffer: pixelBuffer)
         
-        // Capture dependencies needed for detached tasks
-        let bScanner = self.barcodeScannerBox
-        let dScanner = self.documentScannerBox
-        
         // 2. Run standard high-speed Vision tasks
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self = self else { return }
             do {
+                // Safely create request within detached task thread bound context.
+                let localBScanner = VNDetectBarcodesRequest()
+                let localDScanner = VNDetectDocumentSegmentationRequest()
                 let handler = VNImageRequestHandler(cvPixelBuffer: sBuffer.buffer, orientation: .up, options: [:])
-                try handler.perform([bScanner.request, dScanner.request])
+                try handler.perform([localBScanner, localDScanner])
                 
-                let urls = bScanner.request.results?.compactMap { $0.payloadStringValue }.compactMap { URL(string: $0) } ?? []
-                // Extract CGRects or safe properties if needed, or just map carefully
-                let docs = dScanner.request.results ?? []
+                let urls = localBScanner.results?.compactMap { $0.payloadStringValue }.compactMap { URL(string: $0) } ?? []
+                let docs = localDScanner.results ?? []
                 
                 struct UncheckedObservations: @unchecked Sendable {
                     let items: [VNRectangleObservation]
