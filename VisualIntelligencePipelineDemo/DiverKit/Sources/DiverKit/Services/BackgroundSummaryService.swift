@@ -125,9 +125,13 @@ public actor BackgroundSummaryService {
                         }
                     }
                 }
+            } catch {
+                print("⚠️ [BackgroundSummaryService] Outer fetch failed for item \(item.id): \(error)")
+            }
         }
     }
     
+    private func upgradeSessions(modelContext: ModelContext, nodeName: String, system: VisualIntelligenceActorSystem) async throws {
         var descriptor = FetchDescriptor<SessionMetadata>(
             predicate: #Predicate { session in
                 if let summary = session.summary {
