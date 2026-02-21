@@ -1095,7 +1095,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
                         .prefix(3)
                         .joined(separator: ", ")
                     
-                    llmSummary = "Session with \(count) items. Includes: \(titles.isEmpty ? "Captured content" : titles)."
+                    llmSummary = "Session with \(count) items. Includes: \(titles.isEmpty ? "Captured content" : titles). [Model: Heuristic Fallback]"
                 }
                 
                 session.summary = llmSummary
@@ -1159,7 +1159,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
                     // Heuristic Fallback
                     let count = allItems.count
                     let examples = allItems.compactMap { $0.title }.filter { !$0.isEmpty && $0 != "Untitled" }.prefix(3).joined(separator: ", ")
-                    summary = "Collection containing \(count) items. Includes: \(examples.isEmpty ? "Various items" : examples)."
+                    summary = "Collection containing \(count) items. Includes: \(examples.isEmpty ? "Various items" : examples). [Model: Heuristic Fallback]"
                 }
                 
                 collection.llmSummary = summary

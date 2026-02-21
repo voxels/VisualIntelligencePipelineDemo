@@ -22,6 +22,7 @@ struct EdgeComputingTests {
             deviceName: "MacBook Pro",
             chipFamily: "M4 Pro",
             neuralEngineTOPS: 38.0,
+            physicalMemoryGB: 32,
             availableModels: ["FastVLM-0.5B", "YOLO-v8n"],
             isAvailable: true
         )
@@ -31,6 +32,7 @@ struct EdgeComputingTests {
         #expect(decoded.deviceName == "MacBook Pro")
         #expect(decoded.chipFamily == "M4 Pro")
         #expect(decoded.neuralEngineTOPS == 38.0)
+        #expect(decoded.physicalMemoryGB == 32)
         #expect(decoded.availableModels.count == 2)
         #expect(decoded.isAvailable == true)
     }

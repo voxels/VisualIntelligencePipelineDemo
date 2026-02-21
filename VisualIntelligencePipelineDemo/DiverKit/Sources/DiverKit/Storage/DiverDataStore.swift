@@ -26,7 +26,6 @@ public final class DiverDataStore {
         do {
             self.container = try ModelContainer(
                 for: schema,
-                migrationPlan: DiverMigrationPlan.self,
                 configurations: configurations
             )
         } catch {
@@ -70,7 +69,6 @@ public final class DiverDataStore {
         do {
             self.container = try ModelContainer(
                 for: schema,
-                migrationPlan: DiverMigrationPlan.self,
                 configurations: [configuration]
             )
         } catch {

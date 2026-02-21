@@ -184,11 +184,19 @@ public final class SidebarViewModel {
         }
     }
     
-    public func refresh() async {
+    public func refresh(context: ModelContext) async {
         guard let service = pipelineService else { return }
         do {
             try await service.processPendingQueue()
             try await service.refreshProcessedItems()
+            
+            // Check for edge summary upgrades in the background
+            let container = context.container
+            Task.detached(priority: .background) {
+                let router = PipelineEdgeRouter()
+                let system = VisualIntelligenceActorSystem()
+                await BackgroundSummaryService.shared.startUpgradesIfNeeded(modelContainer: container, router: router, system: system)
+            }
         } catch {
             print("❌ Refresh failed: \(error)")
         }

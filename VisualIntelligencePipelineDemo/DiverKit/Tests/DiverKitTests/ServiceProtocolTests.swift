@@ -13,13 +13,13 @@ final class MockIntelligenceProcessor: IntelligenceProcessing, @unchecked Sendab
     var stubbedResults: [IntelligenceResult] = []
     var errorToThrow: Error?
     
-    func process(frame: CVPixelBuffer, orientation: CGImagePropertyOrientation, mode: IntelligenceProcessor.AnalysisMode) async throws -> [IntelligenceResult] {
+    func process(frame: CVPixelBuffer, orientation: CGImagePropertyOrientation, mode: IntelligenceAnalysisMode) async throws -> [IntelligenceResult] {
         processCallCount += 1
         if let error = errorToThrow { throw error }
         return stubbedResults
     }
     
-    func process(image: CGImage, orientation: CGImagePropertyOrientation, mode: IntelligenceProcessor.AnalysisMode) async throws -> [IntelligenceResult] {
+    func process(image: CGImage, orientation: CGImagePropertyOrientation, mode: IntelligenceAnalysisMode) async throws -> [IntelligenceResult] {
         processCallCount += 1
         if let error = errorToThrow { throw error }
         return stubbedResults

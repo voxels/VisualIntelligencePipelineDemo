@@ -186,7 +186,7 @@ struct SidebarView: View {
             try? modelContext.save()
             
             // 2. Process pending queue items
-            await viewModel.refresh()
+            await viewModel.refresh(context: modelContext)
             
             // 3. Refresh Shared with You highlights
             if #available(iOS 16.0, macOS 13.0, *) {

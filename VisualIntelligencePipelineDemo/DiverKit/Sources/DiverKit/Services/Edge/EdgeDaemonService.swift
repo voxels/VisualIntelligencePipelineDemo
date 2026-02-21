@@ -273,12 +273,6 @@ public final class EdgeDaemonService {
     
     // MARK: - Request Processing
     
-    /// Request envelope sent by iOS clients.
-    private struct EdgeRequest: Codable {
-        let method: String      // "vision", "vlm", "nowcast", "gov", "commerce"
-        let payload: Data       // Method-specific payload (image data, JSON params, etc.)
-    }
-    
     /// Response envelope sent back to iOS clients.
     private struct EdgeResponse: Codable {
         let method: String
@@ -286,146 +280,182 @@ public final class EdgeDaemonService {
         let node: String
     }
     
+    nonisolated private func getNodeName() -> String {
+#if os(macOS)
+        return Host.current().localizedName ?? "Edge Node"
+#else
+        return ProcessInfo.processInfo.hostName
+#endif
+    }
+    
+    nonisolated private func createErrorResponse(method: String, nodeName: String) -> Data {
+        let errorResponse = EdgeResponse(method: method, result: Data(), node: nodeName)
+        return (try? JSONEncoder().encode(errorResponse)) ?? Data()
+    }
+    
     nonisolated private func processRequest(_ data: Data) async -> Data {
         let startTime = CFAbsoluteTimeGetCurrent()
-        // Parse the request envelope
-        guard let request = try? JSONDecoder().decode(EdgeRequest.self, from: data) else {
-            // Legacy format: target + payload (length-prefixed)
-            print("⚠️ EdgeDaemon: Received legacy or malformed payload (\(data.count) bytes)")
-            let legacyResult = await processLegacyRequest(data)
-            let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
-            print("✅ EdgeDaemon: Completed legacy request in \(String(format: "%.1f", elapsed))ms (Response: \(legacyResult.count) bytes)")
-            return legacyResult
+        let nodeName = getNodeName()
+        
+        // Unpack framing: [4-byte target length][target string][payload]
+        guard data.count >= 4 else {
+            print("❌ EdgeDaemon: Payload too small (\(data.count) bytes)")
+            return createErrorResponse(method: "unknown", nodeName: nodeName)
         }
         
-#if os(macOS)
-        let nodeName = Host.current().localizedName ?? "Edge Node"
-#else
-        let nodeName = ProcessInfo.processInfo.hostName
-#endif
+        let targetLength = data.prefix(4).withUnsafeBytes { $0.load(as: UInt32.self).bigEndian }
         
-        print("📨 EdgeDaemon: Processing '\(request.method)' payload (\(request.payload.count) bytes)")
+        guard data.count >= 4 + Int(targetLength) else {
+            print("❌ EdgeDaemon: Payload malformed. Expected at least \(4 + targetLength) bytes, got \(data.count)")
+            return createErrorResponse(method: "unknown", nodeName: nodeName)
+        }
+        
+        let targetData = data.dropFirst(4).prefix(Int(targetLength))
+        let payload = Data(data.dropFirst(4 + Int(targetLength)))
+        
+        let method = String(data: targetData, encoding: .utf8) ?? "unknown"
+        print("📨 EdgeDaemon: Processing '\(method)' payload (\(payload.count) bytes)")
         
         do {
-            let resultData: Data
-            
-            switch request.method {
-            case "vision":
-                // Run the same IntelligenceProcessor pipeline as iOS
-                let processor = IntelligenceProcessor()
-                guard let source = CGImageSourceCreateWithData(request.payload as CFData, nil),
-                      let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
-                    throw EdgeInferenceError.invalidImageData
+            let resultData = try await EdgeQueueManager.shared.enqueue {
+                let dummySystem = VisualIntelligenceActorSystem(transport: NWTransportLayer(localNodeName: "daemon"))
+                let encodedResult: Data
+                
+                if method == "vision" || (method.contains("EdgeInferenceActor") && method.contains("analyzeImage")) {
+                    let imageData: Data
+                    if method == "vision" { imageData = payload } else {
+                        let decoder = try EdgeInvocationDecoder(data: payload)
+                        imageData = try decoder.decodeNextArgument()
+                    }
+                    let actor = EdgeInferenceActor(actorSystem: dummySystem)
+                    let visionResult = try await actor.analyzeImage(imageData)
+                    encodedResult = try JSONEncoder().encode(visionResult)
+                    
+                } else if method == "vlm" || (method.contains("EdgeInferenceActor") && method.contains("runVLM")) {
+                    let imageData: Data
+                    let prompt: String
+                    if method == "vlm" {
+                        imageData = payload
+                        prompt = ""
+                    } else {
+                        let decoder = try EdgeInvocationDecoder(data: payload)
+                        imageData = try decoder.decodeNextArgument()
+                        prompt = try decoder.decodeNextArgument()
+                    }
+                    let actor = EdgeInferenceActor(actorSystem: dummySystem)
+                    let vlmResult = try await actor.runVLM(imageData: imageData, prompt: prompt)
+                    encodedResult = try JSONEncoder().encode(vlmResult)
+                    
+                } else if method == "nowcast" || (method.contains("EdgeNowcastingActor") && method.contains("project")) {
+                    let commodityID: String
+                    let horizonDays: Int
+                    if method == "nowcast" {
+                        let params = try JSONDecoder().decode(NowcastRequest.self, from: payload)
+                        commodityID = params.commodityID
+                        horizonDays = params.horizonDays
+                    } else {
+                        let decoder = try EdgeInvocationDecoder(data: payload)
+                        commodityID = try decoder.decodeNextArgument()
+                        horizonDays = try decoder.decodeNextArgument()
+                    }
+                    let actor = EdgeNowcastingActor(actorSystem: dummySystem)
+                    let trajectory = try await actor.project(commodityID: commodityID, horizonDays: horizonDays)
+                    encodedResult = try JSONEncoder().encode(trajectory)
+                    
+                } else if method == "gov" || (method.contains("EdgeESGAActor") && method.contains("fetchGovernmentData")) {
+                    let product: ProductClassification
+                    if method == "gov" {
+                        product = try JSONDecoder().decode(ProductClassification.self, from: payload)
+                    } else {
+                        let decoder = try EdgeInvocationDecoder(data: payload)
+                        product = try decoder.decodeNextArgument()
+                    }
+                    let actor = EdgeESGActor(actorSystem: dummySystem)
+                    let enrichment = try await actor.fetchGovernmentData(product: product)
+                    encodedResult = try JSONEncoder().encode(enrichment)
+                    
+                } else if method == "commerce" || (method.contains("EdgeCommerceActor") && method.contains("rankPlatforms")) {
+                    let product: ProductClassification
+                    let policy: EthicalPolicy
+                    if method == "commerce" {
+                        let params = try JSONDecoder().decode(CommerceRequest.self, from: payload)
+                        product = params.product
+                        policy = params.policy
+                    } else {
+                        let decoder = try EdgeInvocationDecoder(data: payload)
+                        product = try decoder.decodeNextArgument()
+                        policy = try decoder.decodeNextArgument()
+                    }
+                    let actor = EdgeCommerceActor(actorSystem: dummySystem)
+                    let platforms = try await actor.rankPlatforms(product: product, policy: policy)
+                    encodedResult = try JSONEncoder().encode(platforms)
+                    
+                } else if method.contains("EdgeESGActor") && method.contains("fetchCompanyESG") {
+                    let decoder = try EdgeInvocationDecoder(data: payload)
+                    let brand: String = try decoder.decodeNextArgument()
+                    let actor = EdgeESGActor(actorSystem: dummySystem)
+                    let profile = try await actor.fetchCompanyESG(brand: brand)
+                    encodedResult = try JSONEncoder().encode(profile)
+                    
+                } else if method.contains("EdgeFinancialActor") && method.contains("projectBudgetImpact") {
+                    let decoder = try EdgeInvocationDecoder(data: payload)
+                    let price: Decimal = try decoder.decodeNextArgument()
+                    let quantity: Int = try decoder.decodeNextArgument()
+                    let actor = EdgeFinancialActor(actorSystem: dummySystem)
+                    let impact = try await actor.projectBudgetImpact(productPrice: price, quantity: quantity)
+                    encodedResult = try JSONEncoder().encode(impact)
+                    
+                } else if method.contains("EdgeAgenticSearchActor") && method.contains("search") {
+                    let decoder = try EdgeInvocationDecoder(data: payload)
+                    let query: AgenticSearchQuery = try decoder.decodeNextArgument()
+                    let actor = EdgeAgenticSearchActor(actorSystem: dummySystem)
+                    let result = try await actor.search(query: query)
+                    encodedResult = try JSONEncoder().encode(result)
+                    
+                } else if method.contains("EdgeAgenticSearchActor") && method.contains("ingest") {
+                    let decoder = try EdgeInvocationDecoder(data: payload)
+                    let ingestPayload: AgenticSearchIngestPayload = try decoder.decodeNextArgument()
+                    let actor = EdgeAgenticSearchActor(actorSystem: dummySystem)
+                    let result = try await actor.ingest(payload: ingestPayload)
+                    encodedResult = try JSONEncoder().encode(result)
+                    
+                } else if method.contains("EdgeContextActor") && method.contains("summarize") {
+                    let decoder = try EdgeInvocationDecoder(data: payload)
+                    let text: String = try decoder.decodeNextArgument()
+                    let actor = EdgeContextActor(actorSystem: dummySystem)
+                    let result = try await actor.summarize(text: text)
+                    encodedResult = try JSONEncoder().encode(result)
+                    
+                } else {
+                    print("⚠️ EdgeDaemon: Unknown method: \(method)")
+                    encodedResult = Data()
                 }
                 
-                let results = try await processor.process(image: cgImage, mode: .fullAnalysis)
-                let visionResult = convertToVisionResult(results)
-                resultData = try JSONEncoder().encode(visionResult)
-                
-            case "vlm":
-                // Run FastVLM — same service as iOS, potentially larger model
-                guard let source = CGImageSourceCreateWithData(request.payload as CFData, nil),
-                      let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) else {
-                    throw EdgeInferenceError.invalidImageData
-                }
-                
-                let processor = IntelligenceProcessor()
-                let visionResults = try await processor.process(image: cgImage, mode: .fullAnalysis)
-                let visionResult = convertToVisionResult(visionResults)
-                
-                let vlmService = FastVLMEnrichmentService()
-                let analysis = try await vlmService.analyze(
-                    image: cgImage,
-                    visionTags: visionResult.semanticTags,
-                    enrichmentContext: "",
-                    transcription: visionResult.ocrText
-                )
-                
-                let llmResult = LLMAnalysisResult(
-                    summary: analysis?.contextSummary,
-                    statements: analysis?.statements ?? [],
-                    purpose: analysis?.suggestedPurpose,
-                    tags: analysis?.suggestedTags ?? [],
-                    imageDescription: analysis?.imageDescription
-                )
-                resultData = try JSONEncoder().encode(llmResult)
-                
-            case "nowcast":
-                // Run NowcastingEngine with real pricing data
-                let params = try JSONDecoder().decode(NowcastRequest.self, from: request.payload)
-                let pricingService = PricingDataService()
-                let engine = NowcastingEngine()
-                
-                let worldBank: [PriceDataPoint] = await pricingService.fetchWorldBankPrices(commodityID: params.commodityID)
-                let bls: [PriceDataPoint] = await pricingService.fetchBLSPPI(seriesID: params.commodityID)
-                let series: [[PriceDataPoint]] = [worldBank, bls].filter { !$0.isEmpty }
-                let nowcast = engine.nowcast(series: series, horizonDays: params.horizonDays)
-                
-                let allPoints = (worldBank + bls).sorted(by: { $0.date < $1.date })
-                let trajectory = PriceTrajectory(
-                    commodityID: params.commodityID,
-                    dataPoints: allPoints,
-                    projectedDirection: nowcast.direction,
-                    confidenceInterval: nowcast.confidence,  // NowcastResult.confidence
-                    horizonDays: params.horizonDays
-                )
-                resultData = try JSONEncoder().encode(trajectory)
-                
-            case "gov":
-                // Run GovernmentDataService — same 4 parallel API calls as iOS
-                let product = try JSONDecoder().decode(ProductClassification.self, from: request.payload)
-                let service = GovernmentDataService()
-                let enrichment = await service.enrich(product: product)
-                resultData = try JSONEncoder().encode(enrichment)
-                
-            case "commerce":
-                // Run AffiliateRoutingService — same platform ranking as iOS
-                let params = try JSONDecoder().decode(CommerceRequest.self, from: request.payload)
-                let router = AffiliateRoutingService()
-                let platforms = try await router.rankPlatforms(for: params.product, policy: params.policy)
-                resultData = try JSONEncoder().encode(platforms)
-                
-            default:
-                print("⚠️ EdgeDaemon: Unknown method: \(request.method)")
-                resultData = Data()
+                return encodedResult
             }
             
-            let response = EdgeResponse(method: request.method, result: resultData, node: nodeName)
+            let response = EdgeResponse(method: method, result: resultData, node: nodeName)
             let encodedResponse = try JSONEncoder().encode(response)
             
             let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
-            print("✅ EdgeDaemon: Completed '\(request.method)' in \(String(format: "%.1f", elapsed))ms (Response: \(encodedResponse.count) bytes)")
+            print("✅ EdgeDaemon: Completed '\(method)' in \(String(format: "%.1f", elapsed))ms (Response: \(encodedResponse.count) bytes)")
             
             return encodedResponse
             
         } catch {
-            print("❌ EdgeDaemon: Request '\(request.method)' failed: \(error)")
+            print("❌ EdgeDaemon: Request '\(method)' failed: \(error)")
             // Return empty response on error (or we could propagate EdgeError)
-            let errorResponse = EdgeResponse(method: request.method, result: Data(), node: nodeName)
+            let errorResponse = EdgeResponse(method: method, result: Data(), node: nodeName)
             let encodedError = (try? JSONEncoder().encode(errorResponse)) ?? Data()
             
             let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
-            print("⚠️ EdgeDaemon: Aborted '\(request.method)' in \(String(format: "%.1f", elapsed))ms")
+            print("⚠️ EdgeDaemon: Aborted '\(method)' in \(String(format: "%.1f", elapsed))ms")
             
             return encodedError
         }
     }
     
-    /// Legacy frame format fallback: [4-byte target length][target string][payload]
-    nonisolated private func processLegacyRequest(_ data: Data) async -> Data {
-        guard data.count >= 4 else { return Data() }
-        
-        let targetLength = data.prefix(4).withUnsafeBytes { $0.load(as: UInt32.self).bigEndian }
-        let targetData = data.dropFirst(4).prefix(Int(targetLength))
-        let payload = Data(data.dropFirst(4 + Int(targetLength)))
-        
-        let target = String(data: targetData, encoding: .utf8) ?? ""
-        
-        // Map legacy target strings to the new method-based dispatch
-        let request = EdgeRequest(method: target, payload: payload)
-        let requestData = (try? JSONEncoder().encode(request)) ?? Data()
-        return await processRequest(requestData)
-    }
+
     
     /// Convert [IntelligenceResult] → VisionAnalysisResult for network transport.
     nonisolated private func convertToVisionResult(_ results: [IntelligenceResult]) -> VisionAnalysisResult {

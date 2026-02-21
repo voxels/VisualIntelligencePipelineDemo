@@ -124,6 +124,20 @@ This is the **first public beta**. Your feedback is critical to shaping the fina
 - Does semantic/vector search surface relevant items even with non-exact terms?
 - Is search performance acceptable (< 1 second)?
 
+### 10. Commerce Intelligence & AR Mode
+
+- Point the camera at a retail product (e.g. food, electronics).
+- Tap the **AR Mode** button in the camera shutter HUD.
+- Verify that products are identified and an AR overlay (Score Snapshot) appears over the product.
+- After capturing a product, check the **Commerce Intelligence** section in the review/detail view.
+- Review the 7-engine scores (Ethics, Durability, Value, Brand, Social, Health, Cost).
+- Check if the "Buy Now / Wait" recommendation pill is accurate.
+
+**What to look for:**
+- Does the AR mode correctly identify and track the product?
+- Are the scoring dimensions logically calculated based on the product?
+- Is the UI smooth when rendering the 3D overlay and the charts in the detail view?
+
 ---
 
 ## Known Issues

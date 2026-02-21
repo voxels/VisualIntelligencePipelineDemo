@@ -216,7 +216,8 @@ public final class ContextQuestionService: ContextProcessing, Sendable {
         
         let analysis = response.content
         let combinedStatements = analysis.visualStatements + analysis.locationStatements
-        return (analysis.summary, combinedStatements, analysis.purpose, analysis.tags)
+        let taggedSummary = "\(analysis.summary) [Model: SystemLanguageModel-iOS26]"
+        return (taggedSummary, combinedStatements, analysis.purpose, analysis.tags)
     }
     
     @available(iOS 26.0, macOS 26.0, *)
@@ -244,7 +245,7 @@ public final class ContextQuestionService: ContextProcessing, Sendable {
             .replacingOccurrences(of: "in their home", with: "", options: [String.CompareOptions.caseInsensitive, String.CompareOptions.regularExpression])
             .replacingOccurrences(of: " at . ", with: ". ", options: String.CompareOptions.regularExpression)
         
-        return cleanSummary
+        return "\(cleanSummary) [Model: SystemLanguageModel-iOS26]"
     }
     
     @available(iOS 26.0, macOS 26.0, *)
@@ -253,7 +254,7 @@ public final class ContextQuestionService: ContextProcessing, Sendable {
         let instructions = "Summarize the following text segment, retaining key details about activities, objects, and specific content."
         let session = LanguageModelSession(instructions: instructions)
         let response = try await session.respond(to: text)
-        return response.content
+        return "\(response.content) [Model: SystemLanguageModel-iOS26]"
     }
     
     @available(iOS 26.0, macOS 26.0, *)

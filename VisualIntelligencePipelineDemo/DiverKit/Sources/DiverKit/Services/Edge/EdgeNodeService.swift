@@ -244,6 +244,25 @@ public distributed actor EdgeAgenticSearchActor {
     }
 }
 
+/// Handles LLM text summarization on the Edge node.
+public distributed actor EdgeContextActor {
+    public typealias ActorSystem = VisualIntelligenceActorSystem
+    
+    distributed public func summarize(text: String) async throws -> String {
+        print("🧠 [EdgeContextActor] Summarizing text (\(text.count) characters)...")
+        if ContextQuestionService.isAvailable {
+            let service = ContextQuestionService()
+            // We strip any existing tags context service might add, and append our own Edge tag
+            var summary = try await service.summarizeText(text)
+            summary = summary.replacingOccurrences(of: " [Model: SystemLanguageModel-iOS26]", with: "")
+            return "\(summary) [Model: Edge-ContextQuestionService]"
+        } else {
+            // Fallback
+            return "\(String(text.prefix(200)))... [Model: Edge-Heuristic]"
+        }
+    }
+}
+
 // MARK: - Pipeline Edge Router
 
 /// Routes pipeline work to edge nodes or local execution based on availability.
