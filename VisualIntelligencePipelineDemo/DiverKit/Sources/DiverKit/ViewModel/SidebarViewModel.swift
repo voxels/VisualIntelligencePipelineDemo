@@ -193,7 +193,7 @@ public final class SidebarViewModel {
             // Check for edge summary upgrades in the background
             let container = context.container
             Task.detached(priority: .background) {
-                let router = PipelineEdgeRouter()
+                let router = PipelineEdgeRouter(discoveryService: BonjourDiscoveryService())
                 let system = VisualIntelligenceActorSystem()
                 let backgroundService = BackgroundSummaryService(modelContainer: container)
                 await backgroundService.startUpgradesIfNeeded(router: router, system: system)
@@ -1066,7 +1066,7 @@ public final class SidebarViewModel {
         Task {
             do {
                 try await PipelineImportService.importExamples(modelContext: context)
-                await refresh()
+                await refresh(context: context)
             } catch {
                 print("❌ Failed to import examples: \(error)")
             }
@@ -1149,7 +1149,7 @@ public final class SidebarViewModel {
     }
 #endif
 
-    public func importExternalItem(data: Data, filename: String? = nil, isVideo: Bool = false) {
+    public func importExternalItem(data: Data, filename: String? = nil, isVideo: Bool = false, context: ModelContext) {
         Task {
             do {
                 print("📸 Import received, size: \(data.count) bytes, isVideo: \(isVideo)")
@@ -1197,7 +1197,7 @@ public final class SidebarViewModel {
                 
                 await MainActor.run {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                        Task { await self.refresh() }
+                        Task { await self.refresh(context: context) }
                     }
                 }
             } catch {
