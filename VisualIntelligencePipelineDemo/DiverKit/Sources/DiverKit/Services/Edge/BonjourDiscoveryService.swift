@@ -138,6 +138,8 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
         let localName = ProcessInfo.processInfo.hostName
 #endif
 
+        var hasNilMetadata = false
+        
         discoveredNodes = results.compactMap { result -> EdgeNodeInfo? in
             // Extract service name from endpoint
             let name: String
@@ -155,6 +157,10 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
             
             // Parse TXT record metadata
             let metadata = parseTXTRecord(from: result.metadata)
+            
+            if metadata.isEmpty {
+                hasNilMetadata = true
+            }
             
             let nodeInfo = EdgeNodeInfo(
                 deviceName: name,
@@ -181,6 +187,22 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
         }
         
         print("🔍 BonjourDiscovery: \(discoveredNodes.count) node(s) found")
+        
+        // TXT records resolve asynchronously over mDNS. If any node had nil/empty metadata,
+        // schedule a delayed re-process — by then the TXT should be resolved.
+        if hasNilMetadata {
+            let cachedResults = results
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(2))
+                guard let self else { return }
+                // Only re-process if we still have unresolved nodes
+                let hasUnresolved = await self.discoveredNodes.contains(where: { $0.chipFamily == "Unknown" })
+                if hasUnresolved {
+                    print("🔄 BonjourDiscovery: Re-processing results after TXT resolution delay...")
+                    await self.handleResultsChanged(results: cachedResults, changes: [])
+                }
+            }
+        }
     }
     
     /// Parse Bonjour TXT record entries.
