@@ -2,7 +2,7 @@ import Foundation
 import DiverShared
 
 public extension DiverQueueItem {
-    public static func items(intelligenceResults: [IntelligenceResult], capturedImage: Data? = nil, siftedImage: Data? = nil, attachments: [Data]? = nil, purpose: String? = nil, purposes: Set<String> = [], sessionID: String? = nil, contextImageURL: URL? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil, depthPayload: Data? = nil, attachmentDepthPayloads: [Data?]? = nil, siftedMask: Data? = nil) -> [DiverQueueItem] {        var items: [DiverQueueItem] = []
+    static func items(intelligenceResults: [IntelligenceResult], capturedImage: Data? = nil, siftedImage: Data? = nil, attachments: [Data]? = nil, purpose: String? = nil, purposes: Set<String> = [], sessionID: String? = nil, contextImageURL: URL? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil, depthPayload: Data? = nil, attachmentDepthPayloads: [Data?]? = nil, siftedMask: Data? = nil) -> [DiverQueueItem] {        var items: [DiverQueueItem] = []
         
         let masterID = UUID().uuidString
         var fullText = ""
@@ -283,7 +283,7 @@ public extension DiverQueueItem {
         return items
     }
 
-    public static func from(documentImage: Data? = nil, title: String? = nil, tags: [String] = [], text: String? = nil, purpose: String? = nil, purposes: Set<String> = [], date: Date? = nil, sessionID: String? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil, attachments: [Data]? = nil) -> DiverQueueItem {
+    static func from(documentImage: Data? = nil, title: String? = nil, tags: [String] = [], text: String? = nil, purpose: String? = nil, purposes: Set<String> = [], date: Date? = nil, sessionID: String? = nil, placeID: String? = nil, latitude: Double? = nil, longitude: Double? = nil, locationName: String? = nil, attachments: [Data]? = nil) -> DiverQueueItem {
         let id = UUID().uuidString
         let resolvedTitle = title ?? "Scanned Document"
         
@@ -318,7 +318,7 @@ public extension DiverQueueItem {
         )
     }
     
-    public static func determineType(from urls: [URL], labels: [String]) -> DiverItemType {
+    static func determineType(from urls: [URL], labels: [String]) -> DiverItemType {
         if !urls.isEmpty { return .web }
         if labels.contains("book") { return .text }
         // Default to web for general content as it's the most flexible in Diver

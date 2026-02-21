@@ -150,23 +150,23 @@ public actor EdgeModelProvisioner {
             // (Required by mlx_lm.fuse to know the scaling factors and base model)
             let adapterConfig = """
             {
-              "alpha": 16.0,
-              "architectures": [
-                "ClaraModel"
-              ],
-              "base_model_name_or_path": "Qwen/Qwen2-7B-Instruct",
-              "dropout": 0.05,
-              "peft_type": "LORA",
-              "r": 16,
-              "target_modules": [
-                "q_proj",
-                "k_proj",
-                "v_proj",
-                "o_proj",
-                "gate_proj",
-                "up_proj",
-                "down_proj"
-              ]
+              "adapter_file": "adapters.safetensors",
+              "model": "Qwen/Qwen2-7B-Instruct",
+              "num_layers": 28,
+              "lora_parameters": {
+                "keys": [
+                  "q_proj",
+                  "k_proj",
+                  "v_proj",
+                  "o_proj",
+                  "gate_proj",
+                  "up_proj",
+                  "down_proj"
+                ],
+                "rank": 16,
+                "scale": 16.0,
+                "dropout": 0.05
+              }
             }
             """
             

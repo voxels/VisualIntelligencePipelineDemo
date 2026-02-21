@@ -280,7 +280,7 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
                 
                 let urls = barcodeReq.results?.compactMap { $0.payloadStringValue }.compactMap { URL(string: $0) } ?? []
                 // Extract CGRects or safe properties if needed, or just map carefully
-                let docs = docReq.results as? [VNRectangleObservation] ?? []
+                let docs = docReq.results ?? []
                 
                 struct UncheckedObservations: @unchecked Sendable {
                     let items: [VNRectangleObservation]
