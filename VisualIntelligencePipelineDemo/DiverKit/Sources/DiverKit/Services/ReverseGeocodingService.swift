@@ -5,13 +5,12 @@ import DiverShared
 
 /// Priority-ranked reverse geocoding service.
 /// Priority: MKLocalSearch (primary) → MKReverseGeocodingRequest (secondary) → Foursquare (tertiary)
-@MainActor
-public final class ReverseGeocodingService {
+public actor ReverseGeocodingService {
     
     private var foursquareService: ContextualEnrichmentService?
     
     /// Cache entry with TTL for reverse geocoding results
-    private struct CachedGeocode {
+    private struct CachedGeocode: Sendable {
         let result: PlaceContext
         let timestamp: Date
         var isExpired: Bool { Date().timeIntervalSince(timestamp) > 3600 } // 1 hour TTL

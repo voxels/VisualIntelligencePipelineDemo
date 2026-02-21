@@ -23,6 +23,7 @@ public final class Services {
     public var localPipelineService: LocalPipelineService?
     public var agenticSearchService: AgenticSearchService?
     public var edgeRouter: PipelineEdgeRouter?
+    public var localDaemonService: EdgeDaemonService?
     public var actorSystem: VisualIntelligenceActorSystem?
     
     /// KnowMaps CloudCacheService for iCloud cache management

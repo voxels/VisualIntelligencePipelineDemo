@@ -13,9 +13,12 @@ import Observation
 import ImageIO
 import DiverKit
 import DiverShared
+#if os(macOS)
+import Darwin
+#endif
 
 /// Edge daemon status.
-enum DaemonStatus: String, Sendable {
+public enum DaemonStatus: String, Sendable {
     case idle = "Idle"
     case starting = "Starting…"
     case listening = "Listening"
@@ -26,29 +29,29 @@ enum DaemonStatus: String, Sendable {
 /// Core edge daemon service managing Bonjour advertising and request routing.
 @MainActor
 @Observable
-final class EdgeDaemonService {
+public final class EdgeDaemonService {
     
     // MARK: - Published State
     
-    var status: DaemonStatus = .idle {
+    public var status: DaemonStatus = .idle {
         didSet {
             print("🚀 Status: \(status.rawValue)")
         }
     }
-    var isListening = false
-    var connectedClients: [String] = [] {
+    public var isListening = false
+    public var connectedClients: [String] = [] {
         didSet {
             print("👥 Connected clients: \(connectedClients.count)")
         }
     }
-    var totalRequests: Int = 0 {
+    public var totalRequests: Int = 0 {
         didSet {
             print("📊 Total requests processed: \(totalRequests)")
         }
     }
-    var loadedModels: [String] = []
-    var autoStart = false
-    var maxConcurrentRequests = 4
+    public var loadedModels: [String] = []
+    public var autoStart = false
+    public var maxConcurrentRequests = 4
     
     // MARK: - Private
     
@@ -58,7 +61,7 @@ final class EdgeDaemonService {
     
     // MARK: - Status Icon
     
-    var statusIcon: String {
+    public var statusIcon: String {
         switch status {
         case .idle: return "circle"
         case .starting: return "circle.dashed"
@@ -70,7 +73,7 @@ final class EdgeDaemonService {
     
     // MARK: - Lifecycle
     
-    init() {
+    public init() {
         // Auto-discover available models
         loadedModels = discoverModels()
         
@@ -82,14 +85,14 @@ final class EdgeDaemonService {
         }
     }
     
-    func startListening() {
+    public func startListening() {
         guard !isListening else { return }
         status = .starting
         
         do {
-            // TLS 1.3 parameters
-            let params = NWParameters.tls
-            params.includePeerToPeer = true
+            // TCP parameters (local network)
+            let params = NWParameters.tcp
+            // params.includePeerToPeer = true // Not required for plain TCP
             
             let listener = try NWListener(using: params, on: NWEndpoint.Port(rawValue: port)!)
             
@@ -99,8 +102,14 @@ final class EdgeDaemonService {
             txtRecord["tops"] = String(format: "%.0f", neuralEngineTOPS())
             txtRecord["models"] = loadedModels.joined(separator: ",")
             
+#if os(macOS)
+            let nodeName = Host.current().localizedName ?? "Mac Edge Node"
+#else
+            let nodeName = ProcessInfo.processInfo.hostName
+#endif
+            
             listener.service = NWListener.Service(
-                name: Host.current().localizedName ?? "Mac Edge Node",
+                name: nodeName,
                 type: serviceType,
                 txtRecord: txtRecord
             )
@@ -125,7 +134,7 @@ final class EdgeDaemonService {
         }
     }
     
-    func stopListening() {
+    public func stopListening() {
         listener?.cancel()
         listener = nil
         isListening = false
@@ -133,6 +142,8 @@ final class EdgeDaemonService {
         connectedClients.removeAll()
         print("🔴 EdgeDaemon: Stopped")
     }
+    
+    private var activeConnections: [NWConnection] = []
     
     // MARK: - Connection Handling
     
@@ -156,6 +167,7 @@ final class EdgeDaemonService {
     
     nonisolated private func handleNewConnection(_ connection: NWConnection) {
         let clientName = connection.endpoint.debugDescription
+        let clientInterface = connection.currentPath?.availableInterfaces.first?.name ?? "unknown interface"
         
         connection.stateUpdateHandler = { [weak self] state in
             Task { @MainActor in
@@ -163,9 +175,11 @@ final class EdgeDaemonService {
                 switch state {
                 case .ready:
                     self.connectedClients.append(clientName)
-                    print("🔗 EdgeDaemon: Client connected: \(clientName)")
+                    self.activeConnections.append(connection)
+                    print("🔗 EdgeDaemon: Client connected: \(clientName) [\(clientInterface)]")
                 case .cancelled, .failed:
                     self.connectedClients.removeAll { $0 == clientName }
+                    self.activeConnections.removeAll { $0 === connection }
                     print("🔗 EdgeDaemon: Client disconnected: \(clientName)")
                 default:
                     break
@@ -179,18 +193,46 @@ final class EdgeDaemonService {
     
     nonisolated private func receiveMessages(on connection: NWConnection) {
         // Read length-prefixed frames (matching NWTransportLayer protocol)
-        connection.receive(minimumIncompleteLength: 4, maximumLength: 4) { [weak self] content, _, _, error in
-            guard let self, let header = content, header.count == 4, error == nil else { return }
+        connection.receive(minimumIncompleteLength: 4, maximumLength: 4) { [weak self] content, _, isComplete, error in
+            guard let self = self else { return }
+            
+            if let error = error {
+                print("⚠️ EdgeDaemon: Receive error: \(error)")
+                connection.cancel()
+                return
+            }
+            if isComplete {
+                connection.cancel()
+                return
+            }
+            guard let header = content, header.count == 4 else {
+                connection.cancel()
+                return
+            }
             
             let frameLength = header.withUnsafeBytes { $0.load(as: UInt32.self).bigEndian }
             
-            guard frameLength < 50_000_000 else { return } // 50MB limit
+            guard frameLength < 50_000_000 else {
+                print("⚠️ EdgeDaemon: Frame length exceeds limit (\(frameLength) bytes)")
+                connection.cancel()
+                return
+            } // 50MB limit
             
             connection.receive(
                 minimumIncompleteLength: Int(frameLength),
                 maximumLength: Int(frameLength)
-            ) { [weak self] body, _, _, error in
-                guard let self, let body, error == nil else { return }
+            ) { [weak self] body, _, isBodyComplete, bodyError in
+                guard let self = self else { return }
+                
+                if let bodyError = bodyError {
+                    print("⚠️ EdgeDaemon: Body receive error: \(bodyError)")
+                    connection.cancel()
+                    return
+                }
+                guard let body = body else {
+                    connection.cancel()
+                    return
+                }
                 
                 Task { @MainActor in
                     self.totalRequests += 1
@@ -206,11 +248,21 @@ final class EdgeDaemonService {
                     var frame = Data(bytes: &responseLength, count: 4)
                     frame.append(response)
                     
-                    connection.send(content: frame, completion: .contentProcessed { _ in })
+                    connection.send(content: frame, completion: .contentProcessed { sendError in
+                        if let sendError = sendError {
+                            print("⚠️ EdgeDaemon: Send error: \(sendError)")
+                            connection.cancel()
+                        }
+                    })
                     
                     await MainActor.run {
                         self.status = .listening
                     }
+                }
+                
+                if isBodyComplete {
+                    connection.cancel()
+                    return
                 }
                 
                 // Continue receiving
@@ -235,15 +287,24 @@ final class EdgeDaemonService {
     }
     
     nonisolated private func processRequest(_ data: Data) async -> Data {
+        let startTime = CFAbsoluteTimeGetCurrent()
         // Parse the request envelope
         guard let request = try? JSONDecoder().decode(EdgeRequest.self, from: data) else {
             // Legacy format: target + payload (length-prefixed)
-            return await processLegacyRequest(data)
+            print("⚠️ EdgeDaemon: Received legacy or malformed payload (\(data.count) bytes)")
+            let legacyResult = await processLegacyRequest(data)
+            let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+            print("✅ EdgeDaemon: Completed legacy request in \(String(format: "%.1f", elapsed))ms (Response: \(legacyResult.count) bytes)")
+            return legacyResult
         }
         
+#if os(macOS)
         let nodeName = Host.current().localizedName ?? "Edge Node"
+#else
+        let nodeName = ProcessInfo.processInfo.hostName
+#endif
         
-        print("📡 EdgeDaemon: Processing \(request.method) (\(request.payload.count) bytes)")
+        print("📨 EdgeDaemon: Processing '\(request.method)' payload (\(request.payload.count) bytes)")
         
         do {
             let resultData: Data
@@ -330,16 +391,23 @@ final class EdgeDaemonService {
             }
             
             let response = EdgeResponse(method: request.method, result: resultData, node: nodeName)
-            return try JSONEncoder().encode(response)
+            let encodedResponse = try JSONEncoder().encode(response)
+            
+            let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+            print("✅ EdgeDaemon: Completed '\(request.method)' in \(String(format: "%.1f", elapsed))ms (Response: \(encodedResponse.count) bytes)")
+            
+            return encodedResponse
             
         } catch {
-            print("⚠️ EdgeDaemon: Error processing \(request.method): \(error)")
-            let errorResponse: [String: String] = [
-                "error": error.localizedDescription,
-                "method": request.method,
-                "node": nodeName
-            ]
-            return (try? JSONEncoder().encode(errorResponse)) ?? Data()
+            print("❌ EdgeDaemon: Request '\(request.method)' failed: \(error)")
+            // Return empty response on error (or we could propagate EdgeError)
+            let errorResponse = EdgeResponse(method: request.method, result: Data(), node: nodeName)
+            let encodedError = (try? JSONEncoder().encode(errorResponse)) ?? Data()
+            
+            let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+            print("⚠️ EdgeDaemon: Aborted '\(request.method)' in \(String(format: "%.1f", elapsed))ms")
+            
+            return encodedError
         }
     }
     
@@ -416,6 +484,7 @@ final class EdgeDaemonService {
     // MARK: - System Info
     
     nonisolated private func chipFamily() -> String {
+#if os(macOS)
         var size = 0
         sysctlbyname("machdep.cpu.brand_string", nil, &size, nil, 0)
         var brand = [CChar](repeating: 0, count: size)
@@ -428,6 +497,9 @@ final class EdgeDaemonService {
         if brandString.contains("M2") { return "M2" }
         if brandString.contains("M1") { return "M1" }
         return "Apple Silicon"
+#else
+        return "Apple Silicon"
+#endif
     }
     
     nonisolated private func neuralEngineTOPS() -> Float {
@@ -462,7 +534,7 @@ final class EdgeDaemonService {
         let folderName = name.replacingOccurrences(of: "fastvlm-", with: "").uppercased()
         
         print("⏳ Downloading model: \(name) from \(repoId) ...")
-        fflush(stdout)
+
         
         do {
             let modelsDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
@@ -484,7 +556,7 @@ final class EdgeDaemonService {
                 guard let url = URL(string: urlStr) else { continue }
                 
                 print("   ... downloading \(file) from \(urlStr)")
-                fflush(stdout)
+        
                 
                 let (tempURL, response) = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<(URL, HTTPURLResponse), Error>) in
                     let delegate = ConsoleDownloadDelegate(continuation)
@@ -494,7 +566,7 @@ final class EdgeDaemonService {
                 }
                 
                 print("   ... finished \(file) with HTTP \(response.statusCode)")
-                fflush(stdout)
+        
                 defer { try? FileManager.default.removeItem(at: tempURL) }
                 
                 guard response.statusCode == 200 else {
@@ -588,6 +660,16 @@ final class EdgeDaemonService {
             models.append("yolov8-coreml")
         }
         
+        // Check for SAM 2.1 CoreML model
+        if FileManager.default.fileExists(atPath: dir.appendingPathComponent("sam2.1-small.mlpackage").path) {
+            models.append("sam-2.1")
+        }
+        
+        // Check for CLaRa MLX model
+        if FileManager.default.fileExists(atPath: dir.appendingPathComponent("CLaRa/model.safetensors.index.json").path) {
+            models.append("clara-7b-mlx")
+        }
+        
         return models
     }
     
@@ -625,7 +707,7 @@ final class EdgeDaemonService {
         
         while true {
             print("\nclara> ", terminator: "")
-            fflush(stdout)
+    
             
             guard let input = readLine() else { break }
             let queryText = input.trimmingCharacters(in: .whitespacesAndNewlines)

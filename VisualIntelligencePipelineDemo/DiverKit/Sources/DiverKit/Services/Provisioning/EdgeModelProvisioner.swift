@@ -85,7 +85,8 @@ public actor EdgeModelProvisioner {
     private func provisionCLaRa7B() async {
         let claraDir = modelsDir.appendingPathComponent("CLaRa")
         let pytorchDir = modelsDir.appendingPathComponent("CLaRa_PyTorch")
-        let mlxModelPath = claraDir.appendingPathComponent("model.safetensors")
+        let mlxModelPath = claraDir.appendingPathComponent("model.safetensors.index.json")
+
         
         guard !FileManager.default.fileExists(atPath: mlxModelPath.path) else {
             return

@@ -37,6 +37,10 @@ public final class NWTransportLayer: EdgeTransportProtocol, @unchecked Sendable 
     
     // MARK: - EdgeTransportProtocol
     
+    public func connect(to nodeName: String) async throws {
+        _ = try await getOrCreateConnection(to: nodeName)
+    }
+    
     public func send(to actorID: EdgeActorID, target: String, payload: Data) async throws -> Data {
         let connection = try await getOrCreateConnection(to: actorID.nodeName)
         
@@ -118,9 +122,8 @@ public final class NWTransportLayer: EdgeTransportProtocol, @unchecked Sendable 
         }
         if let existing { return existing }
         
-        // Create new TLS 1.3 connection
-        let params = NWParameters.tls
-        params.includePeerToPeer = true
+        // Create new TCP connection
+        let params = NWParameters.tcp
         
         // Use Bonjour service endpoint
         let endpoint = NWEndpoint.service(
@@ -132,29 +135,54 @@ public final class NWTransportLayer: EdgeTransportProtocol, @unchecked Sendable 
         
         let connection = NWConnection(to: endpoint, using: params)
         
-        // Wait for connection to become ready
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            connection.stateUpdateHandler = { state in
-                switch state {
-                case .ready:
-                    continuation.resume()
-                case .failed(let error):
-                    continuation.resume(throwing: error)
-                case .cancelled:
-                    continuation.resume(throwing: EdgeTransportError.connectionFailed)
-                default:
-                    break
-                }
-            }
-            connection.start(queue: .global(qos: .utility))
-        }
-        
-        // Store the ready connection
+        // Store the connection immediately so ARC doesn't deallocate it before setup completes
         connectionStore.withLock { connections in
             connections[nodeName] = connection
         }
         
-        print("🔗 NWTransport: Connected to \(nodeName) (TLS 1.3)")
+        // Wait for connection to become ready
+        do {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                let lock = OSAllocatedUnfairLock(initialState: false)
+                
+                connection.stateUpdateHandler = { state in
+                    switch state {
+                    case .ready:
+                        lock.withLock { hasResumed in
+                            if !hasResumed {
+                                hasResumed = true
+                                continuation.resume()
+                            }
+                        }
+                    case .failed(let error):
+                        lock.withLock { hasResumed in
+                            if !hasResumed {
+                                hasResumed = true
+                                continuation.resume(throwing: error)
+                            }
+                        }
+                    case .cancelled:
+                        lock.withLock { hasResumed in
+                            if !hasResumed {
+                                hasResumed = true
+                                continuation.resume(throwing: EdgeTransportError.connectionFailed)
+                            }
+                        }
+                    default:
+                        break
+                    }
+                }
+                connection.start(queue: .global(qos: .utility))
+            }
+        } catch {
+            // Setup failed, remove from store
+            connectionStore.withLock { connections in
+                connections[nodeName] = nil
+            }
+            throw error
+        }
+        
+        print("🔗 NWTransport: Connected to \(nodeName) (TCP)")
         return connection
     }
 }

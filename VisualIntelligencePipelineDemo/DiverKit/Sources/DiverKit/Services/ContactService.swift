@@ -56,114 +56,102 @@ public final class ContactService: ContactServiceProvider, @unchecked Sendable {
     
     /// Requests access to contacts and attempts to fetch the "Me" contact's home address, then geocodes it.
     public func getHomeLocation() async throws -> CLLocation? {
-        let status = CNContactStore.authorizationStatus(for: .contacts)
-        
-        switch status {
-        case .notDetermined:
-            let granted = try await contactStore.requestAccess(for: .contacts)
-            if !granted {
-                return nil
-            }
-        case .denied, .restricted:
-            return nil
-        case .authorized, .limited:
-            break
-        @unknown default:
-            return nil
-        }
-        
-        // Fetch "Me" contact
-        // Keys to fetch: PostalAddresses
-        let keys = [CNContactPostalAddressesKey] as [CNKeyDescriptor]
-        
-        // Note: CNContactStore.unifiedMeContactWithKeys errors if no "me" card is set.
-        // We should handle that gracefully.
-        do {
-            let meContact: CNContact
+        return try await Task.detached(priority: .userInitiated) {
+            let status = CNContactStore.authorizationStatus(for: .contacts)
             
-            #if os(macOS)
-            meContact = try contactStore.unifiedMeContactWithKeys(toFetch: keys)
-            #else
-            // On iOS, check for manually set contact identifier
-            if let savedId = getMeContactIdentifier() {
-                meContact = try contactStore.unifiedContact(withIdentifier: savedId, keysToFetch: keys)
-            } else {
+            switch status {
+            case .notDetermined:
+                let granted = try await self.contactStore.requestAccess(for: .contacts)
+                if !granted { return nil }
+            case .denied, .restricted:
                 return nil
-            }
-            #endif
-            
-            // Find home address
-            // We look for the label "Home" (CNLabelHome)
-            guard let homeAddress = meContact.postalAddresses.first(where: { $0.label == CNLabelHome }) else {
+            case .authorized, .limited:
+                break
+            @unknown default:
                 return nil
             }
             
-            // Geocode via MapKit
-            let postalAddress = homeAddress.value
-            let addressString = CNPostalAddressFormatter.string(from: postalAddress, style: .mailingAddress)
+            let keys = [CNContactPostalAddressesKey] as [CNKeyDescriptor]
             
-            guard let request = MKGeocodingRequest(addressString: addressString) else { return nil }
-            let mapItems = try await request.mapItems
-            guard let coordinate = mapItems.first?.placemark.coordinate else { return nil }
-            return CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-            
-        } catch {
-            // "Me" contact might not exist or other errors
-            DiverLogger.pipeline.error("Error fetching me contact or geocoding: \(error.localizedDescription)")
-            return nil
-        }
+            do {
+                let meContact: CNContact
+                #if os(macOS)
+                meContact = try self.contactStore.unifiedMeContactWithKeys(toFetch: keys)
+                #else
+                if let savedId = self.getMeContactIdentifier() {
+                    meContact = try self.contactStore.unifiedContact(withIdentifier: savedId, keysToFetch: keys)
+                } else {
+                    return nil
+                }
+                #endif
+                
+                guard let homeAddress = meContact.postalAddresses.first(where: { $0.label == CNLabelHome }) else {
+                    return nil
+                }
+                
+                let postalAddress = homeAddress.value
+                let addressString = CNPostalAddressFormatter.string(from: postalAddress, style: .mailingAddress)
+                
+                guard let request = MKGeocodingRequest(addressString: addressString) else { return nil }
+                let mapItems = try await request.mapItems
+                guard let coordinate = mapItems.first?.placemark.coordinate else { return nil }
+                return CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+                
+            } catch {
+                DiverLogger.pipeline.error("Error fetching me contact or geocoding: \(error.localizedDescription)")
+                return nil
+            }
+        }.value
     }
     
     /// Requests access to contacts and attempts to fetch the "Me" contact's work address, then geocodes it.
     public func getWorkLocation() async throws -> CLLocation? {
-        let status = CNContactStore.authorizationStatus(for: .contacts)
-        
-        switch status {
-        case .notDetermined:
-            let granted = try await contactStore.requestAccess(for: .contacts)
-            if !granted {
-                return nil
-            }
-        case .denied, .restricted:
-            return nil
-        case .authorized, .limited:
-            break
-        @unknown default:
-            return nil
-        }
-        
-        let keys = [CNContactPostalAddressesKey] as [CNKeyDescriptor]
-        
-        do {
-            let meContact: CNContact
+        return try await Task.detached(priority: .userInitiated) {
+            let status = CNContactStore.authorizationStatus(for: .contacts)
             
-            #if os(macOS)
-            meContact = try contactStore.unifiedMeContactWithKeys(toFetch: keys)
-            #else
-            if let savedId = getMeContactIdentifier() {
-                meContact = try contactStore.unifiedContact(withIdentifier: savedId, keysToFetch: keys)
-            } else {
+            switch status {
+            case .notDetermined:
+                let granted = try await self.contactStore.requestAccess(for: .contacts)
+                if !granted { return nil }
+            case .denied, .restricted:
                 return nil
-            }
-            #endif
-            
-            // Find work address
-            guard let workAddress = meContact.postalAddresses.first(where: { $0.label == CNLabelWork }) else {
+            case .authorized, .limited:
+                break
+            @unknown default:
                 return nil
             }
             
-            let postalAddress = workAddress.value
-            let addressString = CNPostalAddressFormatter.string(from: postalAddress, style: .mailingAddress)
+            let keys = [CNContactPostalAddressesKey] as [CNKeyDescriptor]
             
-            guard let request = MKGeocodingRequest(addressString: addressString) else { return nil }
-            let mapItems = try await request.mapItems
-            guard let coordinate = mapItems.first?.placemark.coordinate else { return nil }
-            return CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-            
-        } catch {
-            DiverLogger.pipeline.error("Error fetching me contact work location: \(error.localizedDescription)")
-            return nil
-        }
+            do {
+                let meContact: CNContact
+                #if os(macOS)
+                meContact = try self.contactStore.unifiedMeContactWithKeys(toFetch: keys)
+                #else
+                if let savedId = self.getMeContactIdentifier() {
+                    meContact = try self.contactStore.unifiedContact(withIdentifier: savedId, keysToFetch: keys)
+                } else {
+                    return nil
+                }
+                #endif
+                
+                guard let workAddress = meContact.postalAddresses.first(where: { $0.label == CNLabelWork }) else {
+                    return nil
+                }
+                
+                let postalAddress = workAddress.value
+                let addressString = CNPostalAddressFormatter.string(from: postalAddress, style: .mailingAddress)
+                
+                guard let request = MKGeocodingRequest(addressString: addressString) else { return nil }
+                let mapItems = try await request.mapItems
+                guard let coordinate = mapItems.first?.placemark.coordinate else { return nil }
+                return CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+                
+            } catch {
+                DiverLogger.pipeline.error("Error fetching me contact work location: \(error.localizedDescription)")
+                return nil
+            }
+        }.value
     }
     
     /// Fetches all contacts that have postal addresses, geocodes them, and sorts by distance from a reference location.
@@ -171,131 +159,120 @@ public final class ContactService: ContactServiceProvider, @unchecked Sendable {
     /// - Parameter referenceLocation: The location to sort by distance from (e.g., current location or pinned location)
     /// - Returns: Array of ContactAddress sorted by distance (nearest first)
     public func fetchContactsWithAddresses(sortedByDistanceFrom referenceLocation: CLLocation?) async -> [ContactAddress] {
-        let status = CNContactStore.authorizationStatus(for: .contacts)
-        
-        // Handle authorization
-        switch status {
-        case .authorized, .limited:
-            break // Continue to fetch
-        case .notDetermined:
-            let granted = (try? await contactStore.requestAccess(for: .contacts)) ?? false
-            if !granted { return [] }
-        default:
-            return []
-        }
-        
-        let keys: [CNKeyDescriptor] = [
-            CNContactGivenNameKey as CNKeyDescriptor,
-            CNContactFamilyNameKey as CNKeyDescriptor,
-            CNContactPostalAddressesKey as CNKeyDescriptor,
-            CNContactIdentifierKey as CNKeyDescriptor
-        ]
-        
-        let request = CNContactFetchRequest(keysToFetch: keys)
-        request.sortOrder = .familyName
-        
-        var contactAddresses: [ContactAddress] = []
-        
-        do {
-            try contactStore.enumerateContacts(with: request) { contact, _ in
-                for labeledAddress in contact.postalAddresses {
-                    let postalAddress = labeledAddress.value
-                    let addressString = CNPostalAddressFormatter.string(from: postalAddress, style: .mailingAddress)
-                    
-                    let labelString: String
-                    if let label = labeledAddress.label {
-                        labelString = CNLabeledValue<NSString>.localizedString(forLabel: label)
-                    } else {
-                        labelString = "Address"
-                    }
-                    
-                    let contactName = [contact.givenName, contact.familyName]
-                        .filter { !$0.isEmpty }
-                        .joined(separator: " ")
-                    
-                    let displayName = contactName.isEmpty ? "Unknown" : contactName
-                    
-                    contactAddresses.append(ContactAddress(
-                        contactIdentifier: contact.identifier,
-                        contactName: displayName,
-                        addressLabel: labelString,
-                        formattedAddress: addressString,
-                        location: nil, // Will be geocoded below
-                        distance: nil
-                    ))
-                }
-            }
-        } catch {
-            DiverLogger.pipeline.error("Failed to enumerate contacts: \(error.localizedDescription)")
-            return []
-        }
-        
-        // Load Cache
-        var addressCache = defaults.dictionary(forKey: "diver_address_geocoding_cache") as? [String: [Double]] ?? [:]
-        var cacheUpdated = false
-        
-        // Geocode addresses (Check cache first)
-        var geocodedAddresses: [ContactAddress] = []
-        var newGeocodeCount = 0
-        let maxNewGeocodes = 5 // Safe limit per session to avoid throttling
-        
-        for var address in contactAddresses {
-            // Check Cache
-            if let cachedCoords = addressCache[address.formattedAddress], cachedCoords.count == 2 {
-                let cachedLocation = CLLocation(latitude: cachedCoords[0], longitude: cachedCoords[1])
-                address.location = cachedLocation
-                if let ref = referenceLocation {
-                    address.distance = cachedLocation.distance(from: ref)
-                }
-                geocodedAddresses.append(address)
-                continue
+        return await Task.detached(priority: .userInitiated) {
+            let status = CNContactStore.authorizationStatus(for: .contacts)
+            
+            switch status {
+            case .authorized, .limited:
+                break
+            case .notDetermined:
+                let granted = (try? await self.contactStore.requestAccess(for: .contacts)) ?? false
+                if !granted { return [] }
+            default:
+                return []
             }
             
-            // Limit new geocodes
-            if newGeocodeCount >= maxNewGeocodes { continue }
+            let keys: [CNKeyDescriptor] = [
+                CNContactGivenNameKey as CNKeyDescriptor,
+                CNContactFamilyNameKey as CNKeyDescriptor,
+                CNContactPostalAddressesKey as CNKeyDescriptor,
+                CNContactIdentifierKey as CNKeyDescriptor
+            ]
+            
+            let request = CNContactFetchRequest(keysToFetch: keys)
+            request.sortOrder = .familyName
+            
+            var contactAddresses: [ContactAddress] = []
             
             do {
-                // Throttle slightly
-                try? await Task.sleep(nanoseconds: 100 * 1_000_000) // 100ms delay
-                
-                guard let geoRequest = MKGeocodingRequest(addressString: address.formattedAddress) else { continue }
-                let mapItems = try await geoRequest.mapItems
-                if let coordinate = mapItems.first?.placemark.coordinate {
-                    let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-                    address.location = location
-                    if let ref = referenceLocation {
-                        address.distance = location.distance(from: ref)
+                try self.contactStore.enumerateContacts(with: request) { contact, _ in
+                    for labeledAddress in contact.postalAddresses {
+                        let postalAddress = labeledAddress.value
+                        let addressString = CNPostalAddressFormatter.string(from: postalAddress, style: .mailingAddress)
+                        
+                        let labelString: String
+                        if let label = labeledAddress.label {
+                            labelString = CNLabeledValue<NSString>.localizedString(forLabel: label)
+                        } else {
+                            labelString = "Address"
+                        }
+                        
+                        let contactName = [contact.givenName, contact.familyName]
+                            .filter { !$0.isEmpty }
+                            .joined(separator: " ")
+                        
+                        let displayName = contactName.isEmpty ? "Unknown" : contactName
+                        
+                        contactAddresses.append(ContactAddress(
+                            contactIdentifier: contact.identifier,
+                            contactName: displayName,
+                            addressLabel: labelString,
+                            formattedAddress: addressString,
+                            location: nil,
+                            distance: nil
+                        ))
                     }
-                    geocodedAddresses.append(address)
-                    
-                    // Update cache
-                    addressCache[address.formattedAddress] = [location.coordinate.latitude, location.coordinate.longitude]
-                    cacheUpdated = true
-                    newGeocodeCount += 1
                 }
             } catch {
-                // Fallback: use user's current GPS location so the contact still appears
-                if let ref = referenceLocation {
-                    address.location = ref
-                    address.distance = 0
+                DiverLogger.pipeline.error("Failed to enumerate contacts: \(error.localizedDescription)")
+                return []
+            }
+            
+            var addressCache = self.defaults.dictionary(forKey: "diver_address_geocoding_cache") as? [String: [Double]] ?? [:]
+            var cacheUpdated = false
+            
+            var geocodedAddresses: [ContactAddress] = []
+            var newGeocodeCount = 0
+            let maxNewGeocodes = 5
+            
+            for var address in contactAddresses {
+                if let cachedCoords = addressCache[address.formattedAddress], cachedCoords.count == 2 {
+                    let cachedLocation = CLLocation(latitude: cachedCoords[0], longitude: cachedCoords[1])
+                    address.location = cachedLocation
+                    if let ref = referenceLocation {
+                        address.distance = cachedLocation.distance(from: ref)
+                    }
                     geocodedAddresses.append(address)
-                } else {
-                    DiverLogger.pipeline.debug("Failed to geocode address: \(address.formattedAddress)")
+                    continue
+                }
+                
+                if newGeocodeCount >= maxNewGeocodes { continue }
+                
+                do {
+                    try? await Task.sleep(nanoseconds: 100 * 1_000_000)
+                    guard let geoRequest = MKGeocodingRequest(addressString: address.formattedAddress) else { continue }
+                    let mapItems = try await geoRequest.mapItems
+                    if let coordinate = mapItems.first?.placemark.coordinate {
+                        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+                        address.location = location
+                        if let ref = referenceLocation {
+                            address.distance = location.distance(from: ref)
+                        }
+                        geocodedAddresses.append(address)
+                        
+                        addressCache[address.formattedAddress] = [location.coordinate.latitude, location.coordinate.longitude]
+                        cacheUpdated = true
+                        newGeocodeCount += 1
+                    }
+                } catch {
+                    if let ref = referenceLocation {
+                        address.location = ref
+                        address.distance = 0
+                        geocodedAddresses.append(address)
+                    }
                 }
             }
-        }
-        
-        // Save Cache
-        if cacheUpdated {
-            defaults.set(addressCache, forKey: "diver_address_geocoding_cache")
-        }
-        
-        // Sort by distance if reference location provided
-        if referenceLocation != nil {
-            geocodedAddresses.sort { ($0.distance ?? .infinity) < ($1.distance ?? .infinity) }
-        }
-        
-        return geocodedAddresses
+            
+            if cacheUpdated {
+                self.defaults.set(addressCache, forKey: "diver_address_geocoding_cache")
+            }
+            
+            if referenceLocation != nil {
+                geocodedAddresses.sort { ($0.distance ?? .infinity) < ($1.distance ?? .infinity) }
+            }
+            
+            return geocodedAddresses
+        }.value
     }
 }
 

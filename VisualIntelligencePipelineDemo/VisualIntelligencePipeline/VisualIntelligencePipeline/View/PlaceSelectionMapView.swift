@@ -27,12 +27,12 @@ struct PlaceSelectionMapView: View {
 
     /// Contacts filtered by search text
     private var filteredContactAddresses: [ContactAddress] {
-        guard !searchText.isEmpty else { return contactAddresses }
+        guard !searchText.isEmpty else { return Array(contactAddresses.prefix(20)) }
         let lowercasedSearch = searchText.lowercased()
-        return contactAddresses.filter { contact in
+        return Array(contactAddresses.filter { contact in
             contact.contactName.lowercased().contains(lowercasedSearch) ||
             contact.formattedAddress.lowercased().contains(lowercasedSearch)
-        }
+        }.prefix(20))
     }
 
     var body: some View {
@@ -76,16 +76,7 @@ struct PlaceSelectionMapView: View {
     // MARK: - Map Section
     private var mapSection: some View {
         MapReader { reader in
-            Map(position: $position, selection: Binding(
-                get: { nil },
-                set: { feature in
-                    if let feature = feature {
-                        Task {
-                            await resolveMapFeature(feature)
-                        }
-                    }
-                }
-            )) {
+            Map(position: $position) {
                 // Place Candidates
                 ForEach(viewModel.placeCandidates, id: \.id) { candidate in
                     if let lat = candidate.placeContext?.latitude, let lon = candidate.placeContext?.longitude {

@@ -72,6 +72,9 @@ public protocol EdgeNodeDiscovering: Sendable {
     /// Whether an edge node is currently connected and available for inference.
     var isEdgeNodeConnected: Bool { get async }
     
+    /// Sets a callback triggered when a new edge node is selected.
+    func setOnNodeConnected(_ handler: (@Sendable (String) -> Void)?) async
+    
     /// Start scanning for edge nodes via Bonjour.
     func startDiscovery() async
     

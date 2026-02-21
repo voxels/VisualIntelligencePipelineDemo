@@ -1931,9 +1931,10 @@ public final class LocalPipelineService {
         guard !candidates.isEmpty else { return }
 
         for candidate in candidates {
+            let nameValue = candidate
             // Check if concept exists
             let descriptor = FetchDescriptor<UserConcept>(
-                predicate: #Predicate<UserConcept> { $0.name == candidate }
+                predicate: #Predicate<UserConcept> { $0.name == nameValue }
             )
             
             // All source-extracted concepts have equal weight
@@ -3133,7 +3134,7 @@ public final class LocalPipelineService {
 
     /// Internal test-accessible wrapper for `createCGImage(from:)`.
     /// Only visible via `@testable import DiverKit`.
-    internal func createCGImageForTesting(from data: Data) -> CGImage? {
+    nonisolated internal func createCGImageForTesting(from data: Data) -> CGImage? {
         createCGImage(from: data)
     }
 

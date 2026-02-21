@@ -140,6 +140,20 @@ struct VisualIntelligencePipelineApp: App {
         let actorSystem = VisualIntelligenceActorSystem(transport: transportLayer)
         let edgeRouter = PipelineEdgeRouter(discoveryService: discoveryService)
         
+        // Eagerly connect to discovered nodes to hold the TCP pipe open instantly
+        Task {
+            await discoveryService.setOnNodeConnected { nodeName in
+                Task {
+                    do {
+                        try await transportLayer.connect(to: nodeName)
+                        print("🔗 [VisualIntelligencePipelineApp] Eager connection established to \(nodeName)")
+                    } catch {
+                        print("⚠️ [VisualIntelligencePipelineApp] Eager connection failed: \(error)")
+                    }
+                }
+            }
+        }
+        
         // Native Edge Node checking for iOS devices
         let memoryGB = Double(ProcessInfo.processInfo.physicalMemory) / 1024.0 / 1024.0 / 1024.0
         let isCapableiPadOrMac = memoryGB >= 7.0 // Allow 8GB devices
@@ -148,6 +162,13 @@ struct VisualIntelligencePipelineApp: App {
             print("🚀 [VisualIntelligencePipelineApp] Device is M-series capable (\(String(format: "%.1f", memoryGB)) GB RAM). Starting local headless edge nodes.")
             // Instantiate actors locally
             _ = EdgeAgenticSearchActor(actorSystem: actorSystem)
+            
+            // Start headless daemon to serve OTHER devices on the local grid
+            let daemonService = EdgeDaemonService()
+            daemonService.startListening()
+            
+            // Provide a strong reference so it isn't immediately garbage collected
+            Services.shared.localDaemonService = daemonService
         }
         
         let searchService = AgenticSearchService(router: edgeRouter, system: actorSystem)
@@ -156,8 +177,8 @@ struct VisualIntelligencePipelineApp: App {
         Services.shared.actorSystem = actorSystem
         
         Task {
-            await discoveryService.startDiscovery()
             print("🚀 Started Bonjour Edge Discovery")
+            await discoveryService.startDiscovery()
         }
 
         // Relationship reconciliation runs via maintainLibrary (Settings > Rebuild Library)

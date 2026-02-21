@@ -219,6 +219,7 @@ public struct EdgeResultHandler: DistributedTargetInvocationResultHandler {
 public protocol EdgeTransportProtocol: Sendable {
     var localNodeName: String { get }
     
+    func connect(to nodeName: String) async throws
     func send(to actorID: EdgeActorID, target: String, payload: Data) async throws -> Data
 }
 

@@ -25,7 +25,6 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
     
     private var browser: NWBrowser?
     private var discoveredNodes: [EdgeNodeInfo] = []
-    private var currentConnection: EdgeNodeInfo?
     private var isScanning = false
     
     // MARK: - EdgeNodeDiscovering
@@ -38,11 +37,27 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
         currentConnection
     }
     
+    public var currentConnection: EdgeNodeInfo? {
+        didSet {
+            if let node = currentConnection {
+                onNodeConnected?(node.deviceName)
+            }
+        }
+    }
+    
+    private var onNodeConnected: (@Sendable (String) -> Void)?
+    
     public var isEdgeNodeConnected: Bool {
         currentConnection != nil
     }
     
+    // MARK: - Lifecycle
+    
     public init() {}
+    
+    public func setOnNodeConnected(_ handler: (@Sendable (String) -> Void)?) {
+        self.onNodeConnected = handler
+    }
     
     public func startDiscovery() {
         guard !isScanning else { return }
@@ -136,6 +151,17 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
                 availableModels: metadata["models"]?.components(separatedBy: ",") ?? [],
                 isAvailable: true
             )
+        }
+        
+        let sortedNodes = discoveredNodes.sorted { $0.neuralEngineTOPS > $1.neuralEngineTOPS }
+        if let bestNode = sortedNodes.first {
+            if currentConnection?.deviceName != bestNode.deviceName {
+                currentConnection = bestNode
+                print("🔗 BonjourDiscovery: Auto-connected to highest TOPS node = \(bestNode.deviceName) (\(bestNode.neuralEngineTOPS) TOPS)")
+                onNodeConnected?(bestNode.deviceName)
+            }
+        } else {
+            currentConnection = nil
         }
         
         print("🔍 BonjourDiscovery: \(discoveredNodes.count) node(s) found")
