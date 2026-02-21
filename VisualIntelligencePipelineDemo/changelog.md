@@ -21,6 +21,7 @@
 - **FastVLM Model Resolution**: Reordered `resolveModelID()` to check HuggingFace Hub cache (via `hasOptimalModelCached` flag) first, then local `config.json`, then fallback to download. Cached resolved model ID in static `_resolvedModelID` to prevent repeated resolution and logging spam.
 - **Edge VLM RAM Threshold**: Lowered `canRunMediumVLM` from 8GB to 7GB (enables M2 iPad 1.5B model). Lowered edge node VLM offload threshold from 8GB to 7GB in both `EdgeNodeService.shouldOffload` and `LocalPipelineService`.
 - **CLaRa Citation Deduplication**: `AgenticSearchService.assembleContext` now deduplicates document IDs (highest Jaccard score wins) while preserving relevance order.
+- **FastVLM 1.5B Config Fix**: Added `patchVisionConfigIfNeeded()` workaround for mlx-swift-lm v2.30.x bug — the `apple/FastVLM-1.5B-int8` ships with empty `vision_config: {}` but the library requires non-optional `cls_ratio`, `embed_dims`, etc. The patch injects the MobileCLIP-L encoder config (matching the working 0.5B model) into the HF Hub cache config.json before model loading.
 
 ### Architectural Specification (V3)
 - **UI & HW Decoupling**: Updated `spec.md` to V3, formally separating User Interface forms (iPhone, visionOS) from Hardware ML capabilities, introducing the `CapabilityRouter` strategy.

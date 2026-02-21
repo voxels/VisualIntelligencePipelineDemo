@@ -175,6 +175,9 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         let config = ModelConfiguration(id: repo)
         let startTime = Date()
         
+        // Patch empty vision_config in HF Hub cache before loading (mlx-swift-lm bug workaround)
+        Self.patchVisionConfigIfNeeded(modelID: repo)
+        
         // VLMModelFactory downloads from HF Hub and caches locally
         _ = try await VLMModelFactory.shared.loadContainer(
             configuration: config
@@ -326,6 +329,9 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         
         print("📦 [FastVLMService] Loading model into GPU memory...")
         
+        // Patch empty vision_config in HF Hub cache before loading (mlx-swift-lm bug workaround)
+        Self.patchVisionConfigIfNeeded(modelID: Self.modelID)
+        
         let config: ModelConfiguration
         if Self.modelID.starts(with: "apple/FastVLM/") {
             // Use local weights directory for the downloaded EdgeDaemon models
@@ -377,6 +383,9 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
             config = ModelConfiguration(id: Self.modelID)
         }
         
+        // Patch empty vision_config in HF Hub cache before loading (mlx-swift-lm bug workaround)
+        Self.patchVisionConfigIfNeeded(modelID: Self.modelID)
+        
         self.container = try await VLMModelFactory.shared.loadContainer(
             configuration: config
         ) { update in
@@ -410,6 +419,72 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         container = nil
         print("💤 [FastVLMService] Model unloaded from GPU memory")
         #endif
+    }
+    
+    // MARK: - Config Patching
+    
+    /// Patches `config.json` for models that ship with an empty `vision_config: {}`.
+    /// mlx-swift-lm v2.30.x maps `llava_qwen2` → `FastVLMConfiguration` which requires
+    /// non-optional fields (`cls_ratio`, `embed_dims`, etc.) in `vision_config`.
+    /// The `apple/FastVLM-1.5B-int8` model omits these — this method injects the correct
+    /// MobileCLIP-L (1024-dim) encoder config (same values as the working 0.5B model).
+    private static func patchVisionConfigIfNeeded(modelID: String) {
+        // Only patch HF Hub models (not local edge-downloaded models)
+        guard !modelID.starts(with: "apple/FastVLM/") else { return }
+        
+        // HF Hub Swift caches to Documents/huggingface/models/{repo-id}/config.json
+        guard let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+        let configURL = documentsDir
+            .appendingPathComponent("huggingface/models/\(modelID)/config.json")
+        
+        guard FileManager.default.fileExists(atPath: configURL.path) else { return }
+        
+        do {
+            let data = try Data(contentsOf: configURL)
+            guard var json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+            
+            // Check if vision_config exists and is empty
+            guard let visionConfig = json["vision_config"] as? [String: Any],
+                  visionConfig.isEmpty else {
+                return // Already has vision config — no patch needed
+            }
+            
+            print("🔧 [FastVLM] Patching empty vision_config in \(modelID) config.json")
+            
+            // MobileCLIP-L 1024-dim encoder config (matches mlx-community/FastVLM-0.5B-bf16)
+            let patchedVisionConfig: [String: Any] = [
+                "cls_ratio": 2.0,
+                "down_patch_size": 7,
+                "down_stride": 2,
+                "downsamples": [true, true, true, true, true],
+                "embed_dims": [96, 192, 384, 768, 1536],
+                "hidden_size": 1024,
+                "image_size": 1024,
+                "intermediate_size": 3072,
+                "layer_scale_init_value": 1e-05,
+                "layers": [2, 12, 24, 4, 2],
+                "mlp_ratios": [4, 4, 4, 4, 4],
+                "num_classes": 1000,
+                "patch_size": 64,
+                "pos_embs_shapes": [
+                    NSNull(), NSNull(), NSNull(),
+                    [7, 7],
+                    [3, 3]
+                ],
+                "projection_dim": 3072,
+                "repmixer_kernel_size": 3,
+                "token_mixers": ["repmixer", "repmixer", "repmixer", "attention", "attention"]
+            ]
+            
+            json["vision_config"] = patchedVisionConfig
+            
+            let patched = try JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted, .sortedKeys])
+            try patched.write(to: configURL)
+            
+            print("✅ [FastVLM] Patched vision_config for \(modelID)")
+        } catch {
+            print("⚠️ [FastVLM] Failed to patch config.json: \(error)")
+        }
     }
     
     // MARK: - Single-Pass Grounded Analysis
