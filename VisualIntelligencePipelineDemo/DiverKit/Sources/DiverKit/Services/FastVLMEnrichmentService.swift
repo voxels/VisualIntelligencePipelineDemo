@@ -472,12 +472,38 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         // Only patch HF Hub models (not local edge-downloaded models)
         guard !modelID.starts(with: "apple/FastVLM/") else { return }
         
-        // HF Hub Swift caches to Documents/huggingface/models/{repo-id}/config.json
+        // Must match HubApi.localRepoLocation exactly:
+        //   downloadBase.appending(component: "models").appending(component: repo.id)
+        // where downloadBase = Documents/huggingface
         guard let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
-        let configURL = documentsDir
-            .appendingPathComponent("huggingface/models/\(modelID)/config.json")
+        let repoLocation = documentsDir
+            .appending(component: "huggingface")
+            .appending(component: "models")
+            .appending(component: modelID)
+        let configURL = repoLocation.appending(path: "config.json")
         
-        guard FileManager.default.fileExists(atPath: configURL.path) else { return }
+        print("🔧 [FastVLM] Checking config at: \(configURL.path)")
+        guard FileManager.default.fileExists(atPath: configURL.path) else {
+            print("⚠️ [FastVLM] Config not found at expected path, scanning...")
+            // Fallback: scan for config.json under huggingface/models/
+            let modelsDir = documentsDir.appendingPathComponent("huggingface/models")
+            if let enumerator = FileManager.default.enumerator(atPath: modelsDir.path) {
+                while let file = enumerator.nextObject() as? String {
+                    if file.hasSuffix("config.json") && file.contains("FastVLM") {
+                        let foundURL = modelsDir.appendingPathComponent(file)
+                        print("🔍 [FastVLM] Found config at: \(foundURL.path)")
+                        patchConfigFile(at: foundURL, modelID: modelID)
+                        return
+                    }
+                }
+            }
+            return
+        }
+        
+        patchConfigFile(at: configURL, modelID: modelID)
+    }
+    
+    private static func patchConfigFile(at configURL: URL, modelID: String) {
         
         do {
             let data = try Data(contentsOf: configURL)
