@@ -6,6 +6,7 @@ import Dispatch
 import UIKit
 #endif
 #if canImport(MLXVLM) && !targetEnvironment(simulator)
+import Hub
 import MLX
 import MLXLLM
 import MLXLMCommon
@@ -472,42 +473,20 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         // Only patch HF Hub models (not local edge-downloaded models)
         guard !modelID.starts(with: "apple/FastVLM/") else { return }
         
-        // MLXLMCommon.ModelFactory uses cachesDirectory as HubApi downloadBase:
-        //   HubApi(downloadBase: .cachesDirectory)
-        //   Then localRepoLocation = downloadBase/models/{repo.id}/
-        guard let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else { return }
+        #if canImport(MLXVLM) && !targetEnvironment(simulator)
+        // Use the SAME HubApi instance that loadContainer uses — eliminates all path guesswork
+        let repo = Hub.Repo(id: modelID)
+        let repoDir = defaultHubApi.localRepoLocation(repo)
+        let configURL = repoDir.appending(path: "config.json")
         
-        // Try multiple path construction strategies since URL.appending(component:) vs appendingPathComponent
-        // behave differently with slashes in the model ID
-        let candidates = [
-            // Strategy 1: appendingPathComponent treats slash as path separator → .../models/apple/FastVLM-1.5B-int8/
-            cachesDir.appendingPathComponent("huggingface/models/\(modelID)/config.json"),
-            // Strategy 2: appending(component:) treats entire ID as single component
-            cachesDir.appending(component: "huggingface").appending(component: "models").appending(component: modelID).appending(path: "config.json"),
-        ]
-        
-        for configURL in candidates {
-            print("🔧 [FastVLM] Checking config at: \(configURL.path)")
-            if FileManager.default.fileExists(atPath: configURL.path) {
-                patchConfigFile(at: configURL, modelID: modelID)
-                return
-            }
+        print("🔧 [FastVLM] Checking config at: \(configURL.path)")
+        guard FileManager.default.fileExists(atPath: configURL.path) else {
+            print("⚠️ [FastVLM] Config not found at: \(configURL.path)")
+            return
         }
         
-        // Fallback: scan for config.json under caches/huggingface/
-        print("⚠️ [FastVLM] Config not found at expected paths, scanning caches...")
-        let hfDir = cachesDir.appendingPathComponent("huggingface")
-        if let enumerator = FileManager.default.enumerator(atPath: hfDir.path) {
-            while let file = enumerator.nextObject() as? String {
-                if file.hasSuffix("config.json") && file.lowercased().contains("fastvlm") {
-                    let foundURL = hfDir.appendingPathComponent(file)
-                    print("🔍 [FastVLM] Found config at: \(foundURL.path)")
-                    patchConfigFile(at: foundURL, modelID: modelID)
-                    return
-                }
-            }
-        }
-        print("⚠️ [FastVLM] No config.json found for \(modelID)")
+        patchConfigFile(at: configURL, modelID: modelID)
+        #endif
     }
     
     private static func patchConfigFile(at configURL: URL, modelID: String) {
