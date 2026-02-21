@@ -111,6 +111,41 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
         currentConnection = nil
     }
     
+    /// Update a discovered node's capabilities from a TCP `__capabilities__` RPC response.
+    /// Called after establishing TCP connection, since NWBrowser TXT metadata is unreliable.
+    public func updateNodeFromCapabilities(_ data: Data, nodeName: String) {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            print("⚠️ BonjourDiscovery: Failed to parse capabilities JSON from \(nodeName)")
+            return
+        }
+        
+        let chip = json["chip"] as? String ?? "Unknown"
+        let tops = (json["tops"] as? NSNumber)?.floatValue ?? 0
+        let ram = (json["ram"] as? NSNumber)?.uint64Value ?? 0
+        let models = json["models"] as? [String] ?? []
+        
+        let updatedNode = EdgeNodeInfo(
+            deviceName: nodeName,
+            chipFamily: chip,
+            neuralEngineTOPS: tops,
+            physicalMemoryGB: ram,
+            availableModels: models,
+            isAvailable: true
+        )
+        
+        // Replace the node in discoveredNodes
+        if let idx = discoveredNodes.firstIndex(where: { $0.deviceName == nodeName }) {
+            discoveredNodes[idx] = updatedNode
+        }
+        
+        // Update currentConnection if it matches
+        if currentConnection?.deviceName == nodeName {
+            currentConnection = updatedNode
+        }
+        
+        print("✅ BonjourDiscovery: Updated \(nodeName) via TCP — chip=\(chip), tops=\(tops), ram=\(ram)GB, models=\(models)")
+    }
+    
     // MARK: - Browser Handlers
     
     private func handleBrowserState(_ state: NWBrowser.State) {

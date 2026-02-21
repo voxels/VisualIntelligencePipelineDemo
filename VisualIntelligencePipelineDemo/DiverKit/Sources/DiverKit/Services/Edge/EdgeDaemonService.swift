@@ -315,6 +315,21 @@ public final class EdgeDaemonService {
         let method = String(data: targetData, encoding: .utf8) ?? "unknown"
         print("📨 EdgeDaemon: Processing '\(method)' payload (\(payload.count) bytes)")
         
+        // Fast-path: capabilities query (no enqueue needed)
+        if method == "__capabilities__" {
+            let hw = CapabilityRouter.shared.currentCapability
+            let caps: [String: Any] = [
+                "chip": hw.chipFamily,
+                "tops": hw.neuralEngineTOPS,
+                "ram": hw.physicalMemoryGB,
+                "models": self.discoverModels()
+            ]
+            let capsData = (try? JSONSerialization.data(withJSONObject: caps)) ?? Data()
+            let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+            print("✅ EdgeDaemon: '__capabilities__' responded in \(String(format: "%.0f", elapsed * 1000))ms")
+            return capsData
+        }
+        
         do {
             let resultData = try await EdgeQueueManager.shared.enqueue {
                 let dummySystem = VisualIntelligenceActorSystem(transport: NWTransportLayer(localNodeName: "daemon"))

@@ -150,6 +150,15 @@ struct VisualIntelligencePipelineApp: App {
                         try await transportLayer.connect(to: nodeName)
                         print("🔗 [VisualIntelligencePipelineApp] Eager connection established to \(nodeName)")
                         
+                        // Query edge node capabilities via TCP (NWBrowser TXT metadata is unreliable)
+                        do {
+                            let actorID = EdgeActorID(id: "capabilities", nodeName: nodeName)
+                            let capsData = try await transportLayer.send(to: actorID, target: "__capabilities__", payload: Data())
+                            await discoveryService.updateNodeFromCapabilities(capsData, nodeName: nodeName)
+                        } catch {
+                            print("⚠️ [VisualIntelligencePipelineApp] Capabilities query failed: \(error)")
+                        }
+                        
                         // Automatically trigger silent LLM summary upgrades on the edge node
                         let backgroundService = BackgroundSummaryService(modelContainer: container)
                         await backgroundService.startUpgradesIfNeeded(router: edgeRouter, system: actorSystem)
