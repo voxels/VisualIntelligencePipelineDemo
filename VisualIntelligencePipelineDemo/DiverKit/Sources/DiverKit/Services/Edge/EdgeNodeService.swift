@@ -12,8 +12,10 @@
 
 import Foundation
 import Distributed
-import ImageIO
 import DiverShared
+import Network
+import ImageIO
+import SwiftData
 
 // MARK: - Distributed Actors
 
@@ -228,7 +230,18 @@ public distributed actor EdgeAgenticSearchActor {
     distributed public func search(query: AgenticSearchQuery) async throws -> AgenticSearchResult {
         print("🔍 [EdgeAgenticSearchActor] Querying CLaRa locally via MLX for: \(query.queryText)")
         
-        let contextBlock = "User query context text..." // Will map to actual latents soon
+        var contextBlock = "User query context text..."
+        
+        // Retrieve all items from local data store to feed as context
+        let contextStr: String = await MainActor.run {
+            guard let mc = Services.shared.modelContext else { return "" }
+            let store = DiverDataStore(container: mc.container)
+            return store.generateAgenticContextString(limit: 30)
+        }
+        if !contextStr.isEmpty {
+            contextBlock = contextStr
+        }
+        
         do {
             let answer = try await CLaRaLatentService.shared.query(
                 documentText: contextBlock,

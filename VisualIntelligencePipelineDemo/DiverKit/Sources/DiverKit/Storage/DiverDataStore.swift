@@ -42,6 +42,24 @@ public final class DiverDataStore {
     // remote change notifications are enabled internally by ModelContainer.
     // @Query views auto-refresh via NSManagedObjectContextObjectsDidChange.
     // Pull-to-refresh triggers modelContext.save() to push local changes immediately.
+    
+    public func generateAgenticContextString(limit: Int = 30) -> String {
+        let descriptor = FetchDescriptor<ProcessedItem>()
+        guard let items = try? mainContext.fetch(descriptor) else { return "" }
+        
+        let recentText = items
+            .sorted(by: { $0.createdAt > $1.createdAt })
+            .prefix(limit)
+            .compactMap { item -> String? in
+                let title = item.title ?? "Untitled"
+                let text = item.summary ?? item.transcription ?? ""
+                if text.isEmpty { return nil }
+                return "\(title): \(text)"
+            }
+            .joined(separator: "\n---\n")
+        
+        return recentText.isEmpty ? "" : "Here is my recent library context:\n" + recentText
+    }
 
     public init(types: [any PersistentModel.Type] = DiverDataStore.coreTypes, inMemory: Bool = false, forAppGroup: Bool = true) {
         let schema = Schema(types)

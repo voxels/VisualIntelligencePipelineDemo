@@ -177,6 +177,10 @@ public final class EdgeDaemonService {
                     self.connectedClients.append(clientName)
                     self.activeConnections.append(connection)
                     print("🔗 EdgeDaemon: Client connected: \(clientName) [\(clientInterface)]")
+                    // Eagerly pre-load CLaRa 7B into unified memory so Agentic Search is instant
+                    Task {
+                        try? await CLaRaLatentService.shared.loadModel()
+                    }
                 case .cancelled, .failed:
                     self.connectedClients.removeAll { $0 == clientName }
                     self.activeConnections.removeAll { $0 === connection }
@@ -248,37 +252,33 @@ public final class EdgeDaemonService {
                     var frame = Data(bytes: &responseLength, count: 4)
                     frame.append(response)
                     
-                    connection.send(content: frame, completion: .contentProcessed { sendError in
+                    connection.send(content: frame, isComplete: false, completion: .contentProcessed { [weak self] sendError in
+                        guard let self = self else { return }
                         if let sendError = sendError {
                             print("⚠️ EdgeDaemon: Send error: \(sendError)")
                             connection.cancel()
+                            return
                         }
+                        
+                        Task { @MainActor in
+                            self.status = .listening
+                        }
+                        
+                        if isBodyComplete {
+                            // Client has explicitly terminated the stream
+                            connection.cancel()
+                            return
+                        }
+                        
+                        // Successfully responded, queue up next read on this persistent tunnel
+                        self.receiveMessages(on: connection)
                     })
-                    
-                    await MainActor.run {
-                        self.status = .listening
-                    }
                 }
-                
-                if isBodyComplete {
-                    connection.cancel()
-                    return
-                }
-                
-                // Continue receiving
-                self.receiveMessages(on: connection)
             }
         }
     }
     
     // MARK: - Request Processing
-    
-    /// Response envelope sent back to iOS clients.
-    private struct EdgeResponse: Codable {
-        let method: String
-        let result: Data   // JSON-encoded result type (VisionAnalysisResult, etc.)
-        let node: String
-    }
     
     nonisolated private func getNodeName() -> String {
 #if os(macOS)
@@ -288,11 +288,6 @@ public final class EdgeDaemonService {
 #endif
     }
     
-    nonisolated private func createErrorResponse(method: String, nodeName: String) -> Data {
-        let errorResponse = EdgeResponse(method: method, result: Data(), node: nodeName)
-        return (try? JSONEncoder().encode(errorResponse)) ?? Data()
-    }
-    
     nonisolated private func processRequest(_ data: Data) async -> Data {
         let startTime = CFAbsoluteTimeGetCurrent()
         let nodeName = getNodeName()
@@ -300,14 +295,14 @@ public final class EdgeDaemonService {
         // Unpack framing: [4-byte target length][target string][payload]
         guard data.count >= 4 else {
             print("❌ EdgeDaemon: Payload too small (\(data.count) bytes)")
-            return createErrorResponse(method: "unknown", nodeName: nodeName)
+            return Data()
         }
         
         let targetLength = data.prefix(4).withUnsafeBytes { $0.load(as: UInt32.self).bigEndian }
         
         guard data.count >= 4 + Int(targetLength) else {
             print("❌ EdgeDaemon: Payload malformed. Expected at least \(4 + targetLength) bytes, got \(data.count)")
-            return createErrorResponse(method: "unknown", nodeName: nodeName)
+            return Data()
         }
         
         let targetData = data.dropFirst(4).prefix(Int(targetLength))
@@ -433,25 +428,23 @@ public final class EdgeDaemonService {
                 
                 return encodedResult
             }
-            
-            let response = EdgeResponse(method: method, result: resultData, node: nodeName)
-            let encodedResponse = try JSONEncoder().encode(response)
+            // The resultData is ALREADY JSONEncoded within each actor invocation block above.
+            // We just return it directly so the iOS target can decode(Res.self)
             
             let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
-            print("✅ EdgeDaemon: Completed '\(method)' in \(String(format: "%.1f", elapsed))ms (Response: \(encodedResponse.count) bytes)")
+            print("✅ EdgeDaemon: Completed '\(method)' in \(String(format: "%.1f", elapsed))ms (Response: \(resultData.count) bytes)")
             
-            return encodedResponse
+            return resultData
             
         } catch {
             print("❌ EdgeDaemon: Request '\(method)' failed: \(error)")
-            // Return empty response on error (or we could propagate EdgeError)
-            let errorResponse = EdgeResponse(method: method, result: Data(), node: nodeName)
-            let encodedError = (try? JSONEncoder().encode(errorResponse)) ?? Data()
+            // Return empty response on error
+            let emptyData = Data()
             
             let elapsed = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
             print("⚠️ EdgeDaemon: Aborted '\(method)' in \(String(format: "%.1f", elapsed))ms")
             
-            return encodedError
+            return emptyData
         }
     }
     

@@ -2738,24 +2738,49 @@ public final class LocalPipelineService {
                 
                 combinedText += "\n"
             }
-            
-            let summary: String
+            var summary = ""
             
             // Fetch session metadata for location context
             let session = try modelContext.fetch(fetchMeta).first
             let locationName = session?.locationName ?? "Location"
             
-            if ContextQuestionService.isAvailable {
-                let service = ContextQuestionService()
-                summary = try await service.summarizeText(combinedText)
-            } else {
-                 let titleList = sortedItems
-                     .compactMap { $0.title }
-                     .filter { $0 != "Untitled" && $0 != "Visual Capture" && !$0.isEmpty }
-                     .prefix(3)
-                     .joined(separator: ", ")
-                 
-                 summary = "Session with \(items.count) items at \(locationName). Includes: \(titleList.isEmpty ? "Captured Media" : titleList)."
+            // 1. Try to offload to Edge Context Actor first
+            var summaryGenerated = false
+            let nodeName = "Edge Node" // Default for logging
+            
+            if let router = await Services.shared.edgeRouter, let system = await Services.shared.actorSystem {
+                let decision = await router.shouldOffload(task: .vlmInference)
+                if case .edge(let node, _) = decision {
+                    do {
+                        let identity = EdgeActorID(id: "EdgeContext", nodeName: node.deviceName)
+                        let edgeActor = try EdgeContextActor.resolve(id: identity, using: system)
+                        
+                        let contextPrompt = "Summarize the following session data concisely:\n\(combinedText)"
+                        summary = try await edgeActor.summarize(text: contextPrompt)
+                        summaryGenerated = true
+                        DiverLogger.pipeline.info("✅ generated summary for session \(sessionID) using EdgeContextActor (\(node.deviceName))")
+                    } catch {
+                        DiverLogger.pipeline.error("⚠️ EdgeContextActor failed, falling back to local: \(error)")
+                    }
+                }
+            }
+            
+            // 2. Fallback to Local Apple Intelligence or Heuristics
+            if !summaryGenerated {
+                if ContextQuestionService.isAvailable {
+                    let service = ContextQuestionService()
+                    summary = try await service.summarizeText(combinedText)
+                    DiverLogger.pipeline.info("✅ generated summary for session \(sessionID) using SystemLanguageModel")
+                } else {
+                     let titleList = sortedItems
+                         .compactMap { $0.title }
+                         .filter { $0 != "Untitled" && $0 != "Visual Capture" && !$0.isEmpty }
+                         .prefix(3)
+                         .joined(separator: ", ")
+                     
+                     summary = "Session with \(items.count) items at \(locationName). Includes: \(titleList.isEmpty ? "Captured Media" : titleList)."
+                     DiverLogger.pipeline.info("✅ generated summary for session \(sessionID) using heuristics")
+                }
             }
             
             if let meta = session {

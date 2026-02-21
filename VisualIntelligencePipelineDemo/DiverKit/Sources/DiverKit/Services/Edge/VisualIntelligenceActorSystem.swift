@@ -81,6 +81,23 @@ public final class VisualIntelligenceActorSystem: DistributedActorSystem, Sendab
             target: target.identifier,
             payload: payload
         )
+        
+        // Handle primitive raw strings gracefully
+        if Res.self == String.self {
+            if let str = String(data: response, encoding: .utf8) {
+                // If it was double-quoted by JSONEncoder on the edge, strip it
+                if str.hasPrefix("\"") && str.hasSuffix("\"") {
+                    return String(str.dropFirst().dropLast()) as! Res
+                }
+                return str as! Res
+            }
+        }
+        
+        // Handle bare Data returns
+        if Res.self == Data.self {
+            return response as! Res
+        }
+        
         return try JSONDecoder().decode(Res.self, from: response)
     }
     
@@ -139,6 +156,7 @@ public struct EdgeInvocationEncoder: DistributedTargetInvocationEncoder {
     
     public mutating func recordReturnType<R: Codable>(_ type: R.Type) throws {
         // Return type recorded for invocation metadata
+        // In our simple framing, we rely on the target ID string instead.
     }
     
     public mutating func recordErrorType<E: Error>(_ type: E.Type) throws {
@@ -178,15 +196,15 @@ public class EdgeInvocationDecoder: DistributedTargetInvocationDecoder {
     }
     
     public func decodeGenericSubstitutions() throws -> [Any.Type] {
-        []  // Generic substitutions not used in current implementation
+        []  // We do not rely on generic substitutions encoded to transport
     }
     
     public func decodeReturnType() throws -> Any.Type? {
-        nil // Return type inferred from call site
+        nil // Return type inferred natively from call site
     }
     
     public func decodeErrorType() throws -> Any.Type? {
-        nil
+        nil // Error type natively inferred
     }
 }
 

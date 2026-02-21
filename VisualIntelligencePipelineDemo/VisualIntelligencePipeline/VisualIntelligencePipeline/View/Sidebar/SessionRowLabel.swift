@@ -144,11 +144,28 @@ struct SessionRowLabel: View {
             
             // LLM Session Summary
             if ContextQuestionService.isAvailable, let summary = session.summary, !summary.isEmpty {
-                Text(summary)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(3)
-                    .padding(.top, 4)
+                // Parse out [Model: XYZ] strings into a badge
+                let parsed = parseSummaryModelBadge(from: summary)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(parsed.text)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                        
+                    if let badge = parsed.badge {
+                        Text(badge)
+                            .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule().fill(badge.contains("Edge") ? Color.purple.opacity(0.15) : Color.blue.opacity(0.1))
+                            )
+                            .foregroundStyle(badge.contains("Edge") ? .purple : .blue)
+                    }
+                }
+                .padding(.top, 4)
+                .frame(maxWidth: .infinity, alignment: .leading)
             } else if ContextQuestionService.isAvailable {
                 Text("No Summary Available")
                     .font(.caption2)
@@ -157,5 +174,26 @@ struct SessionRowLabel: View {
             }
         }
         .padding(4)
+    }
+    
+    /// Parses `[Model: ModelName]` from the end of the summary.
+    private func parseSummaryModelBadge(from summary: String) -> (text: String, badge: String?) {
+        let pattern = #"\s*\[Model:\s*(.*?)\]\s*$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            return (summary, nil)
+        }
+        
+        let range = NSRange(summary.startIndex..<summary.endIndex, in: summary)
+        if let match = regex.firstMatch(in: summary, options: [], range: range) {
+            let badgeRange = Range(match.range(at: 1), in: summary)!
+            let fullMatchRange = Range(match.range, in: summary)!
+            
+            let badgeText = String(summary[badgeRange])
+            let cleanText = summary.replacingCharacters(in: fullMatchRange, with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            return (cleanText, badgeText)
+        }
+        
+        return (summary, nil)
     }
 }

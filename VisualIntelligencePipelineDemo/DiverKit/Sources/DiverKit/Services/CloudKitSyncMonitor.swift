@@ -48,7 +48,7 @@ public final class CloudKitSyncMonitor {
         observer = NotificationCenter.default.addObserver(
             forName: NSNotification.Name("NSPersistentCloudKitContainerEventChangedNotification"),
             object: container,
-            queue: .main
+            queue: nil
         ) { [weak self] notification in
             // Extract Sendable values from the notification *before*
             // crossing the MainActor isolation boundary.
@@ -62,7 +62,7 @@ public final class CloudKitSyncMonitor {
             let errorDesc = (event.value(forKey: "error") as? Error)?.localizedDescription
             let eventTypeRaw = (event.value(forKey: "type") as? Int) ?? -1
             
-            MainActor.assumeIsolated {
+            Task { @MainActor in
                 self?.processEvent(succeeded: succeeded, errorDescription: errorDesc, eventTypeRaw: eventTypeRaw)
             }
         }
