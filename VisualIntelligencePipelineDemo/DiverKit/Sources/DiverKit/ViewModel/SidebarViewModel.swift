@@ -194,7 +194,7 @@ public final class SidebarViewModel {
             let container = context.container
             Task.detached(priority: .background) {
                 let router = PipelineEdgeRouter(discoveryService: BonjourDiscoveryService())
-                let system = VisualIntelligenceActorSystem(transport: NWTransportLayer(), localNodeName: UUID().uuidString)
+                let system = VisualIntelligenceActorSystem(transport: NWTransportLayer(localNodeName: UUID().uuidString))
                 let backgroundService = BackgroundSummaryService(modelContainer: container)
                 await backgroundService.startUpgradesIfNeeded(router: router, system: system)
             }
