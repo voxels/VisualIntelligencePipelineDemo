@@ -195,7 +195,8 @@ public final class SidebarViewModel {
             Task.detached(priority: .background) {
                 let router = PipelineEdgeRouter()
                 let system = VisualIntelligenceActorSystem()
-                await BackgroundSummaryService.shared.startUpgradesIfNeeded(modelContainer: container, router: router, system: system)
+                let backgroundService = BackgroundSummaryService(modelContainer: container)
+                await backgroundService.startUpgradesIfNeeded(router: router, system: system)
             }
         } catch {
             print("❌ Refresh failed: \(error)")

@@ -8,17 +8,15 @@
 
 import Foundation
 import SwiftData
-
-/// Non-blocking actor that silently upgrades local LLM summaries using the Edge node.
+import DiverShared
+import Distributed
+@ModelActor
 public actor BackgroundSummaryService {
     
-    public static let shared = BackgroundSummaryService()
     private var currentTask: Task<Void, Never>?
     
-    public init() {}
-    
     /// Starts the background upgrade process if an Edge node is available and we aren't already running.
-    public func startUpgradesIfNeeded(modelContainer: ModelContainer, router: PipelineEdgeRouter, system: VisualIntelligenceActorSystem) {
+    public func startUpgradesIfNeeded(router: PipelineEdgeRouter, system: VisualIntelligenceActorSystem) {
         guard currentTask == nil else { return }
         
         currentTask = Task.detached(priority: .background) {
@@ -30,16 +28,16 @@ public actor BackgroundSummaryService {
             
             print("🔄 [BackgroundSummaryService] Edge node '\(node.deviceName)' detected. Starting silent summary upgrades...")
             
-            let context = ModelContext(modelContainer)
-            context.autosaveEnabled = false
+            // @ModelActor provides `modelContext` natively
+            self.modelContext.autosaveEnabled = false
             
             do {
-                try await self.upgradeProcessedItems(modelContext: context, nodeName: node.deviceName, system: system)
+                try await self.upgradeProcessedItems(nodeName: node.deviceName, system: system)
                 guard !Task.isCancelled else {
                     await self.clearTask()
                     return
                 }
-                try await self.upgradeSessions(modelContext: context, nodeName: node.deviceName, system: system)
+                try await self.upgradeSessions(nodeName: node.deviceName, system: system)
             } catch {
                 if Task.isCancelled {
                     print("🛑 [BackgroundSummaryService] Upgrade cycle cancelled (Edge unavailable).")
@@ -62,7 +60,7 @@ public actor BackgroundSummaryService {
         self.currentTask = nil
     }
     
-    private func upgradeProcessedItems(modelContext: ModelContext, nodeName: String, system: VisualIntelligenceActorSystem) async throws {
+    private func upgradeProcessedItems(nodeName: String, system: VisualIntelligenceActorSystem) async throws {
         // Find ProcessedItems with the old model tag or heuristic fallback
         // We use predicate string matching so SQLite filters it natively
         var descriptor = FetchDescriptor<ProcessedItem>(
@@ -131,7 +129,7 @@ public actor BackgroundSummaryService {
         }
     }
     
-    private func upgradeSessions(modelContext: ModelContext, nodeName: String, system: VisualIntelligenceActorSystem) async throws {
+    private func upgradeSessions(nodeName: String, system: VisualIntelligenceActorSystem) async throws {
         var descriptor = FetchDescriptor<SessionMetadata>(
             predicate: #Predicate { session in
                 if let summary = session.summary {
