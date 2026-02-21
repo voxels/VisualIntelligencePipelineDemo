@@ -62,7 +62,7 @@ public final class NWTransportLayer: EdgeTransportProtocol, Sendable {
         
         // Send frame
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            connection.send(content: frame, completion: .contentProcessed { error in
+            connection.send(content: frame, isComplete: false, completion: .contentProcessed { error in
                 if let error = error {
                     continuation.resume(throwing: error)
                 } else {
