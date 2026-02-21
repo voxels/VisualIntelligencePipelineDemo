@@ -19,11 +19,11 @@ public enum SAM2Error: Error {
 
 /// Runs Apple's SAM 2.1 Small CoreML model natively on the iOS/macOS Neural Engine.
 /// Generates pixel-perfect alpha masks for highlighted subjects in a camera feed.
-public final class SAM2SegmentationService: SAM2Segmenting, @unchecked Sendable {
+public final class SAM2SegmentationService: SAM2Segmenting, Sendable {
     
     // MARK: - Properties
     
-    private let model: VNCoreMLModel?
+    nonisolated(unsafe) private let model: VNCoreMLModel?
     private let context = CIContext(options: nil)
     
     // MARK: - Initialization

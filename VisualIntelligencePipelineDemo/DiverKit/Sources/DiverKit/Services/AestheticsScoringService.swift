@@ -12,8 +12,7 @@ import UIKit
 /// bundled with FeaturePrint generation in a single handler.perform() per frame.
 /// Safety: @unchecked Sendable is correct — only private `let` constants
 /// (similarityThreshold, framesToEvaluate), no mutable state.
-@available(iOS 17.0, macOS 14.0, *)
-public final class AestheticsScoringService: AestheticsScoring, @unchecked Sendable {
+public final class AestheticsScoringService: AestheticsScoring, Sendable {
     
     /// Similarity threshold for deduplication (lower = more similar)
     private let similarityThreshold: Float = 0.5

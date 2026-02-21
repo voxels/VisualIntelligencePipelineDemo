@@ -7,7 +7,7 @@ import DiverShared
 ///
 /// This replaces the previous WKWebView-based implementation which could cause
 /// EXC_GUARD crashes by spawning offscreen WebKit XPC processes.
-public final class WebViewLinkEnrichmentService: NSObject, LinkEnrichmentService, @unchecked Sendable {
+public final class WebViewLinkEnrichmentService: NSObject, LinkEnrichmentService, Sendable {
     
     /// Configurable timeout for both metadata and HTML fetch
     private let timeout: TimeInterval

@@ -18,7 +18,7 @@ import DiverShared
 
 /// Custom DistributedActorSystem for local network ML offloading.
 /// Manages actor identity, serialization, and remote method invocation.
-public final class VisualIntelligenceActorSystem: DistributedActorSystem, @unchecked Sendable {
+public final class VisualIntelligenceActorSystem: DistributedActorSystem, Sendable {
     public typealias ActorID = EdgeActorID
     public typealias InvocationEncoder = EdgeInvocationEncoder
     public typealias InvocationDecoder = EdgeInvocationDecoder
@@ -27,7 +27,7 @@ public final class VisualIntelligenceActorSystem: DistributedActorSystem, @unche
     
     private let transport: EdgeTransportProtocol
     private let lock = NSLock()
-    private var localActors: [ActorID: any DistributedActor] = [:]
+    nonisolated(unsafe) private var localActors: [ActorID: any DistributedActor] = [:]
     
     public init(transport: EdgeTransportProtocol) {
         self.transport = transport

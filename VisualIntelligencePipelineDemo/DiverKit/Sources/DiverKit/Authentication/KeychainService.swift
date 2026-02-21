@@ -18,7 +18,6 @@ public enum KeychainError: Error, Sendable {
 }
 
 /// A generic keychain service for secure storage of sensitive data.
-/// Thread-safe and Sendable for use in async contexts.
 open class KeychainService: @unchecked Sendable {
 
     /// The service identifier used to namespace keychain items

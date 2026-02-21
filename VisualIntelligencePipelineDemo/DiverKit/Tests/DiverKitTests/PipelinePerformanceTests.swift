@@ -195,7 +195,7 @@ final class PipelinePerformanceTests: XCTestCase {
         // Measure cache hit performance
         measure {
             let exp = expectation(description: "cache-hit")
-            Task { @MainActor in
+            Task.detached {
                 _ = await service.lookup(coordinate: coordinate)
                 exp.fulfill()
             }
@@ -217,7 +217,7 @@ final class PipelinePerformanceTests: XCTestCase {
         // Nearby coordinate should hit cache (same 4-decimal key)
         measure {
             let exp = expectation(description: "nearby-hit")
-            Task { @MainActor in
+            Task.detached {
                 _ = await service.lookup(coordinate: nearby)
                 exp.fulfill()
             }
@@ -243,7 +243,7 @@ final class PipelinePerformanceTests: XCTestCase {
         // Second decode: cache hit (should be faster)
         measure {
             let exp = expectation(description: "decode")
-            Task {
+            Task.detached {
                 let _ = await pipeline.createCGImageForTesting(from: pngData)
                 exp.fulfill()
             }

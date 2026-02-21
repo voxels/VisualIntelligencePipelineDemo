@@ -1354,7 +1354,7 @@ public class VisualIntelligenceViewModel {
                 // Check pause state to respect user request ("pause sifting until completed")
                 let shouldPause = await MainActor.run { self.isAnalyzing || self.isReviewing }
                 if shouldPause {
-                    self.isProcessingFrame = false
+                    await MainActor.run { self.isProcessingFrame = false }
                     return
                 }
 

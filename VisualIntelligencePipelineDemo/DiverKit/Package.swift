@@ -49,5 +49,6 @@ let package = Package(
                 .copy("Resources/pipeline_logs.json")
             ]
         )
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )

@@ -594,23 +594,28 @@ public final class EdgeDaemonService {
     
     // MARK: - Download Delegate Helper
     
-    private final class ConsoleDownloadDelegate: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
-        private var continuation: CheckedContinuation<(URL, HTTPURLResponse), Error>?
-        private var lastPrinted = -1
+    private final class ConsoleDownloadDelegate: NSObject, URLSessionDownloadDelegate, Sendable {
+        private let continuationBox: UnsafeContinuationBox
+        nonisolated(unsafe) private var lastPrinted: Int = -1
+        private let printLock = NSLock()
         
         init(_ continuation: CheckedContinuation<(URL, HTTPURLResponse), Error>) {
-            self.continuation = continuation
+            self.continuationBox = UnsafeContinuationBox(continuation)
         }
         
         func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
             if totalBytesExpectedToWrite > 0 {
                 let percent = Int(Double(totalBytesWritten) / Double(totalBytesExpectedToWrite) * 100)
-                if percent % 5 == 0 && percent != lastPrinted {
+                
+                printLock.lock()
+                let last = lastPrinted
+                if percent % 5 == 0 && percent != last {
                     let writtenMB = Double(totalBytesWritten) / 1_048_576.0
                     let totalMB = Double(totalBytesExpectedToWrite) / 1_048_576.0
                     print(String(format: "⏳ Downloading... %d%% (%.2f MB / %.2f MB)", percent, writtenMB, totalMB))
-                    self.lastPrinted = percent
+                    lastPrinted = percent
                 }
+                printLock.unlock()
             }
         }
         
@@ -618,18 +623,39 @@ public final class EdgeDaemonService {
             let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
             try? FileManager.default.copyItem(at: location, to: temp)
             if let response = downloadTask.response as? HTTPURLResponse {
-                continuation?.resume(returning: (temp, response))
+                continuationBox.resume(returning: (temp, response))
             } else {
-                continuation?.resume(throwing: URLError(.badServerResponse))
+                continuationBox.resume(throwing: URLError(.badServerResponse))
             }
-            continuation = nil
         }
         
         func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
             if let error = error {
-                continuation?.resume(throwing: error)
-                continuation = nil
+                continuationBox.resume(throwing: error)
             }
+        }
+    }
+    
+    private final class UnsafeContinuationBox: @unchecked Sendable {
+        private var continuation: CheckedContinuation<(URL, HTTPURLResponse), Error>?
+        private let lock = NSLock()
+        
+        init(_ continuation: CheckedContinuation<(URL, HTTPURLResponse), Error>) {
+            self.continuation = continuation
+        }
+        
+        func resume(returning value: (URL, HTTPURLResponse)) {
+            lock.lock()
+            defer { lock.unlock() }
+            continuation?.resume(returning: value)
+            continuation = nil
+        }
+        
+        func resume(throwing error: Error) {
+            lock.lock()
+            defer { lock.unlock() }
+            continuation?.resume(throwing: error)
+            continuation = nil
         }
     }
     

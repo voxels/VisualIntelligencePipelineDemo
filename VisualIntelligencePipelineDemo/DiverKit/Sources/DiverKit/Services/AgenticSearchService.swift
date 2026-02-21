@@ -23,7 +23,7 @@ public enum AgenticSearchError: Error {
 }
 
 /// The local service that bridges iOS searches to the macOS EdgeDaemon.
-public final class AgenticSearchService: AgenticSearching, @unchecked Sendable {
+public final class AgenticSearchService: AgenticSearching, Sendable {
     
     private let router: PipelineEdgeRouter
     private let system: VisualIntelligenceActorSystem

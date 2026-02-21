@@ -28,7 +28,7 @@ public protocol ESGEnriching: Sendable {
 /// - Climate TRACE sector-level emissions averages
 ///
 /// All data cached with 24-hour TTL.
-public final class ESGEnrichmentService: ESGEnriching, @unchecked Sendable {
+public actor ESGEnrichmentService: ESGEnriching {
     
     private let session: URLSession
     private var cache: [String: CachedEntry] = [:]

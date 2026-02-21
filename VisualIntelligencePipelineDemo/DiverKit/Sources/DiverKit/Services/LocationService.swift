@@ -8,10 +8,8 @@ public protocol LocationProvider: AnyObject, Sendable {
 }
 
 /// Service responsible for fetching the current GPS location.
-/// Safety: @unchecked Sendable — mutable `locationContinuation` is guarded by the
-/// single-consumer pattern: `getCurrentLocation()` returns nil if a request is already
-/// in flight, and delegate callbacks happen serially on CLLocationManager's delegate thread.
-public final class LocationService: NSObject, LocationProvider, @unchecked Sendable {
+@MainActor
+public final class LocationService: NSObject, LocationProvider {
     private let locationManager: CLLocationManager
     private var locationContinuation: CheckedContinuation<CLLocation?, Never>?
     
@@ -53,19 +51,23 @@ public final class LocationService: NSObject, LocationProvider, @unchecked Senda
 }
 
 extension LocationService: CLLocationManagerDelegate {
-    public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    nonisolated public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         let location = locations.last
-        locationContinuation?.resume(returning: location)
-        locationContinuation = nil
+        Task { @MainActor in
+            self.locationContinuation?.resume(returning: location)
+            self.locationContinuation = nil
+        }
     }
     
-    public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+    nonisolated public func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         DiverLogger.pipeline.error("Location lookup failed: \(error.localizedDescription)")
-        locationContinuation?.resume(returning: nil)
-        locationContinuation = nil
+        Task { @MainActor in
+            self.locationContinuation?.resume(returning: nil)
+            self.locationContinuation = nil
+        }
     }
     
-    public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+    nonisolated public func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         let status = manager.authorizationStatus
         #if os(iOS) || os(visionOS) || os(tvOS) || os(watchOS)
         let isAuthorized = status == .authorizedAlways || status == .authorizedWhenInUse
@@ -73,14 +75,16 @@ extension LocationService: CLLocationManagerDelegate {
         let isAuthorized = status == .authorizedAlways
         #endif
 
-        if isAuthorized {
-            // Only trigger if we are waiting for a continuation
-            if locationContinuation != nil {
-                manager.requestLocation()
+        Task { @MainActor in
+            if isAuthorized {
+                // Only trigger if we are waiting for a continuation
+                if self.locationContinuation != nil {
+                    self.locationManager.requestLocation()
+                }
+            } else if status == .denied || status == .restricted {
+                self.locationContinuation?.resume(returning: nil)
+                self.locationContinuation = nil
             }
-        } else if status == .denied || status == .restricted {
-            locationContinuation?.resume(returning: nil)
-            locationContinuation = nil
         }
     }
 }

@@ -15,7 +15,7 @@ import os
 
 /// Network framework transport for distributed actor calls.
 /// TLS 1.3 encrypted, length-prefixed framing over TCP.
-public final class NWTransportLayer: EdgeTransportProtocol, @unchecked Sendable {
+public final class NWTransportLayer: EdgeTransportProtocol, Sendable {
     
     public let localNodeName: String
     private let connectionStore = OSAllocatedUnfairLock(initialState: [String: NWConnection]())

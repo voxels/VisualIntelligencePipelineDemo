@@ -57,7 +57,7 @@ public struct FastVLMAnalysis: Codable, Sendable, Equatable {
 /// Model is opt-in: user must enable and download via Settings.
 /// Safety: @unchecked Sendable — mutable `container` guarded by `loadLock` (NSLock),
 /// `isLoading`/`retainModel`/`memoryPressureSource` accessed from single-consumer patterns.
-public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendable {
+public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     
     // MARK: - Configuration
     
@@ -136,19 +136,19 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, @unchecked Sendab
     // MARK: - Model State (Cached)
     
     #if canImport(MLXVLM) && !targetEnvironment(simulator)
-    private var container: ModelContainer?
+    nonisolated(unsafe) private var container: ModelContainer?
     private let loadLock = NSLock()
     #endif
     
     /// Whether the model is busy (loading or analyzing) — guards memory pressure unloading
-    private var isLoading = false
+    nonisolated(unsafe) private var isLoading = false
     
     /// When true, suppresses memory-pressure unloading (e.g. during batch queue processing).
     /// Only `.critical` pressure will force an unload while retained.
-    public var retainModel: Bool = false
+    nonisolated(unsafe) public var retainModel: Bool = false
     
     /// GCD memory pressure source — auto-unloads model when OS signals pressure
-    private var memoryPressureSource: DispatchSourceMemoryPressure?
+    nonisolated(unsafe) private var memoryPressureSource: DispatchSourceMemoryPressure?
     
     // MARK: - Init / Deinit
     

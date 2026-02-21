@@ -15,9 +15,10 @@ import LDSwiftEventSource
 /// from a single-stream lifecycle (one stream active at a time). EventHandler callbacks
 /// are serialized by the EventSource library. However, stopStream() could technically
 /// race with onMessage() — consider adding NSLock if concurrent stop/event scenarios arise.
-final class SSEStreamService: @unchecked Sendable {
-    private var eventSource: EventSource?
-    private var continuation: AsyncStream<SSEEvent>.Continuation?
+final class SSEStreamService: Sendable {
+    nonisolated(unsafe) private var eventSource: EventSource?
+    nonisolated(unsafe) private var continuation: AsyncStream<SSEEvent>.Continuation?
+    private let lock = NSLock()
     
     init() {
         print("🔧 SSEStreamService initialized")
@@ -36,7 +37,9 @@ final class SSEStreamService: @unchecked Sendable {
                 return
             }
             
+            self.lock.lock()
             self.continuation = continuation
+            self.lock.unlock()
             
             // Convert UUID to lowercase to match backend Redis channel format
             let jobUUID = jobId.uuidString.lowercased()
@@ -61,7 +64,9 @@ final class SSEStreamService: @unchecked Sendable {
             
             // Create and start EventSource
             let eventSource = EventSource(config: config)
+            self.lock.lock()
             self.eventSource = eventSource
+            self.lock.unlock()
             eventSource.start()
             
             print("✅ EventSource started for job \(jobId)")
@@ -74,10 +79,12 @@ final class SSEStreamService: @unchecked Sendable {
     
     func stopStream() {
         print("🛑 Stopping EventSource")
+        lock.lock()
         eventSource?.stop()
         eventSource = nil
         continuation?.finish()
         continuation = nil
+        lock.unlock()
     }
 }
 
@@ -89,7 +96,9 @@ extension SSEStreamService: EventHandler {
     
     func onClosed() {
         print("🔌 SSE connection closed")
+        lock.lock()
         continuation?.finish()
+        lock.unlock()
     }
     
     func onMessage(eventType: String, messageEvent: MessageEvent) {
@@ -103,7 +112,9 @@ extension SSEStreamService: EventHandler {
         do {
             let sseEvent = try JSONDecoder().decode(SSEEvent.self, from: data)
             print("   ✅ Decoded SSEEvent: \(sseEvent.message)")
+            lock.lock()
             continuation?.yield(sseEvent)
+            lock.unlock()
         } catch {
             print("   ❌ Failed to decode SSEEvent: \(error)")
             if let decodingError = error as? DecodingError {
@@ -129,6 +140,8 @@ extension SSEStreamService: EventHandler {
     
     func onError(error: Error) {
         print("❌ SSE error: \(error)")
+        lock.lock()
         continuation?.finish()
+        lock.unlock()
     }
 }

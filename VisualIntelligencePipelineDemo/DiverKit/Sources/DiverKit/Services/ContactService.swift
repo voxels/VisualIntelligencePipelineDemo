@@ -15,18 +15,14 @@ public protocol ContactServiceProvider: AnyObject, Sendable {
 }
 
 /// Service responsible for fetching the current user's home location from Contacts.
-public final class ContactService: ContactServiceProvider, @unchecked Sendable {
+public final class ContactService: ContactServiceProvider, Sendable {
     
-    // We use @unchecked Sendable because CNContactStore is thread-safe documentation-wise but might not be marked Sendable yet in all swift versions?
-    // Actually CNContactStore is generally safe effectively, but strict concurrency might flag it. 
-    // Let's stick to simple implementation.
-    
-    private let contactStore = CNContactStore()
+    nonisolated(unsafe) private let contactStore = CNContactStore()
     // CLGeocoder removed — using MKGeocodingRequest (iOS 26+)
     
     public init() {}
     
-    private let defaults = UserDefaults.standard
+    nonisolated(unsafe) private let defaults = UserDefaults.standard
     private let meContactKey = "diver_me_contact_identifier"
 
     public func setMeContact(_ identifier: String) {

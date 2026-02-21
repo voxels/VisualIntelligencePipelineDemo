@@ -15,7 +15,8 @@ import VideoToolbox
 /// Agent [CORE] - Responsible for Camera Session and Intent Launch Foundation
 /// Safety: @unchecked Sendable is correct — serial `sessionQueue` guards AVFoundation work,
 /// `@Published` properties are only mutated via DispatchQueue.main.async.
-public final class CameraManager: NSObject, ObservableObject, @unchecked Sendable {
+@MainActor
+public final class CameraManager: NSObject, ObservableObject, Sendable {
     @Published public var isReady = false
     @Published public var session = AVCaptureSession()
     @Published public var isRecording = false
@@ -31,24 +32,34 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
     private let photoOutput = AVCapturePhotoOutput()
     
     // Dependencies
-//  CameraManager.swift
-    private let barcodeScanner: VNDetectBarcodesRequest
-    private let documentScanner: VNDetectDocumentSegmentationRequest
-    private let samSegmentationService: (any SAM2Segmenting)?
+    nonisolated private let barcodeScannerBox: UncheckedSendableRequest<VNDetectBarcodesRequest>
+    nonisolated private let documentScannerBox: UncheckedSendableRequest<VNDetectDocumentSegmentationRequest>
+    nonisolated private let samSegmentationService: (any SAM2Segmenting)?
     
-    private var lastAnalysisTime: CFTimeInterval = 0
+    // Thread-safe state for the background capture queue
+    private final class BackgroundState: @unchecked Sendable {
+        var lastAnalysisTime: CFTimeInterval = 0
+        var frameCount: Int = 0
+        let lock = NSLock()
+    }
+    
+    // Thread-safe wrapper for non-Sendable Vision requests that are executed sequentially
+    private struct UncheckedSendableRequest<T>: @unchecked Sendable {
+        let request: T
+    }
+    
+    private let bgState = BackgroundState()
     private let analysisInterval: CFTimeInterval = 1.0 / 10.0 // 10 fps
-    private var frameCount: Int = 0
     
-    public var onFrameCaptured: ((CVPixelBuffer) -> Void)?
+    public var onFrameCaptured: (@MainActor @Sendable (CVPixelBuffer) -> Void)?
     /// Callback delivers (imageData, depthData?) atomically so depth is always paired with the correct photo
-    public var onPhotoCaptured: ((Data, Data?) -> Void)?
+    public var onPhotoCaptured: (@MainActor @Sendable (Data, Data?) -> Void)?
     
     public override init() {
         // Default initializer for testing or when dependencies are not needed immediately
         // In a real app, you might want to inject these.
-        self.barcodeScanner = VNDetectBarcodesRequest()
-        self.documentScanner = VNDetectDocumentSegmentationRequest()
+        self.barcodeScannerBox = UncheckedSendableRequest(request: VNDetectBarcodesRequest())
+        self.documentScannerBox = UncheckedSendableRequest(request: VNDetectDocumentSegmentationRequest())
         
         #if os(iOS)
         // SAM 2.1 is available on iOS native client
@@ -65,8 +76,8 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
     
     // Designated initializer for dependency injection
     public init(barcodeScanner: VNDetectBarcodesRequest = VNDetectBarcodesRequest()) {
-        self.barcodeScanner = barcodeScanner
-        self.documentScanner = VNDetectDocumentSegmentationRequest()
+        self.barcodeScannerBox = UncheckedSendableRequest(request: barcodeScanner)
+        self.documentScannerBox = UncheckedSendableRequest(request: VNDetectDocumentSegmentationRequest())
         
         #if os(iOS)
         // SAM 2.1 is available on iOS native client
@@ -247,40 +258,47 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
 }
 
 extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
-    public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+    nonisolated public func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         
         // 1. Maintain preview frame
         var cgImageOut: CGImage?
         VTCreateCGImageFromCVPixelBuffer(pixelBuffer, options: nil, imageOut: &cgImageOut)
         if let cgImage = cgImageOut {
-            DispatchQueue.main.async { [weak self] in
+            Task { @MainActor [weak self] in
                 self?.previewFrame = cgImage
             }
         }
         
         // --- Throttle Heavy Processing (10 fps) ---
         let currentTime = CACurrentMediaTime()
-        guard currentTime - lastAnalysisTime >= analysisInterval else { return }
-        lastAnalysisTime = currentTime
-        
-        frameCount += 1
+        bgState.lock.lock()
+        let lastTime = bgState.lastAnalysisTime
+        if currentTime - lastTime < analysisInterval {
+            bgState.lock.unlock()
+            return
+        }
+        bgState.lastAnalysisTime = currentTime
+        bgState.frameCount += 1
+        bgState.lock.unlock()
         
         struct UncheckedBuffer: @unchecked Sendable { let buffer: CVPixelBuffer }
         let sBuffer = UncheckedBuffer(buffer: pixelBuffer)
+        
+        // Capture dependencies needed for detached tasks
+        let bScanner = self.barcodeScannerBox
+        let dScanner = self.documentScannerBox
         
         // 2. Run standard high-speed Vision tasks
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self = self else { return }
             do {
                 let handler = VNImageRequestHandler(cvPixelBuffer: sBuffer.buffer, orientation: .up, options: [:])
-                let barcodeReq = VNDetectBarcodesRequest()
-                let docReq = VNDetectDocumentSegmentationRequest()
-                try handler.perform([barcodeReq, docReq])
+                try handler.perform([bScanner.request, dScanner.request])
                 
-                let urls = barcodeReq.results?.compactMap { $0.payloadStringValue }.compactMap { URL(string: $0) } ?? []
+                let urls = bScanner.request.results?.compactMap { $0.payloadStringValue }.compactMap { URL(string: $0) } ?? []
                 // Extract CGRects or safe properties if needed, or just map carefully
-                let docs = docReq.results ?? []
+                let docs = dScanner.request.results ?? []
                 
                 struct UncheckedObservations: @unchecked Sendable {
                     let items: [VNRectangleObservation]
@@ -296,8 +314,10 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
             }
         }
         
+        let samService = self.samSegmentationService
+        
         // 3. Run SAM 2.1 Segmentation (Pixel-Perfect AR Mask)
-        if let sam = samSegmentationService {
+        if let sam = samService {
             Task.detached(priority: .utility) { [weak self] in
                 do {
                     // This runs the CVPixelBuffer through the A-Series Neural Engine
@@ -311,12 +331,14 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
             }
         }
         
-        onFrameCaptured?(pixelBuffer)
+        Task { @MainActor [weak self] in
+            self?.onFrameCaptured?(sBuffer.buffer)
+        }
     }
 }
 
 extension CameraManager: AVCapturePhotoCaptureDelegate {
-    public func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+    nonisolated public func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         if let error = error {
             print("Error capturing photo: \(error)")
             return
@@ -339,6 +361,8 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
         #endif
         
         // Deliver both atomically
-        onPhotoCaptured?(imageData, depthPNG)
+        Task { @MainActor [weak self] in
+            self?.onPhotoCaptured?(imageData, depthPNG)
+        }
     }
 }

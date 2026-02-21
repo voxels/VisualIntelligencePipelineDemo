@@ -40,8 +40,8 @@ Products detected via barcode or visual classification are automatically scored 
 - **Price Nowcasting** — World Bank commodity prices + BLS Producer Price Index → Dynamic Factor Model (Accelerate vDSP) projects price trajectory with confidence intervals.
 - **Ethical Affiliate Routing** — Ranks 5 commerce platforms (Thrive, Target, Amazon, Best Buy, eBay) by carbon, labor, and certification policies.
 
-### Edge Computing (Home Network ML Offloading)
-Any device on your home network can offload ML inference to a more powerful M-series Mac or iPad via **Swift Distributed Actors** over Bonjour. The edge node hosts larger models (FastVLM 3B+), runs nowcasting projections, and handles ESG/commerce data enrichment — while your iPhone stays responsive.
+### Edge Computing & Load Balancing (Home Network ML Offloading)
+Any device on your home network can offload ML inference to a more powerful M-series Mac or iPad via **Swift Distributed Actors** over Bonjour. The new `CapabilityRouter` evaluates devices across your network based on RAM, Neural Engine TOPS, and network speed. It then dynamically **load balances** heavy inference—such as FastVLM 7B encoding or SAM 2.1 video segmentation—across multiple Apple devices simultaneously, keeping your iPhone completely responsive.
 
 - **Automatic discovery** — Bonjour-based (`_visualintel._tcp`) with TLS 1.3 transport
 - **Transparent fallback** — If no edge node is reachable, all inference runs locally on-device

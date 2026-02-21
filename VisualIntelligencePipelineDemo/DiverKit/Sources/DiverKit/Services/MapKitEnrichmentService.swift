@@ -5,8 +5,7 @@ import DiverShared
 
 /// Enrichment service using Apple's MapKit (MKLocalSearch)
 /// Safety: @unchecked Sendable is correct — no mutable stored properties,
-/// all methods are stateless async functions using MapKit APIs.
-public final class MapKitEnrichmentService: ContextualEnrichmentService, @unchecked Sendable {
+public final class MapKitEnrichmentService: ContextualEnrichmentService, Sendable {
 
     public init() {}
     
