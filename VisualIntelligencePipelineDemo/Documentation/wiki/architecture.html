@@ -63,10 +63,11 @@
     &nbsp;&nbsp;&nbsp;&nbsp;├── LocationSearchAggregator (Foursquare + MapKit, parallel)<br>
     &nbsp;&nbsp;&nbsp;&nbsp;├── WeatherEnrichmentService (WeatherKit)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;├── AestheticsScoringService (CoreML quality scoring)<br>
-     &nbsp;&nbsp;&nbsp;&nbsp;├── FastVLMEnrichmentService (FastVLM 0.5B multimodal image analysis)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── FastVLMEnrichmentService (FastVLM 0.5B / 7B Edge multimodal image analysis)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;├── DuckDuckGoEnrichmentService (web intelligence)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;├── AppleMusicEnrichmentService (music matching)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;├── DocumentManager (perspective correction)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── InferenceService (SAM 2.1 Object Segmentation Edge routing)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;└── IntelligenceProcessor (SystemLanguageModel: summaries, concepts, tags)<br><br>
     <strong style="color:var(--accent-purple)">Persistence</strong><br>
     &nbsp;&nbsp;ProcessedItem → SwiftData (DiverDataStore) → CloudKit sync<br>
@@ -118,8 +119,8 @@
     <tr><td>UI Framework</td><td>SwiftUI (iOS 26+, macOS 26+, visionOS 26+)</td></tr>
     <tr><td>Persistence</td><td>SwiftData + CloudKit</td></tr>
     <tr><td>Computer Vision</td><td>Vision framework (subject detection, text recognition, barcode scanning)</td></tr>
-    <tr><td>ML Inference</td><td>CoreML (MiniLM embeddings, aesthetics scoring, taxonomy)</td></tr>
-    <tr><td>Generative AI</td><td>Apple Intelligence — SystemLanguageModel (on-device)</td></tr>
+    <tr><td>ML Inference</td><td>CoreML (SAM 2.1 Subject Sifting, Aesthetics Scoring)</td></tr>
+    <tr><td>Generative AI</td><td>Apple SystemLanguageModel (SLM), MLX Swift (FastVLM 7B, CLaRa memory search)</td></tr>
     <tr><td>Location</td><td>MapKit, CLGeocoder, Foursquare Places API</td></tr>
     <tr><td>Weather</td><td>WeatherKit</td></tr>
     <tr><td>Camera</td><td>AVFoundation (AVCaptureSession)</td></tr>

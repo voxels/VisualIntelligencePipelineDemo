@@ -82,7 +82,7 @@ Fully integrated with Apple's system — 6 App Intents, pre-built shortcut templ
 
 ## 🏗️ Architecture Highlights
 
-- **Modular Swift Packages** — `DiverKit` (ML & pipeline orchestration, 61 services, 18 protocols), `DiverShared` (data models & utilities), and the main app target.
+- **Modular Swift Packages** — `DiverKit` (ML & pipeline orchestration, 62 services, 18 protocols), `DiverShared` (data models & utilities), and the main app target.
 - **Local-First with Sync** — SwiftData persistence backed by CloudKit for seamless cross-device access.
 - **On-Device ML** — Apple Vision (6 request types per pass), FastVLM via MLX Swift, Apple Intelligence via Foundation Models.
 - **Edge Computing** — Swift Distributed Actors over Bonjour for transparent ML offloading to M-series Macs.

@@ -94,7 +94,7 @@ def generate_all():
         "DiverKit — Models",
         "Core data models for enriched items, sessions, collections, and pipeline types.",
         "dkm",
-        [("14", "Files"), ("14", "Types")],
+        [("20", "Files"), ("20", "Types")],
         "\n".join([
             section("ProcessedItem.swift", [
                 type_item("MediaMetadata", "struct", "Codable, Hashable, Sendable — image dimensions, orientation, format"),
@@ -153,9 +153,9 @@ def generate_all():
     # --- DiverKit Services ---
     pages["diverkit-services.html"] = page(
         "DiverKit — Services",
-        "36 services covering pipeline orchestration, location/weather/web/music enrichment, ML inference, session management, and more.",
+        "62 services covering pipeline orchestration, location/weather/web/music enrichment, ML inference, session management, distributed edge scaling, and commerce.",
         "dks",
-        [("36", "Files"), ("36+", "Types")],
+        [("62", "Files"), ("62+", "Types")],
         "\n".join([
             section("Pipeline Orchestration", [
                 type_item("LocalPipelineService", "struct", "2,732 lines — core orchestrator: ingestion → enrichment → persistence"),
@@ -167,10 +167,11 @@ def generate_all():
             section("Intelligence &amp; ML", [
                 type_item("IntelligenceProcessor", "class", "568 lines — on-device LLM prompts via SystemLanguageModel"),
                 type_item("IntelligenceResult", "enum", "Pipeline result: .detected, .sifted, .enriched"),
-                type_item("FastVLMEnrichmentService", "class", "Multimodal image analysis via FastVLM 0.5B (MLX Swift). Two-pass: image description + context synthesis. Prompt excludes camera/capture equipment to prevent hallucinations."),
+                type_item("FastVLMEnrichmentService", "class", "Multimodal image analysis via FastVLM 0.5B / 7B (MLX Swift). Two-pass: image description + context synthesis. Prompt excludes camera/capture equipment to prevent hallucinations."),
                 type_item("FoundationModelsIntentClassifier", "class", "Intent classification using Foundation Models"),
                 type_item("AestheticsScoringService", "struct", "CoreML image quality scoring"),
-            ], "IntelligenceProcessor generates summaries, concepts, and tags by composing LLM prompts enriched with weather, location, OCR text, and web data. FastVLMEnrichmentService runs Apple's FastVLM 0.5B model locally for multimodal image understanding."),
+                type_item("EdgeInferenceActor", "distributed actor", "Distributed ML Router to MacOS neural engine for FastVLM 7B, SAM 2.1, and CLaRa execution."),
+            ], "IntelligenceProcessor generates summaries, concepts, and tags by composing LLM prompts enriched with weather, location, OCR text, and web data. FastVLMEnrichmentService runs Apple's FastVLM models for multimodal image understanding, scaling up parameters via the Edge node."),
             section("Location Services", [
                 type_item("LocationSearchAggregator", "struct", "Parallel Foursquare + MapKit search with merged results"),
                 type_item("SimpleMapFeature", "struct", "Lightweight map annotation model"),
@@ -216,9 +217,9 @@ def generate_all():
     # --- DiverKit ViewModels ---
     pages["diverkit-viewmodels.html"] = page(
         "DiverKit — ViewModels",
-        "Four ObservableObject view models that bridge services to SwiftUI views.",
+        "Six ObservableObject view models that bridge services to SwiftUI views.",
         "dkv",
-        [("4", "Files"), ("4,600+", "Lines")],
+        [("6", "Files"), ("5,200+", "Lines")],
         "\n".join([
             section("VisualIntelligenceViewModel", [
                 type_item("VisualIntelligenceViewModel", "class", "ObservableObject — 2,884 lines"),
@@ -234,6 +235,10 @@ def generate_all():
             section("ProcessedItemViewModel", [
                 type_item("ProcessedItemViewModel", "class", "ObservableObject"),
             ], "Lightweight view model for individual item operations: delete, reprocess, share, and concept weight management."),
+            section("AgenticChatViewModel & MetadataViewModel", [
+                type_item("AgenticChatViewModel", "class", "ObservableObject — memory querying via CLaRa UI"),
+                type_item("MetadataViewModel", "class", "ObservableObject — ActionExtension payload extraction"),
+            ], "Manages complex async interfaces like NLP library parsing and background extension URL ingestion."),
         ])
     )
 
@@ -325,9 +330,9 @@ def generate_all():
     # --- App Views ---
     pages["app-views.html"] = page(
         "App — Views",
-        "25 SwiftUI views composing the camera, sidebar, detail, review, location editing, settings, and widget interfaces.",
+        "42 SwiftUI views composing the camera, sidebar, detail, review, commerce overlays, settings, and widget interfaces.",
         "av",
-        [("25", "Files"), ("14,659", "Lines")],
+        [("42", "Files"), ("18,000+", "Lines")],
         "\n".join([
             section("Camera &amp; Capture", [
                 type_item("VisualIntelligenceView", "struct", "View — 1,795 lines. Camera + overlays + review stack"),
@@ -427,6 +432,7 @@ def generate_all():
                 type_item("ShareLinkIntent", "struct", "AppIntent — share an item via Siri"),
                 type_item("SearchLinksIntent", "struct", "AppIntent, WidgetConfigurationIntent — search the library"),
                 type_item("OpenLinkIntent", "struct", "AppIntent — open a saved link"),
+                type_item("AskCLaRaIntent", "struct", "AppIntent — NLP memory querying via Siri"),
                 type_item("VisualIntelligenceIntent", "struct", "AppIntent — launch capture and analyze"),
                 type_item("OpenVisualIntelligenceIntent", "struct", "AppIntent — open the camera view"),
                 type_item("OpenLinkError", "enum", "Error — itemNotFound, invalidURL"),
@@ -497,10 +503,11 @@ def generate_all():
     &nbsp;&nbsp;&nbsp;&nbsp;├── LocationSearchAggregator (Foursquare + MapKit, parallel)<br>
     &nbsp;&nbsp;&nbsp;&nbsp;├── WeatherEnrichmentService (WeatherKit)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;├── AestheticsScoringService (CoreML quality scoring)<br>
-     &nbsp;&nbsp;&nbsp;&nbsp;├── FastVLMEnrichmentService (FastVLM 0.5B multimodal image analysis)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── FastVLMEnrichmentService (FastVLM 0.5B / 7B Edge multimodal image analysis)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;├── DuckDuckGoEnrichmentService (web intelligence)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;├── AppleMusicEnrichmentService (music matching)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;├── DocumentManager (perspective correction)<br>
+     &nbsp;&nbsp;&nbsp;&nbsp;├── InferenceService (SAM 2.1 Object Segmentation Edge routing)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;└── IntelligenceProcessor (SystemLanguageModel: summaries, concepts, tags)<br><br>
     <strong style="color:var(--accent-purple)">Persistence</strong><br>
     &nbsp;&nbsp;ProcessedItem → SwiftData (DiverDataStore) → CloudKit sync<br>
@@ -552,8 +559,8 @@ def generate_all():
     <tr><td>UI Framework</td><td>SwiftUI (iOS 26+, macOS 26+, visionOS 26+)</td></tr>
     <tr><td>Persistence</td><td>SwiftData + CloudKit</td></tr>
     <tr><td>Computer Vision</td><td>Vision framework (subject detection, text recognition, barcode scanning)</td></tr>
-    <tr><td>ML Inference</td><td>CoreML (MiniLM embeddings, aesthetics scoring, taxonomy)</td></tr>
-    <tr><td>Generative AI</td><td>Apple Intelligence — SystemLanguageModel (on-device)</td></tr>
+    <tr><td>ML Inference</td><td>CoreML (SAM 2.1 Subject Sifting, Aesthetics Scoring)</td></tr>
+    <tr><td>Generative AI</td><td>Apple SystemLanguageModel (SLM), MLX Swift (FastVLM 7B, CLaRa memory search)</td></tr>
     <tr><td>Location</td><td>MapKit, CLGeocoder, Foursquare Places API</td></tr>
     <tr><td>Weather</td><td>WeatherKit</td></tr>
     <tr><td>Camera</td><td>AVFoundation (AVCaptureSession)</td></tr>

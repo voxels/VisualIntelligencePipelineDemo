@@ -32,7 +32,7 @@ The system uses an M-series Mac (or iPad) as a local ML edge node, connected to 
 
 | Device | Chip | Neural Engine | Role |
 |--------|------|--------------|------|
-| **Mac edge node** | M4+ | 16-core, **38 TOPS** | Heavy ML inference (YOLO, nowcasting, LLM reasoning, FastVLM) |
+| **Mac edge node** | M4+ | 16-core, **38 TOPS** | Heavy ML inference (SAM 2.1, nowcasting, CLaRa reasoning, FastVLM 7B) |
 | **iPad edge node** | M5+ | TBD (expected 40+ TOPS) | Same as Mac when available; also a client |
 | **Vision Pro** | M2 + R1 | M2: ~15.8 TOPS; R1: sensor fusion (12ms) | ARKit tracking, HUD rendering, lightweight on-device classification |
 | **iPhone** | A18+ | 16-core NE | Client — on-device inference when no edge node available |
@@ -57,7 +57,7 @@ The system uses an M-series Mac (or iPad) as a local ML edge node, connected to 
 └──────────────────────┘           │    EnrichmentService       │
                                    │    CommerceService         │
 ┌──────────────────────┐           │                            │
-│  Apple Vision Pro    │◀────────▶│  CoreML YOLO/DETR (NE)     │
+│  Apple Vision Pro    │◀────────▶│  CoreML SAM 2.1 (NE)       │
 │  (visionOS Client)   │  Bonjour  │  MLX Swift LLM (~3B)       │
 ├──────────────────────┤           │  Nowcasting Engine (Swift) │
 │  ARKit Object Track  │           └────────────┬───────────────┘
@@ -135,7 +135,7 @@ When the user views a physical product (via camera on iPhone/iPad or spatial tra
 |-------|--------|-----------|---------------|
 | Object detection & bounding box | Client | ARKit / AVFoundation | <50ms |
 | Barcode/QR scan | Client | ARKit / Vision framework | <100ms |
-| Product classification | Edge node (or client fallback) | CoreML YOLO/DETR on Neural Engine | <200ms |
+| Product classification | Edge node (or client fallback) | CoreML SAM 2.1 on Neural Engine | <200ms |
 | Entity resolution (barcode → product ID) | Edge node | Local SQLite lookup + API fallback | <100ms |
 | Multi-strategy scoring | Edge node or client | `[ProductScoringStrategy]` array | <500ms total |
 | ESG data retrieval | Edge node | HTTPS API call (cached) | <500ms (cached: <10ms) |
@@ -496,7 +496,7 @@ Users build a personal product collection by scanning tags/barcodes of items the
 | Step | Deliverable |
 |------|-------------|
 | 1 | `VisualIntelligenceActorSystem` — Bonjour + `NWConnection` (TLS 1.3, LAN-only) |
-| 2 | `distributed actor InferenceService` — YOLO on Mac NE + pipeline offloading |
+| 2 | `distributed actor InferenceService` — SAM 2.1 on Mac NE + pipeline offloading |
 | 3 | `distributed actor NowcastingService` — DFM via Accelerate |
 | 4 | macOS daemon + Bonjour registration |
 | 5 | Client discovery + fallback |

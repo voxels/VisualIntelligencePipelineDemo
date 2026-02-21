@@ -71,7 +71,7 @@ activity. Device names are in SF Pro, stats in SF Mono.
 
 The user clicks MODELS TAB: Four model cards appear in a 2x2 grid. Each card
 shows model name, file size, and a status pill. "FastVLM 3B" shows a blue
-progress bar at 67% with "Downloading..." beneath. "YOLO v8n" shows a green
+progress bar at 67% with "Downloading..." beneath. "SAM 2.1" shows a green
 "Active" pill with a circular gauge showing Neural Engine utilization at 34%.
 
 Cut to the user's hand picking up an iPhone from the desk. The camera app opens
