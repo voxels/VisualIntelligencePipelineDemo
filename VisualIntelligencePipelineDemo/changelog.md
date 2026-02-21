@@ -1,6 +1,15 @@
 # Changelog
 
-## 2026-02-20
+## 2026-02-21
+
+### Architectural Specification (V3)
+- **UI & HW Decoupling**: Updated `spec.md` to V3, formally separating User Interface forms (iPhone, visionOS) from Hardware ML capabilities, introducing the `CapabilityRouter` strategy.
+- **Transient Edge Payloads**: Enforced strict `autoreleasepool` Unified Memory constraints for the Mac Edge Node so transient image frames are never written to disk.
+- **Encrypted Edge Storage**: Mandated `SQLCipher` and `FileProtectionType.complete` for all local Edge Node sqlite DBs (Commerce, Price Time Series) and ML caches to protect financial/LLM data.
+- **Complete Data Deletion**: Expanded the `Delete Database` routine from 4 to 6 steps to securely erase Edge Node cross-device data and individually purge the `.Keys` CloudKit container holding API elements.
+- **Documentation Parity**: Added `AskCLaRaIntent`, `AgenticChatViewModel`, and `MetadataViewModel` to `spec.md` tables. Replaced all legacy YOLO/DETR mentions with `SAM 2.1` and `FastVLM 7B`.
+- **System Stat Refresh**: Re-audited pipeline files and updated source code counts across `README.md`, `GEMINI.md`, and `spec.md` to accurately reflect 62 services, 42 views, and 20 models.
+- **Future Expansion Spec**: Formally documented the upcoming "Live Event & Person Capture Mode" in `spec.md`, integrating Activity Synthesis and Contact Indexing into the potential enrichment context.## 2026-02-20
 
 ### Distributed Edge Processing & AppIntents
 - **Pipeline Edge Offloading**: Fully implemented stateless edge offloading in `LocalPipelineService`. It queries `PipelineEdgeRouter` to dynamically decide whether to run `FastVLMEnrichmentService` and Vision frameworks locally or distribute them via `EdgeInferenceActor`.

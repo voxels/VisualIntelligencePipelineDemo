@@ -60,7 +60,7 @@ The project is modularized using Swift Package Manager:
 | Module | Purpose |
 |--------|---------|
 | `VisualIntelligencePipeline/` | Main application target and UI |
-| `DiverKit/` | Core logic — ML pipeline, 61 services, 18 protocols, view models, models, storage |
+| `DiverKit/` | Core logic — ML pipeline, 62 services, 18 protocols, view models, models, storage |
 | `DiverShared/` | Pure Swift shared data models and utilities |
 | `ActionExtension/` | Share Sheet extension for link ingestion |
 | `VisualIntelligencePipelineWidget/` | Home & Lock screen widgets |

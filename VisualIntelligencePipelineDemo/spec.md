@@ -1,7 +1,7 @@
 # Visual Intelligence Pipeline — Project Specification
 
-> **Version:** 2.0  
-> **Last Updated:** 2026-02-19  
+> **Version:** 3.0  
+> **Last Updated:** 2026-02-21  
 > **Platforms:** iOS 26.3+, iPadOS 26.3+, macOS 26.3+ (edge node), visionOS 26.3+ (future)  
 > **Bundle ID:** `com.secretatomics.VisualIntelligencePipeline`
 
@@ -9,11 +9,28 @@
 
 ## 1. Product Vision
 
-Visual Intelligence Pipeline transforms the iPhone camera into an intelligence layer for everyday life. Point your camera at anything — a product, a sign, a document, a landmark — and the app instantly identifies it, enriches it with contextual metadata, and organizes it into a searchable personal knowledge base.
+Visual Intelligence Pipeline transforms the camera into an intelligence layer for everyday life. Point your camera at anything — a product, a sign, a document, a landmark — and the app instantly identifies it, enriches it with contextual metadata, and organizes it into a searchable personal knowledge base.
 
 Beyond the camera, it serves as a universal hub for saving and organizing links shared from Safari, TikTok, YouTube, iMessage, and any app with a share sheet.
 
-### 1.1 Core Value Propositions
+---
+
+## 2. V3 Architectural Mandate: Hardware-Bound ML, Surface-Bound UI
+
+Version 3.0 introduces a strict separation of concerns across two independent axes:
+
+1. **Model Capabilities (Hardware Axis):** The ability to run Heavy ML (MLX FastVLM, SAM 2.1, CLaRa) is determined purely by `ProcessInfo` (M-series vs A-series) and memory (≥8GB), **not** by the OS platform. An M4 iPad can run the exact same headless agent loop as an M4 Mac.
+2. **User Experience (Surface Axis):** The application interface is determined by the `UITraitCollection` and target OS.
+   * **iPhone (Compact):** Ephemeral capture lens. Instant triage, quick-save, offload heavy logic.
+   * **iPad (Regular):** The processing canvas. Drag-and-drop navigation. Acts as a local Edge Node if capable.
+   * **Mac (Native):** The Librarian. Dense table views, bulk editing, charting, Agentic Search, and background networking.
+   * **Vision Pro (Spatial):** Integrated reality. AR HUDs, spatial scoring panels, and 3D Splat inspection.
+
+**Shared UI Core (`DiverUI`):** All generic components (chips, cards, tags) will be ripped from the main iOS target into a shared Swift Package to service all targets identically, while letting the main platform targets dictate the navigation and windowing paradigms.
+
+---
+
+### 2.1 Core Value Propositions
 
 1. **Capture → Enrich → Understand** — A single tap triggers a multi-stage pipeline that sifts subjects from backgrounds, enriches captures with location/web/music/document context, and generates AI summaries.
 2. **Local-First Intelligence** — All ML inference runs on-device by default: Apple Vision framework, Apple Intelligence (Foundation Models), and FastVLM 0.5B via MLX Swift. No data leaves the device for processing unless routed to a user-owned edge node on the home network.
@@ -40,7 +57,7 @@ VisualIntelligencePipelineDemo/
 | Module | Responsibility | Key Contents |
 |--------|---------------|--------------|
 | **VisualIntelligencePipeline** | App entry point, UI layer, App Intents | 30 SwiftUI views, 7 app services, 14 App Intent definitions |
-| **DiverKit** | Business logic, ML pipelines, persistence | 36 services, 4 service protocols, 4 view models, 14 models, 56 API schemas, storage layer |
+| **DiverKit** | Business logic, ML pipelines, persistence | 62 services, 18 service protocols, 6 view models, 20 models, 56 API schemas, storage layer |
 | **DiverShared** | Cross-target shared types | `AppGroupConfig`, `QueueStore`, `LinkWrapping`, `IntelligenceCapability`, `ContextSnapshot` |
 
 **Future targets** (Ethical Commerce phases):
@@ -84,7 +101,7 @@ Communication uses the `Distributed` framework (iOS 16+ / macOS 13+, SE-0336, SE
 │    Client (resolver) │           │    NowcastingService       │
 └──────────────────────┘           │    CommerceService         │
                                    │                            │
-┌──────────────────────┐           │  CoreML YOLO/DETR (NE)     │
+┌──────────────────────┐           │                         │
 │  Apple Vision Pro    │◀────────▶│  MLX Swift LLM (~3B)       │
 │  (visionOS Client)   │  Bonjour  │  Nowcasting Engine (Swift) │
 ├──────────────────────┤           └────────────┬───────────────┘
@@ -428,16 +445,17 @@ struct FinancialSnapshot: Codable, Sendable {
 ### 4.7 Edge Node Services (Distributed Actors)
 
 > [!NOTE]
-> These services run on the Mac/iPad edge node and are accessed by clients via `VisualIntelligenceActorSystem`. See §2.2 for transport details. All require `import Distributed`.
+> These services run natively on M-series Mac/iPad Edge Nodes and are accessed transparently by iOS clients via the `VisualIntelligenceActorSystem` over Bonjour. 
+>
+> **The Distributed Workload Mandate:** To preserve iPhone battery and bypass thermal throttling, iOS clients **do not** compute heavy ML or query 3rd party APIs when an Edge Node is available. Instead, the iPhone marshals raw image `Data` and query context into a Swift struct payload, transmits it over `NWTransportLayer`, and suspends via `await`. The Edge Node ingests the payload into Unified Memory, executes massive 7B parameter models (CLaRa/FastVLM) or Accelerate Matrix algorithms, and returns a lightweight, fully structured `ProcessedItem` back to the iPhone.
 
-| Service | Type | Responsibility |
-|---------|------|---------------|
-| **InferenceService** | `distributed actor` | Routes Vision analysis, SLM, and FastVLM inference to edge node Neural Engine. Runs CoreML YOLO/DETR for product detection. |
-| **NowcastingService** | `distributed actor` | Dynamic Factor Model (DFM) via Accelerate framework (BLAS/LAPACK). Produces 14-day price trajectory projections from public commodity price APIs. |
-| **CommerceService** | `distributed actor` | Matches products to purchase options filtered by user's ethical policy and platform preferences. Generates affiliate deep links. |
-| **ESGEnrichmentService** | `distributed actor` | Queries Climate TRACE, Open Food Facts, OpenESG APIs. Local cache with 24h TTL. |
-| **PricingDataService** | `distributed actor` | Consumes World Bank, BLS PPI, FRED APIs. SQLite time-series on edge node. |
-| **FinancialContextService** | `distributed actor` | Aggregates FinanceKit (on-device Apple Wallet) + Plaid (OAuth2 bank accounts) into `FinancialSnapshot`. Financial data never leaves edge node. |
+| Service | Type | Cross-Device Inference Responsibility |
+|---------|------|---------------------------------------|
+| **InferenceService** | `distributed actor` | **The Heavy ML Router:** Receives ephemeral image `Data` payloads from iOS. Holds them in an `autoreleasepool` in Mac Unified Memory. Natively orchestrates `SAM 2.1` sifting, `FastVLM 7B` grounded prompting, and `CLaRa` embedding generation. Returns only the lightweight text/alpha responses. |
+| **CommerceService** | `distributed actor` | **The Commerce Synthesizer:** Receives raw Barcode IDs or FastVLM product tags from iOS. Cross-references them locally against 4 government databases and Apple FinanceKit to return instant, affiliated `purchaseOptions`. |
+| **NowcastingService** | `distributed actor` | **The Accelerate Engine:** Receives a commercial category. Executes CPU-intensive Dynamic Factor Model (DFM) LAPACK tensor math over dense historical BLS/FRED arrays locally on the Mac to return a simple 14-day price trajectory to the Vision Pro or iPhone HUD. |
+| **ESGEnrichmentService** | `distributed actor` | **The Cache Guardian:** Prevents the iPhone from making redundant, battery-draining network calls. The Mac queries Climate TRACE and Open Food Facts, caches the results locally for 24h, and serves instant carbon scores to local network peers. |
+| **APIKeyService** | `distributed actor` | Prevents credential leakage. API Keys are stored strictly in the Edge Node's encrypted `.Keys` CloudKit container and are never transmitted to iOS clients. The Edge Node makes all exterior API queries on behalf of the client. |
 
 ### 4.8 Library Maintenance Pipeline
 
@@ -478,9 +496,9 @@ When a capture or link enters the system, it proceeds through these stages **seq
    ├─ QR code detection            → pipelineContext.qrPayloads (+ web enrichment if URL)
    ├─ Semantic classification      → pipelineContext.visualTags
    ├─ Document segmentation        → pipelineContext.documentContent (perspective-corrected)
-   ├─ Subject sifting              → item.siftedImageData (alpha-channel cutout)
+   ├─ Subject sifting (SAM 2.1)    → item.siftedImageData (CoreML high-fidelity alpha-channel cutout)
    └─ Aesthetics scoring           → item.aestheticsScore
-   [local OR edge — identical Vision requests, different Neural Engine]
+   [local OR edge — iOS executes standard Vision; Edge overrides Sifting with SAM 2.1 CoreML]
 
 4. Parallel Enrichment (TaskGroup — runs concurrently)
    ├─ Link metadata extraction     → pipelineContext.linkEnrichment
@@ -502,7 +520,7 @@ When a capture or link enters the system, it proceeds through these stages **seq
    ├─ Input: raw image + Vision `visualTags` + SLM `enrichmentContextString` + OCR `transcription`
    ├─ Single-pass grounded prompt: Vision tags anchor what the model should see
    ├─ Local: FastVLM 0.5B (128 token cap, temperature 0.0)
-   ├─ Edge:  FastVLM 3B+ (expanded context, higher quality)
+   ├─ Edge:  FastVLM 7B MLX (expanded context, native multimodal analysis)
    └─ `FastVLMAnalysis` structured output (same schema either path)
 
 7. Session Assignment (`syncSession`)
@@ -511,8 +529,8 @@ When a capture or link enters the system, it proceeds through these stages **seq
    ├─ Priority 3: Create new session if no match within thresholds
    └─ Session summary generated/updated separately (batched after queue drains)
 
-8. ESG / Commerce Enrichment (opt-in, edge node only)
-   ├─ Product classification       → pipelineContext.productClassification (YOLO/barcode)
+8. ESG / Commerce Enrichment (opt-in, Edge Node only)
+   ├─ Product classification       → pipelineContext.productClassification (Vision Barcodes + FastVLM 7B mapping)
    ├─ ESG data retrieval           → pipelineContext.esgEnrichment (Climate TRACE, Open Food Facts)
    ├─ Pricing nowcast              → pipelineContext.priceTrajectory (DFM, 14-day projection)
    ├─ Financial context            → pipelineContext.financialSnapshot (FinanceKit + Plaid)
@@ -577,6 +595,8 @@ When a capture or link enters the system, it proceeds through these stages **seq
 | **SidebarViewModel** (51KB) | Sidebar state, session management, drag-and-drop, library maintenance |
 | **ReferenceDetailViewModel** | Item detail state, editing, enrichment display |
 | **ProcessedItemViewModel** | Individual item actions and state |
+| **AgenticChatViewModel** | Orchestrates CLaRa natural language querying, UI input streams, and latent memory retrieval |
+| **MetadataViewModel** | *(ActionExtension)* Extracts and structures payload from iOS share sheet `NSExtensionItem` |
 
 ---
 
@@ -584,20 +604,21 @@ When a capture or link enters the system, it proceeds through these stages **seq
 
 ### 7.1 App Intents & Siri
 
-6 registered App Intents, 5 exposed as Siri Shortcuts via `DiverShortcuts: AppShortcutsProvider`:
+7 registered App Intents, 6 exposed as Siri Shortcuts via `DiverShortcuts: AppShortcutsProvider`:
 
 | Intent | Shortcut Title | Description |
 |--------|---------------|-------------|
+| **AskCLaRaIntent** | "Ask CLaRa" | Query the visual library via natural language. Siri: *"Ask CLaRa in [app] about [query]"* |
 | **SaveLinkIntent** | "Save Link" | Save a URL to the library. Siri: *"Save to [app]"* |
 | **ShareLinkIntent** | "Share Link" | Generate a wrapped link and share. Siri: *"Share with [app]"* |
 | **SearchLinksIntent** | "Search & Deep Link" | Search library by keyword, browse recent. Siri: *"Search [app] for [query]"* |
 | **OpenLinkIntent** | "Open Link" | Open a specific item by reference. Siri: *"Open [link] from [app]"* |
-| **VisualIntelligenceIntent** | "Intelligence Scan" | OCR + QR extraction from screenshot/photo, wraps URL via `DiverLinkGenerator`, saves to queue. Siri: *"Scan screen with [app]"* |
+| **VisualIntelligenceIntent** | "Intelligence Scan" | OCR + QR extraction from screenshot/photo, wraps URL via `DiverLinkGenerator`. Siri: *"Scan screen with [app]"* |
 | **OpenVisualIntelligenceIntent** | *(Action Button)* | Opens camera in Visual Intelligence mode. Not a Siri shortcut — bound to device Action Button via `openAppWhenRun`. |
 
 ### 7.2 Widgets
 
-Home screen and Lock screen widgets via `VisualIntelligencePipelineWidget` target, providing at-a-glance access to recent captures and sessions.
+Home screen and Lock screen widgets via `VisualIntelligencePipelineWidget` target. Provides at-a-glance access to recent captures, session summaries, and a dedicated "Ask CLaRa" widget for instant natural language searching of the visual library directly from the Home Screen.
 
 ### 7.3 Share Extension
 
@@ -659,35 +680,44 @@ SwiftData syncs automatically to CloudKit via the `iCloud.com.secretatomics.know
 | **StorageClient** | `Storage/StorageClient.swift` | Remote S3 storage client — generates presigned URLs for upload/download and lists job files via `HTTPClient` |
 | **UnifiedDataManager** | `Storage/UnifiedDataManager.swift` | Unified data access layer |
 
-**Data Deletion:** The "Delete Database" function in Settings performs a 4-step complete purge:
-1. Clear `DiverQueueStore` (file-based processing queue)
-2. Remove App Group directories (`Documents`, `Queue`, `SourceImages`, `Snapshots`) and orphaned files
-3. Delete all SwiftData entities (7 model types: `ProcessedItem`, `LocalInput`, `UserConcept`, `SessionMetadata`, `SessionCollection`, `UserCachedRecord`, `RecommendationData`)
-4. Direct `CKQuery` purge of CloudKit zone (`CD_ProcessedItem`, `CD_SessionMetadata`, `CD_UserConcept`, `CD_LocalInput`, `CD_SessionCollection`) to catch orphaned cloud records
+**Data Deletion:** The "Delete Database" function in Settings performs a complete, cryptographic purge across all synced devices and edge nodes:
+1. **App Groups:** Clear `DiverQueueStore` and remove all directories (`Documents`, `Queue`, `SourceImages`, `Snapshots`, `Payloads`).
+2. **SwiftData:** Hard-delete all entities (`ProcessedItem`, `LocalInput`, `UserConcept`, `SessionMetadata`, `SessionCollection`, `OwnedProduct`, `ScoreSnapshot`).
+3. **CloudKit:** Execute deep `CKQuery` purge of the custom `.Cache` zone to permanently delete orphaned records across Apple's servers, and instantly purge the distinct `iCloud.com.secretatomics.knowmaps.Keys` container to erase all stored API keys.
+4. **Keychain:** Wipe all stored tokens (Plaid, OpenAI, etc.).
+5. **Edge Node Broadcasting:** Broadcast an encrypted `ERASE_ALL_DATA` envelope via the `NWTransportLayer` to the active Edge Node.
+6. **Edge Daemon Purge (Mac/iPad):** Upon receiving the broadcast (or triggered locally if acting as the node), the daemon instantly securely deletes its `ESG Cache`, `Commerce Cache`, `Price Time Series` and flushes all `CLaRa` latent vectors from unified memory. Models (`FastVLM`/`SAM`) are retained.
 
 ### 8.2 File-Based Queue
 
 `QueueStore` (in `DiverShared`) provides a crash-safe, file-based queue using App Groups for cross-process access (main app ↔ share extension). Ensures no captured link or media is lost, even under extension time limits.
 
-### 8.3 Image Storage
+### 8.3 Image Storage & Transient Payloads
 
+The pipeline handles imagery in two phases: **Transient** (Network/RAM) and **Persistent** (SwiftData SQLite).
+
+**Transient Payloads (Network Envelopes):**
+- Images captured by the iOS client but routed to the Mac Edge Node for processing are converted to `Data` objects and beamed across the `NWTransportLayer` inside length-prefixed protocol frames.
+- These frames are held strictly in Unified Memory (RAM) on the Edge Node via `CGImageSourceCreateWithData` inside an `autoreleasepool {}` block. The payloads are **never written to disk** on the daemon side.
+
+**Persistent Storage (iOS CloudKit):**
 - `rawPayload` — Original capture image data (SwiftData `@Attribute(.externalStorage)`)
 - `depthPayload` — LiDAR/TrueDepth depth map data (SwiftData `@Attribute(.externalStorage)`)
 - `siftedImageData` — Background-removed subject cutout with alpha channel
 - `documentImageData` — Perspective-corrected document scan
 - `thumbnailPaths` — File paths to aesthetics-scored session thumbnails
 
-### 8.4 Edge Node Storage
+### 8.4 Edge Node Storage (Encrypted)
 
-The Mac/iPad edge node maintains local caches that never sync to CloudKit or leave the LAN:
+The Mac/iPad edge node maintains local caches that never sync to CloudKit or leave the LAN. Because these datastores touch financial projections and raw CLaRa LLM analysis, **all Edge Node SQLite databases and ML caches must be encrypted at rest using `SQLCipher` or `FileProtectionType.complete`.**
 
 | Store | Technology | Contents | TTL |
 |-------|-----------|----------|-----|
-| **ESG Cache** | SQLite | Climate TRACE, Open Food Facts, OpenESG results | 24h |
-| **Price Time Series** | SQLite | World Bank, BLS PPI, FRED data points | Refreshed daily |
+| **ESG Cache** | SQLite (Encrypted) | Climate TRACE, Open Food Facts, OpenESG results | 24h |
+| **Price Time Series** | SQLite (Encrypted) | World Bank, BLS PPI, FRED data points | Refreshed daily |
 | **Financial Cache** | Keychain + encrypted file | Plaid OAuth2 tokens, transaction cache | Session-based |
-| **Commerce Cache** | SQLite | Affiliate link mappings, platform configs | 7 days |
-| **Model Cache** | File system | CoreML YOLO/DETR, MLX Swift 3B+ weights | Persistent until evicted |
+| **Commerce Cache** | SQLite (Encrypted) | Affiliate link mappings, platform configs | 7 days |
+| **Model Cache** | Encrypted File System | CoreML SAM 2.1, MLX Swift 7B+ weights | Persistent until evicted |
 
 ---
 
@@ -711,8 +741,8 @@ The Mac/iPad edge node maintains local caches that never sync to CloudKit or lea
 | **Minimum OS** | iOS/iPadOS 26.0 | macOS 26.0 | visionOS 26.3 |
 | **Minimum Device** | iPhone 16 / iPad (M-series) | Mac (M4+) | Apple Vision Pro |
 | **Apple Intelligence** | Required | Required | Required |
-| **FastVLM** | 0.5B (optional, ~500MB) | 3B+ (optional, ~2GB) | — |
-| **YOLO/DETR** | — | CoreML model (optional) | — |
+| **FastVLM** | 0.5B (optional, ~500MB) | 7B (required, ~4GB) | — |
+| **SAM 2.1 / CLaRa** | sam2.1-small (optional) | CLaRa 7B MLX (required) | — |
 | **Key Frameworks** | Swift, SwiftUI, SwiftData, Vision, MapKit, Foundation Models, MLX Swift, AVFoundation, CoreLocation, Contacts, MusicKit, Distributed, Network, Charts, FinanceKit | Swift, Distributed, Network, CoreML, MLX Swift, Accelerate, Charts | Swift, SwiftUI, RealityKit, ARKit, Distributed, Network, Charts |
 | **Key APIs** | Spotify, DuckDuckGo | Climate TRACE, Open Food Facts, OpenESG, World Bank, BLS, FRED, Plaid | — |
 | **Financial** | FinanceKit (Apple Wallet) | Plaid (OAuth2 bank data) | — |
@@ -814,3 +844,17 @@ cd DiverShared && swift test
 > For detailed implementation phases (Phase 0 PoC through Phase 3 VisionOS), data source assessment, PCAF data quality tier methodology, degraded-mode design, and procurement API architecture, see:
 >
 > **[Documentation/ethical_commerce_spec.md](Documentation/ethical_commerce_spec.md)**
+
+---
+
+## 15. Future Expansion: Live Event & Person Capture Mode
+
+Moving beyond static objects and web links, the architecture will expand to support a **Live Event / Person Capture Mode**. This mode shifts the enrichment pipeline from spatial objects to social and temporal events.
+
+**Core Capabilities:**
+1. **Person Detection & Contact Indexing:** Leverages the `ContactServiceProvider` and Vision framework face/body detection to identify subjects in the camera feed or media frame. Identified individuals are matched securely against the local on-device Contacts database, linking the capture to specific peers.
+2. **Temporal Activity Synthesis:** Instead of analyzing a single frame, the pipeline captures a brief rolling window (Live Photo / Short Video). The CLaRa or FastVLM model processes this temporal data to synthesize the *activity* or *event* occurring in real-time (e.g., "playing chess with John", "hiking in the park with Sarah").
+3. **Intelligence Enrichment Possibility Set:**
+    - Drives highly targeted `UserConcept` generation (e.g., automatically weighting concepts like `#Family`, `#Chess`, `#John`).
+    - Anchors the `DiverSession` context not just to MapKit locations, but to the social graph present at the event.
+    - Enables Agentic Search via CLaRa to answer social queries over latent memory (e.g., *"When was the last time I went hiking with Sarah?"*).
