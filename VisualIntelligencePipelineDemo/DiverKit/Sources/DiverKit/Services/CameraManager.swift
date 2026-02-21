@@ -92,10 +92,16 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
     private func checkPermissions() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
-            startSession()
+            Task { @MainActor in
+                self.startSession()
+            }
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-                if granted { self?.startSession() }
+                if granted {
+                    Task { @MainActor [weak self] in
+                        self?.startSession()
+                    }
+                }
             }
         default:
             break
@@ -352,3 +358,4 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
         }
     }
 }
+
