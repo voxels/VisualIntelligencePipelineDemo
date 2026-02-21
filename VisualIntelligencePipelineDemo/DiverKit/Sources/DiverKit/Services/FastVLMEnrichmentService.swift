@@ -175,22 +175,37 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         let config = ModelConfiguration(id: repo)
         let startTime = Date()
         
-        // Patch empty vision_config in HF Hub cache before loading (mlx-swift-lm bug workaround)
+        // Patch empty vision_config if already downloaded (e.g. loadModel after download)
         Self.patchVisionConfigIfNeeded(modelID: repo)
         
-        // VLMModelFactory downloads from HF Hub and caches locally
-        _ = try await VLMModelFactory.shared.loadContainer(
-            configuration: config
-        ) { update in
-            let pct = update.fractionCompleted * 100
-            Task { @MainActor in
-                progress(update.fractionCompleted)
+        // VLMModelFactory downloads from HF Hub and caches locally.
+        // First attempt may fail if config.json ships with empty vision_config (mlx-swift-lm bug).
+        // If so, patch the cached config and retry.
+        do {
+            _ = try await VLMModelFactory.shared.loadContainer(
+                configuration: config
+            ) { update in
+                let pct = update.fractionCompleted * 100
+                Task { @MainActor in
+                    progress(update.fractionCompleted)
+                }
+                let pctInt = Int(pct)
+                if pctInt % 10 == 0 {
+                    let pctStr = String(format: "%.0f%%", pct)
+                    DiverLogger.pipeline.info("📥 [FastVLM] Download progress: \(pctStr) — \(repo)")
+                }
             }
-            // Log at 10% intervals to avoid spamming
-            let pctInt = Int(pct)
-            if pctInt % 10 == 0 {
-                let pctStr = String(format: "%.0f%%", pct)
-                DiverLogger.pipeline.info("📥 [FastVLM] Download progress: \(pctStr) — \(repo)")
+        } catch {
+            // Check if this is the empty vision_config bug
+            let errorDesc = String(describing: error)
+            if errorDesc.contains("cls_ratio") || errorDesc.contains("vision_config") {
+                DiverLogger.pipeline.info("🔧 [FastVLM] Config decoding failed — patching vision_config and retrying")
+                Self.patchVisionConfigIfNeeded(modelID: repo)
+                _ = try await VLMModelFactory.shared.loadContainer(
+                    configuration: config
+                )
+            } else {
+                throw error
             }
         }
         
@@ -334,7 +349,6 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         
         let config: ModelConfiguration
         if Self.modelID.starts(with: "apple/FastVLM/") {
-            // Use local weights directory for the downloaded EdgeDaemon models
             config = ModelConfiguration(
                 directory: Self.modelCacheDirectory
             )
@@ -342,9 +356,22 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
             config = ModelConfiguration(id: Self.modelID)
         }
         
-        self.container = try await VLMModelFactory.shared.loadContainer(
-            configuration: config
-        )
+        do {
+            self.container = try await VLMModelFactory.shared.loadContainer(
+                configuration: config
+            )
+        } catch {
+            let errorDesc = String(describing: error)
+            if errorDesc.contains("cls_ratio") || errorDesc.contains("vision_config") {
+                print("🔧 [FastVLMService] Config decoding failed — patching vision_config and retrying")
+                Self.patchVisionConfigIfNeeded(modelID: Self.modelID)
+                self.container = try await VLMModelFactory.shared.loadContainer(
+                    configuration: config
+                )
+            } else {
+                throw error
+            }
+        }
         print("✅ [FastVLMService] Model loaded and cached in GPU memory")
         #else
         throw FastVLMError.notSupported
@@ -383,14 +410,27 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
             config = ModelConfiguration(id: Self.modelID)
         }
         
-        // Patch empty vision_config in HF Hub cache before loading (mlx-swift-lm bug workaround)
+        // Patch if already cached; catch-patch-retry handles first-download case
         Self.patchVisionConfigIfNeeded(modelID: Self.modelID)
         
-        self.container = try await VLMModelFactory.shared.loadContainer(
-            configuration: config
-        ) { update in
-            Task { @MainActor in
-                progress(update.fractionCompleted)
+        do {
+            self.container = try await VLMModelFactory.shared.loadContainer(
+                configuration: config
+            ) { update in
+                Task { @MainActor in
+                    progress(update.fractionCompleted)
+                }
+            }
+        } catch {
+            let errorDesc = String(describing: error)
+            if errorDesc.contains("cls_ratio") || errorDesc.contains("vision_config") {
+                print("🔧 [FastVLMService] Config decoding failed — patching vision_config and retrying")
+                Self.patchVisionConfigIfNeeded(modelID: Self.modelID)
+                self.container = try await VLMModelFactory.shared.loadContainer(
+                    configuration: config
+                )
+            } else {
+                throw error
             }
         }
         
