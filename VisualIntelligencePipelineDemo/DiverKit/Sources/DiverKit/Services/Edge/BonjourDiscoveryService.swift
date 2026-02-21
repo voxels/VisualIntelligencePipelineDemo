@@ -148,6 +148,7 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
                 deviceName: name,
                 chipFamily: metadata["chip"] ?? "Unknown",
                 neuralEngineTOPS: Float(metadata["tops"] ?? "0") ?? 0,
+                physicalMemoryGB: UInt64(metadata["ram"] ?? "0") ?? 0,
                 availableModels: metadata["models"]?.components(separatedBy: ",") ?? [],
                 isAvailable: true
             )
@@ -175,7 +176,7 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
         var dict: [String: String] = [:]
         
         // NWTXTRecord supports dictionary-style access
-        for key in ["chip", "tops", "models"] {
+        for key in ["chip", "tops", "ram", "models"] {
             if let value = txtRecord[key] {
                 dict[key] = value
             }

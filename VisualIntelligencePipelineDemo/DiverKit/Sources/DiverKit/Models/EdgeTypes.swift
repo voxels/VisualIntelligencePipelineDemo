@@ -16,6 +16,7 @@ public struct EdgeNodeInfo: Codable, Sendable, Hashable {
     public let deviceName: String       // e.g., "Michael's MacBook Pro"
     public let chipFamily: String       // e.g., "M4 Pro"
     public let neuralEngineTOPS: Float  // e.g., 38.0
+    public let physicalMemoryGB: UInt64 // e.g., 32
     public let availableModels: [String] // e.g., ["FastVLM-0.5B", "FastVLM-3B", "YOLO-v8n"]
     public let isAvailable: Bool
     
@@ -23,12 +24,14 @@ public struct EdgeNodeInfo: Codable, Sendable, Hashable {
         deviceName: String,
         chipFamily: String,
         neuralEngineTOPS: Float,
+        physicalMemoryGB: UInt64,
         availableModels: [String],
         isAvailable: Bool = true
     ) {
         self.deviceName = deviceName
         self.chipFamily = chipFamily
         self.neuralEngineTOPS = neuralEngineTOPS
+        self.physicalMemoryGB = physicalMemoryGB
         self.availableModels = availableModels
         self.isAvailable = isAvailable
     }
