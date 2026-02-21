@@ -131,6 +131,13 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
         results: Set<NWBrowser.Result>,
         changes: Set<NWBrowser.Result.Change>
     ) {
+        // Local device names to ignore
+#if os(macOS)
+        let localName = Host.current().localizedName ?? "Mac Edge Node"
+#else
+        let localName = ProcessInfo.processInfo.hostName
+#endif
+
         discoveredNodes = results.compactMap { result -> EdgeNodeInfo? in
             // Extract service name from endpoint
             let name: String
@@ -138,6 +145,11 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
             case .service(let svcName, _, _, _):
                 name = svcName
             default:
+                return nil
+            }
+            
+            // Ignore ourselves
+            if name == localName {
                 return nil
             }
             
@@ -159,7 +171,8 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
             if currentConnection?.deviceName != bestNode.deviceName {
                 currentConnection = bestNode
                 print("🔗 BonjourDiscovery: Auto-connected to highest TOPS node = \(bestNode.deviceName) (\(bestNode.neuralEngineTOPS) TOPS)")
-                onNodeConnected?(bestNode.deviceName)
+                // `currentConnection` property observer `didSet` automatically triggers `onNodeConnected?(bestNode.deviceName)`.
+                // A duplicate explicit call here was removed to prevent multi-connections.
             }
         } else {
             currentConnection = nil
