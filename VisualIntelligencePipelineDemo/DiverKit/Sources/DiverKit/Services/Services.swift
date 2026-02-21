@@ -25,6 +25,7 @@ public final class Services {
     public var edgeRouter: PipelineEdgeRouter?
     public var localDaemonService: EdgeDaemonService?
     public var actorSystem: VisualIntelligenceActorSystem?
+    public var samService: (any SAM2Segmenting)?
     
     /// KnowMaps CloudCacheService for iCloud cache management
     public var cloudCacheService: Any?

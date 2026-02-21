@@ -10,7 +10,7 @@ public enum IntelligenceResult {
     case text(String, URL? = nil)
     case semantic(String, confidence: Float)
     case entertainment(title: String, type: EntertainmentType, assets: [URL] = [])
-    case siftedSubject(VNInstanceMaskObservation, label: String?)
+    case siftedSubject(CGImage, bounds: CGRect, label: String?)
     case product(code: String, type: ProductCodeType, mediaAssets: [URL] = [])
     case document(VNRectangleObservation, text: String?, label: String?, rectifiedImage: Data? = nil)
     case purpose(statements: [String])
@@ -47,9 +47,10 @@ extension IntelligenceResult: Hashable {
             hasher.combine(3)
             hasher.combine(title)
             hasher.combine(type)
-        case .siftedSubject(let obs, let label):
+        case .siftedSubject(let mask, let bounds, let label):
             hasher.combine(4)
-            hasher.combine(obs)
+            hasher.combine(bounds.origin.x)
+            hasher.combine(bounds.origin.y)
             hasher.combine(label)
         case .product(let code, let type, _):
             hasher.combine(5)
@@ -84,7 +85,7 @@ extension IntelligenceResult: Hashable {
         case (.text(let t1, let u1), .text(let t2, let u2)): return t1 == t2 && u1 == u2
         case (.semantic(let l1, let c1), .semantic(let l2, let c2)): return l1 == l2 && c1 == c2
         case (.entertainment(let t1, let ty1, _), .entertainment(let t2, let ty2, _)): return t1 == t2 && ty1 == ty2
-        case (.siftedSubject(let o1, let l1), .siftedSubject(let o2, let l2)): return o1 === o2 && l1 == l2
+        case (.siftedSubject(let m1, let b1, let l1), .siftedSubject(let m2, let b2, let l2)): return m1 === m2 && b1 == b2 && l1 == l2
         case (.product(let c1, let t1, _), .product(let c2, let t2, _)): return c1 == c2 && t1 == t2
         case (.document(let o1, let t1, let l1, let r1), .document(let o2, let t2, let l2, let r2)): return o1 === o2 && t1 == t2 && l1 == l2 && r1 == r2
         case (.purpose(let s1), .purpose(let s2)): return s1 == s2
@@ -105,7 +106,7 @@ extension IntelligenceResult {
         case .text(let text, _): return text.count > 30 ? String(text.prefix(30)) + "..." : text
         case .semantic(let label, _): return label.capitalized
         case .entertainment(let title, _, _): return title
-        case .siftedSubject(_, let label): return label?.capitalized ?? "Subject Sifted"
+        case .siftedSubject(_, _, let label): return label?.capitalized ?? "Subject Sifted"
         case .product: return "Product" // Simplification
         case .document(_, let text, let label, _): 
             let prefix = "Doc: "
@@ -132,7 +133,7 @@ extension IntelligenceResult {
             case .book: return "Book Cover"
             case .podcast: return "Podcast Art"
             }
-        case .siftedSubject(_, let label): return label != nil ? "Sifted Object" : "Ready to Peel"
+        case .siftedSubject(_, _, let label): return label != nil ? "Sifted Object" : "Ready to Peel"
         case .product(let code, let type, _): return "\(type.rawValue.uppercased()): \(code)"
         case .document(_, _, let label, _): return label?.capitalized ?? "Auto-segmented document"
         case .purpose(let statements): 
@@ -158,7 +159,7 @@ extension IntelligenceResult {
             case .book: return "book"
             case .podcast: return "podcast.arrow.up.universal"
             }
-        case .siftedSubject(_, let label):
+        case .siftedSubject(_, _, let label):
             if let l = label?.lowercased() {
                 if l.contains("dog") || l.contains("cat") { return "pawprint.fill" }
                 if l.contains("coffee") || l.contains("mug") { return "cup.and.saucer.fill" }
@@ -234,20 +235,17 @@ extension IntelligenceResult {
 public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
     public init() {}
     
-    public enum AnalysisMode: Sendable {
-        case liveSifting
-        case fullAnalysis
-    }
+
     
-    public func process(frame: CVPixelBuffer, orientation: CGImagePropertyOrientation = .up, mode: AnalysisMode = .liveSifting) async throws -> [IntelligenceResult] {
+    public func process(frame: CVPixelBuffer, orientation: CGImagePropertyOrientation = .up, mode: IntelligenceAnalysisMode = .liveSifting) async throws -> [IntelligenceResult] {
         return try await performRequests(cvPixelBuffer: frame, orientation: orientation, mode: mode)
     }
     
-    public func process(image: CGImage, orientation: CGImagePropertyOrientation = .up, mode: AnalysisMode = .liveSifting) async throws -> [IntelligenceResult] {
+    public func process(image: CGImage, orientation: CGImagePropertyOrientation = .up, mode: IntelligenceAnalysisMode = .liveSifting) async throws -> [IntelligenceResult] {
         return try await performRequests(cgImage: image, orientation: orientation, mode: mode)
     }
     
-    private func performRequests(cvPixelBuffer: CVPixelBuffer, orientation: CGImagePropertyOrientation, mode: AnalysisMode) async throws -> [IntelligenceResult] {
+    private func performRequests(cvPixelBuffer: CVPixelBuffer, orientation: CGImagePropertyOrientation, mode: IntelligenceAnalysisMode) async throws -> [IntelligenceResult] {
         var cgImage: CGImage?
         VTCreateCGImageFromCVPixelBuffer(cvPixelBuffer, options: nil, imageOut: &cgImage)
         
@@ -256,24 +254,23 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
         }
     }
     
-    private func performRequests(cgImage: CGImage, orientation: CGImagePropertyOrientation, mode: AnalysisMode) async throws -> [IntelligenceResult] {
+    private func performRequests(cgImage: CGImage, orientation: CGImagePropertyOrientation, mode: IntelligenceAnalysisMode) async throws -> [IntelligenceResult] {
         return try await executePipeline(mode: mode, sourceImage: cgImage, orientation: orientation) {
             VNImageRequestHandler(cgImage: cgImage, orientation: orientation, options: [:])
         }
     }
     
-    private func executePipeline(mode: AnalysisMode, sourceImage: CGImage? = nil, orientation: CGImagePropertyOrientation = .up, handlerFactory: () -> VNImageRequestHandler) async throws -> [IntelligenceResult] {
+    private func executePipeline(mode: IntelligenceAnalysisMode, sourceImage: CGImage? = nil, orientation: CGImagePropertyOrientation = .up, handlerFactory: () -> VNImageRequestHandler) async throws -> [IntelligenceResult] {
          if mode != .liveSifting {
             print("🧠 IntelligenceProcessor: Starting Pipeline (Mode: \(mode))")
          }
          var finalResults: [IntelligenceResult] = []
          
          // Build the request list based on mode
-         let siftingRequest = VNGenerateForegroundInstanceMaskRequest()
          let barcodeRequest = VNDetectBarcodesRequest()
          let aestheticsRequest = VNCalculateImageAestheticsScoresRequest()
          
-         var allRequests: [VNRequest] = [siftingRequest, barcodeRequest, aestheticsRequest]
+         var allRequests: [VNRequest] = [barcodeRequest, aestheticsRequest]
          
          // For full analysis, add all requests upfront so they run in ONE parallel perform() call.
          // We dropped the ROI optimization (where classification focused on the sifted subject region)
@@ -305,14 +302,22 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
          let handler = handlerFactory()
          try handler.perform(allRequests)
          
-         // --- Process Aesthetics Score ---
          if let aestheticResult = aestheticsRequest.results?.first {
              finalResults.append(.aesthetics(score: aestheticResult.overallScore))
          }
          
-         // --- Process Sifting Results ---
-         if let observation = siftingRequest.results?.first {
-             finalResults.append(.siftedSubject(observation, label: nil))
+         // --- Process SAM 2.1 Sifting Results ---
+         let samService = await MainActor.run { Services.shared.samService }
+         if let cg = sourceImage, let sam = samService {
+             do {
+                 if let mask = try await sam.segment(image: cg, orientation: orientation) {
+                     // For SAM2, default bounds to full frame since the mask is a structural map.
+                     let bounds = CGRect(x: 0, y: 0, width: 1, height: 1)
+                     finalResults.append(.siftedSubject(mask, bounds: bounds, label: nil))
+                 }
+             } catch {
+                 print("⚠️ SAM 2.1 Mask Generation Failed: \(error)")
+             }
          }
          
          // --- Process Barcode Results ---
@@ -440,8 +445,8 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
               // Backfill the Sifted Subject Label
               if let bestLabel = topObservations.first?.identifier,
                  let index = finalResults.firstIndex(where: { if case .siftedSubject = $0 { return true } else { return false } }),
-                 case .siftedSubject(let obs, _) = finalResults[index] {
-                  finalResults[index] = .siftedSubject(obs, label: bestLabel)
+                 case .siftedSubject(let mask, let bounds, _) = finalResults[index] {
+                  finalResults[index] = .siftedSubject(mask, bounds: bounds, label: bestLabel)
                   print("🏷️ Assigned Label '\(bestLabel)' to Sifted Subject")
               }
           }
@@ -497,62 +502,7 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
          return finalResults
     }
     
-    // Internal Helper for ROI calculation
-    public func calculateBounds(from observation: VNInstanceMaskObservation) -> CGRect {
-        let maskBuffer = observation.instanceMask
-        CVPixelBufferLockBaseAddress(maskBuffer, .readOnly)
-        defer { CVPixelBufferUnlockBaseAddress(maskBuffer, .readOnly) }
-        
-        guard let baseAddress = CVPixelBufferGetBaseAddress(maskBuffer) else { return .zero }
-        
-        let width = CVPixelBufferGetWidth(maskBuffer)
-        let height = CVPixelBufferGetHeight(maskBuffer)
-        let bytesPerRow = CVPixelBufferGetBytesPerRow(maskBuffer)
-        let buffer = baseAddress.assumingMemoryBound(to: UInt8.self)
-        
-        var minX = width
-        var maxX = 0
-        var minY = height
-        var maxY = 0
-        var found = false
-        
-        // Fast scan
-        for y in 0..<height {
-            let row = buffer + (y * bytesPerRow)
-            for x in 0..<width {
-                if row[x] != 0 {
-                    if x < minX { minX = x }
-                    if x > maxX { maxX = x }
-                    if y < minY { minY = y }
-                    if y > maxY { maxY = y }
-                    found = true
-                }
-            }
-        }
-        
-        if !found { return .zero }
-        
-        let normalizedMinX = CGFloat(minX) / CGFloat(width)
-        let normalizedMaxX = CGFloat(maxX) / CGFloat(width)
-        // Vision Origin is Bottom-Left, Buffer is Top-Left. 
-        // VNRecognizeTextRequest Y is Bottom-Left.
-        // We need Standard Normalized Coordinates (0,0 is Bottom Left).
-        // Buffer Y=0 is Top.
-        // NormalizedY = 1 - (y / height).
-        // MaxY in buffer (bottom of object) -> MinY in Vision.
-        // MinY in buffer (top of object) -> MaxY in Vision.
-        
-        let normalizedMinY = 1.0 - (CGFloat(maxY) / CGFloat(height)) // Bottom of object
-        let normalizedMaxY = 1.0 - (CGFloat(minY) / CGFloat(height)) // Top of object
-        
-        return CGRect(
-            x: normalizedMinX,
-            y: normalizedMinY,
-            width: normalizedMaxX - normalizedMinX,
-            height: normalizedMaxY - normalizedMinY
-        )
-    }
-    
+
     private func extractURL(from text: String) -> URL? {
         let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
         let range = NSRange(text.startIndex..<text.endIndex, in: text)
@@ -590,7 +540,7 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
                         contextParts.append("Product Code: \(code) (\(type.rawValue))")
                     case .entertainment(let title, let type, _):
                         contextParts.append("Entertainment: \(title) (\(type))")
-                    case .siftedSubject(_, let label):
+                    case .siftedSubject(_, _, let label):
                         if let label { contextParts.append("Visual Subject: \(label)") }
                     case .purpose:
                         break // Skip existing purpose results

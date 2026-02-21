@@ -35,7 +35,15 @@ public final class SessionMetadata: Identifiable, DiverObject {
     /// Array of file paths to aesthetic-scored thumbnail images
     public var thumbnailPaths: [String] = []
     
-    public init(sessionID: String = UUID().uuidString, title: String? = nil, summary: String? = nil, createdAt: Date = Date(), updatedAt: Date = Date(), latitude: Double? = nil, longitude: Double? = nil, placeID: String? = nil, locationName: String? = nil, collectionID: String? = nil, isFavorite: Bool = false, thumbnailAssetIdentifier: String? = nil, thumbnailPaths: [String] = []) {
+    // MARK: - Phase 5 (Temporal & Social)
+    
+    /// Optional file path to the temporal video component of a Live Photo or burst sequence.
+    public var livePhotoVideoPath: String? = nil
+    
+    /// Array of Apple Contacts Framework (CNContact) identifiers associated with this session's subject.
+    public var contactIdentifiers: [String]? = []
+    
+    public init(sessionID: String = UUID().uuidString, title: String? = nil, summary: String? = nil, createdAt: Date = Date(), updatedAt: Date = Date(), latitude: Double? = nil, longitude: Double? = nil, placeID: String? = nil, locationName: String? = nil, collectionID: String? = nil, isFavorite: Bool = false, thumbnailAssetIdentifier: String? = nil, thumbnailPaths: [String] = [], livePhotoVideoPath: String? = nil, contactIdentifiers: [String]? = []) {
 
         self.sessionID = sessionID
         self.title = title
@@ -50,6 +58,8 @@ public final class SessionMetadata: Identifiable, DiverObject {
         self.isFavorite = isFavorite
         self.thumbnailAssetIdentifier = thumbnailAssetIdentifier
         self.thumbnailPaths = thumbnailPaths
+        self.livePhotoVideoPath = livePhotoVideoPath
+        self.contactIdentifiers = contactIdentifiers
     }
     
     // MARK: - DiverObject Conformance

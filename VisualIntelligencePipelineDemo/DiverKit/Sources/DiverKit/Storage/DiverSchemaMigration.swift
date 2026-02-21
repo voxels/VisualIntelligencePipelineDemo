@@ -38,34 +38,41 @@ public enum DiverSchemaV1: VersionedSchema {
     }
 }
 
+// MARK: - Schema V2 (Temporal & Social Support)
+
+/// V2 introduces new properties to SessionMetadata to support Live Photos and Contacts.
+/// This is a lightweight migration (adding optional properties).
+public enum DiverSchemaV2: VersionedSchema {
+    nonisolated(unsafe) public static var versionIdentifier = Schema.Version(2, 0, 0)
+    
+    public static var models: [any PersistentModel.Type] {
+        [
+            LocalInput.self,
+            ProcessedItem.self,
+            UserConcept.self,
+            SessionMetadata.self,
+            SessionCollection.self,
+            OwnedProduct.self,
+            ScoreSnapshot.self
+        ]
+    }
+}
+
 // MARK: - Migration Plan
 
 /// Migration plan for the Diver data model.
-/// Currently contains only the V1 baseline (no migration stages needed yet).
-/// When adding V2, add a new VersionedSchema enum and a lightweight stage here.
-///
-/// Example for future V2:
-/// ```
-/// public enum DiverSchemaV2: VersionedSchema {
-///     public static var versionIdentifier = Schema.Version(2, 0, 0)
-///     public static var models: [any PersistentModel.Type] {
-///         // Updated model list
-///     }
-/// }
-///
-/// // In DiverMigrationPlan:
-/// static var schemas: [..., DiverSchemaV2.self]
-/// static var stages: [migrateV1toV2]
-/// static let migrateV1toV2 = MigrationStage.lightweight(
-///     fromVersion: DiverSchemaV1.self, toVersion: DiverSchemaV2.self
-/// )
-/// ```
 public enum DiverMigrationPlan: SchemaMigrationPlan {
     public static var schemas: [any VersionedSchema.Type] {
-        [DiverSchemaV1.self]
+        [DiverSchemaV1.self, DiverSchemaV2.self]
     }
     
     public static var stages: [MigrationStage] {
-        [] // No migrations yet — V1 is the current baseline
+        [migrateV1toV2]
     }
+    
+    // Automatic lightweight migration for adding optional properties
+    static let migrateV1toV2 = MigrationStage.lightweight(
+        fromVersion: DiverSchemaV1.self,
+        toVersion: DiverSchemaV2.self
+    )
 }

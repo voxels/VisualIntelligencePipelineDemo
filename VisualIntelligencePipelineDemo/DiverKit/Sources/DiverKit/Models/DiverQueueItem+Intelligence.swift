@@ -143,7 +143,7 @@ public extension DiverQueueItem {
                 childDescriptors.append((desc, rectifiedImage))
                 
             case .purpose: break
-            case .siftedSubject(_, _): break
+            case .siftedSubject(_, _, _): break
             case .aesthetics: break
             case .saliency: break
             case .qr(let url):

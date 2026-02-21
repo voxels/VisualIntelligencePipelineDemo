@@ -281,7 +281,7 @@ public class VisualIntelligenceViewModel {
     }
 
     // MARK: - Internal State
-    public var activeObservation: VNInstanceMaskObservation?
+    public var activeObservation: CGImage?
     public var lastCaptureTime: Date?
 
     public var cameraManager = CameraManager()
@@ -321,16 +321,15 @@ public class VisualIntelligenceViewModel {
     // Off-main helper to process a frame safely without sending main-actor state
     // Off-main helper to process a frame safely without sending main-actor state
     nonisolated(nonsending)
-    private func processFrameOffMain(_ pixelBuffer: UnsafeSendable<CVPixelBuffer>, orientation: CGImagePropertyOrientation, mode: IntelligenceProcessor.AnalysisMode) async -> ([IntelligenceResult], CGRect?)? {
+    private func processFrameOffMain(_ pixelBuffer: UnsafeSendable<CVPixelBuffer>, orientation: CGImagePropertyOrientation, mode: IntelligenceAnalysisMode) async -> ([IntelligenceResult], CGRect?)? {
         // Create a local processor to avoid sending the main-actor-isolated `self.processor` across actors
         let localProcessor = IntelligenceProcessor()
         guard let results = try? await localProcessor.process(frame: pixelBuffer.value, orientation: orientation, mode: mode) else { return nil }
         
         var bounds: CGRect?
         if let sifted = results.first(where: { if case .siftedSubject = $0 { return true } else { return false } }),
-           case .siftedSubject(let obs, _) = sifted {
-             // Calculate bounds OFF-MAIN here
-             bounds = localProcessor.calculateBounds(from: obs)
+           case .siftedSubject(_, let sbounds, _) = sifted {
+             bounds = sbounds
         }
         
         return (results, bounds)
@@ -906,15 +905,16 @@ public class VisualIntelligenceViewModel {
                 await MainActor.run { self.pipelineStatus = .reading }
                 
                 if let sifted = fullResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
-                   case .siftedSubject(let observation, _) = sifted {
+                   case .siftedSubject(let mask, let bounds, _) = sifted {
                     Task.detached(priority: .utility) { [weak self] in
                         guard let self else { return }
                         let cgOrientation = await MainActor.run {
                             self.capturedImageVisionOrientation
                         }
                         if let (sImage, sBounds) = await self.extractSiftedImage(
-                            observation: UnsafeSendable(value: observation),
-                            frame: UnsafeSendable(value: cgImage),
+                            mask: mask,
+                            bounds: bounds,
+                            frame: cgImage,
                             orientation: cgOrientation
                         ) {
                             await MainActor.run {
@@ -1178,11 +1178,12 @@ public class VisualIntelligenceViewModel {
                 
                 // Extract sifted image from first
                 if let sifted = firstResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
-                   case .siftedSubject(let observation, _) = sifted {
+                   case .siftedSubject(let mask, let bounds, _) = sifted {
                     let cgOrientation = await MainActor.run { self.capturedImageVisionOrientation }
                     if let (sImage, sBounds) = await self.extractSiftedImage(
-                        observation: UnsafeSendable(value: observation),
-                        frame: UnsafeSendable(value: firstMedia.cgImage),
+                        mask: mask,
+                        bounds: bounds,
+                        frame: firstMedia.cgImage,
                         orientation: cgOrientation
                     ) {
                         await MainActor.run {
@@ -1378,8 +1379,8 @@ public class VisualIntelligenceViewModel {
                         // Extract observation if present for state tracking (Live Highlighting)
                         // We DO update this even in review mode, so the background "Live View" still feels alive/highlighted
                         if let sifted = newResults.first(where: { if case .siftedSubject = $0 { return true } else { return false } }),
-                           case .siftedSubject(let obs, _) = sifted {
-                            self.activeObservation = obs
+                           case .siftedSubject(let mask, _, _) = sifted {
+                            self.activeObservation = mask
                             self.siftedBoundingBox = newBounds // Use off-main calculated bounds
                         } else {
                             self.activeObservation = nil
@@ -1439,16 +1440,14 @@ public class VisualIntelligenceViewModel {
     private func analyzeStaticImage(cgImage: CGImage) {
         Task.detached(priority: .userInitiated) {
              do {
-                 let request = VNGenerateForegroundInstanceMaskRequest()
-                 let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-                 try handler.perform([request])
+                 let samService = await MainActor.run { Services.shared.samService }
+                 guard let sam = samService else { return }
                  
-                 if let result = request.results?.first {
-                    // analyzeStaticImage is called with capturedImage.cgImage — already normalized
-                    // to .up by fixedOrientation/setCapturedImage. No rotation needed.
+                 if let mask = try await sam.segment(image: cgImage, orientation: .up) {
                     if let (sImage, sBounds) = await self.extractSiftedImage(
-                        observation: UnsafeSendable(value: result),
-                        frame: UnsafeSendable(value: cgImage),
+                        mask: mask,
+                        bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+                        frame: cgImage,
                         orientation: .up
                     ) {
                         await MainActor.run { [weak self] in
@@ -1464,55 +1463,33 @@ public class VisualIntelligenceViewModel {
     }
     
     nonisolated(nonsending) private func extractSiftedImage(
-        observation: UnsafeSendable<VNInstanceMaskObservation>, 
-        frame: UnsafeSendable<CVPixelBuffer>,
+        mask: CGImage,
+        bounds: CGRect,
+        frame: CGImage,
         orientation: CGImagePropertyOrientation
     ) async -> (PlatformImage, CGRect)? {
-        // Pass orientation to the handler to match the processor's handler that created the observation.
-        // generateMaskedImage with an oriented handler returns already-oriented pixels.
-        guard let result = try? await performExtraction(observation: observation.value, handler: VNImageRequestHandler(cvPixelBuffer: frame.value, orientation: orientation, options: [:]), orientation: orientation) else { return nil }
-        return result
-    }
-
-    nonisolated(nonsending) private func extractSiftedImage(
-        observation: UnsafeSendable<VNInstanceMaskObservation>, 
-        frame: UnsafeSendable<CGImage>,
-        orientation: CGImagePropertyOrientation
-    ) async -> (PlatformImage, CGRect)? {
-        // Pass orientation to the handler to match the processor's handler that created the observation.
-        // generateMaskedImage with an oriented handler returns already-oriented pixels.
-        guard let result = try? await performExtraction(observation: observation.value, handler: VNImageRequestHandler(cgImage: frame.value, orientation: orientation, options: [:]), orientation: orientation) else { return nil }
-        return result
-    }
-
-    nonisolated(nonsending) private func performExtraction(
-        observation: VNInstanceMaskObservation,
-        handler: VNImageRequestHandler,
-        orientation: CGImagePropertyOrientation
-    ) async throws -> (PlatformImage, CGRect)? {
-        // 1. Generate the cropped masked image.
-        // The handler includes orientation, so generateMaskedImage returns already-oriented pixels.
-        let maskBuffer = try observation.generateMaskedImage(
-            ofInstances: observation.allInstances,
-            from: handler,
-            croppedToInstancesExtent: true
-        )
+        let ciImage = CIImage(cgImage: frame)
+        let maskImage = CIImage(cgImage: mask)
         
-        // 2. Calculate the bounding box from the instanceMask buffer (sensor coordinates)
-        let sensorBounds = calculateBounds(from: observation)
+        let scaleX = ciImage.extent.width / maskImage.extent.width
+        let scaleY = ciImage.extent.height / maskImage.extent.height
+        let scaledMask = maskImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
         
-        // 3. Transform the bounding box to match the oriented display coordinates
-        let bounds = transformBounds(sensorBounds, forOrientation: orientation)
+        // Blend Original with mask
+        let blendFilter = CIFilter.blendWithMask()
+        blendFilter.inputImage = ciImage
+        blendFilter.maskImage = scaledMask
+        blendFilter.backgroundImage = CIImage(color: .clear).cropped(to: ciImage.extent)
         
-        let ciImage = CIImage(cvPixelBuffer: maskBuffer)
+        guard let output = blendFilter.outputImage else { return nil }
+        
         let context = CIContext(options: [.useSoftwareRenderer: false])
-        
-        if let cgImage = context.createCGImage(ciImage, from: ciImage.extent) {
+        if let cgImage = context.createCGImage(output, from: output.extent) {
             #if canImport(UIKit)
-            // The mask pixels are already oriented by the handler — no rotation needed.
-            let uiImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
+            let uiOrientation = self.uiImageOrientation(from: orientation)
+            let uiImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: uiOrientation)
             return (uiImage, bounds)
-            #elseif canImport(AppKit)
+            #else
             return (NSImage(cgImage: cgImage, size: .zero), bounds)
             #endif
         }

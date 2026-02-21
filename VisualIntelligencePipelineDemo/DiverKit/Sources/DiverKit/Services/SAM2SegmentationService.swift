@@ -7,6 +7,7 @@ import CoreImage
 /// Protocol defining the contract for pixel-perfect structural segmentation on the edge.
 public protocol SAM2Segmenting: Sendable {
     func segment(pixelBuffer: CVPixelBuffer) async throws -> CGImage?
+    func segment(image: CGImage, orientation: CGImagePropertyOrientation) async throws -> CGImage?
 }
 
 /// Errors thrown by the SAM 2 Segmentation Service
@@ -93,10 +94,52 @@ public final class SAM2SegmentationService: SAM2Segmenting, Sendable {
                 }
             }
             
-            // SAM expects the image to be cropped/scaled to a specific size (usually 1024x1024)
+    // SAM expects the image to be cropped/scaled to a specific size (usually 1024x1024)
             request.imageCropAndScaleOption = .scaleFit
             
             let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+            
+            do {
+                try handler.perform([request])
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    /// Processes a static CGImage through the Neural Engine to generate a structural mask.
+    public func segment(image: CGImage, orientation: CGImagePropertyOrientation = .up) async throws -> CGImage? {
+        guard let vnModel = model else {
+            throw SAM2Error.modelNotFound
+        }
+        
+        return try await withCheckedThrowingContinuation { continuation in
+            let request = VNCoreMLRequest(model: vnModel) { request, error in
+                if let error = error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                
+                guard let results = request.results as? [VNCoreMLFeatureValueObservation],
+                      let firstResult = results.first,
+                      let multiArray = firstResult.featureValue.multiArrayValue else {
+                    continuation.resume(throwing: SAM2Error.missingOutput)
+                    return
+                }
+                
+                do {
+                    if let cgImage = try self.convertMultiArrayToCGImage(multiArray) {
+                        continuation.resume(returning: cgImage)
+                    } else {
+                        continuation.resume(throwing: SAM2Error.generationFailed)
+                    }
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+            
+            request.imageCropAndScaleOption = .scaleFit
+            let handler = VNImageRequestHandler(cgImage: image, orientation: orientation, options: [:])
             
             do {
                 try handler.perform([request])

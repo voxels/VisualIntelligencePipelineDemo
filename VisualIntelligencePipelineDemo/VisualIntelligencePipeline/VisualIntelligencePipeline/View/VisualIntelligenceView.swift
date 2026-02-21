@@ -576,12 +576,12 @@ extension VisualIntelligenceView {
             if let url = result.primaryURL {
                 UIApplication.shared.open(url)
             }
-        case .siftedSubject(let observation, _):
+        case .siftedSubject(let mask, _, _):
             withAnimation {
                 if viewModel.activeObservation != nil {
                     viewModel.activeObservation = nil
                 } else {
-                    viewModel.activeObservation = observation
+                    viewModel.activeObservation = mask
                 }
             }
         default:
@@ -1510,14 +1510,14 @@ struct IntelligenceResultsView: View {
                         }
                     }
                 }))
-            case .siftedSubject(let observation, let label):
+            case .siftedSubject(let mask, _, let label):
                 if let label = label {
                     buttons.append((label, "viewfinder", {
                         withAnimation {
                             if viewModel.activeObservation != nil {
                                 viewModel.activeObservation = nil
                             } else {
-                                viewModel.activeObservation = observation
+                                viewModel.activeObservation = mask
                             }
                         }
                     }))

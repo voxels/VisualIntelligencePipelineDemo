@@ -14,10 +14,15 @@ import DiverShared
 
 // MARK: - IntelligenceProcessing
 
+public enum IntelligenceAnalysisMode: Sendable {
+    case liveSifting
+    case fullAnalysis
+}
+
 /// Protocol for Vision-based image analysis (OCR, QR, semantic, sifting, aesthetics).
 public protocol IntelligenceProcessing: Sendable {
-    func process(frame: CVPixelBuffer, orientation: CGImagePropertyOrientation, mode: IntelligenceProcessor.AnalysisMode) async throws -> [IntelligenceResult]
-    func process(image: CGImage, orientation: CGImagePropertyOrientation, mode: IntelligenceProcessor.AnalysisMode) async throws -> [IntelligenceResult]
+    func process(frame: CVPixelBuffer, orientation: CGImagePropertyOrientation, mode: IntelligenceAnalysisMode) async throws -> [IntelligenceResult]
+    func process(image: CGImage, orientation: CGImagePropertyOrientation, mode: IntelligenceAnalysisMode) async throws -> [IntelligenceResult]
 }
 
 // MARK: - ContextProcessing

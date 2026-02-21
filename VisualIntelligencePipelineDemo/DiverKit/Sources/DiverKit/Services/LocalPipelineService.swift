@@ -836,12 +836,58 @@ public final class LocalPipelineService {
                 return createCGImage(from: imageData)
             }()
             
-            if let analysis = try? await fastVLMService.analyze(
-                image: image,
-                visionTags: pipelineContext.visualTags,
-                enrichmentContext: pipelineContext.enrichmentContextString,
-                transcription: processed.transcription
-            ) {
+            var analysis: FastVLMAnalysis? = nil
+            let router = await MainActor.run { Services.shared.edgeRouter }
+            let system = await MainActor.run { Services.shared.actorSystem }
+            
+            if let router = router, let system = system, let imageData = rawPayload {
+                let decision = await router.shouldOffload(task: .vlmInference)
+                if case .edge(let node, _) = decision {
+                    do {
+                        let identity = EdgeActorID(id: "EdgeInference", nodeName: node.deviceName)
+                        let edgeActor = try EdgeInferenceActor.resolve(id: identity, using: system)
+                        
+                        let prompt: String
+                        if let _ = image {
+                            prompt = FastVLMEnrichmentService.buildGroundedPrompt(
+                                visionTags: pipelineContext.visualTags,
+                                enrichmentContext: pipelineContext.enrichmentContextString,
+                                transcription: processed.transcription
+                            )
+                        } else {
+                            prompt = FastVLMEnrichmentService.buildTextOnlyPrompt(
+                                enrichmentContext: pipelineContext.enrichmentContextString,
+                                transcription: processed.transcription
+                            )
+                        }
+                        
+                        let resultText = try await edgeActor.runVLM(imageData: imageData, prompt: prompt)
+                        analysis = FastVLMAnalysis(
+                            imageDescription: resultText.imageDescription,
+                            contextSummary: resultText.summary,
+                            suggestedTitle: nil,
+                            suggestedPurpose: resultText.purpose,
+                            suggestedTags: resultText.tags,
+                            statements: resultText.statements,
+                            modelID: "EdgeInference"
+                        )
+                        DiverLogger.pipeline.info("🚀 [LocalPipeline] FastVLM Reprocess offloaded to \(node.deviceName)")
+                    } catch {
+                        DiverLogger.pipeline.error("⚠️ [LocalPipeline] FastVLM Reprocess offload failed, falling back to local: \(error)")
+                    }
+                }
+            }
+            
+            if analysis == nil {
+                analysis = try? await fastVLMService.analyze(
+                    image: image,
+                    visionTags: pipelineContext.visualTags,
+                    enrichmentContext: pipelineContext.enrichmentContextString,
+                    transcription: processed.transcription
+                )
+            }
+            
+            if let analysis = analysis {
                 pipelineContext.fastVLMAnalysis = analysis
                 processed.fastVLMAnalysis = analysis
                 processed.processingLog.append("\(Date().formatted()): FastVLM: grounded analysis complete")
@@ -1686,7 +1732,7 @@ public final class LocalPipelineService {
                     }
                 }
                 
-            case .siftedSubject(_, let label):
+            case .siftedSubject(_, _, let label):
                 if let label = label {
                     contextLog += "• Subject: \(label)\n"
                     newTags.append(label)
@@ -1795,7 +1841,7 @@ public final class LocalPipelineService {
                     // 4. Analyze each frame
                     for (index, thumb) in thumbnails.enumerated() {
                         print("   - Analyzing frame \(index + 1)")
-                        let results = try await processor.process(image: thumb.image, mode: .fullAnalysis)
+                        let results = try await processor.process(image: thumb.image, orientation: .up, mode: .fullAnalysis)
                         await integrateIntelligenceResults(results, to: item, pipelineContext: &pipelineContext, enrichmentService: enrichmentService)
                     }
                     

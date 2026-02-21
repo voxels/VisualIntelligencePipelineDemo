@@ -70,20 +70,27 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         
         guard let dir = modelsDir else { return "mlx-community/FastVLM-0.5B-bf16" }
         
-        let tiers = [
-            ("7B", "apple/FastVLM/7B"),
-            ("1.5B", "apple/FastVLM/1.5B"),
-            ("0.5B", "apple/FastVLM/0.5B")
-        ]
+        let capability = CapabilityRouter.shared
         
-        for (folder, hfPath) in tiers {
-            let configPath = dir.appendingPathComponent("\(folder)/config.json").path
-            if FileManager.default.fileExists(atPath: configPath) {
-                print("🧠 [FastVLMService] Resolved best available model: \(hfPath)")
-                return hfPath
+        // 1. If we can run heavy VLM (16GB+ RAM), prefer 7B, then fallback.
+        if capability.canRunHeavyVLM {
+            let config7B = dir.appendingPathComponent("7B/config.json").path
+            if FileManager.default.fileExists(atPath: config7B) {
+                print("🧠 [FastVLMService] Resolved heavy model capability: apple/FastVLM/7B")
+                return "apple/FastVLM/7B"
             }
         }
         
+        // 2. If we can run light VLM (8GB+ RAM), or as a fallback for 7B, try 0.5B.
+        if capability.canRunLightVLM {
+            let config05B = dir.appendingPathComponent("0.5B/config.json").path
+            if FileManager.default.fileExists(atPath: config05B) {
+                print("🧠 [FastVLMService] Resolved light model capability: apple/FastVLM/0.5B")
+                return "apple/FastVLM/0.5B"
+            }
+        }
+        
+        // 3. Fallback to default community model if local weights aren't downloaded or RAM is too low.
         return "mlx-community/FastVLM-0.5B-bf16"
     }
     private static let enabledKey = "fastvlm_enrichment_enabled"

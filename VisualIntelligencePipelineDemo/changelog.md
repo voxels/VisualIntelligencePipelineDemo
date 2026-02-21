@@ -9,7 +9,15 @@
 - **Complete Data Deletion**: Expanded the `Delete Database` routine from 4 to 6 steps to securely erase Edge Node cross-device data and individually purge the `.Keys` CloudKit container holding API elements.
 - **Documentation Parity**: Added `AskCLaRaIntent`, `AgenticChatViewModel`, and `MetadataViewModel` to `spec.md` tables. Replaced all legacy YOLO/DETR mentions with `SAM 2.1` and `FastVLM 7B`.
 - **System Stat Refresh**: Re-audited pipeline files and updated source code counts across `README.md`, `GEMINI.md`, and `spec.md` to accurately reflect 62 services, 42 views, and 20 models.
-- **Future Expansion Spec**: Formally documented the upcoming "Live Event & Person Capture Mode" in `spec.md`, integrating Activity Synthesis and Contact Indexing into the potential enrichment context.## 2026-02-20
+- **Future Expansion Spec**: Formally documented the upcoming "Live Event & Person Capture Mode" in `spec.md`, integrating Activity Synthesis and Contact Indexing into the potential enrichment context.
+
+### V3 Architecture Migration (Implementation)
+- **Phase 1 (Swift 6 Concurrency)**: Enabled `Concurrency = Complete` across DiverKit. Removed `@unchecked Sendable` waivers from `EdgeDaemonService` and `CameraManager`. Created `MockCapabilityRouter` and `MockEdgeNodeService` for robust unit testing.
+- **Phase 2 (Encrypted Storage & Security)**: Ensured `AppGroupConfig` creates DiverQueueStore directories with native `FileProtectionType.complete`. Abstracted cryptographic erasure logic into `StorageClient` to securely wipe Edge Node transient caches without affecting vital CloudKit `.Keys` containers.
+- **Phase 4 (ML Model Upgrades)**: Integrated SAM 2.1 (CoreML) for subject sifting. Wired `FastVLMEnrichmentService` to the `CapabilityRouter` to automatically boot the 7B FastVLM model when 16GB+ RAM is detected, or fallback to the 0.5B model. Integrated `CLaRaLatentService` natively as a seamless local fallback inside `AgenticSearchService`.
+- **Phase 5 (Temporal & Social Base)**: Scaffolded `ContactServiceProvider` integrating Vision face detection with Apple Contacts. Created `DiverSchemaV2` to migrate `SessionMetadata` with optional `livePhotoVideoPath` and `[Contact]` identifier tracking attributes, mapping the `DiverMigrationPlan` directly to `ModelContainer` for automatic CloudKit-safe migrations on launch.
+
+## 2026-02-20
 
 ### Distributed Edge Processing & AppIntents
 - **Pipeline Edge Offloading**: Fully implemented stateless edge offloading in `LocalPipelineService`. It queries `PipelineEdgeRouter` to dynamically decide whether to run `FastVLMEnrichmentService` and Vision frameworks locally or distribute them via `EdgeInferenceActor`.

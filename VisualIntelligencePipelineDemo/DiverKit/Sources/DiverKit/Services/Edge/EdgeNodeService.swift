@@ -268,7 +268,7 @@ public final class PipelineEdgeRouter: Sendable {
         
         // Check if edge node has the capability
         switch task {
-        case .visionAnalysis, .vlmInference:
+        case .visionAnalysis:
             // Offload if the connected node has better capability, or if we lack local heavy vision.
             let localTOPS = CapabilityRouter.shared.currentCapability.neuralEngineTOPS
             let needsOffload = !CapabilityRouter.shared.canRunHeavyVision || node.neuralEngineTOPS > localTOPS
@@ -281,6 +281,20 @@ public final class PipelineEdgeRouter: Sendable {
                 return .local(reason: "Edge node TOPS (\(node.neuralEngineTOPS)) too low for heavy inference")
             }
             return .edge(node: node, reason: "Offloading to \(node.deviceName) (\(node.chipFamily), \(node.neuralEngineTOPS) TOPS)")
+            
+        case .vlmInference:
+            // Offload if we cannot run heavy VLM locally, but edge can (assumed 16GB+ on macs usually, but we check node capability).
+            let localRAM = CapabilityRouter.shared.currentCapability.physicalMemoryGB
+            let needsOffload = !CapabilityRouter.shared.canRunHeavyVLM || node.physicalMemoryGB > localRAM
+            
+            guard needsOffload else {
+                 return .local(reason: "Local node has sufficient or better capability (\(localRAM)GB RAM)")
+            }
+            
+            guard node.physicalMemoryGB >= 8 else {
+                 return .local(reason: "Edge node RAM (\(node.physicalMemoryGB)GB) too low for VLM inference")
+            }
+            return .edge(node: node, reason: "Offloading VLM to \(node.deviceName) (\(node.physicalMemoryGB)GB RAM)")
             
         case .nowcasting:
             // Nowcasting is CPU-bound, any edge node can handle it
