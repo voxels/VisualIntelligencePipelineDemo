@@ -141,12 +141,18 @@ struct VisualIntelligencePipelineApp: App {
         let edgeRouter = PipelineEdgeRouter(discoveryService: discoveryService)
         
         // Eagerly connect to discovered nodes to hold the TCP pipe open instantly
+        // Capture dependencies locally to avoid capturing self before full initialization
+        let container = dataStore.container
         Task {
             await discoveryService.setOnNodeConnected { nodeName in
                 Task {
                     do {
                         try await transportLayer.connect(to: nodeName)
                         print("🔗 [VisualIntelligencePipelineApp] Eager connection established to \(nodeName)")
+                        
+                        // Automatically trigger silent LLM summary upgrades on the edge node
+                        let backgroundService = BackgroundSummaryService(modelContainer: container)
+                        await backgroundService.startUpgradesIfNeeded(router: edgeRouter, system: actorSystem)
                     } catch {
                         print("⚠️ [VisualIntelligencePipelineApp] Eager connection failed: \(error)")
                     }
