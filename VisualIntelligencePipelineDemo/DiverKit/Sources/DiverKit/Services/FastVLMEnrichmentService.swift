@@ -133,10 +133,16 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     
     /// Maps hardware capability to the best MLX-format HuggingFace repo.
     /// These are pre-converted MLX checkpoints — no PyTorch→MLX conversion needed at runtime.
+    ///
+    /// NOTE: `apple/FastVLM-1.5B-int8` is NOT compatible with mlx-swift-lm v2.30.x —
+    /// its vision encoder weights don't match the FastViT architecture the library expects.
+    /// No official `mlx-community` 1.5B port exists yet. When one does, re-enable the medium tier.
+    /// Candidate: `EZCon/FastVLM-1.5B-mlx` (third-party, untested).
     public static var optimalHuggingFaceRepo: String {
         let capability = CapabilityRouter.shared
         if capability.canRunHeavyVLM { return "mlx-community/FastVLM-7B-bf16" }
-        if capability.canRunMediumVLM { return "apple/FastVLM-1.5B-int8" }
+        // Medium tier disabled — apple/FastVLM-1.5B-int8 incompatible with mlx-swift-lm
+        // if capability.canRunMediumVLM { return "apple/FastVLM-1.5B-int8" }
         return "mlx-community/FastVLM-0.5B-bf16"
     }
     
