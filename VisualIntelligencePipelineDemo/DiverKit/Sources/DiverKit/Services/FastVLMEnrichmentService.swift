@@ -184,6 +184,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         
         // Patch empty vision_config if already downloaded (e.g. loadModel after download)
         Self.patchVisionConfigIfNeeded(modelID: repo)
+        Self.patchChatTemplateIfNeeded(modelID: repo)
         
         // VLMModelFactory downloads from HF Hub and caches locally.
         // First attempt may fail if config.json ships with empty vision_config (mlx-swift-lm bug).
@@ -208,6 +209,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
             if errorDesc.contains("cls_ratio") || errorDesc.contains("vision_config") {
                 DiverLogger.pipeline.info("🔧 [FastVLM] Config decoding failed — patching vision_config and retrying")
                 Self.patchVisionConfigIfNeeded(modelID: repo)
+                Self.patchChatTemplateIfNeeded(modelID: repo)
                 _ = try await VLMModelFactory.shared.loadContainer(
                     configuration: config
                 )
@@ -356,6 +358,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         
         // Patch empty/missing vision_config before loading
         Self.patchVisionConfigIfNeeded(modelID: currentModelID)
+        Self.patchChatTemplateIfNeeded(modelID: currentModelID)
         
         let config: ModelConfiguration
         if currentModelID.starts(with: "apple/FastVLM/") {
@@ -373,6 +376,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
             if errorDesc.contains("cls_ratio") || errorDesc.contains("vision_config") {
                 print("🔧 [FastVLMService] Config decoding failed — patching vision_config and retrying")
                 Self.patchVisionConfigIfNeeded(modelID: currentModelID)
+                Self.patchChatTemplateIfNeeded(modelID: currentModelID)
                 self.container = try await VLMModelFactory.shared.loadContainer(
                     configuration: config
                 )
@@ -427,6 +431,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         
         // Patch if already cached; catch-patch-retry handles first-download case
         Self.patchVisionConfigIfNeeded(modelID: Self.modelID)
+        Self.patchChatTemplateIfNeeded(modelID: Self.modelID)
         
         do {
             self.container = try await VLMModelFactory.shared.loadContainer(
@@ -441,6 +446,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
             if errorDesc.contains("cls_ratio") || errorDesc.contains("vision_config") {
                 print("🔧 [FastVLMService] Config decoding failed — patching vision_config and retrying")
                 Self.patchVisionConfigIfNeeded(modelID: Self.modelID)
+                Self.patchChatTemplateIfNeeded(modelID: Self.modelID)
                 self.container = try await VLMModelFactory.shared.loadContainer(
                     configuration: config
                 )
@@ -552,6 +558,49 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         } catch {
             print("⚠️ [FastVLM] Failed to patch config.json: \(error)")
         }
+    }
+    
+    
+    /// Patches `tokenizer_config.json` for models that ship without a `chat_template`.
+    /// FastVLM 1.5B uses ChatML tokens (`<|im_start|>`, `<|im_end|>`) but ships without
+    /// the Jinja template, causing `missingChatTemplate` errors in mlx-swift-lm.
+    private static func patchChatTemplateIfNeeded(modelID: String) {
+        #if canImport(MLXVLM) && !targetEnvironment(simulator)
+        let tokenizerURL: URL
+        
+        if modelID.starts(with: "apple/FastVLM/") {
+            tokenizerURL = modelCacheDirectory.appendingPathComponent("tokenizer_config.json")
+        } else {
+            let repo = Hub.Repo(id: modelID)
+            tokenizerURL = defaultHubApi.localRepoLocation(repo).appending(path: "tokenizer_config.json")
+        }
+        
+        guard FileManager.default.fileExists(atPath: tokenizerURL.path) else { return }
+        
+        do {
+            let data = try Data(contentsOf: tokenizerURL)
+            guard var json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+            
+            // Already has a chat_template — skip
+            if json["chat_template"] != nil { return }
+            
+            print("🔧 [FastVLM] Patching missing chat_template in \(modelID) tokenizer_config.json")
+            
+            // ChatML Jinja template (matches Qwen2 / im_start / im_end token format)
+            let chatMLTemplate = """
+            {% for message in messages %}{% if loop.first and messages[0]['role'] != 'system' %}<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n{% endif %}<|im_start|>{{ message['role'] }}\n{{ message['content'] }}<|im_end|>\n{% endfor %}{% if add_generation_prompt %}<|im_start|>assistant\n{% endif %}
+            """
+            
+            json["chat_template"] = chatMLTemplate
+            
+            let patched = try JSONSerialization.data(withJSONObject: json, options: [.prettyPrinted, .sortedKeys])
+            try patched.write(to: tokenizerURL)
+            
+            print("✅ [FastVLM] Patched chat_template for \(modelID)")
+        } catch {
+            print("⚠️ [FastVLM] Failed to patch tokenizer_config.json: \(error)")
+        }
+        #endif
     }
     
     // MARK: - Single-Pass Grounded Analysis
