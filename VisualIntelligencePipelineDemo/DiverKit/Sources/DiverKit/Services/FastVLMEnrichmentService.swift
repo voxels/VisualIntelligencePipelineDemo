@@ -384,36 +384,12 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
                     configuration: config
                 )
             } else if currentModelID.starts(with: "apple/FastVLM/") {
-                // Local model has broken/incomplete weights — re-provision
+                // Local model has incompatible weights (e.g. PyTorch format, not MLX)
+                // Don't re-provision inline — that blocks the request for minutes.
+                // Just throw and let the CLaRa fallback in EdgeContextActor handle it.
                 print("⚠️ [FastVLMService] Local model \(currentModelID) failed: \(error)")
-                print("🔧 [FastVLMService] Re-provisioning local model...")
-                
-                // Delete incomplete directory so provisioner runs fresh
-                try? FileManager.default.removeItem(at: Self.modelCacheDirectory)
-                Self.invalidateModelIDCache()
-                
-                #if os(macOS)
-                // Re-run the provisioner to convert from HF PyTorch weights
-                await EdgeModelProvisioner.shared.provisionAll()
-                
-                // Retry loading after provisioning
-                let retryConfig = ModelConfiguration(directory: Self.modelCacheDirectory)
-                Self.patchVisionConfigIfNeeded(modelID: Self.modelID)
-                self.container = try await VLMModelFactory.shared.loadContainer(
-                    configuration: retryConfig
-                )
-                #else
-                // iOS: fall back to the 0.5B HF Hub model
-                let hubConfig = ModelConfiguration(id: "mlx-community/FastVLM-0.5B-bf16")
-                self.container = try await VLMModelFactory.shared.loadContainer(
-                    configuration: hubConfig
-                ) { update in
-                    let pct = Int(update.fractionCompleted * 100)
-                    if pct % 25 == 0 {
-                        print("📥 [FastVLMService] Fallback download: \(pct)%")
-                    }
-                }
-                #endif
+                print("⚠️ [FastVLMService] Model weights are incompatible with mlx-swift-lm. Falling through to CLaRa.")
+                throw error
             } else {
                 throw error
             }

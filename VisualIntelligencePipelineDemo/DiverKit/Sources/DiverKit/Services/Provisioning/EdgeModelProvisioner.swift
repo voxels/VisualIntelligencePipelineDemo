@@ -203,46 +203,76 @@ public actor EdgeModelProvisioner {
     private func provisionFastVLM7B() async {
         let fastvlmDir = modelsDir.appendingPathComponent("FastVLM/7B")
         
-        // Check for actual weight files, not just config.json
+        // Check for MLX-format weight files (not PyTorch)
+        // MLX weights are stored as model-XXXXX-of-XXXXX.safetensors or weight.safetensors
+        // with an accompanying model.safetensors.index.json
         let weightIndex = fastvlmDir.appendingPathComponent("model.safetensors.index.json")
-        let singleWeight = fastvlmDir.appendingPathComponent("model.safetensors")
-        guard !FileManager.default.fileExists(atPath: weightIndex.path)
-           && !FileManager.default.fileExists(atPath: singleWeight.path) else {
+        let singleWeight = fastvlmDir.appendingPathComponent("weights.safetensors")
+        
+        // Also check for any MLX weight shards
+        let hasMLXWeights: Bool = {
+            guard FileManager.default.fileExists(atPath: fastvlmDir.path) else { return false }
+            let contents = (try? FileManager.default.contentsOfDirectory(atPath: fastvlmDir.path)) ?? []
+            // MLX weights have "weight" prefix or model.safetensors.index.json
+            return FileManager.default.fileExists(atPath: weightIndex.path)
+                || FileManager.default.fileExists(atPath: singleWeight.path)
+                || contents.contains(where: { $0.hasPrefix("weight") && $0.hasSuffix(".safetensors") })
+        }()
+        
+        guard !hasMLXWeights else {
             return
         }
         
-        print("⚙️ Provisioning FastVLM 7B via HuggingFace Hub download...")
+        // Clean up any PyTorch-format weights from previous attempts
+        if FileManager.default.fileExists(atPath: fastvlmDir.path) {
+            let contents = (try? FileManager.default.contentsOfDirectory(atPath: fastvlmDir.path)) ?? []
+            let hasPyTorchWeights = contents.contains(where: { $0.hasPrefix("model-") && $0.hasSuffix(".safetensors") })
+            if hasPyTorchWeights {
+                print("🧹 [FastVLM] Cleaning up PyTorch-format weights from \(fastvlmDir.path)")
+                try? FileManager.default.removeItem(at: fastvlmDir)
+            }
+        }
+        
+        print("⚙️ Provisioning FastVLM 7B via mlx_vlm convert (PyTorch → MLX)...")
         do {
             try FileManager.default.createDirectory(at: fastvlmDir, withIntermediateDirectories: true)
             
-            // Download safetensors, config, and tokenizer from apple/FastVLM-7B
+            // Use mlx_vlm.convert to download from HF AND convert to MLX format
+            // This produces MLX-compatible weight files that mlx-swift-lm can load
+            let conversionScript = """
+            import subprocess, sys
+            try:
+                from mlx_vlm import convert
+            except ImportError:
+                print("Installing mlx-vlm...")
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "mlx-vlm", "--quiet"])
+                from mlx_vlm import convert
+            
+            print("Converting apple/FastVLM-7B to MLX format...")
+            convert.convert(
+                "apple/FastVLM-7B",
+                mlx_path="\(fastvlmDir.path)",
+                dtype="float16"
+            )
+            print("Conversion complete.")
+            """
+            
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            process.arguments = [
-                "python3", "-c",
-                """
-                from huggingface_hub import snapshot_download
-                print("Downloading apple/FastVLM-7B...")
-                snapshot_download(
-                    'apple/FastVLM-7B',
-                    local_dir='\(fastvlmDir.path)',
-                    local_dir_use_symlinks=False,
-                    allow_patterns=['*.safetensors', '*.json', 'tokenizer.*']
-                )
-                print("Download complete.")
-                """
-            ]
+            process.arguments = ["python3", "-c", conversionScript]
             process.currentDirectoryURL = modelsDir
             
             try process.run()
             process.waitUntilExit()
             
             if process.terminationStatus == 0 {
-                print("✅ FastVLM 7B provisioned successfully.")
+                print("✅ FastVLM 7B provisioned and converted to MLX successfully.")
             } else {
-                print("⚠️ FastVLM 7B download exited with status \(process.terminationStatus)")
+                print("⚠️ FastVLM 7B MLX conversion exited with status \(process.terminationStatus)")
+                print("⚠️ FastVLM 7B requires `pip install mlx-vlm` for PyTorch → MLX conversion.")
+                // Clean up failed attempt
                 let contents = (try? FileManager.default.contentsOfDirectory(atPath: fastvlmDir.path)) ?? []
-                if !contents.contains(where: { $0.hasSuffix(".safetensors") }) {
+                if !contents.contains(where: { $0.hasPrefix("weight") && $0.hasSuffix(".safetensors") }) {
                     try? FileManager.default.removeItem(at: fastvlmDir)
                 }
             }
