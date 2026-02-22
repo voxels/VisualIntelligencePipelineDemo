@@ -94,6 +94,10 @@ public distributed actor EdgeInferenceActor {
         // Run Vision analysis first (same as pipeline does)
         let visionResult = try await analyzeImage(imageData)
         
+        // Ensure FastVLM is enabled — EdgeDaemon has its own empty UserDefaults,
+        // so the user's iOS Settings toggle doesn't sync here.
+        FastVLMEnrichmentService.setEnabled(true)
+        
         // Then run FastVLM using the shared service (keeps model loaded in GPU memory)
         do {
             let analysis = try await Self.sharedVLMService.analyze(
