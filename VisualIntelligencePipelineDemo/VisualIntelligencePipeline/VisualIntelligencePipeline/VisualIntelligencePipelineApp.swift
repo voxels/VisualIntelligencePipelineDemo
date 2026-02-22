@@ -40,6 +40,10 @@ struct VisualIntelligencePipelineApp: App {
     // Navigation Manager for deep linking
     @StateObject private var navigationManager = NavigationManager()
     
+    // Launch splash state
+    @State private var isLaunching = true
+    @State private var launchStatusMessage = "Starting up…"
+    
     static var sharedDataStore: DiverDataStore? {
         return _staticDataStore
     }
@@ -234,6 +238,13 @@ struct VisualIntelligencePipelineApp: App {
                 .environment(\.metadataPipelineService, metadataPipelineService)
                 .environmentObject(sharedWithYouManager ?? SharedWithYouManager(queueStore: try! DiverQueueStore(directoryURL: AppGroupContainer.queueDirectoryURL()!), pipelineService: metadataPipelineService, isEnabled: false))
                 .environmentObject(navigationManager)
+                .overlay {
+                    if isLaunching {
+                        launchSplashView
+                            .transition(.opacity)
+                    }
+                }
+                .animation(.easeOut(duration: 0.4), value: isLaunching)
                 .onAppear {
                     // Initialize KnowMapsServiceContainer with the shared container
                     knowMapsServices = {
@@ -294,11 +305,14 @@ struct VisualIntelligencePipelineApp: App {
                     }
                     
                     // Populate CLaRa's in-memory document index from the full library.
-                    // This is pure text processing — works on all devices.
-                    // The index is used for RAG retrieval when querying CLaRa locally
-                    // or when sending context to the EdgeDaemon.
+                    // This is the longest startup task — splash screen stays visible until done.
                     Task.detached(priority: .utility) {
+                        await MainActor.run { launchStatusMessage = "Building search index…" }
                         await CLaRaLatentService.shared.populateIndex(container: dataStore.container)
+                        await MainActor.run {
+                            launchStatusMessage = "Ready"
+                            withAnimation { isLaunching = false }
+                        }
                     }
 
                     if #available(iOS 16.0, macOS 13.0, *) {
@@ -463,6 +477,50 @@ struct VisualIntelligencePipelineApp: App {
         return data.base64EncodedString()
     }
 
+    // MARK: - Launch Splash Screen
+    
+    private var launchSplashView: some View {
+        ZStack {
+            // Full-screen frosted background
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+            
+            VStack(spacing: 24) {
+                Spacer()
+                
+                // App icon
+                Image("AppIcon")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 100, height: 100)
+                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .shadow(color: .black.opacity(0.2), radius: 12, y: 6)
+                
+                VStack(spacing: 8) {
+                    Text("Visual Intelligence")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.primary)
+                    
+                    Text(launchStatusMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .contentTransition(.numericText())
+                }
+                
+                ProgressView()
+                    .progressViewStyle(.circular)
+                    .tint(.accentColor)
+                    .scaleEffect(1.2)
+                
+                Spacer()
+                Spacer()
+            }
+        }
+        .allowsHitTesting(true) // Block all touches while launching
+    }
+    
     private func handleDeepLink(_ url: URL) {
         print("🔗 Handling deep link: \(url.absoluteString)")
         
