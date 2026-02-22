@@ -1102,16 +1102,34 @@ public final class MetadataPipelineService: @unchecked Sendable {
                     continue
                 }
                 
-                // Build aggregated context from item source material (transcriptions, not summaries)
+                // Build aggregated context from item source material (all available metadata)
                 let itemContexts = items.compactMap { item -> String? in
                     var parts: [String] = []
                     if let title = item.title, !title.isEmpty { parts.append("Title: \(title)") }
                     if let transcription = item.transcription, !transcription.isEmpty {
                         parts.append("OCR: \(transcription.prefix(300))")
                     }
-                    if let place = item.placeContext?.name, !place.isEmpty {
-                        parts.append("Place: \(place)")
+                    if !item.tags.isEmpty { parts.append("Tags: \(item.tags.joined(separator: ", "))") }
+                    if !item.categories.isEmpty { parts.append("Categories: \(item.categories.joined(separator: ", "))") }
+                    if let mt = item.mediaType { parts.append("Media Type: \(mt)") }
+                    if let p = item.placeContext {
+                        if let name = p.name, !name.isEmpty { parts.append("Venue: \(name)") }
+                        if let addr = p.address, !addr.isEmpty { parts.append("Address: \(addr)") }
+                    } else if let loc = item.location, !loc.isEmpty {
+                        parts.append("Location: \(loc)")
                     }
+                    if let webCtx = item.webContext {
+                        if let site = webCtx.siteName { parts.append("Web Site: \(site)") }
+                        if let text = webCtx.textContent { parts.append("Web Content: \(String(text.prefix(200)))") }
+                    }
+                    if let vlm = item.fastVLMAnalysis, let ctx = vlm.contextSummary {
+                        parts.append("Visual Analysis: \(String(ctx.prefix(300)))")
+                    }
+                    if !item.questions.isEmpty { parts.append("Questions: \(item.questions.joined(separator: "; "))") }
+                    if let score = item.aestheticsScore, score > 0 {
+                        parts.append("Quality: \(String(format: "%.0f%%", score * 100))")
+                    }
+                    if let product = item.productMetadata { parts.append("Product: \(product)") }
                     return parts.isEmpty ? nil : parts.joined(separator: " | ")
                 }.prefix(20) // Limit to avoid token overflow
                 
