@@ -63,26 +63,12 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
     }
     
     /// Maps device hardware to the optimal HuggingFace repo.
-    /// Uses MLX-community pre-converted checkpoints for efficient on-device inference.
+    /// The CLaRa model is hosted at apple/CLaRa-7B-Instruct (no MLX-community port).
+    /// On macOS, EdgeModelProvisioner fuses the LoRA adapter locally into MLX format.
+    /// On iOS, the model is downloaded from HF Hub and loaded via MLXLLM.
     public static var optimalHuggingFaceRepo: String {
-        let capability = CapabilityRouter.shared
-        let hw = capability.currentCapability
-        
-        if capability.canRunHeavyVLM {
-            // 16GB+ RAM — full 7B instruct model
-            DiverLogger.pipeline.info("🧩 [CLaRa] Optimal tier: 7B (heavy, \(hw.physicalMemoryGB)GB RAM)")
-            return "mlx-community/CLaRa-7B-Instruct-bf16"
-        }
-        
-        if capability.canRunMediumVLM {
-            // M-series + 8GB+ — 7B quantized (int4 fits in ~4GB)
-            DiverLogger.pipeline.info("🧩 [CLaRa] Optimal tier: 7B-4bit (medium, \(hw.chipFamily) \(hw.physicalMemoryGB)GB)")
-            return "mlx-community/CLaRa-7B-Instruct-4bit"
-        }
-        
-        // 8GB+ on non-M-series — quantized model
-        DiverLogger.pipeline.info("🧩 [CLaRa] Optimal tier: 7B-4bit (light, \(hw.physicalMemoryGB)GB RAM)")
-        return "mlx-community/CLaRa-7B-Instruct-4bit"
+        DiverLogger.pipeline.info("🧩 [CLaRa] Optimal tier: 7B-Instruct")
+        return "apple/CLaRa-7B-Instruct"
     }
     
     /// Returns the HuggingFace repo if the model should be downloaded from Hub,
