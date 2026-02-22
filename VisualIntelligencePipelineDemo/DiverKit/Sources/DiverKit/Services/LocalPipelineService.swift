@@ -2230,10 +2230,26 @@ public final class LocalPipelineService {
         // Step 2: Fetch enrichment data once (shared across strategies that need it)
         let esgService = ESGEnrichmentService()
         let govService = GovernmentDataService()
+        let edgeRouter = await MainActor.run { Services.shared.edgeRouter }
+        let edgeSystem = await MainActor.run { Services.shared.actorSystem }
         
         // Step 2a: Parallel fetch — ESG product data + Government safety data
-        // Both are independent and can run concurrently
-        async let govFuture = govService.enrich(product: classification)
+        // Edge-first: offload government API calls to Mac when available
+        let govEnrichment: GovernmentEnrichment?
+        if let edgeRouter, let edgeSystem,
+           case .edge(let node, _) = await edgeRouter.shouldOffload(task: .governmentAPI) {
+            do {
+                let identity = EdgeActorID(id: "EdgeESG", nodeName: node.deviceName)
+                let actor = try EdgeESGActor.resolve(id: identity, using: edgeSystem)
+                govEnrichment = try await actor.fetchGovernmentData(product: classification)
+                DiverLogger.pipeline.info("🌐 Commerce: Government data fetched via edge (\(node.deviceName))")
+            } catch {
+                DiverLogger.pipeline.info("⚠️ Commerce: Edge gov data failed, falling back local: \(error)")
+                govEnrichment = await govService.enrich(product: classification)
+            }
+        } else {
+            govEnrichment = await govService.enrich(product: classification)
+        }
         
         let esgEnrichment: ESGEnrichment?
         if let barcode = classification.barcode {
@@ -2241,8 +2257,6 @@ public final class LocalPipelineService {
         } else {
             esgEnrichment = try? await esgService.enrich(category: classification.category)
         }
-        
-        let govEnrichment: GovernmentEnrichment? = await govFuture
         
         pipelineContext.governmentData = govEnrichment
         item.governmentContext = govEnrichment
@@ -2255,25 +2269,32 @@ public final class LocalPipelineService {
         }
         
         // Step 2b: Price trajectory + nowcast
-        let pricingService = PricingDataService()
-        let nowcastEngine = NowcastingEngine()
-        
+        // Edge-first: offload CPU-bound nowcasting to Mac when available
         let commodityID = mapCategoryToCommodity(classification.category)
         if !commodityID.isEmpty {
-            if let trajectory = try? await pricingService.project(commodityID: commodityID) {
-                pipelineContext.priceTrend = trajectory
-                
-                // Run DFM nowcast on raw price series
-                let worldBankSeries = await pricingService.fetchWorldBankPrices(commodityID: commodityID)
-                let blsSeries = await pricingService.fetchBLSPPI(seriesID: mapCategoryToBLSSeries(classification.category))
-                
-                let allSeries = [worldBankSeries, blsSeries].filter { !$0.isEmpty }
-                if !allSeries.isEmpty {
-                    let nowcast = nowcastEngine.nowcast(series: allSeries)
+            if let edgeRouter, let edgeSystem,
+               case .edge(let node, _) = await edgeRouter.shouldOffload(task: .nowcasting) {
+                do {
+                    let identity = EdgeActorID(id: "EdgeNowcasting", nodeName: node.deviceName)
+                    let actor = try EdgeNowcastingActor.resolve(id: identity, using: edgeSystem)
+                    let trajectory = try await actor.project(commodityID: commodityID, horizonDays: 30)
+                    pipelineContext.priceTrend = trajectory
+                    
+                    let nowcast = NowcastResult(
+                        direction: trajectory.projectedDirection,
+                        confidence: trajectory.confidenceInterval,
+                        projectedChange: 0  // Edge doesn't return raw momentum
+                    )
                     pipelineContext.nowcastResult = nowcast
                     item.nowcastContext = nowcast
-                    DiverLogger.pipeline.info("📈 Nowcast: trend=\(nowcast.direction.rawValue), confidence=\(String(format: "%.0f%%", nowcast.confidence * 100))")
+                    DiverLogger.pipeline.info("📈 Nowcast via edge (\(node.deviceName)): trend=\(nowcast.direction.rawValue), confidence=\(String(format: "%.0f%%", nowcast.confidence * 100))")
+                } catch {
+                    DiverLogger.pipeline.info("⚠️ Commerce: Edge nowcast failed, falling back local: \(error)")
+                    // Fall through to local nowcast below
+                    await performLocalNowcast(commodityID: commodityID, classification: classification, item: item, pipelineContext: &pipelineContext)
                 }
+            } else {
+                await performLocalNowcast(commodityID: commodityID, classification: classification, item: item, pipelineContext: &pipelineContext)
             }
         }
         
@@ -2330,12 +2351,33 @@ public final class LocalPipelineService {
         }
         
         // Step 5b: Affiliate routing with ethical policy
-        let affiliateService = AffiliateRoutingService()
+        // Edge-first: offload commerce routing to Mac when available
         let ethicalPolicy = loadEthicalPolicy()
-        if let platforms = try? await affiliateService.rankPlatforms(for: classification, policy: ethicalPolicy) {
-            pipelineContext.affiliateMatches = platforms
-            item.affiliateContext = platforms
-            DiverLogger.pipeline.info("🏪 Affiliate: \(platforms.count) platforms ranked for \(classification.name)")
+        if let edgeRouter, let edgeSystem,
+           case .edge(let node, _) = await edgeRouter.shouldOffload(task: .commerceRouting) {
+            do {
+                let identity = EdgeActorID(id: "EdgeCommerce", nodeName: node.deviceName)
+                let actor = try EdgeCommerceActor.resolve(id: identity, using: edgeSystem)
+                let platforms = try await actor.rankPlatforms(product: classification, policy: ethicalPolicy)
+                pipelineContext.affiliateMatches = platforms
+                item.affiliateContext = platforms
+                DiverLogger.pipeline.info("🏪 Affiliate via edge (\(node.deviceName)): \(platforms.count) platforms ranked for \(classification.name)")
+            } catch {
+                DiverLogger.pipeline.info("⚠️ Commerce: Edge affiliate failed, falling back local: \(error)")
+                let affiliateService = AffiliateRoutingService()
+                if let platforms = try? await affiliateService.rankPlatforms(for: classification, policy: ethicalPolicy) {
+                    pipelineContext.affiliateMatches = platforms
+                    item.affiliateContext = platforms
+                    DiverLogger.pipeline.info("🏪 Affiliate: \(platforms.count) platforms ranked for \(classification.name)")
+                }
+            }
+        } else {
+            let affiliateService = AffiliateRoutingService()
+            if let platforms = try? await affiliateService.rankPlatforms(for: classification, policy: ethicalPolicy) {
+                pipelineContext.affiliateMatches = platforms
+                item.affiliateContext = platforms
+                DiverLogger.pipeline.info("🏪 Affiliate: \(platforms.count) platforms ranked for \(classification.name)")
+            }
         }
         
         // Step 6: Record historical snapshot for time-series charts
@@ -2360,6 +2402,32 @@ public final class LocalPipelineService {
         )
         modelContext.insert(snapshot)
         DiverLogger.pipeline.info("📊 Snapshot recorded for \(classification.name) (\(allScores.count) strategies)")
+    }
+    
+    /// Local nowcast fallback — fetches World Bank + BLS PPI data and runs DFM engine.
+    private func performLocalNowcast(
+        commodityID: String,
+        classification: ProductClassification,
+        item: ProcessedItem,
+        pipelineContext: inout PipelineContext
+    ) async {
+        let pricingService = PricingDataService()
+        let nowcastEngine = NowcastingEngine()
+        
+        if let trajectory = try? await pricingService.project(commodityID: commodityID) {
+            pipelineContext.priceTrend = trajectory
+            
+            let worldBankSeries = await pricingService.fetchWorldBankPrices(commodityID: commodityID)
+            let blsSeries = await pricingService.fetchBLSPPI(seriesID: mapCategoryToBLSSeries(classification.category))
+            
+            let allSeries = [worldBankSeries, blsSeries].filter { !$0.isEmpty }
+            if !allSeries.isEmpty {
+                let nowcast = nowcastEngine.nowcast(series: allSeries)
+                pipelineContext.nowcastResult = nowcast
+                item.nowcastContext = nowcast
+                DiverLogger.pipeline.info("📈 Nowcast: trend=\(nowcast.direction.rawValue), confidence=\(String(format: "%.0f%%", nowcast.confidence * 100))")
+            }
+        }
     }
     
     // MARK: - Commerce Helpers
