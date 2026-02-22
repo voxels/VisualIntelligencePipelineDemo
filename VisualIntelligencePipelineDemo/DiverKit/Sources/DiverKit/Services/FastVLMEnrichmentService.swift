@@ -107,14 +107,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
                 return contents.contains { $0.hasSuffix(".safetensors") }
             }
             
-            if capability.canRunHeavyVLM {
-                let tier7B = dir.appendingPathComponent("7B")
-                if hasWeights(tier7B) {
-                    DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/7B (heavy tier, \(hw.physicalMemoryGB)GB RAM)")
-                    return "apple/FastVLM/7B"
-                }
-            }
-            if capability.canRunMediumVLM {
+            if capability.canRunHeavyVLM || capability.canRunMediumVLM {
                 let tier15B = dir.appendingPathComponent("1.5B")
                 if hasWeights(tier15B) {
                     DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/1.5B (medium tier, \(hw.chipFamily) \(hw.physicalMemoryGB)GB)")

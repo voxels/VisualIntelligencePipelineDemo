@@ -42,7 +42,7 @@ struct EdgeDaemonCLI {
                           stop                   - Stop Bonjour listener
                           clients                - List connected iOS clients
                           models                 - List available ML models
-                          download <model_id>    - Download an ML model (e.g., fastvlm-7b)
+                          download <model_id>    - Download an ML model (e.g., fastvlm-0.5b)
                           chat                   - Interactive search REPL against local data spaces
                           quit                   - Exit EdgeDaemon
                         """)

@@ -536,14 +536,13 @@ public final class EdgeDaemonService {
     nonisolated public func downloadModel(name: String) async {
         let fastVLMTiers = [
             ("mlx-community/FastVLM-0.5B-bf16", "fastvlm-0.5b"),
-            // Mocking the larger tiers to the 0.5B repo for now
-            // (Apple released 1.5B and 7B PyTorch checkpoints, but MLX conversions aren't on the community hub yet)
+            // 1.5B maps to 0.5B — Apple released PyTorch checkpoint but no MLX port exists
             ("mlx-community/FastVLM-0.5B-bf16", "fastvlm-1.5b"),
-            ("mlx-community/FastVLM-0.5B-bf16", "fastvlm-7b"),
+            // 7B removed — llava_qwen2 architecture unsupported by mlx_vlm converter
         ]
         
         guard let match = fastVLMTiers.first(where: { $0.1 == name }) else {
-            print("⚠️ EdgeDaemon: Model '\(name)' not found. Available models: fastvlm-0.5b, fastvlm-1.5b, fastvlm-7b")
+            print("⚠️ EdgeDaemon: Model '\(name)' not found. Available models: fastvlm-0.5b, fastvlm-1.5b")
             return
         }
         
@@ -688,7 +687,7 @@ public final class EdgeDaemonService {
         let fastVLMTiers = [
             ("0.5B", "fastvlm-0.5b"),
             ("1.5B", "fastvlm-1.5b"),
-            ("7B", "fastvlm-7b"),
+            // 7B removed — llava_qwen2 architecture unsupported by mlx_vlm converter
         ]
         
         for (folder, modelID) in fastVLMTiers {
