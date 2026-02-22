@@ -835,6 +835,27 @@ struct ReferenceDetailContent: View {
                         .transition(.move(edge: .top).combined(with: .opacity))
                     }
                     
+                    // VLM Insights (factual statements from visual analysis)
+                    if let vlm = item.fastVLMAnalysis, !vlm.statements.isEmpty {
+                        Divider()
+                        Text("Insights")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        
+                        ForEach(vlm.statements, id: \.self) { statement in
+                            HStack(alignment: .top, spacing: 6) {
+                                Image(systemName: "eye.fill")
+                                    .foregroundStyle(.purple)
+                                    .font(.caption)
+                                    .padding(.top, 2)
+                                
+                                Text(statement)
+                                    .font(.caption)
+                                    .foregroundStyle(.primary)
+                            }
+                        }
+                    }
+                    
                     // Reflection Questions
                      if !item.questions.isEmpty {
                          Divider()
