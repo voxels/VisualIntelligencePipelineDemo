@@ -470,20 +470,22 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     
     // MARK: - Config Patching
     
-    /// Patches `config.json` for models that ship with an empty `vision_config: {}`.
+    /// Patches `config.json` for models that ship with an empty or missing `vision_config`.
     /// mlx-swift-lm v2.30.x maps `llava_qwen2` → `FastVLMConfiguration` which requires
     /// non-optional fields (`cls_ratio`, `embed_dims`, etc.) in `vision_config`.
-    /// The `apple/FastVLM-1.5B-int8` model omits these — this method injects the correct
-    /// MobileCLIP-L (1024-dim) encoder config (same values as the working 0.5B model).
+    /// Handles both HF Hub models and locally provisioned models (apple/FastVLM/).
     private static func patchVisionConfigIfNeeded(modelID: String) {
-        // Only patch HF Hub models (not local edge-downloaded models)
-        guard !modelID.starts(with: "apple/FastVLM/") else { return }
-        
         #if canImport(MLXVLM) && !targetEnvironment(simulator)
-        // Use the SAME HubApi instance that loadContainer uses — eliminates all path guesswork
-        let repo = Hub.Repo(id: modelID)
-        let repoDir = defaultHubApi.localRepoLocation(repo)
-        let configURL = repoDir.appending(path: "config.json")
+        let configURL: URL
+        
+        if modelID.starts(with: "apple/FastVLM/") {
+            // Local model in Application Support/Models/FastVLM/<tier>/
+            configURL = modelCacheDirectory.appendingPathComponent("config.json")
+        } else {
+            // HF Hub model — use the Hub API's local repo location
+            let repo = Hub.Repo(id: modelID)
+            configURL = defaultHubApi.localRepoLocation(repo).appending(path: "config.json")
+        }
         
         print("🔧 [FastVLM] Checking config at: \(configURL.path)")
         guard FileManager.default.fileExists(atPath: configURL.path) else {
@@ -501,10 +503,9 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
             let data = try Data(contentsOf: configURL)
             guard var json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
             
-            // Check if vision_config exists and is empty
-            guard let visionConfig = json["vision_config"] as? [String: Any],
-                  visionConfig.isEmpty else {
-                return // Already has vision config — no patch needed
+            // Check if vision_config is missing or empty — both need patching
+            if let visionConfig = json["vision_config"] as? [String: Any], !visionConfig.isEmpty {
+                return // Already has populated vision config — no patch needed
             }
             
             print("🔧 [FastVLM] Patching empty vision_config in \(modelID) config.json")
