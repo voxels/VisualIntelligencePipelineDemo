@@ -75,6 +75,7 @@ public actor BackgroundSummaryService {
         if let summary = item.summary {
           return summary.contains("[Model: SystemLanguageModel-iOS26]")
             || summary.contains("[Model: Heuristic Fallback]")
+            || summary.contains("[Model: FastVLM-")
         } else {
           return false
         }
@@ -97,8 +98,25 @@ public actor BackgroundSummaryService {
       do {
         var contextParts: [String] = []
         if let t = item.title { contextParts.append("Title: \(t)") }
-        if let o = item.transcription { contextParts.append("OCR: \(o.prefix(500))") }
-        if let p = item.placeContext?.name { contextParts.append("Venue: \(p)") }
+        if let o = item.transcription { contextParts.append("OCR: \(o.prefix(800))") }
+        if !item.tags.isEmpty { contextParts.append("Tags: \(item.tags.joined(separator: ", "))") }
+        if !item.categories.isEmpty { contextParts.append("Categories: \(item.categories.joined(separator: ", "))") }
+        if let mt = item.mediaType { contextParts.append("Media Type: \(mt)") }
+        if let p = item.placeContext {
+          if let name = p.name { contextParts.append("Venue: \(name)") }
+          if let addr = p.address { contextParts.append("Address: \(addr)") }
+        }
+        if let loc = item.location { contextParts.append("Location: \(loc)") }
+        if let webCtx = item.webContext {
+          if let site = webCtx.siteName { contextParts.append("Web Site: \(site)") }
+          if let text = webCtx.textContent { contextParts.append("Web Content: \(String(text.prefix(300)))") }
+        }
+        if let vlm = item.fastVLMAnalysis {
+          if let ctx = vlm.contextSummary { contextParts.append("Visual Analysis: \(String(ctx.prefix(500)))") }
+        }
+        if !item.questions.isEmpty { contextParts.append("Questions: \(item.questions.joined(separator: "; "))") }
+        if let score = item.aestheticsScore, score > 0 { contextParts.append("Quality Score: \(String(format: "%.0f%%", score * 100))") }
+        if let product = item.productMetadata { contextParts.append("Product: \(product)") }
 
         let textToSummarize: String
         if !contextParts.isEmpty {
@@ -149,6 +167,7 @@ public actor BackgroundSummaryService {
         if let summary = session.summary {
           return summary.contains("[Model: SystemLanguageModel-iOS26]")
             || summary.contains("[Model: Heuristic Fallback]")
+            || summary.contains("[Model: FastVLM-")
         } else {
           return false
         }
