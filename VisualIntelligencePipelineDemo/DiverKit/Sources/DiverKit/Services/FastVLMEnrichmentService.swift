@@ -387,7 +387,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     
     /// Ensure model is loaded, loading if necessary. Thread-safe.
     #if canImport(MLXVLM) && !targetEnvironment(simulator)
-    private func ensureLoaded() async throws -> ModelContainer {
+    func ensureLoaded() async throws -> ModelContainer {
         if let container {
             return container
         }
