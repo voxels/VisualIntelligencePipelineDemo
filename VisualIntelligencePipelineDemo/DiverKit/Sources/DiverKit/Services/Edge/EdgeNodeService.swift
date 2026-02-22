@@ -269,37 +269,38 @@ public distributed actor EdgeContextActor {
     
     distributed public func summarize(text: String, imageData: Data?) async throws -> String {
         print("🧠 [EdgeContextActor] Summarizing text (\(text.count) characters) + image(\(imageData?.count ?? 0) bytes) using FastVLM...")
-        if FastVLMEnrichmentService.isAvailable {
-            let service = FastVLMEnrichmentService()
-            
-            // Convert raw image data to CGImage for FastVLM
-            let cgImage: CGImage? = imageData.flatMap { data in
-                #if canImport(UIKit)
-                guard let uiImage = UIImage(data: data) else { return nil }
-                return uiImage.cgImage
-                #elseif canImport(AppKit)
-                guard let nsImage = NSImage(data: data),
-                      let cgRef = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
-                return cgRef
-                #else
-                return nil
-                #endif
-            }
-            
-            let analysis = try await service.analyze(
-                image: cgImage,
-                visionTags: [],
-                enrichmentContext: text,
-                transcription: nil
-            )
-            if let result = analysis?.contextSummary, !result.isEmpty {
-                return result
-            }
-            return "\(String(text.prefix(200)))..."
-        } else {
-            // Fallback
+        
+        // Convert raw image data to CGImage for FastVLM
+        let cgImage: CGImage? = imageData.flatMap { data in
+            #if canImport(UIKit)
+            guard let uiImage = UIImage(data: data) else { return nil }
+            return uiImage.cgImage
+            #elseif canImport(AppKit)
+            guard let nsImage = NSImage(data: data),
+                  let cgRef = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+            return cgRef
+            #else
+            return nil
+            #endif
+        }
+        
+        // FastVLM requires an image — skip if none available
+        guard let image = cgImage, FastVLMEnrichmentService.isAvailable else {
+            print("⚠️ [EdgeContextActor] No image or FastVLM unavailable — using text fallback")
             return "\(String(text.prefix(200)))..."
         }
+        
+        let service = FastVLMEnrichmentService()
+        let analysis = try await service.analyze(
+            image: image,
+            visionTags: [],
+            enrichmentContext: text,
+            transcription: nil
+        )
+        if let result = analysis?.contextSummary, !result.isEmpty {
+            return result
+        }
+        return "\(String(text.prefix(200)))..."
     }
 }
 

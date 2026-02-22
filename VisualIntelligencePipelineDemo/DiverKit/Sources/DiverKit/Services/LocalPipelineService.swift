@@ -2790,22 +2790,22 @@ public final class LocalPipelineService {
                     let bestImageItem = sortedItems
                         .sorted { ($0.aestheticsScore ?? 0) > ($1.aestheticsScore ?? 0) }
                         .first { $0.rawPayload != nil }
-                    let representativeImage: CGImage? = bestImageItem.flatMap { item in
-                        guard let data = item.rawPayload else { return nil }
-                        return self.createCGImage(from: data)
-                    }
-                    let visionTags = bestImageItem?.visualTags ?? []
-                    let analysis = try? await service.analyze(
-                        image: representativeImage,
-                        visionTags: visionTags,
-                        enrichmentContext: combinedText,
-                        transcription: nil
-                    )
-                    if let result = analysis?.contextSummary, !result.isEmpty {
-                        let modelBadge = analysis?.modelID ?? FastVLMEnrichmentService.modelID
-                        summary = "\(result) [Model: \(modelBadge)]"
-                        summaryGenerated = true
-                        DiverLogger.pipeline.info("✅ generated summary for session \(sessionID) using local FastVLM (\(modelBadge))")
+                    if let bestItem = bestImageItem,
+                       let data = bestItem.rawPayload,
+                       let representativeImage = self.createCGImage(from: data) {
+                        let visionTags = bestItem.visualTags
+                        let analysis = try? await service.analyze(
+                            image: representativeImage,
+                            visionTags: visionTags,
+                            enrichmentContext: combinedText,
+                            transcription: nil
+                        )
+                        if let result = analysis?.contextSummary, !result.isEmpty {
+                            let modelBadge = analysis?.modelID ?? FastVLMEnrichmentService.modelID
+                            summary = "\(result) [Model: \(modelBadge)]"
+                            summaryGenerated = true
+                            DiverLogger.pipeline.info("✅ generated summary for session \(sessionID) using local FastVLM (\(modelBadge))")
+                        }
                     }
                 }
                 
