@@ -9,7 +9,7 @@ import SwiftUI
 import DiverKit
 
 struct DailySummaryCard: View {
-    @ObservedObject var service: DailyContextService
+    var service: DailyContextService
     
     var body: some View {
         Section {

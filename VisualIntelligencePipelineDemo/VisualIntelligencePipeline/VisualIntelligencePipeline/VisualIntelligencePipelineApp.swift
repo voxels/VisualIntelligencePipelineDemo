@@ -108,7 +108,7 @@ struct VisualIntelligencePipelineApp: App {
         ])
         
         let contextService = ContextQuestionService()
-        let dailyContextService = DailyContextService()
+        let dailyContextService = DailyContextService(container: dataStore.container)
         
         // Register in shared Services singleton for VisualIntelligenceViewModel
         Services.shared.modelContext = dataStore.mainContext  // Single source of truth
@@ -370,37 +370,12 @@ struct VisualIntelligencePipelineApp: App {
                     // await metadataPipelineService.runDataDiagnostics()
                     
                     // Daily Narrative Backfill — runs AFTER queue drains so all items are ready
-                    // Use a background context to avoid blocking the main thread
-                    let bgCtx = await ModelContext(dataStore.container)
-                    bgCtx.autosaveEnabled = false
-                    
+                    // DailyContextService now owns its own background ModelContext
                     guard let service = await MainActor.run(body: { Services.shared.dailyContextService }),
                           await !service.hasContent else { return }
                     
-                    print("📝 Daily Context is empty, checking for backfill items...")
-                    let calendar = Calendar.current
-                    let startOfDay = calendar.startOfDay(for: Date())
-                    
-                    let descriptor = FetchDescriptor<ProcessedItem>(
-                        predicate: #Predicate { $0.createdAt >= startOfDay },
-                        sortBy: [SortDescriptor(\.createdAt)]
-                    )
-                    
-                    do {
-                        let items = try bgCtx.fetch(descriptor)
-                        if !items.isEmpty {
-                            print("📝 Found \(items.count) items to backfill daily context.")
-                            let logs = items.map { item in
-                                let time = item.createdAt.formatted(date: .omitted, time: .shortened)
-                                return "[\(time)] Captured: \(item.title ?? "Untitled Item")"
-                            }
-                            await MainActor.run {
-                                service.ingest(logs)
-                            }
-                        }
-                    } catch {
-                        print("❌ Failed to fetch items for daily context backfill: \(error)")
-                    }
+                    print("📝 Daily Context is empty, triggering backfill...")
+                    await service.updateSummary()
                 }
 
                 // Refresh all widgets

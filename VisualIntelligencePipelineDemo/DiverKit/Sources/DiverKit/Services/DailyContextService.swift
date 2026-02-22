@@ -6,92 +6,76 @@
 //
 
 import Foundation
-import Combine
 import SwiftUI
 import DiverShared
 import SwiftData
 
-/// A service that tracks the user's daily context and generates a running summary using LLM.
+/// Generates a daily focus summary from the user's captured items using on-device LLM.
+///
+/// Architecture:
+/// - `@Observable` (not ObservableObject) — modern SwiftUI observation.
+/// - SwiftData fetches run on a **background** `ModelContext` to avoid main-thread blocking.
+/// - Richer context extraction: title, location, summary, tags, FastVLM analysis,
+///   web context, commerce products, transcription, media type, questions.
 @MainActor
-public class DailyContextService: ObservableObject {
-    @Published public var dailySummary: String = "No activity yet in the last 24 hours."
-    @Published public var isGenerating: Bool = false
+@Observable
+public final class DailyContextService {
+    public var dailySummary: String = "No activity yet in the last 24 hours."
+    public var isGenerating: Bool = false
     
-    struct ContextEntry: Codable {
-        let text: String
-        let date: Date
-    }
-
-    private var contexts: [ContextEntry] = []
     private let contextService = ContextQuestionService()
+    private let modelContainer: ModelContainer
     
     private let persistenceURL: URL = {
         do {
-            return try AppGroupContainer.containerURL().appendingPathComponent("daily_context_state_v2.json")
+            return try AppGroupContainer.containerURL().appendingPathComponent("daily_context_state_v3.json")
         } catch {
-            // Fallback for previews/tests
             let urls = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
-            return urls[0].appendingPathComponent("daily_context_state_v2.json")
+            return urls[0].appendingPathComponent("daily_context_state_v3.json")
         }
     }()
     
-    struct PersistedState: Codable {
-        let entries: [ContextEntry]
+    private struct PersistedState: Codable {
         let summary: String
         let date: Date
     }
     
     private var lastSaveDate: Date?
-
-    public init() {
+    
+    public init(container: ModelContainer) {
+        self.modelContainer = container
         loadState()
     }
     
-
-    
-    // Derived property, true if we have a summary or if there are items in the DB
+    /// True if we have a meaningful summary or recent items exist.
     public var hasContent: Bool {
-        return !dailySummary.contains("No activity") || checkRecentActivityExists()
+        !dailySummary.contains("No activity") || checkRecentActivityExists()
     }
-
-    // Deprecated: No longer stores text. Just triggers update.
-    public func ingest(_ items: [String]) {
-        Task {
-            // Wait a moment for DB persistence
-            try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
-            await updateSummary()
+    
+    /// Triggers a background re-generation of the daily summary.
+    /// Called after pipeline saves or on app foreground.
+    public func requestUpdate() {
+        Task.detached(priority: .utility) { [weak self] in
+            guard let self else { return }
+            // Brief delay for SwiftData persistence to flush
+            try? await Task.sleep(for: .seconds(1))
+            await self.updateSummary()
         }
     }
     
-    // Deprecated: No longer stores text. Just triggers update.
-    public func addContext(_ text: String) {
-        Task {
-            // Wait a moment for DB persistence
-            try? await Task.sleep(nanoseconds: 2 * 1_000_000_000)
-            await updateSummary()
-        }
-    }
+    // MARK: - Core Summary Pipeline
     
-    private func checkRecentActivityExists() -> Bool {
-        // Quick check without full fetch
-        guard let context = Services.shared.modelContext else { return false }
-        let cutoff = Date().addingTimeInterval(-24 * 3600)
-        let descriptor = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.createdAt > cutoff })
-        let count = (try? context.fetchCount(descriptor)) ?? 0
-        return count > 0
-    }
-    
-    /// Forces a re-generation of the daily summary based on Live SwiftData.
+    /// Fetches recent items on a background context, extracts rich metadata,
+    /// and generates a thematic summary via SLM.
     public func updateSummary() async {
-        guard let context = Services.shared.modelContext else {
-            print("⚠️ DailyContextService: No ModelContext available.")
-            return
-        }
-        
         self.isGenerating = true
         defer { self.isGenerating = false }
         
-        // 1. Fetch Recent Items (Live Data)
+        // Background ModelContext for SwiftData (per GEMINI.md rule #7)
+        let context = ModelContext(modelContainer)
+        context.autosaveEnabled = false
+        
+        // 1. Fetch last 24 hours of items
         let cutoff = Date().addingTimeInterval(-24 * 3600)
         let descriptor = FetchDescriptor<ProcessedItem>(
             predicate: #Predicate { $0.createdAt > cutoff },
@@ -104,72 +88,145 @@ public class DailyContextService: ObservableObject {
             return
         }
         
-        // 2. Format Context from Live Items
-        var formattedContext = ""
-        let calendar = Calendar.current
+        // 2. Extract rich context per item
+        let formattedContext = formatItemsContext(items)
         
-        for item in items {
-            let date = item.createdAt
-            let prefix = calendar.isDateInToday(date) ? "[Today \(date.formatted(date: .omitted, time: .shortened))]" : "[Yesterday \(date.formatted(date: .omitted, time: .shortened))]"
-            
-            // Richer Context Construction
-            var details = "Item: \(item.title ?? "Untitled")"
-            if let loc = item.location { details += " @ \(loc)" }
-            if let sum = item.summary { details += " - \(sum)" }
-            if !item.tags.isEmpty { details += " [\(item.tags.joined(separator: ", "))]" }
-            
-            formattedContext += "\(prefix) \(details)\n\n"
-        }
-        
-        // 3. Generate Summary via LLM
-        do {
-            if ContextQuestionService.isAvailable {
-                let prompt = """
-                Create a concise, one-sentence summary of the user's focus over the last 24 hours based on these activities.
-                Prioritize the most recent items (the ones at the end of the list).
-                If no activities are listed, say "No recent activity."
-                
-                Current time: \(Date().formatted())
-                Activities (Last 24 Hours):
-                \(formattedContext)
-                
-                Summary (ONE SENTENCE):
-                """
-                
+        // 3. Generate summary
+        if ContextQuestionService.isAvailable {
+            do {
+                let prompt = buildPrompt(formattedContext: formattedContext, itemCount: items.count)
                 let summary = try await contextService.summarizeText(prompt)
-                
-                await MainActor.run {
-                    self.dailySummary = summary
-                    self.saveState()
-                }
-            } else {
-                 // Heuristic Fallback
-                 let count = items.count
-                 let locations = Set(items.compactMap { $0.location }).prefix(2).joined(separator: " and ")
-                 let fallback = "Captured \(count) items\(locations.isEmpty ? "" : " at " + locations) today."
-                 
-                 await MainActor.run {
-                     self.dailySummary = fallback
-                     self.saveState()
-                 }
+                self.dailySummary = summary
+                saveState()
+            } catch {
+                print("❌ Daily Summary Generation Failed: \(error)")
             }
-            
-        } catch {
-            print("❌ Daily Summary Generation Failed: \(error)")
+        } else {
+            // Heuristic fallback when SLM unavailable
+            let count = items.count
+            let locations = Set(items.compactMap { $0.location }).prefix(2).joined(separator: " and ")
+            let types = Set(items.compactMap { $0.mediaType }).joined(separator: ", ")
+            var fallback = "Captured \(count) items"
+            if !locations.isEmpty { fallback += " at \(locations)" }
+            if !types.isEmpty { fallback += " (\(types))" }
+            fallback += " today."
+            self.dailySummary = fallback
+            saveState()
         }
     }
     
-    /// Clears the daily context summary (Does not delete actual items)
+    /// Clears the daily context summary (does not delete items).
     public func clear() {
         dailySummary = "Start of a fresh day."
         saveState()
     }
     
+    // MARK: - Rich Context Formatting
+    
+    private func formatItemsContext(_ items: [ProcessedItem]) -> String {
+        let calendar = Calendar.current
+        var lines: [String] = []
+        
+        for item in items {
+            let date = item.createdAt
+            let timeLabel = calendar.isDateInToday(date)
+                ? "[Today \(date.formatted(date: .omitted, time: .shortened))]"
+                : "[Yesterday \(date.formatted(date: .omitted, time: .shortened))]"
+            
+            var parts: [String] = []
+            
+            // Core identity
+            parts.append("• \(item.title ?? "Untitled")")
+            
+            // Location
+            if let loc = item.location {
+                parts.append("  📍 \(loc)")
+            }
+            
+            // Summary (LLM-generated)
+            if let sum = item.summary, !sum.isEmpty {
+                parts.append("  💡 \(sum)")
+            }
+            
+            // FastVLM visual analysis
+            if let vlm = item.fastVLMAnalysis, let desc = vlm.imageDescription, !desc.isEmpty {
+                let truncated = String(desc.prefix(200))
+                parts.append("  👁️ VLM: \(truncated)")
+            }
+            
+            // Web context
+            if let web = item.webContext {
+                if let site = web.siteName, !site.isEmpty {
+                    parts.append("  🔗 Web: \(site)")
+                }
+            }
+            
+            // Commerce / product
+            if let commerce = item.commerceContext, let first = commerce.first {
+                parts.append("  🛒 Product: \(first.option.productName)")
+            }
+            
+            // Transcription (OCR text, first 150 chars)
+            if let transcript = item.transcription, !transcript.isEmpty {
+                let truncated = String(transcript.prefix(150))
+                parts.append("  📝 Text: \(truncated)")
+            }
+            
+            // Tags
+            if !item.tags.isEmpty {
+                parts.append("  🏷️ [\(item.tags.prefix(8).joined(separator: ", "))]")
+            }
+            
+            // Media type
+            if let media = item.mediaType {
+                parts.append("  📷 Type: \(media)")
+            }
+            
+            // Questions the pipeline generated
+            if !item.questions.isEmpty {
+                parts.append("  ❓ \(item.questions.prefix(2).joined(separator: "; "))")
+            }
+            
+            lines.append("\(timeLabel)\n\(parts.joined(separator: "\n"))")
+        }
+        
+        return lines.joined(separator: "\n\n")
+    }
+    
+    private func buildPrompt(formattedContext: String, itemCount: Int) -> String {
+        """
+        You are a personal assistant summarizing a user's day based on their captured items.
+        Create a 2-3 sentence thematic summary of their focus and activities.
+        
+        Guidelines:
+        - Identify themes (e.g. "shopping", "research", "exploring", "documenting")
+        - Mention specific locations or products if they recur
+        - Note time-of-day patterns if visible (morning vs afternoon)
+        - Be warm and insightful, not robotic
+        - Prioritize the most recent items
+        
+        Current time: \(Date().formatted())
+        Total items: \(itemCount)
+        
+        Activities (Last 24 Hours):
+        \(formattedContext)
+        
+        Summary (2-3 SENTENCES):
+        """
+    }
+    
+    // MARK: - Helpers
+    
+    private func checkRecentActivityExists() -> Bool {
+        let context = ModelContext(modelContainer)
+        context.autosaveEnabled = false
+        let cutoff = Date().addingTimeInterval(-24 * 3600)
+        let descriptor = FetchDescriptor<ProcessedItem>(predicate: #Predicate { $0.createdAt > cutoff })
+        return (try? context.fetchCount(descriptor)) ?? 0 > 0
+    }
+    
     private func saveState() {
-        let now = Date()
-        self.lastSaveDate = now
-        // We now only persist the SUMMARY, not the source entries (which live in DB)
-        let state = PersistedState(entries: [], summary: dailySummary, date: now)
+        let state = PersistedState(summary: dailySummary, date: Date())
         do {
             let data = try JSONEncoder().encode(state)
             try data.write(to: persistenceURL)
@@ -186,7 +243,7 @@ public class DailyContextService: ObservableObject {
             self.dailySummary = state.summary
             self.lastSaveDate = state.date
         } catch {
-            // No file or invalid, ignore
+            // No file or invalid state — start fresh
         }
     }
 }

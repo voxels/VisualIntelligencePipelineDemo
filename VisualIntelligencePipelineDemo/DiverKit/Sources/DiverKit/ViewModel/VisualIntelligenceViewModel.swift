@@ -2726,7 +2726,7 @@ public class VisualIntelligenceViewModel {
         if !currentStepSummary.isEmpty {
             let summary = currentStepSummary
             Task { @MainActor in
-                Services.shared.dailyContextService?.addContext(summary)
+                Services.shared.dailyContextService?.requestUpdate()
             }
         }
 
