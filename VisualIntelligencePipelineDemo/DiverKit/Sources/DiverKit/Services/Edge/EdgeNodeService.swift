@@ -282,17 +282,31 @@ public distributed actor EdgeContextActor {
             return "\(String(text.prefix(200)))..."
         }
         
-        // Use FastVLM with a summarization-specific prompt.
-        // Wrapped in do/catch: model config may be incompatible on some devices (e.g., FastVLM/7B).
+        // 1. Try FastVLM with image + text (best quality when model works)
         let service = FastVLMEnrichmentService()
         do {
             if let result = try await service.summarize(image: image, context: text) {
                 return result
             }
         } catch {
-            print("⚠️ [EdgeContextActor] FastVLM summarize failed: \(error) — using text fallback")
+            print("⚠️ [EdgeContextActor] FastVLM summarize failed: \(error)")
         }
         
+        // 2. Fallback to CLaRa 7B (text-only LLM, already loaded on daemon)
+        if CLaRaLatentService.shared.isAvailable {
+            do {
+                try await CLaRaLatentService.shared.loadModel()
+                let question = "Write a concise 1-2 sentence activity summary of this capture session."
+                if let result = try await CLaRaLatentService.shared.query(documentText: String(text.prefix(3000)), question: question) {
+                    print("✅ [EdgeContextActor] Summarized via CLaRa fallback")
+                    return result
+                }
+            } catch {
+                print("⚠️ [EdgeContextActor] CLaRa fallback failed: \(error)")
+            }
+        }
+        
+        // 3. Last resort: text prefix
         return "\(String(text.prefix(200)))..."
     }
 }
