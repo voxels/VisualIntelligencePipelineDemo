@@ -52,7 +52,6 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
     /// Whether the optimal CLaRa model for this device is already cached locally.
     public var hasModelCached: Bool {
         FileManager.default.fileExists(atPath: Self.modelCacheDirectory.path)
-            || Self.resolvedHuggingFaceRepo != nil
     }
     
     // MARK: - Model Resolution
