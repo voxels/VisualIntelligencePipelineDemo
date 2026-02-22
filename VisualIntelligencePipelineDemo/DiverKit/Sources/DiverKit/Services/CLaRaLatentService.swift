@@ -400,18 +400,37 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
         return ingest(id: id, text: doc, metadata: metadata)
     }
     
-    /// Bulk-populate the document index from all ProcessedItems in the SwiftData container.
-    /// Call this once at app launch (background thread) to hydrate the RAG index.
-    /// Uses a private ModelContext to avoid main-thread blocking.
+    /// Bulk-populate the document index from ProcessedItems in the SwiftData container.
+    /// On first launch, indexes everything. On subsequent launches, only indexes
+    /// items updated since the last index run (incremental).
     public func populateIndex(container: SwiftData.ModelContainer) {
         let context = SwiftData.ModelContext(container)
         context.autosaveEnabled = false
         
-        let descriptor = FetchDescriptor<ProcessedItem>()
+        let lastIndexedKey = "CLaRa_lastIndexedAt"
+        let lastIndexedAt = UserDefaults.standard.object(forKey: lastIndexedKey) as? Date
+        let isIncremental = lastIndexedAt != nil && documentCount > 0
+        
+        var descriptor = FetchDescriptor<ProcessedItem>(
+            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
+        )
+        
+        if isIncremental, let since = lastIndexedAt {
+            descriptor.predicate = #Predicate { item in
+                item.updatedAt > since
+            }
+        }
         
         do {
             let items = try context.fetch(descriptor)
-            DiverLogger.pipeline.info("🧩 [CLaRa] Populating index from \(items.count) library items...")
+            
+            guard !items.isEmpty || !isIncremental else {
+                DiverLogger.pipeline.info("🧩 [CLaRa] Index up to date — no new items since last run")
+                return
+            }
+            
+            let mode = isIncremental ? "incremental" : "full"
+            DiverLogger.pipeline.info("🧩 [CLaRa] Populating index (\(mode)): \(items.count) items...")
             
             var totalChunks = 0
             for item in items {
@@ -438,7 +457,10 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
                 totalChunks += chunks
             }
             
-            DiverLogger.pipeline.info("✅ [CLaRa] Index populated: \(items.count) items → \(totalChunks) chunks")
+            // Persist the high-water mark
+            UserDefaults.standard.set(Date(), forKey: lastIndexedKey)
+            
+            DiverLogger.pipeline.info("✅ [CLaRa] Index populated (\(mode)): \(items.count) items → \(totalChunks) chunks (total: \(documentCount))")
         } catch {
             DiverLogger.pipeline.error("❌ [CLaRa] Failed to populate index: \(error)")
         }
