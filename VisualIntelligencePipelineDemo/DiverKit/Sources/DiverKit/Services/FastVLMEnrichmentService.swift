@@ -96,27 +96,34 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         }
         
         // 2. Check Application Support for locally provisioned models (e.g., from EdgeDaemon).
+        //    Require BOTH config.json AND at least one .safetensors weight file.
         let modelsDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
             .first?.appendingPathComponent("Models/FastVLM")
         
         if let dir = modelsDir {
+            let hasWeights: (URL) -> Bool = { tierDir in
+                guard FileManager.default.fileExists(atPath: tierDir.appendingPathComponent("config.json").path) else { return false }
+                let contents = (try? FileManager.default.contentsOfDirectory(atPath: tierDir.path)) ?? []
+                return contents.contains { $0.hasSuffix(".safetensors") }
+            }
+            
             if capability.canRunHeavyVLM {
-                let config7B = dir.appendingPathComponent("7B/config.json").path
-                if FileManager.default.fileExists(atPath: config7B) {
+                let tier7B = dir.appendingPathComponent("7B")
+                if hasWeights(tier7B) {
                     DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/7B (heavy tier, \(hw.physicalMemoryGB)GB RAM)")
                     return "apple/FastVLM/7B"
                 }
             }
             if capability.canRunMediumVLM {
-                let config15B = dir.appendingPathComponent("1.5B/config.json").path
-                if FileManager.default.fileExists(atPath: config15B) {
+                let tier15B = dir.appendingPathComponent("1.5B")
+                if hasWeights(tier15B) {
                     DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/1.5B (medium tier, \(hw.chipFamily) \(hw.physicalMemoryGB)GB)")
                     return "apple/FastVLM/1.5B"
                 }
             }
             if capability.canRunLightVLM {
-                let config05B = dir.appendingPathComponent("0.5B/config.json").path
-                if FileManager.default.fileExists(atPath: config05B) {
+                let tier05B = dir.appendingPathComponent("0.5B")
+                if hasWeights(tier05B) {
                     DiverLogger.pipeline.info("🧠 [FastVLM] ✅ Resolved: apple/FastVLM/0.5B (light tier, \(hw.physicalMemoryGB)GB RAM)")
                     return "apple/FastVLM/0.5B"
                 }
