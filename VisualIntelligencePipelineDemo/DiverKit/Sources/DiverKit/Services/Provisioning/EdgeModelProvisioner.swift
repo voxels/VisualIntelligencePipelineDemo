@@ -211,18 +211,26 @@ public actor EdgeModelProvisioner {
             return
         }
         
-        print("⚙️ Provisioning FastVLM 7B via mlx_vlm convert...")
+        print("⚙️ Provisioning FastVLM 7B via HuggingFace Hub download...")
         do {
             try FileManager.default.createDirectory(at: fastvlmDir, withIntermediateDirectories: true)
             
-            // Use mlx_vlm.convert to download from HF and convert to MLX format
+            // Download safetensors, config, and tokenizer from apple/FastVLM-7B
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
             process.arguments = [
-                "python3", "-m", "mlx_vlm.convert",
-                "--hf-path", "apple/FastVLM-7B",
-                "--mlx-path", fastvlmDir.path,
-                "--dtype", "float16"
+                "python3", "-c",
+                """
+                from huggingface_hub import snapshot_download
+                print("Downloading apple/FastVLM-7B...")
+                snapshot_download(
+                    'apple/FastVLM-7B',
+                    local_dir='\(fastvlmDir.path)',
+                    local_dir_use_symlinks=False,
+                    allow_patterns=['*.safetensors', '*.json', 'tokenizer.*']
+                )
+                print("Download complete.")
+                """
             ]
             process.currentDirectoryURL = modelsDir
             
@@ -232,8 +240,7 @@ public actor EdgeModelProvisioner {
             if process.terminationStatus == 0 {
                 print("✅ FastVLM 7B provisioned successfully.")
             } else {
-                print("⚠️ FastVLM 7B conversion exited with status \(process.terminationStatus)")
-                // Clean up incomplete directory so it doesn't block future attempts
+                print("⚠️ FastVLM 7B download exited with status \(process.terminationStatus)")
                 let contents = (try? FileManager.default.contentsOfDirectory(atPath: fastvlmDir.path)) ?? []
                 if !contents.contains(where: { $0.hasSuffix(".safetensors") }) {
                     try? FileManager.default.removeItem(at: fastvlmDir)
