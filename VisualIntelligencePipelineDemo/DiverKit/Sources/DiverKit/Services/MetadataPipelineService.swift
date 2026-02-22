@@ -583,7 +583,8 @@ public final class MetadataPipelineService: @unchecked Sendable {
                     enrichmentService: enrichmentService,
                     locationService: effectiveLocationService,
                     indexingService: indexingService,
-                    contextService: contextService
+                    contextService: contextService,
+                    fastVLMService: fastVLMService
                 )
             } else {
                 var imageData: Data? = localItem.rawPayload
@@ -607,7 +608,8 @@ public final class MetadataPipelineService: @unchecked Sendable {
                     enrichmentService: enrichmentService,
                     locationService: effectiveLocationService,
                     indexingService: indexingService,
-                    contextService: contextService
+                    contextService: contextService,
+                    fastVLMService: fastVLMService
                 )
             }
             

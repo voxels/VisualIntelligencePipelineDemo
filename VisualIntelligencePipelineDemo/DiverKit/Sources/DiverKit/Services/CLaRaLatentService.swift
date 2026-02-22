@@ -492,10 +492,17 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
             DiverLogger.pipeline.info("📦 [CLaRa] Source: local directory \(Self.modelCacheDirectory.path)")
             config = MLXLMCommon.ModelConfiguration(directory: Self.modelCacheDirectory)
         } else {
-            // Load from HuggingFace Hub (auto-download path)
+            #if os(macOS)
+            // Only macOS can load from HF Hub — EdgeModelProvisioner converts PyTorch→MLX
             let repo = Self.optimalHuggingFaceRepo
             DiverLogger.pipeline.info("📦 [CLaRa] Source: HuggingFace Hub \(repo)")
             config = MLXLMCommon.ModelConfiguration(id: repo)
+            #else
+            // On iOS/iPadOS, apple/CLaRa-7B-Instruct is PyTorch — can't load via MLXLLM.
+            // CLaRa inference happens via the macOS EdgeDaemon over Bonjour.
+            DiverLogger.pipeline.info("⏭️ [CLaRa] No local MLX weights on iOS — use edge node for CLaRa inference")
+            throw CLaRaError.notSupported
+            #endif
         }
         
         let startTime = Date()
