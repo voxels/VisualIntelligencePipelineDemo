@@ -1,7 +1,7 @@
 # Visual Intelligence Pipeline — Project Specification
 
 > **Version:** 3.0  
-> **Last Updated:** 2026-02-21  
+> **Last Updated:** 2026-02-22  
 > **Platforms:** iOS 26.3+, iPadOS 26.3+, macOS 26.3+ (edge node), visionOS 26.3+ (future)  
 > **Bundle ID:** `com.secretatomics.VisualIntelligencePipeline`
 
@@ -33,7 +33,7 @@ Version 3.0 introduces a strict separation of concerns across two independent ax
 ### 2.1 Core Value Propositions
 
 1. **Capture → Enrich → Understand** — A single tap triggers a multi-stage pipeline that sifts subjects from backgrounds, enriches captures with location/web/music/document context, and generates AI summaries.
-2. **Local-First Intelligence** — All ML inference runs on-device by default: Apple Vision framework, Apple Intelligence (Foundation Models), and FastVLM 0.5B via MLX Swift. No data leaves the device for processing unless routed to a user-owned edge node on the home network.
+2. **Local-First Intelligence** — All ML inference runs on-device by default: Apple Vision framework, Apple Intelligence (Foundation Models), and FastVLM 0.5B via MLX Swift. No data leaves the device for processing unless routed to a user-owned edge node on the home network. Edge-first routing prioritizes CLaRa 7B for summarization when available.
 3. **Universal Link Organization** — Links from any source are wrapped in tamper-proof HMAC-signed URLs, processed through the same enrichment pipeline, and surfaced alongside visual captures.
 4. **Cross-Device Sync** — SwiftData + CloudKit provides seamless, automatic sync across all devices.
 5. **Ethical Commerce Intelligence** — When viewing a physical product, the system surfaces real-time ESG sustainability data, pricing nowcasts, and a commerce CTA filtered by the user's ethical preferences. Advisory-only — the user always confirms.
@@ -102,7 +102,7 @@ Communication uses the `Distributed` framework (iOS 16+ / macOS 13+, SE-0336, SE
 └──────────────────────┘           │    CommerceService         │
                                    │                            │
 ┌──────────────────────┐           │                         │
-│  Apple Vision Pro    │◀────────▶│  MLX Swift LLM (~3B)       │
+│  Apple Vision Pro    │◀────────▶│  MLX Swift LLM (CLaRa 7B)  │
 │  (visionOS Client)   │  Bonjour  │  Nowcasting Engine (Swift) │
 ├──────────────────────┤           └────────────┬───────────────┘
 │  ARKit Object Track  │                        │ HTTPS
@@ -206,8 +206,8 @@ The pipeline is **sequential** — each stage feeds its output into `PipelineCon
                                          └──────┬────────┘
                                                 ▼
                                          ┌───────────────┐
-                                    ⑤    │  FastVLM       │  Multimodal synthesis
-                                         │  (MLX Swift)   │  (0.5B local / 3B+ edge)
+                                    ⑤    │  FastVLM       │  Multimodal image analysis
+                                         │  (MLX Swift)   │  (0.5B local / 1.5B edge)
                                          │  [local OR     │
                                          │   edge]        │
                                          └──────┬────────┘
@@ -341,7 +341,7 @@ In-memory structured context aggregated during pipeline processing. Not persiste
 
 Provides three serialization outputs:
 - `asContextString` — Full context for SystemLanguageModel
-- `enrichmentContextString` — Priority-ordered, truncated context for FastVLM
+- `enrichmentContextString` — Priority-ordered context for FastVLM (image-focused, minimal metadata)
 - `commerceContextString` — ESG + pricing + financial context for advisory engine
 
 ### 3.6 Commerce & Finance Types
@@ -401,7 +401,7 @@ struct FinancialSnapshot: Codable, Sendable {
 | Service | Isolation | Responsibility |
 |---------|-----------|---------------|
 | **IntelligenceProcessor** | `Sendable`, no actor | Runs 6 Vision requests in a single `executePipeline` pass (OCR, QR, semantic classification, document detection, subject sifting, aesthetics scoring). Also drives on-device LLM for concept extraction and summarization. **Must run off `@MainActor`.** |
-| **FastVLMEnrichmentService** | `@unchecked Sendable` | Apple FastVLM 0.5B via MLX Swift. Single-pass grounded analysis: image + Vision tags + enrichment context → structured output. ~500MB on-demand download, memory-pressure eviction. On edge node: can run 3B+ models. **Must run off `@MainActor`.** |
+| **FastVLMEnrichmentService** | `@unchecked Sendable` | Apple FastVLM via MLX Swift. Short, image-focused prompt with Vision tags as grounding anchors (max 8 tags, 200 chars OCR). Local: 0.5B (~500MB). Edge: 1.5B (always runs when edge available). **Must run off `@MainActor`.** |
 | **ContextQuestionService** | No actor isolation | Apple Foundation Models (`LanguageModelSession`) structured generation via `@Generable` macro. `LanguageModelSession` is a `final class` with no actor annotation — pure `async/await`. **Must run off `@MainActor`.** |
 | **FoundationModelsIntentClassifier** | No actor isolation | LLM-based intent classification for incoming items. |
 | **AestheticsScoringService** | `@unchecked Sendable` | Wraps `VNCalculateImageAestheticsScoresRequest` (Vision, iOS 18+). Vision requests support Swift concurrency natively. **Must run off `@MainActor`.** |
@@ -451,7 +451,7 @@ struct FinancialSnapshot: Codable, Sendable {
 
 | Service | Type | Cross-Device Inference Responsibility |
 |---------|------|---------------------------------------|
-| **InferenceService** | `distributed actor` | **The Heavy ML Router:** Receives ephemeral image `Data` payloads from iOS. Holds them in an `autoreleasepool` in Mac Unified Memory. Natively orchestrates `SAM 2.1` sifting, `FastVLM 7B` grounded prompting, and `CLaRa` embedding generation. Returns only the lightweight text/alpha responses. |
+| **InferenceService** | `distributed actor` | **The Heavy ML Router:** Receives ephemeral image `Data` payloads from iOS. Holds them in an `autoreleasepool` in Mac Unified Memory. Natively orchestrates `SAM 2.1` sifting, `FastVLM 1.5B` grounded prompting, and `CLaRa 7B` structured summarization. Returns only the lightweight text/alpha responses. |
 | **CommerceService** | `distributed actor` | **The Commerce Synthesizer:** Receives raw Barcode IDs or FastVLM product tags from iOS. Cross-references them locally against 4 government databases and Apple FinanceKit to return instant, affiliated `purchaseOptions`. |
 | **NowcastingService** | `distributed actor` | **The Accelerate Engine:** Receives a commercial category. Executes CPU-intensive Dynamic Factor Model (DFM) LAPACK tensor math over dense historical BLS/FRED arrays locally on the Mac to return a simple 14-day price trajectory to the Vision Pro or iPhone HUD. |
 | **ESGEnrichmentService** | `distributed actor` | **The Cache Guardian:** Prevents the iPhone from making redundant, battery-draining network calls. The Mac queries Climate TRACE and Open Food Facts, caches the results locally for 24h, and serves instant carbon scores to local network peers. |
@@ -504,7 +504,15 @@ When a capture or link enters the system, it proceeds through these stages **seq
    ├─ Link metadata extraction     → pipelineContext.linkEnrichment
    └─ Cover image save             → pipelineContext.coverImagePath
 
-5. Stage 1: SLM — Apple Intelligence (`performLLMAnalysis` via `ContextQuestionService`)
+5. Edge-First Intelligence Routing (when edge CLaRa available)
+   ├─ Check: PipelineEdgeRouter.shouldOffload(.vlmInference)
+   ├─ If edge available → EdgeContextActor.summarizeStructured()
+   │   ├─ CLaRa 7B: detailed prompt (field descriptions, 6000 char context)
+   │   ├─ Returns JSON: summary + 3-7 tags + 3-5 statements + purpose
+   │   └─ Stamps [Model: Edge-CLaRa-7B], sets edgeSummarized = true
+   └─ Skips Stage 5a (SLM) when edge succeeds
+
+5a. Stage 1: SLM — Apple Intelligence (skipped when edge CLaRa succeeded)
    ├─ Input: full PipelineContext (Vision tags, OCR text, location, link data, knowledge graph)
    ├─ @Generable `ContextAnalysis` structured output:
    │   ├─ `summary`             → 2-sentence activity summary
@@ -513,14 +521,14 @@ When a capture or link enters the system, it proceeds through these stages **seq
    │   ├─ `purpose`             → user intent (e.g. "Researching camera gear")
    │   └─ `tags`                → 2 descriptive tags
    ├─ Concept extraction        → UserConcept auto-creation with weight tracking
-   └─ All outputs aggregated into `pipelineContext.enrichmentContextString` for FastVLM
-   [local OR edge]
+   └─ All outputs aggregated into `pipelineContext.enrichmentContextString`
+   [local only — skipped when edge CLaRa provides structured output]
 
-6. Stage 2: FastVLM — Grounded Image Analysis (opt-in, `FastVLMEnrichmentService`)
-   ├─ Input: raw image + Vision `visualTags` + SLM `enrichmentContextString` + OCR `transcription`
-   ├─ Single-pass grounded prompt: Vision tags anchor what the model should see
-   ├─ Local: FastVLM 0.5B (128 token cap, temperature 0.0)
-   ├─ Edge:  FastVLM 7B MLX (expanded context, native multimodal analysis)
+6. Stage 2: FastVLM — Grounded Image Analysis (`FastVLMEnrichmentService`)
+   ├─ Input: raw image + Vision `visualTags` (max 8) + OCR (max 200 chars)
+   ├─ Image-focused prompt: "Describe this image in detail" + vision grounding
+   ├─ Edge FastVLM 1.5B always runs when edge available (even if CLaRa summarized)
+   ├─ Local FastVLM 0.5B fallback only when no edge and no CLaRa summary
    └─ `FastVLMAnalysis` structured output (same schema either path)
 
 7. Session Assignment (`syncSession`)
@@ -741,7 +749,7 @@ The Mac/iPad edge node maintains local caches that never sync to CloudKit or lea
 | **Minimum OS** | iOS/iPadOS 26.0 | macOS 26.0 | visionOS 26.3 |
 | **Minimum Device** | iPhone 16 / iPad (M-series) | Mac (M4+) | Apple Vision Pro |
 | **Apple Intelligence** | Required | Required | Required |
-| **FastVLM** | 0.5B (optional, ~500MB) | 7B (required, ~4GB) | — |
+| **FastVLM** | 0.5B (optional, ~500MB) | 1.5B (required, ~1GB) | — |
 | **SAM 2.1 / CLaRa** | sam2.1-small (optional) | CLaRa 7B MLX (required) | — |
 | **Key Frameworks** | Swift, SwiftUI, SwiftData, Vision, MapKit, Foundation Models, MLX Swift, AVFoundation, CoreLocation, Contacts, MusicKit, Distributed, Network, Charts, FinanceKit | Swift, Distributed, Network, CoreML, MLX Swift, Accelerate, Charts | Swift, SwiftUI, RealityKit, ARKit, Distributed, Network, Charts |
 | **Key APIs** | Spotify, DuckDuckGo | Climate TRACE, Open Food Facts, OpenESG, World Bank, BLS, FRED, Plaid | — |
@@ -823,7 +831,7 @@ cd DiverShared && swift test
 | **PipelineContext** | Typed struct aggregating all enrichment data during processing |
 | **Enrichment** | Any metadata added to a capture post-ingestion (location, web, music, AI analysis) |
 | **Daily Focus** | AI-generated daily activity brief from `DailyContextService` |
-| **FastVLM** | Apple's Fast Vision-Language Model (0.5B on-device, 3B+ on edge), run via MLX Swift |
+| **FastVLM** | Apple's Fast Vision-Language Model (0.5B on-device, 1.5B on edge), run via MLX Swift |
 | **masterCaptureID** | String linking sibling items captured simultaneously (photo + QR + document) |
 | **Edge Node** | Local Mac or M-series iPad hosting distributed actors for ML offloading and data enrichment |
 | **Data Quality Tier** | 1–5 rating adapted from PCAF: 1 = independently verified, 5 = sector-average estimate |
