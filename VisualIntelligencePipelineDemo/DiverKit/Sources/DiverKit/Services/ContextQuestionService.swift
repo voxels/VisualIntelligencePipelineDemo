@@ -175,12 +175,12 @@ public final class ContextQuestionService: ContextProcessing, Sendable {
         return String(text.prefix(200)) + "..."
     }
     
-    // MARK: - MainActor LLM Helpers
-    // These must run on MainActor to satisfy FoundationModels threading requirements
+    // MARK: - LLM Helpers
+    // These run on the calling task's executor — NOT @MainActor.
+    // LanguageModelSession is Sendable and does not require main-thread execution.
     
     #if canImport(FoundationModels)
     @available(iOS 26.0, macOS 26.0, *)
-    @MainActor
     private func runContextAnalysis(input: String) async throws -> (summary: String?, statements: [String], purpose: String?, tags: [String]) {
         let instructions = """
         Analyze the provided context to determine the user's specific activity and intent.
@@ -221,7 +221,6 @@ public final class ContextQuestionService: ContextProcessing, Sendable {
     }
     
     @available(iOS 26.0, macOS 26.0, *)
-    @MainActor
     private func runTextSummary(text: String) async throws -> String {
         let instructions = """
         Analyze the following text (which represents user activity logs or multiple session contexts) and provide a high-level, cohesive summary.
@@ -249,7 +248,6 @@ public final class ContextQuestionService: ContextProcessing, Sendable {
     }
     
     @available(iOS 26.0, macOS 26.0, *)
-    @MainActor
     private func runChunkSummary(_ text: String) async throws -> String {
         let instructions = "Summarize the following text segment, retaining key details about activities, objects, and specific content."
         let session = LanguageModelSession(instructions: instructions)
@@ -258,7 +256,6 @@ public final class ContextQuestionService: ContextProcessing, Sendable {
     }
     
     @available(iOS 26.0, macOS 26.0, *)
-    @MainActor
     private func runPurposeSuggestion(context: String) async throws -> [String] {
         let instructions = """
         Analyze the provided session context (a collection of related items/activities) and suggest 3-5 specific, distinct "Purposes" or "Goals" that describe why the user collected these items.
