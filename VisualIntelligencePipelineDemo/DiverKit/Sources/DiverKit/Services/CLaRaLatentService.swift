@@ -50,9 +50,20 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
     }
     
     /// Whether the optimal CLaRa model for this device is already cached locally.
+    /// Checks both the App Support manual-install path AND the MLXLLM Hub cache.
     public var hasModelCached: Bool {
-        FileManager.default.fileExists(atPath: Self.modelCacheDirectory.path)
+        if FileManager.default.fileExists(atPath: Self.modelCacheDirectory.path) { return true }
+        // Also check the MLXLLM Hub cache (~/Library/Caches/models/<repo>)
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("models/\(Self.optimalHuggingFaceRepo)")
+        if let cache = cacheDir, FileManager.default.fileExists(atPath: cache.appendingPathComponent("config.json").path) {
+            return true
+        }
+        return false
     }
+    
+    /// Key to track repos that failed download (PyTorch format, missing config.json, etc.)
+    private static let downloadFailedKey = "clara_download_failed_repo"
     
     // MARK: - Model Resolution
     
@@ -89,14 +100,21 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
         let hw = CapabilityRouter.shared.currentCapability
         DiverLogger.pipeline.info("📥 [CLaRa] Download check — chip: \(hw.chipFamily), RAM: \(hw.physicalMemoryGB)GB")
         
-        guard !FileManager.default.fileExists(atPath: Self.modelCacheDirectory.path) else {
-            DiverLogger.pipeline.info("✅ [CLaRa] Model already cached at \(Self.modelCacheDirectory.path)")
+        guard !hasModelCached else {
+            DiverLogger.pipeline.info("✅ [CLaRa] Model already cached")
             progress(1.0)
             return
         }
         
-        #if canImport(MLXLLM) && !targetEnvironment(simulator)
+        // Don't re-attempt a download that previously failed for this repo
+        // (e.g., apple/CLaRa-7B-Instruct is PyTorch format — MLXLLM can't load it)
         let repo = Self.optimalHuggingFaceRepo
+        if UserDefaults.standard.string(forKey: Self.downloadFailedKey) == repo {
+            DiverLogger.pipeline.info("⏭️ [CLaRa] Skipping download — \(repo) previously failed (incompatible format). Use edge node instead.")
+            return
+        }
+        
+        #if canImport(MLXLLM) && !targetEnvironment(simulator)
         DiverLogger.pipeline.info("📥 [CLaRa] Starting background download: \(repo) for \(hw.chipFamily) (\(hw.physicalMemoryGB)GB)")
         
         let config = MLXLMCommon.ModelConfiguration(id: repo)
@@ -118,6 +136,8 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
         }
         
         let elapsed = String(format: "%.1f", Date().timeIntervalSince(startTime))
+        // Clear any previous failure marker on success
+        UserDefaults.standard.removeObject(forKey: Self.downloadFailedKey)
         DiverLogger.pipeline.info("✅ [CLaRa] Download complete: \(repo) in \(elapsed)s")
         #else
         DiverLogger.pipeline.warning("⚠️ [CLaRa] MLXLLM not available on this platform — cannot download")

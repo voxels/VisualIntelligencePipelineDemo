@@ -287,6 +287,8 @@ struct VisualIntelligencePipelineApp: App {
                                 }
                             } catch {
                                 DiverLogger.pipeline.error("❌ [CLaRa] Background auto-download failed: \(error)")
+                                // Record failure so we don't retry an incompatible repo on every launch
+                                UserDefaults.standard.set(CLaRaLatentService.optimalHuggingFaceRepo, forKey: "clara_download_failed_repo")
                             }
                         }
                     }
