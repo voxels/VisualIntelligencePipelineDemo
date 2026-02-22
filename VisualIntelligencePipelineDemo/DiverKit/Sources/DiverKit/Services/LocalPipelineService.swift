@@ -2772,6 +2772,7 @@ public final class LocalPipelineService {
                         let bestImagePayload: Data? = sortedItems
                             .sorted { ($0.aestheticsScore ?? 0) > ($1.aestheticsScore ?? 0) }
                             .first { $0.rawPayload != nil }?.rawPayload
+                        DiverLogger.pipeline.info("📦 [SessionSummary] Sending to edge: text=\(contextPrompt.count) chars, image=\(bestImagePayload?.count ?? 0) bytes")
                         summary = try await edgeActor.summarize(text: contextPrompt, imageData: bestImagePayload)
                         summaryGenerated = true
                         DiverLogger.pipeline.info("✅ generated summary for session \(sessionID) using EdgeContextActor (\(node.deviceName))")
@@ -2793,15 +2794,9 @@ public final class LocalPipelineService {
                     if let bestItem = bestImageItem,
                        let data = bestItem.rawPayload,
                        let representativeImage = self.createCGImage(from: data) {
-                        let visionTags = bestItem.visualTags
-                        let analysis = try? await service.analyze(
-                            image: representativeImage,
-                            visionTags: visionTags,
-                            enrichmentContext: combinedText,
-                            transcription: nil
-                        )
-                        if let result = analysis?.contextSummary, !result.isEmpty {
-                            let modelBadge = analysis?.modelID ?? FastVLMEnrichmentService.modelID
+                        let contextPrompt = "Summarize the following session data concisely:\n\(combinedText)"
+                        if let result = try? await service.summarize(image: representativeImage, context: contextPrompt) {
+                            let modelBadge = FastVLMEnrichmentService.modelID
                             summary = "\(result) [Model: \(modelBadge)]"
                             summaryGenerated = true
                             DiverLogger.pipeline.info("✅ generated summary for session \(sessionID) using local FastVLM (\(modelBadge))")

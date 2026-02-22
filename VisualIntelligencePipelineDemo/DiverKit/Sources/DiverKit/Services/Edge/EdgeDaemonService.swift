@@ -436,9 +436,16 @@ public final class EdgeDaemonService {
                 } else if method.contains("EdgeContextActor") && method.contains("summarize") {
                     let decoder = try EdgeInvocationDecoder(data: payload)
                     let text: String = try decoder.decodeNextArgument()
-                    let imageData: Data? = try? decoder.decodeNextArgument()
+                    var imageData: Data? = nil
+                    do {
+                        imageData = try decoder.decodeNextArgument() as Data
+                    } catch {
+                        print("⚠️ EdgeDaemon: Failed to decode imageData for summarize: \(error)")
+                    }
+                    print("📦 EdgeDaemon: summarize text=\(text.count) chars, imageData=\(imageData?.count ?? 0) bytes")
                     let actor = EdgeContextActor(actorSystem: dummySystem)
                     let result = try await actor.summarize(text: text, imageData: imageData)
+                    print("✅ EdgeDaemon: summarize result=\(result.count) chars")
                     encodedResult = try JSONEncoder().encode(result)
                     
                 } else {
