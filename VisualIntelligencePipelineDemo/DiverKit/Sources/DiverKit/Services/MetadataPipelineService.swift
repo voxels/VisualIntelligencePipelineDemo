@@ -46,6 +46,20 @@ public final class MetadataPipelineService: @unchecked Sendable {
     public var contextService: (any ContextProcessing)?
     public var fastVLMService: (any FastVLMAnalyzing)?
     
+    // MARK: - Commerce Scoring (created per pipeline run — lightweight structs)
+    private var defaultScoringStrategies: [any ProductScoringStrategy] {
+        [
+            ESGScoringStrategy(),
+            BrandAlignmentStrategy(),
+            ValueScoringStrategy(),
+            DurabilityScoringStrategy(),
+            SocialProofScoringStrategy(),
+            HealthFitScoringStrategy(),
+            TotalCostScoringStrategy()
+        ]
+    }
+    private var defaultRecommender: any ProductRecommending { ProductRecommendationService() }
+    
     // MARK: - Queue Progress (observed by QueueProgressView)
     public var isProcessingQueue: Bool = false
     private var resetTask: Task<Void, Never>?
@@ -409,7 +423,9 @@ public final class MetadataPipelineService: @unchecked Sendable {
                     locationService: effectiveLocationService,
 
                     indexingService: indexingService,
-                    contextService: contextService
+                    contextService: contextService,
+                    scoringStrategies: defaultScoringStrategies,
+                    recommender: defaultRecommender
                 )
             } else {
                  // Fallback: create a temporary input from item data
@@ -438,7 +454,9 @@ public final class MetadataPipelineService: @unchecked Sendable {
                     enrichmentService: enrichmentService,
                     locationService: effectiveLocationService,
                     indexingService: indexingService,
-                    contextService: contextService
+                    contextService: contextService,
+                    scoringStrategies: defaultScoringStrategies,
+                    recommender: defaultRecommender
                 )
             }
             
@@ -584,7 +602,9 @@ public final class MetadataPipelineService: @unchecked Sendable {
                     locationService: effectiveLocationService,
                     indexingService: indexingService,
                     contextService: contextService,
-                    fastVLMService: fastVLMService
+                    fastVLMService: fastVLMService,
+                    scoringStrategies: defaultScoringStrategies,
+                    recommender: defaultRecommender
                 )
             } else {
                 var imageData: Data? = localItem.rawPayload
@@ -609,7 +629,9 @@ public final class MetadataPipelineService: @unchecked Sendable {
                     locationService: effectiveLocationService,
                     indexingService: indexingService,
                     contextService: contextService,
-                    fastVLMService: fastVLMService
+                    fastVLMService: fastVLMService,
+                    scoringStrategies: defaultScoringStrategies,
+                    recommender: defaultRecommender
                 )
             }
             
@@ -722,7 +744,9 @@ public final class MetadataPipelineService: @unchecked Sendable {
 
                         indexingService: self.indexingService,
                         contextService: self.contextService,
-                        fastVLMService: self.fastVLMService
+                        fastVLMService: self.fastVLMService,
+                        scoringStrategies: self.defaultScoringStrategies,
+                        recommender: self.defaultRecommender
                     )
                     queueCompletedCount += 1
                 } catch {
@@ -908,7 +932,9 @@ public final class MetadataPipelineService: @unchecked Sendable {
 
                     indexingService: self.indexingService,
                     contextService: self.contextService,
-                    fastVLMService: self.fastVLMService
+                    fastVLMService: self.fastVLMService,
+                    scoringStrategies: self.defaultScoringStrategies,
+                    recommender: self.defaultRecommender
                 )
                 
                 try? activeContext.save()
@@ -998,7 +1024,9 @@ public final class MetadataPipelineService: @unchecked Sendable {
 
             indexingService: indexingService,
             contextService: contextService,
-            fastVLMService: fastVLMService
+            fastVLMService: fastVLMService,
+            scoringStrategies: defaultScoringStrategies,
+            recommender: defaultRecommender
         )
         
         // Assign depth payload from queue item (captured atomically with photo)
