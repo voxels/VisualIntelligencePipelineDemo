@@ -130,7 +130,7 @@ public actor BackgroundSummaryService {
         var success = false
         while attempt <= 3 && !success && !Task.isCancelled {
           do {
-            let newSummary = try await edgeActor.summarize(text: textToSummarize)
+            let newSummary = try await edgeActor.summarize(text: textToSummarize, imageData: item.rawPayload)
             if !Task.isCancelled {
               item.summary = "\(newSummary) [Model: Edge-FastVLM]"
               item.updatedAt = Date()
@@ -200,12 +200,17 @@ public actor BackgroundSummaryService {
         } else {
           textToSummarize = "Summarize this session concisely: \(oldSummary)"
         }
+        
+        // Select best representative image from session items
+        let bestImagePayload: Data? = items
+          .sorted { ($0.aestheticsScore ?? 0) > ($1.aestheticsScore ?? 0) }
+          .first { $0.rawPayload != nil }?.rawPayload
 
         var attempt = 1
         var success = false
         while attempt <= 3 && !success && !Task.isCancelled {
           do {
-            let newSummary = try await edgeActor.summarize(text: textToSummarize)
+            let newSummary = try await edgeActor.summarize(text: textToSummarize, imageData: bestImagePayload)
             if !Task.isCancelled {
               session.summary = "\(newSummary) [Model: Edge-FastVLM]"
               session.updatedAt = Date()

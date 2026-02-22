@@ -267,12 +267,27 @@ public distributed actor EdgeAgenticSearchActor {
 public distributed actor EdgeContextActor {
     public typealias ActorSystem = VisualIntelligenceActorSystem
     
-    distributed public func summarize(text: String) async throws -> String {
-        print("🧠 [EdgeContextActor] Summarizing text (\(text.count) characters) using FastVLM...")
+    distributed public func summarize(text: String, imageData: Data?) async throws -> String {
+        print("🧠 [EdgeContextActor] Summarizing text (\(text.count) characters) + image(\(imageData?.count ?? 0) bytes) using FastVLM...")
         if FastVLMEnrichmentService.isAvailable {
             let service = FastVLMEnrichmentService()
+            
+            // Convert raw image data to CGImage for FastVLM
+            let cgImage: CGImage? = imageData.flatMap { data in
+                #if canImport(UIKit)
+                guard let uiImage = UIImage(data: data) else { return nil }
+                return uiImage.cgImage
+                #elseif canImport(AppKit)
+                guard let nsImage = NSImage(data: data),
+                      let cgRef = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return nil }
+                return cgRef
+                #else
+                return nil
+                #endif
+            }
+            
             let analysis = try await service.analyze(
-                image: nil,
+                image: cgImage,
                 visionTags: [],
                 enrichmentContext: text,
                 transcription: nil

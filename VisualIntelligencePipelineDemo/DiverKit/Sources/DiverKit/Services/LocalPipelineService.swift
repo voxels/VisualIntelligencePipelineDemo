@@ -2768,7 +2768,11 @@ public final class LocalPipelineService {
                         let edgeActor = try EdgeContextActor.resolve(id: identity, using: system)
                         
                         let contextPrompt = "Summarize the following session data concisely:\n\(combinedText)"
-                        summary = try await edgeActor.summarize(text: contextPrompt)
+                        // Select the best representative image for FastVLM (same logic as local path)
+                        let bestImagePayload: Data? = sortedItems
+                            .sorted { ($0.aestheticsScore ?? 0) > ($1.aestheticsScore ?? 0) }
+                            .first { $0.rawPayload != nil }?.rawPayload
+                        summary = try await edgeActor.summarize(text: contextPrompt, imageData: bestImagePayload)
                         summaryGenerated = true
                         DiverLogger.pipeline.info("✅ generated summary for session \(sessionID) using EdgeContextActor (\(node.deviceName))")
                     } catch {
