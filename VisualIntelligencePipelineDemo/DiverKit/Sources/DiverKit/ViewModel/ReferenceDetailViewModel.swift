@@ -187,18 +187,22 @@ public class ReferenceDetailViewModel: ObservableObject {
     }
     
     public func updateTitle(_ title: String, for item: ProcessedItem) {
-        Task { @MainActor in
-            // Basic validation
-             guard title.count > 2, !title.contains("http"), title != item.title else { return }
-            
-             item.title = title
-             try? item.modelContext?.save()
-             
-             // Regenerate summary to reflect new title
-             if let service = Services.shared.localPipelineService {
-                 print("🔄 Regenerating summary after title update...")
-                 await service.regenerateSummary(for: item)
-             }
+        // Basic validation
+        guard title.count > 2, !title.contains("http"), title != item.title else { return }
+        
+        // Update title immediately on the main context for instant UI feedback
+        item.title = title
+        try? item.modelContext?.save()
+        
+        // Regenerate summary in the background using processItemByID (creates its own
+        // background ModelContext — avoids "Unbinding from main queue" and UI freeze)
+        let itemID = item.id
+        Task.detached(priority: .utility) {
+            print("🔄 Regenerating summary after title update...")
+            if let pipeline = Services.shared.metadataPipelineService {
+                try? await pipeline.processItemByID(itemID)
+            }
+            await MainActor.run { item.status = .ready }
         }
     }
     
