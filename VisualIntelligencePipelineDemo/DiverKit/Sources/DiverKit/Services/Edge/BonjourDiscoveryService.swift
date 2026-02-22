@@ -39,7 +39,9 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
     
     public var currentConnection: EdgeNodeInfo? {
         didSet {
-            if let node = currentConnection {
+            // Only fire callback when connecting to a NEW device (not just updating capabilities)
+            if let node = currentConnection,
+               node.deviceName != oldValue?.deviceName {
                 onNodeConnected?(node.deviceName)
             }
         }
