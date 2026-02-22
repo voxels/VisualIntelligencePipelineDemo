@@ -121,25 +121,26 @@ public class ReferenceDetailViewModel: ObservableObject {
     // MARK: - Purpose Management
     
     public func addPurpose(_ purpose: String, to item: ProcessedItem) {
-        Task { @MainActor in
-            guard !item.purposes.contains(purpose) else { return }
-            
-            withAnimation {
-                item.purposes.append(purpose)
+        guard !item.purposes.contains(purpose) else { return }
+        
+        withAnimation {
+            item.purposes.append(purpose)
+        }
+        try? item.modelContext?.save()
+        
+        // Remove from suggestions if present
+        if let idx = self.suggestedPurposes.firstIndex(of: purpose) {
+            _ = withAnimation {
+                self.suggestedPurposes.remove(at: idx)
             }
-            try? item.modelContext?.save()
-            
-            // Remove from suggestions if present
-            if let idx = self.suggestedPurposes.firstIndex(of: purpose) {
-                _ = withAnimation {
-                    self.suggestedPurposes.remove(at: idx)
-                }
-            }
-            
-            // Auto-regenerate summary to reflect new purpose
-            if let service = Services.shared.localPipelineService {
-                print("🔄 Regenerating summary for purpose update...")
-                await service.regenerateSummary(for: item)
+        }
+        
+        // Auto-regenerate summary in the background (not on main thread)
+        let itemID = item.id
+        Task.detached(priority: .utility) {
+            print("🔄 Regenerating summary for purpose update...")
+            if let pipeline = Services.shared.metadataPipelineService {
+                try? await pipeline.processItemByID(itemID)
             }
         }
     }

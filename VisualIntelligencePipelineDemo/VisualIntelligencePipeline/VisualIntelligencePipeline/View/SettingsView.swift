@@ -500,18 +500,23 @@ struct LogExportShareSheet: View {
 }
 #endif
 struct StorageInfoRow: View {
-    @Query private var processedItems: [ProcessedItem]
+    @Environment(\.modelContext) private var modelContext
+    @State private var itemCount: Int = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text("Processed Items")
                 Spacer()
-                Text("\(processedItems.count)")
+                Text("\(itemCount)")
                     .foregroundStyle(.secondary)
             }
         }
         .font(.subheadline)
+        .onAppear {
+            let descriptor = FetchDescriptor<ProcessedItem>()
+            itemCount = (try? modelContext.fetchCount(descriptor)) ?? 0
+        }
     }
 }
 
