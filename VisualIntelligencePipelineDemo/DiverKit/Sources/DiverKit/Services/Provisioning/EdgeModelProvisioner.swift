@@ -201,14 +201,47 @@ public actor EdgeModelProvisioner {
     }
     
     private func provisionFastVLM7B() async {
-        let modelsTiers = modelsDir.appendingPathComponent("FastVLM/7B")
-        let configPath = modelsTiers.appendingPathComponent("config.json")
+        let fastvlmDir = modelsDir.appendingPathComponent("FastVLM/7B")
         
-        guard !FileManager.default.fileExists(atPath: configPath.path) else {
+        // Check for actual weight files, not just config.json
+        let weightIndex = fastvlmDir.appendingPathComponent("model.safetensors.index.json")
+        let singleWeight = fastvlmDir.appendingPathComponent("model.safetensors")
+        guard !FileManager.default.fileExists(atPath: weightIndex.path)
+           && !FileManager.default.fileExists(atPath: singleWeight.path) else {
             return
         }
-        print("⚙️ Triggering FastVLM 7B provision...")
-        // We will execute the mlx conversion here similar to CLaRa
+        
+        print("⚙️ Provisioning FastVLM 7B via mlx_vlm convert...")
+        do {
+            try FileManager.default.createDirectory(at: fastvlmDir, withIntermediateDirectories: true)
+            
+            // Use mlx_vlm.convert to download from HF and convert to MLX format
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+            process.arguments = [
+                "python3", "-m", "mlx_vlm.convert",
+                "--hf-path", "apple/FastVLM-7B",
+                "--mlx-path", fastvlmDir.path,
+                "--dtype", "float16"
+            ]
+            process.currentDirectoryURL = modelsDir
+            
+            try process.run()
+            process.waitUntilExit()
+            
+            if process.terminationStatus == 0 {
+                print("✅ FastVLM 7B provisioned successfully.")
+            } else {
+                print("⚠️ FastVLM 7B conversion exited with status \(process.terminationStatus)")
+                // Clean up incomplete directory so it doesn't block future attempts
+                let contents = (try? FileManager.default.contentsOfDirectory(atPath: fastvlmDir.path)) ?? []
+                if !contents.contains(where: { $0.hasSuffix(".safetensors") }) {
+                    try? FileManager.default.removeItem(at: fastvlmDir)
+                }
+            }
+        } catch {
+            print("⚠️ FastVLM 7B provisioning error: \(error)")
+        }
     }
     
     private func provisionMLSharp() async {

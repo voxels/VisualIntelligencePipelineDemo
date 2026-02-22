@@ -384,25 +384,36 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
                     configuration: config
                 )
             } else if currentModelID.starts(with: "apple/FastVLM/") {
-                // Local model has broken weights — delete it and fall back to HF Hub
+                // Local model has broken/incomplete weights — re-provision
                 print("⚠️ [FastVLMService] Local model \(currentModelID) failed: \(error)")
-                print("🔧 [FastVLMService] Deleting broken local model and falling back to HF Hub...")
+                print("🔧 [FastVLMService] Re-provisioning local model...")
+                
+                // Delete incomplete directory so provisioner runs fresh
                 try? FileManager.default.removeItem(at: Self.modelCacheDirectory)
                 Self.invalidateModelIDCache()
                 
-                let hubRepo = Self.optimalHuggingFaceRepo
-                print("📥 [FastVLMService] Downloading from HF Hub: \(hubRepo)")
-                let hubConfig = ModelConfiguration(id: hubRepo)
-                Self.patchVisionConfigIfNeeded(modelID: hubRepo)
+                #if os(macOS)
+                // Re-run the provisioner to convert from HF PyTorch weights
+                await EdgeModelProvisioner.shared.provisionAll()
+                
+                // Retry loading after provisioning
+                let retryConfig = ModelConfiguration(directory: Self.modelCacheDirectory)
+                Self.patchVisionConfigIfNeeded(modelID: Self.modelID)
+                self.container = try await VLMModelFactory.shared.loadContainer(
+                    configuration: retryConfig
+                )
+                #else
+                // iOS: fall back to the 0.5B HF Hub model
+                let hubConfig = ModelConfiguration(id: "mlx-community/FastVLM-0.5B-bf16")
                 self.container = try await VLMModelFactory.shared.loadContainer(
                     configuration: hubConfig
                 ) { update in
                     let pct = Int(update.fractionCompleted * 100)
                     if pct % 25 == 0 {
-                        print("📥 [FastVLMService] Auto-heal download: \(pct)%")
+                        print("📥 [FastVLMService] Fallback download: \(pct)%")
                     }
                 }
-                Self.markModelCached()
+                #endif
             } else {
                 throw error
             }
