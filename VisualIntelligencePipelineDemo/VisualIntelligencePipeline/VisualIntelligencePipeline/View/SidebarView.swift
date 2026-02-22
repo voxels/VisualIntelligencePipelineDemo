@@ -31,7 +31,7 @@ struct SidebarView: View {
     // MARK: - State
     @State private var collectionsExpanded = true
     @State private var sessionsExpanded = true
-    @State private var processingExpanded = true
+
     @State private var selectedPhotos: [PhotosPickerItem] = []
     
     // Collection Management State
@@ -59,15 +59,11 @@ struct SidebarView: View {
     // Cached Intelligence Section Data (computed asynchronously to avoid main-thread SwiftData faults)
     @State private var cachedRelatedConcepts: [UserConcept] = []
     
-    // MARK: - Queries (6 total — minimise @Query count to reduce main-thread blocking)
-    // Each @Query re-fetches ALL matches eagerly on every CloudKit merge / data mutation.
-    // Derive subsets with computed properties instead of adding more @Query declarations.
-    // NOTE: Using != exclusion to avoid type-checker timeout with 3+ || chains in #Predicate.
+    // MARK: - Queries (4 in parent — sections own their own queries for isolated re-renders)
+    // Sections like Processing, Favorites, Intelligence, Inbox own their own @Query
+    // so data changes only re-render those sections, not the entire sidebar.
     @Query(filter: #Predicate<ProcessedItem> { $0.statusRaw != "queued" && $0.statusRaw != "processing" && $0.statusRaw != "failed" }, sort: \ProcessedItem.updatedAt, order: .reverse)
     private var readyItems: [ProcessedItem]
-    
-    @Query(filter: #Predicate<ProcessedItem> { $0.statusRaw == "queued" || $0.statusRaw == "processing" }, sort: \ProcessedItem.updatedAt, order: .reverse)
-    private var processingItems: [ProcessedItem]
     
     @Query(sort: \SessionCollection.updatedAt, order: .reverse)
     private var collections: [SessionCollection]
@@ -78,26 +74,8 @@ struct SidebarView: View {
     @Query(sort: \UserConcept.weight, order: .reverse)
     private var allConcepts: [UserConcept]
     
-    // MARK: - Derived Subsets (no extra @Query — filtered in-memory)
-    
-    /// Items still being enriched in Phase 2 (derived from readyItems)
-    private var enrichingItems: [ProcessedItem] {
-        readyItems.filter { $0.statusRaw == ProcessingStatus.enriching.rawValue }
-    }
-    
-    /// Favorited items (derived from readyItems)
-    private var favoriteItems: [ProcessedItem] {
-        readyItems.filter { $0.isFavorite }
-    }
-    
-    /// Favorited sessions (derived from sessions)
-    private var favoriteSessions: [SessionMetadata] {
-        sessions.filter { $0.isFavorite }
-    }
-    
     // MARK: - Computed Properties
     
-
     /// Session IDs that belong to any collection
     private var collectionSessionIDs: Set<String> {
         Set(collections.flatMap { $0.sessionIDs })
@@ -108,10 +86,7 @@ struct SidebarView: View {
         sessions.filter { !collectionSessionIDs.contains($0.sessionID) }
     }
     
-    /// Items with no sessionID
-    private var uncategorizedItems: [ProcessedItem] {
-        readyItems.filter { $0.sessionID == nil }
-    }
+
     
     
     // MARK: - Library Sorting
@@ -149,16 +124,24 @@ struct SidebarView: View {
             // Agentic Search Entry Point
             agenticSearchSection
             
-            // Intelligence Actions
-            intelligenceSection
+            // Intelligence Actions (owns its own @Query for sessions)
+            SidebarIntelligenceSection(
+                viewModel: viewModel,
+                cachedRelatedConcepts: cachedRelatedConcepts
+            )
             
             // Daily Summary
             if ContextQuestionService.isAvailable, let service = Services.shared.dailyContextService {
                 DailySummaryCard(service: service)
             }
             
-            // Collections with Sessions
-            favoritesSection
+            // Favorites (owns its own @Query for favorites)
+            SidebarFavoritesSection(
+                selectedSession: $selectedSession,
+                viewModel: viewModel
+            )
+            
+            // Library (collections + sessions)
             librarySection
             
             // Shared with You
@@ -166,15 +149,11 @@ struct SidebarView: View {
                 SharedWithYouView(manager: sharedWithYouManager)
             }
                         
-            // Inbox (Uncategorized Items)
-            if !uncategorizedItems.isEmpty {
-                inboxSection
-            }
+            // Inbox (owns its own @Query for uncategorized items)
+            SidebarInboxSection(viewModel: viewModel)
                         
-            // Processing Items - moved above Memory/Today
-            if !processingItems.isEmpty {
-                processingSection
-            }
+            // Processing (owns its own @Query for processing items)
+            SidebarProcessingSection(viewModel: viewModel)
             
             // Memory/Concepts
             memorySection
@@ -183,7 +162,6 @@ struct SidebarView: View {
             // Debug Info
             Section("Info") {
                 Text("Total Items: \(readyItems.count)")
-                Text("Uncategorized: \(uncategorizedItems.count)")
                 Text("Sessions: \(sessions.count)")
             }
             #endif
@@ -501,67 +479,6 @@ struct SidebarView: View {
         }
     }
     
-    @ViewBuilder
-    private var favoritesSection: some View {
-        if !favoriteItems.isEmpty || !favoriteSessions.isEmpty {
-            Section("Favorites") {
-                // Favorite Sessions
-                ForEach(favoriteSessions) { session in
-                    NavigationLink(value: session) {
-                        Label {
-                            Text(session.displayTitle)
-                        } icon: {
-                            Image(systemName: "star.fill")
-                                .foregroundStyle(.yellow)
-                        }
-                    }
-                    .contextMenu {
-                        Button {
-                            viewModel.toggleFavorite(for: session, context: modelContext)
-                        } label: {
-                            Label("Unfavorite", systemImage: "star.slash")
-                        }
-                    }
-                }
-                
-                // Favorite Items
-                ForEach(favoriteItems) { item in
-                    Button {
-                        // Find parent session
-                        if let sessionID = item.sessionID {
-                            if let session = sessions.first(where: { $0.sessionID == sessionID }) {
-                                selectedSession = session
-                                navigationManager.selectedSession = session
-                            }
-                        }
-                        // Select the item itself
-                        navigationManager.selection = item
-                    } label: {
-                        ItemRow(item: item)
-                    }
-                    .buttonStyle(.plain)
-                    .contextMenu {
-                        if let sessionID = item.sessionID, let session = sessions.first(where: { $0.sessionID == sessionID }) {
-                            Button {
-                                viewModel.setSessionAsCurrent(session, context: modelContext)
-                            } label: {
-                                Label("Set session as Current", systemImage: "clock.arrow.2.circlepath")
-                            }
-                            Divider()
-                        }
-                        
-                        Button {
-                            viewModel.toggleFavorite(for: item, context: modelContext)
-                        } label: {
-                            Label(item.isFavorite ? "Unfavorite" : "Favorite",
-                                  systemImage: item.isFavorite ? "star.slash" : "star.fill")
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
     
     // MARK: - Sections
     
@@ -610,253 +527,6 @@ struct SidebarView: View {
         }
     }
 
-    
-
-    
-    @ViewBuilder
-    private var intelligenceSection: some View {
-        Section("Current Context") {
-                if let lastSession = sessions.first {
-                    // Full contextual summary
-                    if ContextQuestionService.isAvailable, let summary = lastSession.summary, !summary.isEmpty {
-                        Text(summary)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .padding(.vertical, 8)
-                    }
-                    
-                    // Related concepts chips — computed asynchronously to avoid
-                    // faulting 292 ProcessedItem.purposes during body evaluation
-                    if ContextQuestionService.isAvailable, !cachedRelatedConcepts.isEmpty {
-                        let concepts = cachedRelatedConcepts
-                        if !concepts.isEmpty {
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 8) {
-                                    ForEach(concepts) { concept in
-                                        Text(concept.name)
-                                            .font(.caption)
-                                            .fontWeight(.medium)
-                                            .foregroundStyle(.purple)
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
-                                            .background(
-                                                Capsule()
-                                                    .fill(.purple.opacity(0.1))
-                                            )
-                                            .overlay(
-                                                Capsule()
-                                                    .strokeBorder(.purple.opacity(0.3), lineWidth: 1)
-                                            )
-                                    }
-                                }
-                                .padding(.vertical, 4)
-                            }
-                        }
-                    }
-                    
-                    Button {
-                        navigationManager.scanSessionID = lastSession.sessionID
-                        navigationManager.isScanActive = true
-                    } label: {
-                        HStack(spacing: 12) {
-                            // Thumbnail Preview
-                            if let preview = previewImage(for: lastSession) {
-                                Image(uiImage: preview)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 44, height: 44)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .strokeBorder(.white.opacity(0.2), lineWidth: 1)
-                                    )
-                            } else {
-                                Image(systemName: "plus.viewfinder")
-                                    .font(.title2)
-                                    .frame(width: 44, height: 44)
-                                    .background(.cyan.opacity(0.1))
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                                    .foregroundStyle(.cyan)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Add Image")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.primary)
-                                
-                                if let location = lastSession.locationName {
-                                    Text(location)
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                        .lineLimit(1)
-                                } else {
-                                    Text(lastSession.title ?? "Current Session")
-                                        .font(.caption2)
-                                    .lineLimit(1)
-                                }
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .contextMenu {
-                        Button {
-                            viewModel.importTargetSession = lastSession
-                            viewModel.isImporting = true
-                        } label: {
-                            Label("Import from Photos", systemImage: "photo")
-                        }
-                    }
-                    
-                    // New Note button - creates empty document for this session
-                    Button {
-                        let newNote = viewModel.createNewNoteForSession(lastSession, context: modelContext)
-                        // Ensure we navigate hierarchy: Session -> Item
-                        // 1. Select the session (Pushes Content Pane on iPhone)
-                        navigationManager.selectedSession = lastSession
-                        // 2. Select the item (Pushes Detail Pane)
-                        navigationManager.selection = newNote
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "doc.text.fill")
-                                .font(.title2)
-                                .frame(width: 44, height: 44)
-                                .background(.purple.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                                .foregroundStyle(.purple)
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Add Note")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.primary)
-                                
-                                Text("Add text to context")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-                        }
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    Button {
-                        navigationManager.scanSessionID = nil // Start fresh
-                        navigationManager.isScanActive = true
-                    } label: {
-                        Label("Scan for Context", systemImage: "sparkles.tv")
-                            .foregroundStyle(.cyan)
-                    }
-                }
-            }
-        }
-    
-    private func previewImage(for session: SessionMetadata) -> UIImage? {
-        viewModel.previewImage(for: session, allItems: readyItems)
-    }
-    
-    @ViewBuilder
-    private var inboxSection: some View {
-        Section("Inbox") {
-            ForEach(uncategorizedItems) { item in
-                Button {
-                    // Navigate to item
-                    navigationManager.selection = item
-                } label: {
-                    ItemRow(item: item)
-                }
-                .buttonStyle(.plain)
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    Button(role: .destructive) {
-                        viewModel.deleteItem(item, context: modelContext)
-                    } label: {
-                        Label("Delete Item", systemImage: "trash")
-                    }
-                }
-                .contextMenu {
-                    Button {
-                        viewModel.toggleFavorite(for: item, context: modelContext)
-                    } label: {
-                        Label(item.isFavorite ? "Unfavorite" : "Favorite",
-                              systemImage: item.isFavorite ? "star.slash" : "star.fill")
-                    }
-                    
-                    if !collections.isEmpty {
-                        Menu {
-                            ForEach(collections) { collection in
-                                Button {
-                                    // Move item to a new session in this collection?
-                                    // Or just assign to collection (not supported directly on item)
-                                    // Best: Create new session in collection with this item
-                                    _ = viewModel.createSessionWithItem(item, in: collection, context: modelContext)
-                                } label: {
-                                    Label(collection.name, systemImage: "folder")
-                                }
-                            }
-                        } label: {
-                            Label("Move to Collection", systemImage: "folder.badge.plus")
-                        }
-                    }
-                }
-                .draggable(ItemTransfer(id: item.id))
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var processingSection: some View {
-        Section {
-            DisclosureGroup(isExpanded: $processingExpanded) {
-                ForEach(processingItems) { item in
-                    HStack {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(item.title ?? item.displayLabel)
-                                .font(.subheadline)
-                                .lineLimit(1)
-                            
-                            // Status subtitle from processing log or status
-                            if let lastLog = item.processingLog.last {
-                                // Extract just the message part after the date
-                                let message = lastLog.components(separatedBy: ": ").dropFirst().joined(separator: ": ")
-                                Text(message.isEmpty ? item.status.rawValue.capitalized : message)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            } else {
-                                Text(item.status.rawValue.capitalized)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button {
-                            viewModel.processNow(item)
-                        } label: {
-                            Label("Process Now", systemImage: "bolt.fill")
-                        }
-                        .tint(.blue)
-                    }
-                    .swipeActions(edge: .leading, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            viewModel.cancelProcessing(item, context: modelContext)
-                        } label: {
-                            Label("Cancel", systemImage: "xmark.circle")
-                        }
-                    }
-                }
-            } label: {
-                Label("Processing (\(processingItems.count))", systemImage: "gear")
-                    .foregroundStyle(.orange)
-            }
-        }
-    }
-    
-    /// Process an item immediately with high priority
-    
-    
     
     @ViewBuilder
     private var memorySection: some View {
