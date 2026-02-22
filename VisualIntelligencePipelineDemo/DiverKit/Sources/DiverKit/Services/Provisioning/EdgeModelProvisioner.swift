@@ -237,24 +237,28 @@ public actor EdgeModelProvisioner {
         do {
             try FileManager.default.createDirectory(at: fastvlmDir, withIntermediateDirectories: true)
             
-            // Use mlx_vlm.convert to download from HF AND convert to MLX format
-            // This produces MLX-compatible weight files that mlx-swift-lm can load
+            // Use mlx_vlm.convert CLI to download from HF AND convert to MLX format.
+            // Requires PyTorch for weight loading. Auto-installs missing deps.
             let conversionScript = """
-            import subprocess, sys
-            try:
-                from mlx_vlm import convert
-            except ImportError:
-                print("Installing mlx-vlm...")
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "mlx-vlm", "--quiet"])
-                from mlx_vlm import convert
+            import subprocess, sys, importlib
+            
+            # Check and install deps
+            deps = {'torch': 'torch', 'mlx_vlm': 'mlx-vlm'}
+            for mod, pkg in deps.items():
+                try:
+                    importlib.import_module(mod)
+                except ImportError:
+                    print(f"Installing {pkg}...")
+                    subprocess.check_call([sys.executable, "-m", "pip", "install", pkg, "--quiet"])
             
             print("Converting apple/FastVLM-7B to MLX format...")
-            convert.convert(
-                "apple/FastVLM-7B",
-                mlx_path="\(fastvlmDir.path)",
-                dtype="float16"
-            )
-            print("Conversion complete.")
+            result = subprocess.run([
+                sys.executable, "-m", "mlx_vlm.convert",
+                "--hf-path", "apple/FastVLM-7B",
+                "--mlx-path", "\(fastvlmDir.path)",
+                "--dtype", "float16"
+            ])
+            sys.exit(result.returncode)
             """
             
             let process = Process()
