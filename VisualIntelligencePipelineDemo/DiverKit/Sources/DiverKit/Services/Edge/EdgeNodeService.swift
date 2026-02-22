@@ -276,13 +276,14 @@ public distributed actor EdgeContextActor {
             return CGImageSourceCreateImageAtIndex(source, 0, nil)
         }
         
-        // FastVLM requires an image — skip if none available
-        guard let image = cgImage, FastVLMEnrichmentService.isAvailable else {
-            print("⚠️ [EdgeContextActor] No image or FastVLM unavailable — using text fallback")
+        // FastVLM requires an image
+        guard let image = cgImage else {
+            print("⚠️ [EdgeContextActor] No image — using text fallback")
             return "\(String(text.prefix(200)))..."
         }
         
-        // Use FastVLM with a summarization-specific prompt (not the generic image analysis prompt).
+        // Use FastVLM with a summarization-specific prompt.
+        // Don't check isAvailable — the daemon's model cache path differs but FastVLM works fine.
         let service = FastVLMEnrichmentService()
         if let result = try await service.summarize(image: image, context: text) {
             return result

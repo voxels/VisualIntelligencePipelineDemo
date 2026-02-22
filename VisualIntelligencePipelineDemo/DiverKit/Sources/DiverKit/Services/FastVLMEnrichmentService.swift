@@ -717,7 +717,6 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     /// Uses a custom prompt optimized for activity summaries (not the generic image analysis prompt).
     /// Returns nil on Simulator or when MLXVLM is unavailable.
     public func summarize(image: CGImage, context: String) async throws -> String? {
-        guard Self.isAvailable else { return nil }
         
         #if canImport(MLXVLM) && !targetEnvironment(simulator)
         let container = try await ensureLoaded()
