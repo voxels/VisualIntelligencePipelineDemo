@@ -283,10 +283,14 @@ public distributed actor EdgeContextActor {
         }
         
         // Use FastVLM with a summarization-specific prompt.
-        // Don't check isAvailable — the daemon's model cache path differs but FastVLM works fine.
+        // Wrapped in do/catch: model config may be incompatible on some devices (e.g., FastVLM/7B).
         let service = FastVLMEnrichmentService()
-        if let result = try await service.summarize(image: image, context: text) {
-            return result
+        do {
+            if let result = try await service.summarize(image: image, context: text) {
+                return result
+            }
+        } catch {
+            print("⚠️ [EdgeContextActor] FastVLM summarize failed: \(error) — using text fallback")
         }
         
         return "\(String(text.prefix(200)))..."
