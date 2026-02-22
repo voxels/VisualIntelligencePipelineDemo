@@ -100,21 +100,22 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
         let hw = CapabilityRouter.shared.currentCapability
         DiverLogger.pipeline.info("📥 [CLaRa] Download check — chip: \(hw.chipFamily), RAM: \(hw.physicalMemoryGB)GB")
         
+        // apple/CLaRa-7B-Instruct is PyTorch format — MLXLLM can't load it directly.
+        // On iOS/iPadOS, CLaRa runs via the macOS EdgeDaemon (which converts PyTorch→MLX).
+        // Only attempt download on macOS where we have the full provisioning pipeline.
+        #if !os(macOS)
+        DiverLogger.pipeline.info("⏭️ [CLaRa] Skipping on-device download — PyTorch model requires macOS EdgeDaemon for MLX conversion. Use edge node instead.")
+        return
+        #endif
+        
         guard !hasModelCached else {
             DiverLogger.pipeline.info("✅ [CLaRa] Model already cached")
             progress(1.0)
             return
         }
         
-        // Don't re-attempt a download that previously failed for this repo
-        // (e.g., apple/CLaRa-7B-Instruct is PyTorch format — MLXLLM can't load it)
-        let repo = Self.optimalHuggingFaceRepo
-        if UserDefaults.standard.string(forKey: Self.downloadFailedKey) == repo {
-            DiverLogger.pipeline.info("⏭️ [CLaRa] Skipping download — \(repo) previously failed (incompatible format). Use edge node instead.")
-            return
-        }
-        
         #if canImport(MLXLLM) && !targetEnvironment(simulator)
+        let repo = Self.optimalHuggingFaceRepo
         DiverLogger.pipeline.info("📥 [CLaRa] Starting background download: \(repo) for \(hw.chipFamily) (\(hw.physicalMemoryGB)GB)")
         
         let config = MLXLMCommon.ModelConfiguration(id: repo)
