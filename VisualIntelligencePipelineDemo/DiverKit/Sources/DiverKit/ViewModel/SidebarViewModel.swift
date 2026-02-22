@@ -532,9 +532,15 @@ public final class SidebarViewModel {
     }
     
     public func processNow(_ item: ProcessedItem) {
+        item.status = .processing
         let itemID = item.id
         Task.detached(priority: .utility) { [pipelineService] in
-            try? await pipelineService?.processItemByID(itemID)
+            do {
+                try await pipelineService?.processItemByID(itemID)
+                await MainActor.run { item.status = .ready }
+            } catch {
+                await MainActor.run { item.status = .failed }
+            }
         }
     }
     

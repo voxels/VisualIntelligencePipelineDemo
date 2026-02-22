@@ -279,11 +279,16 @@ public class ReferenceDetailViewModel: ObservableObject {
                 if let pipeline = await MainActor.run(body: { Services.shared.metadataPipelineService }) {
                     try await pipeline.processItemByID(itemID)
                     print("✅ Immediate refresh completed for \(itemID)")
+                    // Update the main-context item status — processItemByID writes to a
+                    // private background ModelContext, so the main-context copy stays stale.
+                    await MainActor.run { item.status = .ready }
                 } else {
                     print("❌ MetadataPipelineService not available")
+                    await MainActor.run { item.status = .failed }
                 }
             } catch {
                 print("❌ Failed to trigger immediate refresh: \(error)")
+                await MainActor.run { item.status = .failed }
             }
         }
     }
