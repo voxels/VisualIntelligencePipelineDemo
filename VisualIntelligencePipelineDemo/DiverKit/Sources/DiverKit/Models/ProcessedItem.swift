@@ -83,6 +83,8 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
     public var nowcastContextData: Data?
     /// Ethical platform matches with affiliate URLs
     public var affiliateContextData: Data?
+    /// ESG product enrichment (Open Food Facts, Open Beauty Facts, etc.)
+    public var esgContextData: Data?
     public var questions: [String] = [] 
     
     // Computed Accessors
@@ -139,6 +141,11 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
     public var affiliateContext: [PlatformMatch]? {
         get { decode(affiliateContextData) }
         set { affiliateContextData = encode(newValue) }
+    }
+    
+    public var esgContext: ESGEnrichment? {
+        get { decode(esgContextData) }
+        set { esgContextData = encode(newValue) }
     }
     
     private func decode<T: Codable>(_ data: Data?) -> T? {

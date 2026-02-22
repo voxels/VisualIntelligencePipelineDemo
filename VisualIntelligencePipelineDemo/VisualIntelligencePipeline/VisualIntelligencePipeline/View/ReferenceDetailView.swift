@@ -525,6 +525,122 @@ struct ReferenceDetailContent: View {
                     }
                 }
                 
+                // Product Details Section (ESG / Open *Facts data)
+                if let esg = item.esgContext {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: "leaf.fill")
+                                .foregroundStyle(.green)
+                            Text("Product Details")
+                                .font(.title3)
+                                .bold()
+                            Spacer()
+                            Text(esg.source)
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        // Product name
+                        if let name = esg.genericName {
+                            DetailRow(label: "Product", value: name)
+                        }
+                        if let qty = esg.quantity {
+                            DetailRow(label: "Size", value: qty)
+                        }
+                        
+                        // Scores row
+                        HStack(spacing: 16) {
+                            if let eco = esg.ecoScore {
+                                ScoreBadge(label: "Eco-Score", value: eco.uppercased(), color: gradeColor(eco))
+                            }
+                            if let nutri = esg.nutriScore {
+                                ScoreBadge(label: "Nutri-Score", value: nutri.uppercased(), color: gradeColor(nutri))
+                            }
+                            if let nova = esg.novaGroup {
+                                ScoreBadge(label: "NOVA", value: "\(nova)/4", color: nova <= 2 ? .green : nova == 3 ? .orange : .red)
+                            }
+                            if let carbon = esg.carbonIntensity {
+                                ScoreBadge(label: "CO₂", value: String(format: "%.1f", carbon), color: carbon < 2 ? .green : carbon < 5 ? .orange : .red)
+                            }
+                        }
+                        
+                        // Ingredients
+                        if let ingredients = esg.ingredientsText, !ingredients.isEmpty {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Ingredients")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                Text(ingredients)
+                                    .font(.caption)
+                                    .lineLimit(5)
+                            }
+                        }
+                        
+                        // Allergens & Traces
+                        if !esg.allergens.isEmpty {
+                            DetailRow(label: "Allergens", value: esg.allergens.joined(separator: ", "))
+                        }
+                        if !esg.traces.isEmpty {
+                            DetailRow(label: "May contain", value: esg.traces.joined(separator: ", "))
+                        }
+                        
+                        // Origin & Packaging
+                        if let origin = esg.origins {
+                            DetailRow(label: "Origin", value: origin)
+                        }
+                        if let mfg = esg.manufacturingPlaces {
+                            DetailRow(label: "Made in", value: mfg)
+                        }
+                        if let packaging = esg.packagingText {
+                            DetailRow(label: "Packaging", value: packaging)
+                        }
+                        
+                        // Certifications
+                        if !esg.certifications.isEmpty {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Certifications")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                FlowLayout(spacing: 6) {
+                                    ForEach(esg.certifications, id: \.self) { cert in
+                                        Text(cert)
+                                            .font(.caption2)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 3)
+                                            .background(.green.opacity(0.15), in: Capsule())
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Nutrition highlights
+                        if !esg.nutriments.isEmpty {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Nutrition (per serving)")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                let sorted = esg.nutriments.sorted { $0.key < $1.key }.prefix(8)
+                                ForEach(Array(sorted), id: \.key) { key, value in
+                                    HStack {
+                                        Text(key.replacingOccurrences(of: "_", with: " ").capitalized)
+                                            .font(.caption)
+                                        Spacer()
+                                        Text(String(format: "%.1f", value))
+                                            .font(.caption.monospacedDigit())
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Availability
+                        if !esg.stores.isEmpty {
+                            DetailRow(label: "Available at", value: esg.stores.joined(separator: ", "))
+                        }
+                    }
+                    .detailCardStyle()
+                }
+                
                 // EXIF Metadata Section (Camera, Exposure, etc.)
                 EXIFMetadataSection(item: item)
                 
@@ -2671,5 +2787,55 @@ struct DataVideoPlayer: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Product Details Helpers
+
+private struct DetailRow: View {
+    let label: String
+    let value: String
+    
+    var body: some View {
+        HStack(alignment: .top) {
+            Text(label)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 80, alignment: .leading)
+            Text(value)
+                .font(.caption)
+        }
+    }
+}
+
+private struct ScoreBadge: View {
+    let label: String
+    let value: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.headline.weight(.bold))
+                .foregroundStyle(color)
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(minWidth: 60)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 8)
+        .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+    }
+}
+
+private func gradeColor(_ grade: String) -> Color {
+    switch grade.uppercased() {
+    case "A": return .green
+    case "B": return .mint
+    case "C": return .yellow
+    case "D": return .orange
+    case "E": return .red
+    default: return .secondary
     }
 }

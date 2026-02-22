@@ -2179,6 +2179,9 @@ public final class LocalPipelineService {
         pipelineContext.governmentData = govEnrichment
         item.governmentContext = govEnrichment
         
+        // Persist ESG enrichment for Product Details UI
+        item.esgContext = esgEnrichment
+        
         if let gov = govEnrichment, gov.hasConcerns {
             DiverLogger.pipeline.info("⚠️ Commerce: Government data flags concerns for \(classification.name) — \(gov.recalls.count) recalls, \(gov.fdaAlerts.count) FDA alerts")
         }
