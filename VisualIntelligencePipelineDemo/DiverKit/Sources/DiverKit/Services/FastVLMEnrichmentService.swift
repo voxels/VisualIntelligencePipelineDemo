@@ -713,6 +713,51 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     }
     #endif
     
+    /// Summarize a capture session using the image + rich text context.
+    /// Uses a custom prompt optimized for activity summaries (not the generic image analysis prompt).
+    /// Returns nil on Simulator or when MLXVLM is unavailable.
+    public func summarize(image: CGImage, context: String) async throws -> String? {
+        guard Self.isAvailable else { return nil }
+        
+        #if canImport(MLXVLM) && !targetEnvironment(simulator)
+        let container = try await ensureLoaded()
+        
+        let prompt = """
+        Look at this image and the following metadata about a capture session.
+        Write a concise 1-2 sentence activity summary describing what was captured and why.
+        
+        \(String(context.prefix(3000)))
+        
+        Summary:
+        """
+        
+        let result: String = try await container.perform { ctx in
+            let ciImage = CIImage(cgImage: image)
+            let imageInput = UserInput.Image.ciImage(ciImage)
+            let lmInput = try await ctx.processor.prepare(
+                input: UserInput(prompt: prompt, images: [imageInput])
+            )
+            let params = GenerateParameters(maxTokens: 256, temperature: 0.0)
+            let stream = try MLXLMCommon.generate(
+                input: lmInput, parameters: params, context: ctx
+            )
+            var output = ""
+            for await generation in stream {
+                if case .chunk(let chunk) = generation {
+                    output += chunk
+                    if output.count > 512 { break }
+                }
+            }
+            return output
+        }
+        
+        let trimmed = result.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+        #else
+        return nil
+        #endif
+    }
+    
     public static func buildTextOnlyPrompt(
         enrichmentContext: String,
         transcription: String?

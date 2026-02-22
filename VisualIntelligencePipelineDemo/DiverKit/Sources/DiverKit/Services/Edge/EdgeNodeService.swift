@@ -282,46 +282,11 @@ public distributed actor EdgeContextActor {
             return "\(String(text.prefix(200)))..."
         }
         
-        // Use FastVLM directly with a summarization-specific prompt.
-        // The generic analyze() uses an image-analysis prompt that's wrong for session summaries.
-        #if canImport(MLXVLM) && !targetEnvironment(simulator)
+        // Use FastVLM with a summarization-specific prompt (not the generic image analysis prompt).
         let service = FastVLMEnrichmentService()
-        let container = try await service.ensureLoaded()
-        
-        let prompt = """
-        Look at this image and the following metadata about a capture session.
-        Write a concise 1-2 sentence activity summary describing what was captured and why.
-        
-        \(String(text.prefix(3000)))
-        
-        Summary:
-        """
-        
-        let result: String = try await container.perform { context in
-            let ciImage = CIImage(cgImage: image)
-            let imageInput = UserInput.Image.ciImage(ciImage)
-            let lmInput = try await context.processor.prepare(
-                input: UserInput(prompt: prompt, images: [imageInput])
-            )
-            let params = GenerateParameters(maxTokens: 256, temperature: 0.0)
-            let stream = try MLXLMCommon.generate(
-                input: lmInput, parameters: params, context: context
-            )
-            var output = ""
-            for await generation in stream {
-                if case .chunk(let chunk) = generation {
-                    output += chunk
-                    if output.count > 512 { break }
-                }
-            }
-            return output
+        if let result = try await service.summarize(image: image, context: text) {
+            return result
         }
-        
-        let trimmed = result.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !trimmed.isEmpty {
-            return trimmed
-        }
-        #endif
         
         return "\(String(text.prefix(200)))..."
     }
