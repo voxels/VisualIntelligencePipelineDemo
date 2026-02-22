@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-02-22
+
+### CLaRa iOS Download & Context Fixes
+- **Skip CLaRa Download on iOS/iPadOS**: `downloadModel()` now has `#if !os(macOS)` early return — `apple/CLaRa-7B-Instruct` is PyTorch format that MLXLLM can't load. On mobile, CLaRa runs via the macOS EdgeDaemon over Bonjour.
+- **Skip CLaRa HF Hub Load on iOS**: `loadModel()` no longer falls back to HuggingFace Hub on non-macOS platforms. Only loads from local cache directory (EdgeDaemon provisioned path).
+- **CLaRa Summary Badge**: `claraFallback()` in `EdgeContextActor` now stamps `[Model: Edge-CLaRa-7B]` on generated summaries. `BackgroundSummaryService` detects existing `[Model:]` badges to avoid double-stamping.
+- **Enriched CLaRa Context**: Rewrote CLaRa fallback prompt with structured system prompt explaining all metadata fields (OCR, tags, location, web, VLM, questions, aesthetics, product). Increased context limit from 3000 to 6000 chars.
+- **Enriched Session Summaries**: `MetadataPipelineService.generatePendingSessionSummaries()` now passes all available item metadata (tags, categories, location, web context, FastVLM analysis, questions, aesthetics, media type, product metadata) — previously only passed Title, OCR, and Place.
+- **Full Pipeline on Reprocess**: `processItemByID()` now passes `fastVLMService` to both `process()` calls, matching the normal queue path. Lightning bolt reprocess runs Vision → LLM → FastVLM → CLaRa ingestion.
+- **Download Failure Tracking**: Records failed download repo in UserDefaults so `downloadModel()` won't retry an incompatible repo on every launch.
+
 ## 2026-02-21
 
 ### CLaRa RAG Pipeline & Agentic Chat UI

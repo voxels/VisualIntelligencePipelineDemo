@@ -153,7 +153,7 @@ def generate_all():
     # --- DiverKit Services ---
     pages["diverkit-services.html"] = page(
         "DiverKit — Services",
-        "62 services covering pipeline orchestration, location/weather/web/music enrichment, ML inference, session management, distributed edge scaling, and commerce.",
+        "65 services covering pipeline orchestration, location/weather/web/music enrichment, ML inference, session management, distributed edge scaling, and commerce.",
         "dks",
         [("62", "Files"), ("62+", "Types")],
         "\n".join([
