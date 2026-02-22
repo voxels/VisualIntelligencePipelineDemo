@@ -291,31 +291,11 @@ public distributed actor EdgeContextActor {
     public typealias ActorSystem = VisualIntelligenceActorSystem
     
     distributed public func summarize(text: String, imageData: Data?) async throws -> String {
-        print("🧠 [EdgeContextActor] Summarizing text (\(text.count) characters) + image(\(imageData?.count ?? 0) bytes) using FastVLM...")
+        print("🧠 [EdgeContextActor] Summarizing text (\(text.count) characters) via CLaRa 7B...")
         
-        // Convert raw image data to CGImage using ImageIO (cross-platform)
-        let cgImage: CGImage? = imageData.flatMap { data in
-            guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
-            return CGImageSourceCreateImageAtIndex(source, 0, nil)
-        }
-        
-        // FastVLM requires an image
-        guard let image = cgImage else {
-            print("⚠️ [EdgeContextActor] No image — using CLaRa text-only summarization")
-            return try await claraFallback(context: text)
-        }
-        
-        // 1. Try FastVLM with image + text (best quality when model works)
-        let service = FastVLMEnrichmentService()
-        do {
-            if let result = try await service.summarize(image: image, context: text) {
-                return result
-            }
-        } catch {
-            print("⚠️ [EdgeContextActor] FastVLM summarize failed: \(error)")
-        }
-        
-        // 2. Fallback to CLaRa 7B (text-only LLM, already loaded on daemon)
+        // Always use CLaRa 7B for summarization — it handles long context well.
+        // FastVLM 1.5B echoes input when given metadata-heavy prompts (GIGO).
+        // FastVLM is reserved for dedicated image analysis (analyzeImage path).
         return try await claraFallback(context: text)
     }
     
