@@ -57,8 +57,13 @@ struct SidebarView: View {
     @State private var newSessionTitle = ""
     
     // MARK: - Queries
-    @Query(sort: \ProcessedItem.updatedAt, order: .reverse)
-    private var allItems: [ProcessedItem]
+    // Pre-filter to .ready status to avoid loading ALL items (292+) on every CloudKit merge.
+    // SwiftData @Query loads all matching objects eagerly — unfiltered queries block the main thread.
+    @Query(filter: #Predicate<ProcessedItem> { $0.statusRaw == "ready" }, sort: \ProcessedItem.updatedAt, order: .reverse)
+    private var readyItems: [ProcessedItem]
+    
+    @Query(filter: #Predicate<ProcessedItem> { $0.statusRaw == "queued" || $0.statusRaw == "processing" }, sort: \ProcessedItem.updatedAt, order: .reverse)
+    private var processingItems: [ProcessedItem]
     
     @Query(filter: #Predicate<ProcessedItem> { $0.isFavorite == true }, sort: \ProcessedItem.updatedAt, order: .reverse)
     private var favoriteItems: [ProcessedItem]
@@ -77,14 +82,7 @@ struct SidebarView: View {
     
     // MARK: - Computed Properties
     
-    private var readyItems: [ProcessedItem] {
-        allItems.filter { $0.status == .ready }
-    }
-    
-    private var processingItems: [ProcessedItem] {
-        allItems.filter { $0.status == .queued || $0.status == .processing }
-    }
-    
+
     /// Session IDs that belong to any collection
     private var collectionSessionIDs: Set<String> {
         Set(collections.flatMap { $0.sessionIDs })
@@ -169,7 +167,7 @@ struct SidebarView: View {
             #if DEBUG || DEBUG_MEMORY
             // Debug Info
             Section("Info") {
-                Text("Total Items: \(allItems.count)")
+                Text("Total Items: \(readyItems.count)")
                 Text("Uncategorized: \(uncategorizedItems.count)")
                 Text("Sessions: \(sessions.count)")
             }
@@ -574,7 +572,7 @@ struct SidebarView: View {
                     
                     // Related concepts chips
                     if ContextQuestionService.isAvailable {
-                        let concepts = viewModel.relatedConcepts(for: lastSession, allItems: allItems, allConcepts: allConcepts)
+                        let concepts = viewModel.relatedConcepts(for: lastSession, allItems: readyItems, allConcepts: allConcepts)
                         if !concepts.isEmpty {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 8) {
@@ -698,7 +696,7 @@ struct SidebarView: View {
         }
     
     private func previewImage(for session: SessionMetadata) -> UIImage? {
-        viewModel.previewImage(for: session, allItems: allItems)
+        viewModel.previewImage(for: session, allItems: readyItems)
     }
     
     @ViewBuilder
@@ -888,7 +886,7 @@ extension SidebarView {
                 SidebarSessionRow(
                     session: session,
                     viewModel: viewModel,
-                    allItems: allItems,
+                    allItems: readyItems,
                     allConcepts: allConcepts,
                     onLocationEdit: { sessionForLocationEdit = $0 },
                     onRename: { s, t in sessionToRename = s; newSessionTitle = t },
@@ -949,7 +947,7 @@ extension SidebarView {
         SidebarSessionRow(
             session: session,
             viewModel: viewModel,
-            allItems: allItems,
+            allItems: readyItems,
             allConcepts: allConcepts,
             onLocationEdit: { sessionForLocationEdit = $0 },
             onRename: { s, t in sessionToRename = s; newSessionTitle = t },
