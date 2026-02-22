@@ -15,7 +15,7 @@ packages:
 
 targets:
   EdgeDaemon:
-    type: tool
+    type: application
     platform: macOS
     sources:
       - path: .
@@ -25,9 +25,22 @@ targets:
           - "*.xcworkspace"
           - "*.entitlements"
           - Info.plist
+          - build.log
+          - export
+          - run_daemon.sh
+          - README.md
     dependencies:
       - package: DiverKit
       - package: DiverShared
+    info:
+      path: Info.plist
+      properties:
+        LSUIElement: true
+        LSApplicationCategoryType: public.app-category.utilities
+        CFBundleDisplayName: Visual Intelligence Edge
+        NSLocalNetworkUsageDescription: Edge Daemon advertises via Bonjour to serve ML inference to iOS devices on your local network.
+        NSBonjourServices:
+          - _visualintel._tcp
     settings:
       base:
         PRODUCT_NAME: EdgeDaemon
@@ -38,6 +51,7 @@ targets:
         DEVELOPMENT_TEAM: ""
         ENABLE_HARDENED_RUNTIME: YES
         SWIFT_STRICT_CONCURRENCY: complete
+        PRODUCT_BUNDLE_IDENTIFIER: com.secretatomics.visualintelligence.EdgeDaemon
 
 schemes:
   EdgeDaemon:
