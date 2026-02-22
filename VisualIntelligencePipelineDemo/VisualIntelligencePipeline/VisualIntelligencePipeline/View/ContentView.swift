@@ -153,6 +153,23 @@ struct SessionItemsView: View {
         }.sorted { $0.updatedAt > $1.updatedAt }
     }
     
+    /// Parent/master items only — these appear as top-level rows
+    private var parentItems: [ProcessedItem] {
+        sessionItems.filter { item in
+            // A parent item either has no masterCaptureID, or its masterCaptureID == its own id
+            item.masterCaptureID == nil || item.masterCaptureID == item.id
+        }
+    }
+    
+    /// Child items for a given parent (matched by masterCaptureID)
+    private func childItems(for parent: ProcessedItem) -> [ProcessedItem] {
+        sessionItems.filter { item in
+            item.masterCaptureID == parent.masterCaptureID
+            && item.masterCaptureID != nil
+            && item.id != parent.id
+        }
+    }
+    
     var body: some View {
         Group {
             if let _ = session {
@@ -210,13 +227,33 @@ struct SessionItemsView: View {
     private var itemList: some View {
         List(selection: $selection) {
             Section {
-                ForEach(sessionItems) { item in
+                ForEach(parentItems) { item in
                     ItemRowContainer(
                         item: item,
                         viewModel: viewModel,
                         modelContext: modelContext,
                         selection: $selection
                     )
+                    
+                    // Show child items (QR codes, web links, documents) as indented sub-items
+                    let children = childItems(for: item)
+                    if !children.isEmpty {
+                        DisclosureGroup {
+                            ForEach(children) { child in
+                                ItemRowContainer(
+                                    item: child,
+                                    viewModel: viewModel,
+                                    modelContext: modelContext,
+                                    selection: $selection
+                                )
+                                .padding(.leading, 8)
+                            }
+                        } label: {
+                            Label("\(children.count) Related", systemImage: "link")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             } header: {
                 VStack(alignment: .leading, spacing: 8) {
