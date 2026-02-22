@@ -298,7 +298,7 @@ struct VisualIntelligencePipelineApp: App {
                     // The index is used for RAG retrieval when querying CLaRa locally
                     // or when sending context to the EdgeDaemon.
                     Task.detached(priority: .utility) {
-                        CLaRaLatentService.shared.populateIndex(container: dataStore.container)
+                        await CLaRaLatentService.shared.populateIndex(container: dataStore.container)
                     }
 
                     if #available(iOS 16.0, macOS 13.0, *) {

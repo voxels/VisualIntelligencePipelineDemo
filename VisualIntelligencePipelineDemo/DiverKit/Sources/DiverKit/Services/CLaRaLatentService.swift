@@ -409,7 +409,9 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
     /// Bulk-populate the document index from ProcessedItems in the SwiftData container.
     /// On first launch, indexes everything. On subsequent launches, only indexes
     /// items updated since the last index run (incremental).
-    public func populateIndex(container: SwiftData.ModelContainer) {
+    /// Batched in groups of 50 with async yields to avoid blocking the main-thread
+    /// CoreData coordinator with massive WAL checkpoints.
+    public func populateIndex(container: SwiftData.ModelContainer) async {
         let context = SwiftData.ModelContext(container)
         context.autosaveEnabled = false
         
@@ -417,56 +419,80 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
         let lastIndexedAt = UserDefaults.standard.object(forKey: lastIndexedKey) as? Date
         let isIncremental = lastIndexedAt != nil && documentCount > 0
         
-        var descriptor = FetchDescriptor<ProcessedItem>(
-            sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
-        )
-        
-        if isIncremental, let since = lastIndexedAt {
-            descriptor.predicate = #Predicate { item in
-                item.updatedAt > since
-            }
-        }
+        let batchSize = 50
+        var offset = 0
+        var totalItems = 0
+        var totalChunks = 0
+        let mode = isIncremental ? "incremental" : "full"
         
         do {
-            let items = try context.fetch(descriptor)
+            // First pass: get total count for logging
+            var countDescriptor = FetchDescriptor<ProcessedItem>()
+            if isIncremental, let since = lastIndexedAt {
+                countDescriptor.predicate = #Predicate { item in
+                    item.updatedAt > since
+                }
+            }
+            let itemCount = try context.fetchCount(countDescriptor)
             
-            guard !items.isEmpty || !isIncremental else {
+            guard itemCount > 0 || !isIncremental else {
                 DiverLogger.pipeline.info("🧩 [CLaRa] Index up to date — no new items since last run")
                 return
             }
             
-            let mode = isIncremental ? "incremental" : "full"
-            DiverLogger.pipeline.info("🧩 [CLaRa] Populating index (\(mode)): \(items.count) items...")
+            DiverLogger.pipeline.info("🧩 [CLaRa] Populating index (\(mode)): \(itemCount) items...")
             
-            var totalChunks = 0
-            for item in items {
-                let chunks = ingestProcessedItem(
-                    id: item.id,
-                    title: item.title,
-                    summary: item.summary,
-                    transcription: item.transcription,
-                    tags: item.tags,
-                    visualTags: item.visualTags,
-                    categories: item.categories,
-                    location: item.location,
-                    purposes: item.purposes,
-                    productMetadata: item.productMetadata,
-                    url: item.url,
-                    placeContextData: item.placeContextData,
-                    webContextData: item.webContextData,
-                    weatherContextData: item.weatherContextData,
-                    documentContextData: item.documentContextData,
-                    qrContextData: item.qrContextData,
-                    fastVLMAnalysisData: item.fastVLMAnalysisData,
-                    questions: item.questions
+            // Batch fetch and process
+            while true {
+                var descriptor = FetchDescriptor<ProcessedItem>(
+                    sortBy: [SortDescriptor(\.updatedAt, order: .reverse)]
                 )
-                totalChunks += chunks
+                if isIncremental, let since = lastIndexedAt {
+                    descriptor.predicate = #Predicate { item in
+                        item.updatedAt > since
+                    }
+                }
+                descriptor.fetchLimit = batchSize
+                descriptor.fetchOffset = offset
+                
+                let batch = try context.fetch(descriptor)
+                if batch.isEmpty { break }
+                
+                for item in batch {
+                    let chunks = ingestProcessedItem(
+                        id: item.id,
+                        title: item.title,
+                        summary: item.summary,
+                        transcription: item.transcription,
+                        tags: item.tags,
+                        visualTags: item.visualTags,
+                        categories: item.categories,
+                        location: item.location,
+                        purposes: item.purposes,
+                        productMetadata: item.productMetadata,
+                        url: item.url,
+                        placeContextData: item.placeContextData,
+                        webContextData: item.webContextData,
+                        weatherContextData: item.weatherContextData,
+                        documentContextData: item.documentContextData,
+                        qrContextData: item.qrContextData,
+                        fastVLMAnalysisData: item.fastVLMAnalysisData,
+                        questions: item.questions
+                    )
+                    totalChunks += chunks
+                }
+                
+                totalItems += batch.count
+                offset += batchSize
+                
+                // Yield to let the main thread process pending WAL checkpoints
+                await Task.yield()
             }
             
             // Persist the high-water mark
             UserDefaults.standard.set(Date(), forKey: lastIndexedKey)
             
-            DiverLogger.pipeline.info("✅ [CLaRa] Index populated (\(mode)): \(items.count) items → \(totalChunks) chunks (total: \(self.documentCount))")
+            DiverLogger.pipeline.info("✅ [CLaRa] Index populated (\(mode)): \(totalItems) items → \(totalChunks) chunks (total: \(self.documentCount))")
         } catch {
             DiverLogger.pipeline.error("❌ [CLaRa] Failed to populate index: \(error)")
         }
