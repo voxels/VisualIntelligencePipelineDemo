@@ -520,7 +520,7 @@ struct VisualIntelligenceHUD: View {
         }
         .padding(.bottom, 30)
         .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
-        .sheet(isPresented: $showingSpatialAR) {
+        .fullScreenCover(isPresented: $showingSpatialAR) {
             SpatialScoreOverlayView()
         }
     }

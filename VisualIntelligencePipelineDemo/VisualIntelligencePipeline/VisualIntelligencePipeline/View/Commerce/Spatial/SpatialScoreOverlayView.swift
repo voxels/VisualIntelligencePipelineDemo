@@ -67,33 +67,48 @@ struct SpatialScoreOverlayView: View {
         }
     }
     
-    // MARK: - iOS/iPadOS (RealityView + SwiftUI overlay)
+    // MARK: - iOS/iPadOS (ARView with camera passthrough)
     
     #if !os(visionOS)
     private var iOSContent: some View {
         ZStack {
-            RealityView { content in
-                let root = Entity()
-                content.add(root)
-            }
+            // ARView with live camera feed
+            ARCameraView()
+                .ignoresSafeArea()
             
-            // Score cards as SwiftUI overlay
+            // Score cards floating at bottom
             VStack {
                 Spacer()
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(detector.detectedProducts) { product in
-                            ProductScoreAttachment(
-                                productName: product.productName,
-                                compositeScore: product.compositeScore,
-                                strategyScores: product.strategyScores,
-                                recommendation: product.recommendation
-                            )
-                        }
+                
+                if detector.detectedProducts.isEmpty {
+                    // Scanning indicator
+                    HStack(spacing: 10) {
+                        ProgressView()
+                            .tint(.white)
+                        Text("Point at products to scan…")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.white)
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .padding(.bottom, 100)
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(detector.detectedProducts) { product in
+                                ProductScoreAttachment(
+                                    productName: product.productName,
+                                    compositeScore: product.compositeScore,
+                                    strategyScores: product.strategyScores,
+                                    recommendation: product.recommendation
+                                )
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    .padding(.bottom, 80)
                 }
-                .padding(.bottom, 80)
             }
         }
     }
@@ -137,3 +152,37 @@ struct SpatialScoreOverlayView: View {
     }
     #endif
 }
+
+// MARK: - ARView UIViewRepresentable (iOS Camera Passthrough)
+
+#if !os(visionOS)
+import ARKit
+
+/// Wraps RealityKit's ARView for live camera passthrough on iOS.
+struct ARCameraView: UIViewRepresentable {
+    
+    func makeUIView(context: Context) -> ARView {
+        let arView = ARView(frame: .zero)
+        arView.cameraMode = .ar
+        arView.renderOptions = [.disableMotionBlur, .disableDepthOfField]
+        
+        // World tracking for camera passthrough
+        let config = ARWorldTrackingConfiguration()
+        config.planeDetection = [.horizontal, .vertical]
+        if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
+            config.sceneReconstruction = .mesh
+        }
+        arView.session.run(config)
+        
+        return arView
+    }
+    
+    func updateUIView(_ uiView: ARView, context: Context) {
+        // No dynamic updates needed
+    }
+    
+    static func dismantleUIView(_ uiView: ARView, coordinator: ()) {
+        uiView.session.pause()
+    }
+}
+#endif
