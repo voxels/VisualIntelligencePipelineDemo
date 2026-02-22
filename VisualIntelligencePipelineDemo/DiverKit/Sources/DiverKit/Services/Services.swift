@@ -1,8 +1,9 @@
 import Foundation
 import SwiftData
 
-@MainActor
-public final class Services {
+// Services is NOT @MainActor — background tasks must be able to read service references
+// without hopping to the main thread. Properties are set once at startup and then read-only.
+public final class Services: @unchecked Sendable {
     public static let shared = Services()
     
     /// Shared ModelContext - single source of truth for all services

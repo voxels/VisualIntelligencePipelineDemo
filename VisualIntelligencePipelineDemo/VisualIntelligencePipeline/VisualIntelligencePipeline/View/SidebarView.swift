@@ -56,6 +56,9 @@ struct SidebarView: View {
     @State private var sessionToRename: SessionMetadata?
     @State private var newSessionTitle = ""
     
+    // Cached Intelligence Section Data (computed asynchronously to avoid main-thread SwiftData faults)
+    @State private var cachedRelatedConcepts: [UserConcept] = []
+    
     // MARK: - Queries
     // Pre-filter to .ready status to avoid loading ALL items (292+) on every CloudKit merge.
     // SwiftData @Query loads all matching objects eagerly — unfiltered queries block the main thread.
@@ -198,6 +201,40 @@ struct SidebarView: View {
                 bgContext.autosaveEnabled = false
                 await viewModel.removeEmptySessions(context: bgContext)
             }
+        }
+        .task(id: sessions.first?.sessionID) {
+            // Compute related concepts off the main thread using a background context.
+            // This replaces the inline relatedConcepts() call that faulted 292 SwiftData
+            // objects during body evaluation (causing "gesture gate timed out" freezes).
+            guard let lastSession = sessions.first else {
+                cachedRelatedConcepts = []
+                return
+            }
+            let container = modelContext.container
+            let sessionID = lastSession.sessionID
+            let conceptsCopy = allConcepts
+            let result = await Task.detached(priority: .utility) { () -> [UserConcept] in
+                let bgCtx = ModelContext(container)
+                bgCtx.autosaveEnabled = false
+                let descriptor = FetchDescriptor<ProcessedItem>(
+                    predicate: #Predicate { $0.sessionID == sessionID && $0.statusRaw == "ready" }
+                )
+                guard let items = try? bgCtx.fetch(descriptor) else { return [] }
+                var sessionTerms = Set<String>()
+                for item in items {
+                    sessionTerms.formUnion(item.tags)
+                    sessionTerms.formUnion(item.categories)
+                    sessionTerms.formUnion(item.purposes)
+                }
+                let meaningfulTerms = sessionTerms.filter { !$0.hasPrefix("At: ") }
+                let related = conceptsCopy.filter { concept in
+                    meaningfulTerms.contains { term in
+                        term.lowercased() == concept.name.lowercased()
+                    }
+                }
+                return Array(related.sorted(by: { $0.weight > $1.weight }).prefix(5))
+            }.value
+            cachedRelatedConcepts = result
         }
         .task {
             for await event in pipelineService.progressStream {
@@ -576,9 +613,10 @@ struct SidebarView: View {
                             .padding(.vertical, 8)
                     }
                     
-                    // Related concepts chips
-                    if ContextQuestionService.isAvailable {
-                        let concepts = viewModel.relatedConcepts(for: lastSession, allItems: readyItems, allConcepts: allConcepts)
+                    // Related concepts chips — computed asynchronously to avoid
+                    // faulting 292 ProcessedItem.purposes during body evaluation
+                    if ContextQuestionService.isAvailable, !cachedRelatedConcepts.isEmpty {
+                        let concepts = cachedRelatedConcepts
                         if !concepts.isEmpty {
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 8) {
