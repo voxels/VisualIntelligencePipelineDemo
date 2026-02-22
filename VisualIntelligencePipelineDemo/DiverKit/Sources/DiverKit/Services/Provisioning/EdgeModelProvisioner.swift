@@ -243,7 +243,7 @@ public actor EdgeModelProvisioner {
             import subprocess, sys, importlib
             
             # Check and install deps
-            deps = {'torch': 'torch', 'mlx_vlm': 'mlx-vlm'}
+            deps = {'torch': 'torch', 'timm': 'timm', 'mlx_vlm': 'mlx-vlm'}
             for mod, pkg in deps.items():
                 try:
                     importlib.import_module(mod)
