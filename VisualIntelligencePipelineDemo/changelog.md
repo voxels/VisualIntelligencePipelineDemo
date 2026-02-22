@@ -2,6 +2,17 @@
 
 ## 2026-02-22
 
+### Edge-First Model Routing & Prompt Optimization
+- **Edge-First CLaRa Routing**: Pipeline checks for edge CLaRa 7B before running SLM (Stage 1). If available, calls `EdgeContextActor.summarizeStructured()` for summary + tags + statements + purpose in a single call. Skips SLM and local FastVLM when edge succeeds.
+- **`summarizeStructured()` Distributed Actor**: New method on `EdgeContextActor` returns `LLMAnalysisResult` with JSON-parsed structured output (summary, tags, statements, purpose). Falls back to plain summary if JSON parsing fails.
+- **CLaRa-Only Edge Summarization**: Removed FastVLM from `EdgeContextActor.summarize()` — FastVLM 1.5B echoed input when given metadata-heavy summarization prompts (GIGO). CLaRa 7B handles long context properly. FastVLM reserved for dedicated image analysis only.
+- **Specialized CLaRa Prompt**: CLaRa `summarizeStructured` prompt now includes detailed field descriptions (OCR, Vision tags, location, web, product), requests 3-7 tags, 3-5 statements, and purpose taxonomy (reference, shopping, travel, etc.).
+- **Streamlined FastVLM Prompt**: `buildGroundedPrompt` simplified per Apple FastVLM best practices: short, image-focused, no large metadata dumps. Max 200 chars OCR, 8 vision tags as grounding anchors. Enrichment context removed (overwhelmed 1.5B model).
+- **Fixed FastVLM Double-Wrapping**: Edge path was calling `buildGroundedPrompt` → passing result to `runVLM` → which called `buildGroundedPrompt` again inside `analyze()`. Now passes raw enrichment context.
+- **Edge FastVLM Always Runs**: Stage 2 edge FastVLM (1.5B) always attempts when edge available. Only local FastVLM (0.5B) fallback skipped when CLaRa already summarized. Model ID updated to `Edge-FastVLM-1.5B`.
+- **BackgroundSummaryService Predicate Fix**: Predicate had `[Model: FastVLM-` (trailing dash) but actual badge is `[Model: FastVLM]` — items never matched for upgrade. Simplified to `contains("[Model:") && !contains("[Model: Edge-CLaRa-7B]")`. Fixed `startDate` → `createdAt` on SessionMetadata sort key.
+- **Splash Screen Freeze Fix**: Splash was blocking on CLaRa index population (291 items, 771 chunks, 598MB WAL). CLaRa index now builds progressively in background — splash dismisses immediately.
+
 ### CLaRa iOS Download & Context Fixes
 - **Skip CLaRa Download on iOS/iPadOS**: `downloadModel()` now has `#if !os(macOS)` early return — `apple/CLaRa-7B-Instruct` is PyTorch format that MLXLLM can't load. On mobile, CLaRa runs via the macOS EdgeDaemon over Bonjour.
 - **Skip CLaRa HF Hub Load on iOS**: `loadModel()` no longer falls back to HuggingFace Hub on non-macOS platforms. Only loads from local cache directory (EdgeDaemon provisioned path).
