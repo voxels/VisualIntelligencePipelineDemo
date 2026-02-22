@@ -341,6 +341,8 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     
     /// Load the VLM into GPU memory. Call once at app launch.
     /// Subsequent calls are no-ops if already loaded.
+    /// Auto-heals: if a local model fails to load (broken weights), deletes it
+    /// and retries from HF Hub.
     public func loadModel() async throws {
         #if canImport(MLXVLM) && !targetEnvironment(simulator)
         guard !isModelLoaded else {
@@ -356,18 +358,17 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         // Cap MLX GPU buffer cache to 256 MB to reduce memory pressure
         GPU.set(cacheLimit: 256 * 1024 * 1024)
         
-        print("📦 [FastVLMService] Loading model into GPU memory...")
+        let currentModelID = Self.modelID
+        print("📦 [FastVLMService] Loading model \(currentModelID) into GPU memory...")
         
-        // Patch empty vision_config in HF Hub cache before loading (mlx-swift-lm bug workaround)
-        Self.patchVisionConfigIfNeeded(modelID: Self.modelID)
+        // Patch empty/missing vision_config before loading
+        Self.patchVisionConfigIfNeeded(modelID: currentModelID)
         
         let config: ModelConfiguration
-        if Self.modelID.starts(with: "apple/FastVLM/") {
-            config = ModelConfiguration(
-                directory: Self.modelCacheDirectory
-            )
+        if currentModelID.starts(with: "apple/FastVLM/") {
+            config = ModelConfiguration(directory: Self.modelCacheDirectory)
         } else {
-            config = ModelConfiguration(id: Self.modelID)
+            config = ModelConfiguration(id: currentModelID)
         }
         
         do {
@@ -378,10 +379,30 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
             let errorDesc = String(describing: error)
             if errorDesc.contains("cls_ratio") || errorDesc.contains("vision_config") {
                 print("🔧 [FastVLMService] Config decoding failed — patching vision_config and retrying")
-                Self.patchVisionConfigIfNeeded(modelID: Self.modelID)
+                Self.patchVisionConfigIfNeeded(modelID: currentModelID)
                 self.container = try await VLMModelFactory.shared.loadContainer(
                     configuration: config
                 )
+            } else if currentModelID.starts(with: "apple/FastVLM/") {
+                // Local model has broken weights — delete it and fall back to HF Hub
+                print("⚠️ [FastVLMService] Local model \(currentModelID) failed: \(error)")
+                print("🔧 [FastVLMService] Deleting broken local model and falling back to HF Hub...")
+                try? FileManager.default.removeItem(at: Self.modelCacheDirectory)
+                Self.invalidateModelIDCache()
+                
+                let hubRepo = Self.optimalHuggingFaceRepo
+                print("📥 [FastVLMService] Downloading from HF Hub: \(hubRepo)")
+                let hubConfig = ModelConfiguration(id: hubRepo)
+                Self.patchVisionConfigIfNeeded(modelID: hubRepo)
+                self.container = try await VLMModelFactory.shared.loadContainer(
+                    configuration: hubConfig
+                ) { update in
+                    let pct = Int(update.fractionCompleted * 100)
+                    if pct % 25 == 0 {
+                        print("📥 [FastVLMService] Auto-heal download: \(pct)%")
+                    }
+                }
+                Self.markModelCached()
             } else {
                 throw error
             }
