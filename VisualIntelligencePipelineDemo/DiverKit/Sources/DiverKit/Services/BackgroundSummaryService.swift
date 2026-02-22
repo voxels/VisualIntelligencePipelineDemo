@@ -73,9 +73,8 @@ public actor BackgroundSummaryService {
     var descriptor = FetchDescriptor<ProcessedItem>(
       predicate: #Predicate { item in
         if let summary = item.summary {
-          return summary.contains("[Model: SystemLanguageModel-iOS26]")
-            || summary.contains("[Model: Heuristic Fallback]")
-            || summary.contains("[Model: FastVLM-")
+          // Upgrade any item NOT already summarized by CLaRa
+          return summary.contains("[Model:") && !summary.contains("[Model: Edge-CLaRa-7B]")
         } else {
           return false
         }
@@ -163,21 +162,20 @@ public actor BackgroundSummaryService {
 
   private func upgradeSessions(nodeName: String, system: VisualIntelligenceActorSystem) async throws
   {
-    var descriptor = FetchDescriptor<SessionMetadata>(
+    var sessionDesc = FetchDescriptor<SessionMetadata>(
       predicate: #Predicate { session in
         if let summary = session.summary {
-          return summary.contains("[Model: SystemLanguageModel-iOS26]")
-            || summary.contains("[Model: Heuristic Fallback]")
-            || summary.contains("[Model: FastVLM-")
+          // Upgrade any session NOT already summarized by CLaRa
+          return summary.contains("[Model:") && !summary.contains("[Model: Edge-CLaRa-7B]")
         } else {
           return false
         }
       },
       sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
     )
-    descriptor.fetchLimit = 5
+    sessionDesc.fetchLimit = 5
 
-    let sessionsToUpgrade = try modelContext.fetch(descriptor)
+    let sessionsToUpgrade = try modelContext.fetch(sessionDesc)
 
     guard !sessionsToUpgrade.isEmpty else { return }
 
@@ -203,9 +201,8 @@ public actor BackgroundSummaryService {
         }
         
         // Select best representative image from session items
-        let bestImagePayload: Data? = items
-          .sorted { ($0.aestheticsScore ?? 0) > ($1.aestheticsScore ?? 0) }
-          .first { $0.rawPayload != nil }?.rawPayload
+        let sortedByScore: [ProcessedItem] = items.sorted { ($0.aestheticsScore ?? 0) > ($1.aestheticsScore ?? 0) }
+        let bestImagePayload: Data? = sortedByScore.first(where: { $0.rawPayload != nil })?.rawPayload
 
         var attempt = 1
         var success = false

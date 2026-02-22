@@ -362,6 +362,65 @@ public distributed actor EdgeContextActor {
         
         return "\(String(context.prefix(200)))..."
     }
+    
+    /// Structured summarization returning summary + tags + statements + purpose.
+    /// Used by edge-first pipeline routing to replace SLM + FastVLM in a single call.
+    distributed public func summarizeStructured(text: String, imageData: Data?) async throws -> LLMAnalysisResult {
+        print("🧠 [EdgeContextActor] Structured summarization (\(text.count) chars) + image(\(imageData?.count ?? 0) bytes)")
+        
+        guard CLaRaLatentService.shared.isAvailable else {
+            return LLMAnalysisResult(summary: String(text.prefix(200)))
+        }
+        
+        try await CLaRaLatentService.shared.loadModel()
+        
+        let enrichedContext = String(text.prefix(6000))
+        
+        let structuredPrompt = """
+        You are a visual intelligence assistant analyzing a captured item. Below is enriched metadata.
+        
+        Respond with a JSON object containing:
+        - "summary": A concise 1-2 sentence description (WHAT, WHERE, WHY)
+        - "tags": An array of 3-5 descriptive keyword tags
+        - "statements": An array of 2-4 factual assertions about this item
+        - "purpose": A single word/phrase for the user's intent (e.g., "reference", "shopping", "travel")
+        
+        ONLY output valid JSON, no markdown or explanation.
+        
+        ---
+        
+        \(enrichedContext)
+        """
+        
+        if let result = try await CLaRaLatentService.shared.query(
+            documentText: structuredPrompt,
+            question: "Analyze this capture and return structured JSON."
+        ) {
+            // Try to parse JSON response
+            if let jsonData = result.data(using: .utf8),
+               let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] {
+                let summary = json["summary"] as? String
+                let tags = json["tags"] as? [String] ?? []
+                let statements = json["statements"] as? [String] ?? []
+                let purpose = json["purpose"] as? String
+                print("✅ [EdgeContextActor] Structured CLaRa: \(tags.count) tags, \(statements.count) statements")
+                return LLMAnalysisResult(
+                    summary: summary.map { "\($0) [Model: Edge-CLaRa-7B]" },
+                    statements: statements,
+                    purpose: purpose,
+                    tags: tags
+                )
+            }
+            
+            // JSON parsing failed — return as plain summary
+            print("⚠️ [EdgeContextActor] CLaRa didn't return valid JSON, using as plain summary")
+            return LLMAnalysisResult(
+                summary: "\(result) [Model: Edge-CLaRa-7B]"
+            )
+        }
+        
+        return LLMAnalysisResult(summary: String(text.prefix(200)))
+    }
 }
 
 // MARK: - Pipeline Edge Router

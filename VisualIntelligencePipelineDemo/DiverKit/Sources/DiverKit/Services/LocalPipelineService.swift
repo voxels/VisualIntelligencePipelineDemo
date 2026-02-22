@@ -471,13 +471,88 @@ public final class LocalPipelineService {
                 try? modelContext.save()
                 throw CancellationError()
             }
+            // ── Edge-First Intelligence Routing ──
+            // If CLaRa edge is connected, use it as primary (7B > 0.5B FastVLM > SLM).
+            // Skip SLM + local FastVLM when edge succeeds — they're redundant.
+            var edgeSummarized = false
             
-            // Two-Stage Intelligence Pipeline:
-            // Stage 1: SLM @Generable ContextAnalysis (fast, typed structured extraction)
-            // Stage 2: FastVLM (multimodal synthesis using image + structured context)
+            do {
+                let router = await MainActor.run { Services.shared.edgeRouter }
+                let system = await MainActor.run { Services.shared.actorSystem }
+                
+                if let router = router, let system = system {
+                    let decision = await router.shouldOffload(task: .vlmInference)
+                    if case .edge(let node, _) = decision {
+                        let identity = EdgeActorID(id: "EdgeContext", nodeName: node.deviceName)
+                        let edgeActor = try EdgeContextActor.resolve(id: identity, using: system)
+                        
+                        // Build rich context (same fields as BackgroundSummaryService)
+                        var contextParts: [String] = []
+                        if let t = existing.title { contextParts.append("Title: \(t)") }
+                        if let o = existing.transcription { contextParts.append("OCR: \(String(o.prefix(800)))") }
+                        if !existing.tags.isEmpty { contextParts.append("Tags: \(existing.tags.joined(separator: ", "))") }
+                        if !existing.categories.isEmpty { contextParts.append("Categories: \(existing.categories.joined(separator: ", "))") }
+                        if let mt = existing.mediaType { contextParts.append("Media Type: \(mt)") }
+                        if let loc = existing.location { contextParts.append("Location: \(loc)") }
+                        if let p = existing.placeContext {
+                            if let name = p.name { contextParts.append("Venue: \(name)") }
+                            if let addr = p.address { contextParts.append("Address: \(addr)") }
+                        }
+                        if let webCtx = existing.webContext {
+                            if let site = webCtx.siteName { contextParts.append("Web Site: \(site)") }
+                            if let text = webCtx.textContent { contextParts.append("Web Content: \(String(text.prefix(500)))") }
+                        }
+                        if !localPipelineContext.visualTags.isEmpty {
+                            contextParts.append("Vision Tags: \(localPipelineContext.visualTags.joined(separator: ", "))")
+                        }
+                        if let product = existing.productMetadata { contextParts.append("Product: \(product)") }
+                        
+                        let contextText = contextParts.joined(separator: "\n")
+                        let imageData = rawPayload ?? existing.rawPayload
+                        
+                        let result = try await edgeActor.summarizeStructured(text: contextText, imageData: imageData)
+                        
+                        // Apply structured CLaRa result
+                        if let summary = result.summary, !summary.isEmpty {
+                            existing.summary = summary
+                        }
+                        if !result.tags.isEmpty {
+                            existing.tags = Array(Set(existing.tags + result.tags))
+                        }
+                        if let purpose = result.purpose, !existing.purposes.contains(purpose) {
+                            existing.purposes.append(purpose)
+                        }
+                        // Store as FastVLMAnalysis so Insights section displays statements
+                        if !result.statements.isEmpty {
+                            existing.fastVLMAnalysis = FastVLMAnalysis(
+                                contextSummary: result.summary,
+                                suggestedPurpose: result.purpose,
+                                suggestedTags: result.tags,
+                                statements: result.statements,
+                                modelID: "Edge-CLaRa-7B"
+                            )
+                        }
+                        
+                        existing.processingLog.append("\(Date().formatted()): Edge-first CLaRa: summary + \(result.tags.count) tags + \(result.statements.count) statements")
+                        edgeSummarized = true
+                        print("🚀 [LocalPipeline] Edge-first CLaRa complete on \(node.deviceName) — skipping SLM + FastVLM")
+                    }
+                }
+            } catch {
+                print("⚠️ [LocalPipeline] Edge-first CLaRa failed, falling back to SLM + FastVLM: \(error)")
+            }
             
-            // Stage 1: SLM produces typed intermediate — always run for structured extraction
-            await performLLMAnalysis(for: existing, descriptor: descriptor, pipelineContext: localPipelineContext)
+            // ── Cancellation check ──
+            guard !Task.isCancelled else {
+                existing.status = .queued
+                try? modelContext.save()
+                throw CancellationError()
+            }
+            
+            // Stage 1: SLM (skipped when edge CLaRa succeeded)
+            if !edgeSummarized {
+                await performLLMAnalysis(for: existing, descriptor: descriptor, pipelineContext: localPipelineContext)
+            }
             
             // ── Cancellation check: after SLM ──
             guard !Task.isCancelled else {
@@ -486,8 +561,8 @@ public final class LocalPipelineService {
                 throw CancellationError()
             }
             
-            // Stage 2: FastVLM analysis (enriches/overrides SLM output with multimodal understanding)
-        if let fastVLMService, fastVLMService.isAvailable {
+            // Stage 2: FastVLM analysis (skipped when edge CLaRa already provided structured output)
+        if !edgeSummarized, let fastVLMService, fastVLMService.isAvailable {
             let image: CGImage? = {
                 guard let imageData = rawPayload ?? existing.rawPayload else { return nil }
                 return createCGImage(from: imageData)
