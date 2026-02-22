@@ -460,7 +460,7 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
             // Persist the high-water mark
             UserDefaults.standard.set(Date(), forKey: lastIndexedKey)
             
-            DiverLogger.pipeline.info("✅ [CLaRa] Index populated (\(mode)): \(items.count) items → \(totalChunks) chunks (total: \(documentCount))")
+            DiverLogger.pipeline.info("✅ [CLaRa] Index populated (\(mode)): \(items.count) items → \(totalChunks) chunks (total: \(self.documentCount))")
         } catch {
             DiverLogger.pipeline.error("❌ [CLaRa] Failed to populate index: \(error)")
         }
