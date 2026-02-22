@@ -2,6 +2,22 @@
 
 ## 2026-02-22
 
+### Two-Phase Pipeline Split
+- **Capture-Time Phase 1**: `LocalPipelineService.process()` now accepts `captureOnly` parameter. Phase 1 runs Vision analysis (OCR, QR, sift, aesthetics, saliency, classification), Location enrichment (GPS + MapKit), and Web metadata. Items appear in sidebar immediately with `.captured` status (~1-2s).
+- **Background Phase 2**: `MetadataPipelineService.enrichCapturedItems()` sweeps `.captured` items after batch completion. Runs CLaRa/SLM analysis, FastVLM, Commerce scoring, Concept extraction, and Session sync. Items transition `.enriching` → `.ready`.
+- **New ProcessingStatus States**: Added `.captured` (Phase 1 done, visible) and `.enriching` (Phase 2 in progress) between `.processing` and `.ready`.
+- **Sidebar Queries Updated**: `readyItems` query now uses exclusion pattern (`!= queued && != processing && != failed`) to include captured/enriching items. Separate `enrichingItems` query for progress tracking.
+- **processItemByID Unchanged**: User-triggered reprocessing still runs both phases synchronously (user is waiting for results).
+
+### Commerce Edge Actor Wiring
+- **Pipeline Commerce Edge Routing**: `performCommerceEnrichment` now routes government data → `EdgeESGActor.fetchGovernmentData`, nowcasting → `EdgeNowcastingActor.project`, and affiliate ranking → `EdgeCommerceActor.rankPlatforms` when Mac edge node is available. Falls back to local services.
+- **AR Commerce Scoring**: `SpatialProductDetector.scoreProduct(at:)` calls all 4 commerce edge actors (gov, ESG, nowcast, affiliate) in parallel when products are detected. Populates `compositeScore`, `strategyScores`, and `recommendation` fields.
+- **`performLocalNowcast` Helper**: Extracted local nowcast fallback (World Bank + BLS PPI → DFM engine) into reusable method.
+
+### Edge Daemon Fixes
+- **`summarizeStructured` Dispatch Fix**: Added explicit handler for `summarizeStructured` **before** the generic `summarize` handler. Previously, substring match routed it to `summarize`, returning a JSON string instead of `LLMAnalysisResult`.
+- **`EdgeESGAActor` Typo Fix**: Corrected double-A typo (`EdgeESGAActor` → `EdgeESGActor`) in daemon dispatch for `fetchGovernmentData`.
+
 ### Edge-First Model Routing & Prompt Optimization
 - **Edge-First CLaRa Routing**: Pipeline checks for edge CLaRa 7B before running SLM (Stage 1). If available, calls `EdgeContextActor.summarizeStructured()` for summary + tags + statements + purpose in a single call. Skips SLM and local FastVLM when edge succeeds.
 - **`summarizeStructured()` Distributed Actor**: New method on `EdgeContextActor` returns `LLMAnalysisResult` with JSON-parsed structured output (summary, tags, statements, purpose). Falls back to plain summary if JSON parsing fails.

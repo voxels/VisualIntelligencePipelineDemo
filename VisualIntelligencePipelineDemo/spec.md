@@ -163,7 +163,7 @@ distributed actor InferenceService {
 
 ### 2.4 Data Flow
 
-The pipeline is **sequential** — each stage feeds its output into `PipelineContext`. When an edge node is available on the home network, stages ②–⑤ can be routed to the remote `InferenceService` transparently.
+The pipeline is **two-phase** — each stage feeds its output into `PipelineContext`. **Phase 1** (capture-time, ~1-2s) runs Vision + Location + Web enrichment and returns with `.captured` status. **Phase 2** (background) runs CLaRa/SLM, FastVLM, Commerce, and Concepts, transitioning items through `.enriching` to `.ready`. When an edge node is available on the home network, intelligence and commerce stages route to the remote Mac transparently.
 
 ```
 ┌──────────────┐    ┌──────────────────┐    ┌─────────────────────┐
@@ -262,7 +262,7 @@ The primary data entity for all enriched captures and links.
 | `transcription` | `String?` | OCR text or video transcription |
 | `visualTags` | `[String]` | Vision-derived semantic classification tags |
 | `aestheticsScore` | `Float?` | Vision-computed quality score |
-| `processingStatus` | `String` | Current pipeline state (`queued`, `processing`, `completed`, `failed`) |
+| `processingStatus` | `String` | Current pipeline state (`queued`, `processing`, `captured`, `enriching`, `ready`, `failed`, `reviewRequired`, `archived`) |
 | `processingLog` | `[String]` | Timestamped processing events |
 | `failureCount` | `Int` | Retry tracking |
 
