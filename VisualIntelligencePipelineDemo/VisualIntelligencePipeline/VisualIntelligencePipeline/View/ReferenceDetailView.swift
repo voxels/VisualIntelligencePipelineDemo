@@ -2664,29 +2664,33 @@ struct AsyncItemImageView: View {
         let snapshotPath = item.webContext?.snapshotURL
         let isDocument = item.entityType == "document"
         
-        // Priority 1: For document-type items, rawPayload IS the rectified image
-        // (CIPerspectiveCorrection output from commitReviewSave). Use it directly
-        // to avoid double-rectification from pipeline re-detection.
-        // For non-documents, check documentContext.rectifiedPayload (reprocessed master captures).
-        if isDocument, let data = rawData {
-            if let decoded = await decodeImage(from: data) {
-                withAnimation {
-                    self.image = decoded
-                    self.isLoading = false
+        // Priority 1: For document-type items, show the rectified/original document image.
+        // For non-documents, skip rectifiedPayload — the user wants their original photo,
+        // not a pipeline-detected document crop.
+        if isDocument {
+            // Document items: rawPayload IS the rectified image from CIPerspectiveCorrection
+            if let data = rawData {
+                if let decoded = await decodeImage(from: data) {
+                    withAnimation {
+                        self.image = decoded
+                        self.isLoading = false
+                    }
+                    return
                 }
-                return
             }
-        } else if let rectData {
-            if let decoded = await decodeImage(from: rectData) {
-                withAnimation {
-                    self.image = decoded
-                    self.isLoading = false
+            // Fallback: rectifiedPayload from documentContext (reprocessed master captures)
+            if let rectData {
+                if let decoded = await decodeImage(from: rectData) {
+                    withAnimation {
+                        self.image = decoded
+                        self.isLoading = false
+                    }
+                    return
                 }
-                return
             }
         }
         
-        // Priority 2: Raw Payload
+        // Priority 2: Raw Payload (original photo for non-document items)
         if let data = rawData {
             if let decoded = await decodeImage(from: data) {
                 withAnimation {
