@@ -60,13 +60,17 @@ struct SidebarView: View {
     @State private var cachedRelatedConcepts: [UserConcept] = []
     
     // MARK: - Queries
-    // Pre-filter to .ready status to avoid loading ALL items (292+) on every CloudKit merge.
+    // Pre-filter to visible statuses to avoid loading ALL items on every CloudKit merge.
     // SwiftData @Query loads all matching objects eagerly — unfiltered queries block the main thread.
-    @Query(filter: #Predicate<ProcessedItem> { $0.statusRaw == "ready" }, sort: \ProcessedItem.updatedAt, order: .reverse)
+    // NOTE: Using != exclusion to avoid type-checker timeout with 3+ || chains in #Predicate.
+    @Query(filter: #Predicate<ProcessedItem> { $0.statusRaw != "queued" && $0.statusRaw != "processing" && $0.statusRaw != "failed" }, sort: \ProcessedItem.updatedAt, order: .reverse)
     private var readyItems: [ProcessedItem]
     
     @Query(filter: #Predicate<ProcessedItem> { $0.statusRaw == "queued" || $0.statusRaw == "processing" }, sort: \ProcessedItem.updatedAt, order: .reverse)
     private var processingItems: [ProcessedItem]
+    
+    @Query(filter: #Predicate<ProcessedItem> { $0.statusRaw == "enriching" }, sort: \ProcessedItem.updatedAt, order: .reverse)
+    private var enrichingItems: [ProcessedItem]
     
     @Query(filter: #Predicate<ProcessedItem> { $0.isFavorite == true }, sort: \ProcessedItem.updatedAt, order: .reverse)
     private var favoriteItems: [ProcessedItem]

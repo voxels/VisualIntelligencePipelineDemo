@@ -987,6 +987,8 @@ struct StatusBadge: View {
         switch status {
         case .queued: return .gray
         case .processing: return .blue
+        case .captured: return .teal
+        case .enriching: return .blue
         case .ready: return .green
         case .failed: return .red
         case .reviewRequired: return .orange

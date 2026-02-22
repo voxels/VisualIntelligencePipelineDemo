@@ -255,6 +255,11 @@ public final class MetadataPipelineService: @unchecked Sendable {
                     if successCount > 0 {
                         await self.generatePendingSessionSummaries()
                         await self.generatePendingCollectionSummaries()
+                        
+                        // Phase 2: Enrich captured items in background
+                        // Items are already visible in sidebar with tags/thumbnails/location.
+                        // This adds CLaRa/SLM summaries, FastVLM analysis, and commerce scoring.
+                        await self.enrichCapturedItems()
                     }
                 } else {
                     print("📂 [MetadataPipeline] No pending files in DiverQueueStore.")
@@ -1026,7 +1031,8 @@ public final class MetadataPipelineService: @unchecked Sendable {
             contextService: contextService,
             fastVLMService: fastVLMService,
             scoringStrategies: defaultScoringStrategies,
-            recommender: defaultRecommender
+            recommender: defaultRecommender,
+            captureOnly: true  // Phase 1 only — Phase 2 runs in background sweep
         )
         
         // Assign depth payload from queue item (captured atomically with photo)
@@ -1037,6 +1043,108 @@ public final class MetadataPipelineService: @unchecked Sendable {
         }
 
         DiverLogger.storage.debug("Saved LocalInput to SwiftData - inputId: \(localInput.id.uuidString)")
+    }
+    
+    // MARK: - Phase 2: Background Enrichment Sweep
+    
+    /// Sweep items in `.captured` state and run Phase 2 (CLaRa/SLM, FastVLM, Commerce, Concepts).
+    /// Called after the batch queue completes Phase 1 for all items.
+    private func enrichCapturedItems() async {
+        let capturedStatus = ProcessingStatus.captured.rawValue
+        let capturedFetch = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.statusRaw == capturedStatus },
+            sortBy: [SortDescriptor(\.createdAt)]
+        )
+        
+        guard let capturedItems = try? activeContext.fetch(capturedFetch), !capturedItems.isEmpty else {
+            return
+        }
+        
+        DiverLogger.pipeline.info("🔄 Phase 2: Enriching \(capturedItems.count) captured items in background")
+        
+        for item in capturedItems {
+            if Task.isCancelled { break }
+            await Task.yield()
+            
+            item.statusRaw = ProcessingStatus.enriching.rawValue
+            item.processingLog.append("\(Date().formatted()): Starting Phase 2 background enrichment.")
+            try? activeContext.save()
+            
+            do {
+                let localPipeline = LocalPipelineService(modelContext: activeContext)
+                
+                // Create a minimal LocalInput so process() can run Phase 2
+                let enrichInput = LocalInput(
+                    createdAt: item.createdAt,
+                    url: item.url,
+                    text: item.title,
+                    source: item.source ?? "enrichment",
+                    inputType: item.entityType ?? "web",
+                    rawPayload: item.rawPayload
+                )
+                activeContext.insert(enrichInput)
+                
+                let descriptor = DiverItemDescriptor(
+                    id: item.id,
+                    url: item.url ?? "",
+                    title: item.title ?? "",
+                    type: DiverItemType(rawValue: item.entityType ?? "web") ?? .web,
+                    attributionID: item.attributionID,
+                    masterCaptureID: item.masterCaptureID,
+                    sessionID: item.sessionID
+                )
+                
+                _ = try await localPipeline.process(
+                    input: enrichInput,
+                    descriptor: descriptor,
+                    enrichmentService: enrichmentService,
+                    locationService: nil,  // Don't re-run location
+                    indexingService: indexingService,
+                    contextService: contextService,
+                    fastVLMService: fastVLMService,
+                    scoringStrategies: defaultScoringStrategies,
+                    recommender: defaultRecommender,
+                    captureOnly: false  // Run full pipeline (Phase 2 continues from .captured)
+                )
+                
+                item.statusRaw = ProcessingStatus.ready.rawValue
+                item.processingLog.append("\(Date().formatted()): Phase 2 enrichment complete.")
+                try? activeContext.save()
+                
+                // Ingest into CLaRa index
+                CLaRaLatentService.shared.ingestProcessedItem(
+                    id: item.id,
+                    title: item.title,
+                    summary: item.summary,
+                    transcription: item.transcription,
+                    tags: item.tags,
+                    visualTags: item.visualTags,
+                    categories: item.categories,
+                    location: item.location,
+                    purposes: item.purposes,
+                    productMetadata: item.productMetadata,
+                    url: item.url,
+                    placeContextData: item.placeContextData,
+                    webContextData: item.webContextData,
+                    weatherContextData: item.weatherContextData,
+                    documentContextData: item.documentContextData,
+                    qrContextData: item.qrContextData,
+                    fastVLMAnalysisData: item.fastVLMAnalysisData,
+                    questions: item.questions
+                )
+                
+                DiverLogger.pipeline.info("✅ Phase 2 complete for \(item.id)")
+                
+            } catch {
+                DiverLogger.pipeline.error("❌ Phase 2 failed for \(item.id): \(error)")
+                item.statusRaw = ProcessingStatus.failed.rawValue
+                item.failureCount += 1
+                item.processingLog.append("\(Date().formatted()): Phase 2 enrichment failed - \(error.localizedDescription)")
+                try? activeContext.save()
+            }
+        }
+        
+        DiverLogger.pipeline.info("🔄 Phase 2: Background enrichment sweep complete")
     }
 
     public func refreshProcessedItems() async throws {

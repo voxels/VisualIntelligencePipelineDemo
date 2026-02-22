@@ -101,7 +101,8 @@ public final class LocalPipelineService {
         contextService: (any ContextProcessing)? = nil,
         fastVLMService: (any FastVLMAnalyzing)? = nil,
         scoringStrategies: [any ProductScoringStrategy] = [],
-        recommender: (any ProductRecommending)? = nil
+        recommender: (any ProductRecommending)? = nil,
+        captureOnly: Bool = false
     ) async throws -> ProcessedItem {
         let resolvedId = descriptor?.id ?? resolveId(for: input)
 
@@ -470,6 +471,18 @@ public final class LocalPipelineService {
                 existing.status = .queued
                 try? modelContext.save()
                 throw CancellationError()
+            }
+            
+            // ── Phase 1 Complete: Return early if capture-only mode ──
+            // Item now has Vision tags, thumbnails, location, and web metadata.
+            // Phase 2 (CLaRa/SLM, FastVLM, Commerce) runs in background.
+            if captureOnly {
+                existing.status = .captured
+                existing.processingLog.append("\(Date().formatted()): Phase 1 complete (Vision + Location + Web). Queued for background enrichment.")
+                try? modelContext.save()
+                modelContext.delete(input)
+                DiverLogger.pipeline.info("📸 Phase 1 complete for \(existing.id) — queued for enrichment")
+                return existing
             }
             // ── Edge-First Intelligence Routing ──
             // If CLaRa edge is connected, use it as primary (7B > 0.5B FastVLM > SLM).
