@@ -79,6 +79,9 @@ public distributed actor EdgeInferenceActor {
         )
     }
     
+    /// Shared FastVLM instance to avoid re-loading the model on every call.
+    private static let sharedVLMService = FastVLMEnrichmentService()
+    
     distributed public func runVLM(imageData: Data, prompt: String) async throws -> LLMAnalysisResult {
         let cgImage: CGImage = try autoreleasepool {
             guard let cgImageSource = CGImageSourceCreateWithData(imageData as CFData, nil),
@@ -91,21 +94,37 @@ public distributed actor EdgeInferenceActor {
         // Run Vision analysis first (same as pipeline does)
         let visionResult = try await analyzeImage(imageData)
         
-        // Then run FastVLM using the same service the pipeline uses
-        let vlmService = FastVLMEnrichmentService()
-        let analysis = try await vlmService.analyze(
-            image: cgImage,
-            visionTags: visionResult.semanticTags,
-            enrichmentContext: prompt,
-            transcription: visionResult.ocrText
-        )
+        // Then run FastVLM using the shared service (keeps model loaded in GPU memory)
+        do {
+            let analysis = try await Self.sharedVLMService.analyze(
+                image: cgImage,
+                visionTags: visionResult.semanticTags,
+                enrichmentContext: prompt,
+                transcription: visionResult.ocrText
+            )
+            
+            if let analysis {
+                return LLMAnalysisResult(
+                    summary: analysis.contextSummary,
+                    statements: analysis.statements ?? [],
+                    purpose: analysis.suggestedPurpose,
+                    tags: analysis.suggestedTags ?? [],
+                    imageDescription: analysis.imageDescription
+                )
+            } else {
+                print("⚠️ [EdgeInferenceActor] FastVLM analyze returned nil — returning Vision-only result")
+            }
+        } catch {
+            print("❌ [EdgeInferenceActor] FastVLM analyze failed: \(error) — returning Vision-only result")
+        }
         
+        // Fallback: return Vision-only result (OCR text, semantic tags)
         return LLMAnalysisResult(
-            summary: analysis?.contextSummary,
-            statements: analysis?.statements ?? [],
-            purpose: analysis?.suggestedPurpose,
-            tags: analysis?.suggestedTags ?? [],
-            imageDescription: analysis?.imageDescription
+            summary: nil,
+            statements: [],
+            purpose: nil,
+            tags: visionResult.semanticTags,
+            imageDescription: nil
         )
     }
 }
