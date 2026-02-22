@@ -22,17 +22,13 @@ struct EdgeDaemonApp: App {
                 isLoginItemEnabled: $isLoginItemEnabled
             )
         } label: {
-            Label("Edge Daemon", systemImage: menuBarIcon)
-                .labelStyle(.iconOnly)
-        }
-    }
-
-    private var menuBarIcon: String {
-        switch service.status {
-        case .listening: return "brain.filled.head.profile"
-        case .processing: return "brain.head.profile"
-        case .error: return "exclamationmark.triangle.fill"
-        default: return "brain.head.profile"
+            HStack(spacing: 4) {
+                Image(systemName: service.isListening ? "brain.filled.head.profile" : "brain.head.profile")
+                if service.status == .processing {
+                    Image(systemName: "bolt.fill")
+                        .font(.caption2)
+                }
+            }
         }
     }
 }
@@ -44,78 +40,77 @@ struct EdgeDaemonMenu: View {
     @Binding var isLoginItemEnabled: Bool
 
     var body: some View {
-        // Status Header
-        Section {
+        // ── Header ──
+        VStack(alignment: .leading, spacing: 2) {
             HStack {
-                Image(systemName: service.statusIcon)
-                    .foregroundStyle(statusColor)
-                Text(service.status.rawValue)
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 8, height: 8)
+                Text("Visual Intelligence Edge")
                     .fontWeight(.semibold)
             }
+            Text("\(service.status.rawValue) · Port 8847 · \(service.totalRequests) requests")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
 
-            if service.isListening {
-                Label("Port 8847", systemImage: "network")
-            }
+        Divider()
 
-            Label("\(service.totalRequests) requests", systemImage: "chart.bar.fill")
+        // ── Models ──
+        ForEach(service.loadedModels, id: \.self) { model in
+            Label(model, systemImage: "checkmark.circle.fill")
+                .foregroundStyle(.green)
+                .font(.caption)
+        }
+
+        if service.loadedModels.isEmpty {
+            Label("No models", systemImage: "xmark.circle")
+                .foregroundStyle(.secondary)
+                .font(.caption)
         }
 
         Divider()
 
-        // Models
-        Section("Models (\(service.loadedModels.count))") {
-            if service.loadedModels.isEmpty {
-                Text("No models loaded")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(service.loadedModels, id: \.self) { model in
-                    Label(model, systemImage: "cpu")
-                }
-            }
-        }
-
-        Divider()
-
-        // Clients
-        Section("Clients (\(service.connectedClients.count))") {
-            if service.connectedClients.isEmpty {
-                Text("No clients connected")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(service.connectedClients, id: \.self) { client in
-                    Label(client, systemImage: "iphone")
-                }
-            }
-        }
-
-        Divider()
-
-        // Controls
-        Section {
-            Toggle(isOn: Binding(
-                get: { service.isListening },
-                set: { newValue in
-                    if newValue {
-                        service.startListening()
-                    } else {
-                        service.stopListening()
-                    }
-                }
-            )) {
-                Label("Listening", systemImage: "antenna.radiowaves.left.and.right")
-            }
-
-            Toggle(isOn: $isLoginItemEnabled) {
-                Label("Start at Login", systemImage: "person.crop.circle.badge.clock")
-            }
-            .onChange(of: isLoginItemEnabled) { _, newValue in
-                toggleLoginItem(enabled: newValue)
+        // ── Clients ──
+        if service.connectedClients.isEmpty {
+            Label("No clients", systemImage: "iphone.slash")
+                .foregroundStyle(.secondary)
+                .font(.caption)
+        } else {
+            ForEach(service.connectedClients, id: \.self) { client in
+                Label(client, systemImage: "iphone.radiowaves.left.and.right")
+                    .font(.caption)
             }
         }
 
         Divider()
 
-        Button("Quit Edge Daemon") {
+        // ── Controls ──
+        if service.isListening {
+            Button {
+                service.stopListening()
+            } label: {
+                Label("Stop Listening", systemImage: "stop.circle")
+            }
+        } else {
+            Button {
+                service.startListening()
+            } label: {
+                Label("Start Listening", systemImage: "play.circle")
+            }
+        }
+
+        Toggle(isOn: $isLoginItemEnabled) {
+            Label("Start at Login", systemImage: "clock.badge.checkmark")
+        }
+        .onChange(of: isLoginItemEnabled) { _, enabled in
+            toggleLoginItem(enabled: enabled)
+        }
+
+        Divider()
+
+        Button("Quit") {
             service.stopListening()
             NSApplication.shared.terminate(nil)
         }
@@ -124,10 +119,11 @@ struct EdgeDaemonMenu: View {
 
     private var statusColor: Color {
         switch service.status {
-        case .listening: return .green
-        case .processing: return .blue
-        case .error: return .red
-        default: return .secondary
+        case .listening: .green
+        case .processing: .blue
+        case .error: .red
+        case .starting: .orange
+        case .idle: .gray
         }
     }
 
@@ -135,14 +131,11 @@ struct EdgeDaemonMenu: View {
         do {
             if enabled {
                 try SMAppService.mainApp.register()
-                print("✅ Registered as login item")
             } else {
                 try SMAppService.mainApp.unregister()
-                print("✅ Unregistered login item")
             }
         } catch {
             print("❌ Login item toggle failed: \(error)")
-            // Revert UI state
             isLoginItemEnabled = SMAppService.mainApp.status == .enabled
         }
     }
