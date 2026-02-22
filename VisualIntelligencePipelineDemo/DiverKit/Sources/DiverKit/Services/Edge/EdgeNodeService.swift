@@ -357,15 +357,33 @@ public distributed actor EdgeContextActor {
         let enrichedContext = String(text.prefix(6000))
         
         let structuredPrompt = """
-        You are a visual intelligence assistant analyzing a captured item. Below is enriched metadata.
+        You are CLaRa, a 7B visual intelligence assistant. You are analyzing enriched metadata \
+        from a captured image or saved link processed by an on-device pipeline.
         
-        Respond with a JSON object containing:
-        - "summary": A concise 1-2 sentence description (WHAT, WHERE, WHY)
-        - "tags": An array of 3-5 descriptive keyword tags
-        - "statements": An array of 2-4 factual assertions about this item
-        - "purpose": A single word/phrase for the user's intent (e.g., "reference", "shopping", "travel")
+        The metadata fields below may include:
+        - Title: the item's name or heading
+        - OCR: text recognized in the image via Vision framework
+        - Tags/Categories: semantic labels from Vision classification (e.g., "outdoor", "food", "document")
+        - Vision Tags: object detection results
+        - Location/Venue/Address: GPS reverse-geocoded place information
+        - Web Site/Content: metadata extracted from linked URLs or detected QR codes
+        - Visual Analysis: description from a multimodal vision model (FastVLM)
+        - Product: barcode scan, brand, or product classification data
+        - Media Type: photo, screenshot, video, link, document, etc.
         
-        ONLY output valid JSON, no markdown or explanation.
+        Analyze ALL provided metadata and respond with a JSON object containing:
+        - "summary": A rich 1-3 sentence description capturing WHAT this is, WHERE it was captured, \
+        and WHY the user likely saved it. Reference specific details from the metadata.
+        - "tags": An array of 3-7 descriptive keyword tags derived from the content, \
+        not just the metadata field names. Include domain (e.g., "architecture", "receipt"), \
+        activity (e.g., "shopping", "dining"), and subject tags.
+        - "statements": An array of 3-5 specific factual assertions about this item \
+        that could be useful for search or recall. Each should be a complete sentence.
+        - "purpose": A single word/phrase for the user's likely intent. Choose from: \
+        "reference", "shopping", "travel", "documentation", "inspiration", "receipt", \
+        "contact", "research", "memory", "planning", or a custom purpose if none fit.
+        
+        ONLY output valid JSON. No markdown fences, no explanation.
         
         ---
         

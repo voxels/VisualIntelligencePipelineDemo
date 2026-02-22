@@ -561,8 +561,10 @@ public final class LocalPipelineService {
                 throw CancellationError()
             }
             
-            // Stage 2: FastVLM analysis (skipped when edge CLaRa already provided structured output)
-        if !edgeSummarized, let fastVLMService, fastVLMService.isAvailable {
+            // Stage 2: FastVLM image analysis
+            // Edge FastVLM (1.5B) always attempts when edge is available.
+            // Local FastVLM (0.5B) fallback skipped if edge CLaRa already provided output.
+        if let fastVLMService, fastVLMService.isAvailable {
             let image: CGImage? = {
                 guard let imageData = rawPayload ?? existing.rawPayload else { return nil }
                 return createCGImage(from: imageData)
@@ -579,21 +581,10 @@ public final class LocalPipelineService {
                         let identity = EdgeActorID(id: "EdgeInference", nodeName: node.deviceName)
                         let edgeActor = try EdgeInferenceActor.resolve(id: identity, using: system)
                         
-                        let prompt: String
-                        if let _ = image {
-                            prompt = FastVLMEnrichmentService.buildGroundedPrompt(
-                                visionTags: localPipelineContext.visualTags,
-                                enrichmentContext: localPipelineContext.enrichmentContextString,
-                                transcription: existing.transcription
-                            )
-                        } else {
-                            prompt = FastVLMEnrichmentService.buildTextOnlyPrompt(
-                                enrichmentContext: localPipelineContext.enrichmentContextString,
-                                transcription: existing.transcription
-                            )
-                        }
                         
-                        let resultText = try await edgeActor.runVLM(imageData: imageData, prompt: prompt)
+                        // Pass raw enrichment context — runVLM's analyze() builds its own prompt.
+                        // Do NOT use buildGroundedPrompt here (it would be double-wrapped).
+                        let resultText = try await edgeActor.runVLM(imageData: imageData, prompt: localPipelineContext.enrichmentContextString)
                         analysis = FastVLMAnalysis(
                             imageDescription: resultText.imageDescription,
                             contextSummary: resultText.summary,
@@ -601,7 +592,7 @@ public final class LocalPipelineService {
                             suggestedPurpose: resultText.purpose,
                             suggestedTags: resultText.tags,
                             statements: resultText.statements,
-                            modelID: "EdgeInference"
+                            modelID: "Edge-FastVLM-1.5B"
                         )
                         DiverLogger.pipeline.info("🚀 [LocalPipeline] FastVLM offloaded to \(node.deviceName)")
                     } catch {
@@ -610,9 +601,11 @@ public final class LocalPipelineService {
                 }
             }
             
-            // Only fall back to local FastVLM when we have an actual image.
-            // Text-only FastVLM (0.5B) hallucinates without visual grounding.
-            if analysis == nil, image != nil {
+            // Only fall back to local FastVLM when:
+            // 1. Edge FastVLM didn't run (no edge available)
+            // 2. Edge CLaRa didn't already provide output
+            // 3. We have an actual image (0.5B hallucinates without visual grounding)
+            if analysis == nil, !edgeSummarized, image != nil {
                 analysis = try? await fastVLMService.analyze(
                     image: image,
                     visionTags: localPipelineContext.visualTags,

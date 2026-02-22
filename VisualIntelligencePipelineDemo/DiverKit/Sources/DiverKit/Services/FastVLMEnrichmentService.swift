@@ -703,35 +703,29 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         enrichmentContext: String,
         transcription: String?
     ) -> String {
-        var prompt = """
-        Analyze this image and provide a structured description.
-        """
+        // FastVLM best practice: short, image-focused prompt with vision grounding.
+        // Avoid large metadata dumps — they overwhelm the 1.5B model (GIGO).
+        var prompt = "Describe this image in detail. Focus on the main subject, objects, text, and activities visible."
         
         if !visionTags.isEmpty {
-            prompt += "\nThis image has been classified as containing: \(visionTags.prefix(10).joined(separator: ", "))."
+            prompt += "\nDetected: \(visionTags.prefix(8).joined(separator: ", "))."
         }
         
         if let transcription, !transcription.isEmpty {
-            prompt += "\nVisible text detected: \(String(transcription.prefix(500)))"
-        }
-        
-        if !enrichmentContext.isEmpty {
-            prompt += "\nAdditional context: \(String(enrichmentContext.prefix(1000)))"
+            prompt += "\nVisible text: \(String(transcription.prefix(200)))"
         }
         
         prompt += """
         
         
         Respond in this exact format:
-        TITLE: [short descriptive title of what is shown]
-        SUMMARY: [one sentence describing only what you can confirm seeing]
-        PURPOSE: [the user's likely intent for capturing this]
+        TITLE: [short descriptive title]
+        SUMMARY: [one sentence describing what is shown]
+        PURPOSE: [capture intent]
         TAGS: [tag1, tag2, tag3]
         STATEMENTS:
-        - [specific observation about what is visible]
-        - [specific observation about what is visible]
-        
-        Only describe what you can directly see. Do not speculate. If unsure, say "unknown".
+        - [factual observation]
+        - [factual observation]
         """
         
         return prompt
