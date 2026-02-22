@@ -308,8 +308,10 @@ struct VisualIntelligencePipelineApp: App {
                     withAnimation { isLaunching = false }
                     
                     // Populate CLaRa's in-memory document index from the full library.
-                    // Runs in background — search becomes available progressively.
+                    // Delay 1s after splash dismiss so the UI transition animation has
+                    // time to render before heavy SwiftData fetches begin churning WAL.
                     Task.detached(priority: .utility) {
+                        try? await Task.sleep(for: .seconds(1))
                         await CLaRaLatentService.shared.populateIndex(container: dataStore.container)
                     }
 
