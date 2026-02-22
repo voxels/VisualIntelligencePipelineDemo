@@ -132,7 +132,8 @@ public actor BackgroundSummaryService {
           do {
             let newSummary = try await edgeActor.summarize(text: textToSummarize, imageData: item.rawPayload)
             if !Task.isCancelled {
-              item.summary = "\(newSummary) [Model: Edge-FastVLM]"
+              // EdgeContextActor may badge CLaRa summaries itself — don't double-badge
+              item.summary = newSummary.contains("[Model:") ? newSummary : "\(newSummary) [Model: Edge-FastVLM]"
               item.updatedAt = Date()
               item.processingLog.append(
                 "\(Date().formatted()): Summary silently upgraded by Edge Context Actor")
@@ -212,7 +213,8 @@ public actor BackgroundSummaryService {
           do {
             let newSummary = try await edgeActor.summarize(text: textToSummarize, imageData: bestImagePayload)
             if !Task.isCancelled {
-              session.summary = "\(newSummary) [Model: Edge-FastVLM]"
+              // EdgeContextActor may badge CLaRa summaries itself — don't double-badge
+              session.summary = newSummary.contains("[Model:") ? newSummary : "\(newSummary) [Model: Edge-FastVLM]"
               session.updatedAt = Date()
               try modelContext.save()
               print(

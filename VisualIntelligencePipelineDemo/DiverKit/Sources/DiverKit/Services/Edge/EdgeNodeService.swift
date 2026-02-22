@@ -334,7 +334,7 @@ public distributed actor EdgeContextActor {
             question: "Summarize this capture."
         ) {
             print("✅ [EdgeContextActor] Summarized via CLaRa with full context (\(context.count) chars)")
-            return result
+            return "\(result) [Model: Edge-CLaRa-7B]"
         }
         
         return "\(String(context.prefix(200)))..."
