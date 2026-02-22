@@ -535,7 +535,9 @@ public final class LocalPipelineService {
                 }
             }
             
-            if analysis == nil {
+            // Only fall back to local FastVLM when we have an actual image.
+            // Text-only FastVLM (0.5B) hallucinates without visual grounding.
+            if analysis == nil, image != nil {
                 analysis = try? await fastVLMService.analyze(
                     image: image,
                     visionTags: localPipelineContext.visualTags,
@@ -886,7 +888,9 @@ public final class LocalPipelineService {
                 }
             }
             
-            if analysis == nil {
+            // Only fall back to local FastVLM when we have an actual image.
+            // Text-only FastVLM (0.5B) hallucinates without visual grounding.
+            if analysis == nil, image != nil {
                 analysis = try? await fastVLMService.analyze(
                     image: image,
                     visionTags: pipelineContext.visualTags,
@@ -2089,14 +2093,28 @@ public final class LocalPipelineService {
                 barcode: nil,
                 confidence: 0.6
             )
-        } else if item.categories.contains("product") || item.productMetadata != nil {
+        } else if item.categories.contains("product") || item.productMetadata != nil || item.entityType?.lowercased() == "product" {
+            // Extract barcode from diver-product:// URL (set on barcode child items)
+            // or from productMetadata text (e.g. "Product: 12345")
+            let extractedBarcode: String? = {
+                if let url = item.url, url.hasPrefix("diver-product://") {
+                    return String(url.dropFirst("diver-product://".count))
+                }
+                if let metadata = item.productMetadata,
+                   let range = metadata.range(of: "Product: ") {
+                    let code = String(metadata[range.upperBound...]).components(separatedBy: "\n").first
+                    return code?.isEmpty == false ? code : nil
+                }
+                return nil
+            }()
+            
             classification = ProductClassification(
-                productID: item.id,
+                productID: extractedBarcode ?? item.id,
                 name: item.title ?? "Detected Product",
                 category: inferCategory(from: item),
                 brand: extractBrand(from: item),
-                barcode: nil,
-                confidence: 0.4
+                barcode: extractedBarcode,
+                confidence: extractedBarcode != nil ? 0.85 : 0.4
             )
         } else {
             return // No product detected
