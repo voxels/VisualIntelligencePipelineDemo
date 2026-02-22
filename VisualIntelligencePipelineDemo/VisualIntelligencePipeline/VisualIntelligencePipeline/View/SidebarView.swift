@@ -190,8 +190,14 @@ struct SidebarView: View {
         }
         .onAppear {
             viewModel.setPipelineService(pipelineService)
-            // Clean up empty/abandoned sessions on appear
-            viewModel.removeEmptySessions(context: modelContext)
+            // Clean up empty/abandoned sessions in the background to avoid blocking the main thread.
+            // removeEmptySessions fetches all SessionMetadata — heavy on 292+ item libraries.
+            let container = modelContext.container
+            Task.detached(priority: .utility) { [viewModel] in
+                let bgContext = ModelContext(container)
+                bgContext.autosaveEnabled = false
+                await viewModel.removeEmptySessions(context: bgContext)
+            }
         }
         .task {
             for await event in pipelineService.progressStream {
