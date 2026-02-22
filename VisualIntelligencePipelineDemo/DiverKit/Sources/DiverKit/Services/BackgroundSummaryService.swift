@@ -23,6 +23,7 @@ public actor BackgroundSummaryService {
 
     currentTask = Task.detached(priority: .background) {
       let decision = await router.shouldOffload(task: .vlmInference)
+      print("🔄 [BackgroundSummaryService] Routing decision: \(decision)")
       guard case .edge(let node, _) = decision else {
         await self.clearTask()
         return

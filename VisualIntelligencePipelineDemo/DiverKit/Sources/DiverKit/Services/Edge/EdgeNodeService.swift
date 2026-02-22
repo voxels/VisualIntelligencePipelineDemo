@@ -307,8 +307,10 @@ public final class PipelineEdgeRouter: Sendable {
         
         guard isConnected,
               let node = await discoveryService.connectedNode else {
+            print("🔍 [EdgeRouter] shouldOffload(\(task)): No edge node connected (isConnected=\(isConnected))")
             return .local(reason: "No edge node connected")
         }
+        print("🔍 [EdgeRouter] shouldOffload(\(task)): node=\(node.deviceName), chip=\(node.chipFamily), tops=\(node.neuralEngineTOPS), ram=\(node.physicalMemoryGB)GB")
         
         // Check if edge node has the capability
         switch task {
