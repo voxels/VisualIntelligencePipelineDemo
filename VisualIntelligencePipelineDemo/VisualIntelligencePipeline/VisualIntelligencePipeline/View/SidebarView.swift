@@ -59,9 +59,9 @@ struct SidebarView: View {
     // Cached Intelligence Section Data (computed asynchronously to avoid main-thread SwiftData faults)
     @State private var cachedRelatedConcepts: [UserConcept] = []
     
-    // MARK: - Queries
-    // Pre-filter to visible statuses to avoid loading ALL items on every CloudKit merge.
-    // SwiftData @Query loads all matching objects eagerly — unfiltered queries block the main thread.
+    // MARK: - Queries (6 total — minimise @Query count to reduce main-thread blocking)
+    // Each @Query re-fetches ALL matches eagerly on every CloudKit merge / data mutation.
+    // Derive subsets with computed properties instead of adding more @Query declarations.
     // NOTE: Using != exclusion to avoid type-checker timeout with 3+ || chains in #Predicate.
     @Query(filter: #Predicate<ProcessedItem> { $0.statusRaw != "queued" && $0.statusRaw != "processing" && $0.statusRaw != "failed" }, sort: \ProcessedItem.updatedAt, order: .reverse)
     private var readyItems: [ProcessedItem]
@@ -69,23 +69,31 @@ struct SidebarView: View {
     @Query(filter: #Predicate<ProcessedItem> { $0.statusRaw == "queued" || $0.statusRaw == "processing" }, sort: \ProcessedItem.updatedAt, order: .reverse)
     private var processingItems: [ProcessedItem]
     
-    @Query(filter: #Predicate<ProcessedItem> { $0.statusRaw == "enriching" }, sort: \ProcessedItem.updatedAt, order: .reverse)
-    private var enrichingItems: [ProcessedItem]
-    
-    @Query(filter: #Predicate<ProcessedItem> { $0.isFavorite == true }, sort: \ProcessedItem.updatedAt, order: .reverse)
-    private var favoriteItems: [ProcessedItem]
-    
     @Query(sort: \SessionCollection.updatedAt, order: .reverse)
     private var collections: [SessionCollection]
     
     @Query(sort: \SessionMetadata.updatedAt, order: .reverse)
     private var sessions: [SessionMetadata]
     
-    @Query(filter: #Predicate<SessionMetadata> { $0.isFavorite == true }, sort: \SessionMetadata.updatedAt, order: .reverse)
-    private var favoriteSessions: [SessionMetadata]
-    
     @Query(sort: \UserConcept.weight, order: .reverse)
     private var allConcepts: [UserConcept]
+    
+    // MARK: - Derived Subsets (no extra @Query — filtered in-memory)
+    
+    /// Items still being enriched in Phase 2 (derived from readyItems)
+    private var enrichingItems: [ProcessedItem] {
+        readyItems.filter { $0.statusRaw == ProcessingStatus.enriching.rawValue }
+    }
+    
+    /// Favorited items (derived from readyItems)
+    private var favoriteItems: [ProcessedItem] {
+        readyItems.filter { $0.isFavorite }
+    }
+    
+    /// Favorited sessions (derived from sessions)
+    private var favoriteSessions: [SessionMetadata] {
+        sessions.filter { $0.isFavorite }
+    }
     
     // MARK: - Computed Properties
     
