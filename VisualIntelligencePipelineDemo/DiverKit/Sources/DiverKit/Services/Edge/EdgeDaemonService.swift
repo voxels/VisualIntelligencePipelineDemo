@@ -376,7 +376,7 @@ public final class EdgeDaemonService {
                     let trajectory = try await actor.project(commodityID: commodityID, horizonDays: horizonDays)
                     encodedResult = try JSONEncoder().encode(trajectory)
                     
-                } else if method == "gov" || (method.contains("EdgeESGAActor") && method.contains("fetchGovernmentData")) {
+                } else if method == "gov" || (method.contains("EdgeESGActor") && method.contains("fetchGovernmentData")) {
                     let product: ProductClassification
                     if method == "gov" {
                         product = try JSONDecoder().decode(ProductClassification.self, from: payload)
