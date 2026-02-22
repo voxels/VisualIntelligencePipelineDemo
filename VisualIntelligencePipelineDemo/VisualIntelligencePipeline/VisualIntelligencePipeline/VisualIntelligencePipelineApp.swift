@@ -304,15 +304,13 @@ struct VisualIntelligencePipelineApp: App {
                         }
                     }
                     
+                    // Dismiss splash screen — CLaRa index builds progressively in background
+                    withAnimation { isLaunching = false }
+                    
                     // Populate CLaRa's in-memory document index from the full library.
-                    // This is the longest startup task — splash screen stays visible until done.
+                    // Runs in background — search becomes available progressively.
                     Task.detached(priority: .utility) {
-                        await MainActor.run { launchStatusMessage = "Building search index…" }
                         await CLaRaLatentService.shared.populateIndex(container: dataStore.container)
-                        await MainActor.run {
-                            launchStatusMessage = "Ready"
-                            withAnimation { isLaunching = false }
-                        }
                     }
 
                     if #available(iOS 16.0, macOS 13.0, *) {
