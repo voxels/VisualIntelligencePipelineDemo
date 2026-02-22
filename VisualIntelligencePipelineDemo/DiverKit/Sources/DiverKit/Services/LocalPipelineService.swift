@@ -223,10 +223,11 @@ public final class LocalPipelineService {
                       let lat = Double(components[0].trimmingCharacters(in: .whitespaces)),
                       let lon = Double(components[1].trimmingCharacters(in: .whitespaces)) {
                 
-                // Also check if this raw coordinate matches cached Home, if we had access to it easily.
-                // For now, assume raw string might be a manual override if placeContext is nil.
+                // Raw coordinate string — NOT a user override. This could be stale EXIF/metadata coords.
+                // Allow live location, contact detection, and reverse geocoding to correct it.
                 effectiveLocation = CLLocation(latitude: lat, longitude: lon)
-                hasUserOverride = true 
+                // hasUserOverride stays false — this is just a weak fallback
+                DiverLogger.pipeline.debug("Using existing.location string as weak fallback: \(lat), \(lon)")
             }
             
             // 2. Metadata (high priority truth)
