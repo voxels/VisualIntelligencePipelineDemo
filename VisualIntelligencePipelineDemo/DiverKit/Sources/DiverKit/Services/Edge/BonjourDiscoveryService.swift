@@ -26,6 +26,8 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
     private var browser: NWBrowser?
     private var discoveredNodes: [EdgeNodeInfo] = []
     private var isScanning = false
+    private var reconnectTask: Task<Void, Never>?
+    private let reconnectInterval: Duration = .seconds(10)
     
     // MARK: - EdgeNodeDiscovering
     
@@ -95,6 +97,8 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
         browser?.cancel()
         browser = nil
         isScanning = false
+        reconnectTask?.cancel()
+        reconnectTask = nil
         print("🔍 BonjourDiscovery: Stopped scanning")
     }
     
@@ -157,6 +161,8 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
         case .failed(let error):
             print("⚠️ BonjourDiscovery: Browser failed: \(error)")
             isScanning = false
+            // Auto-restart discovery after failure (WiFi reconnect, etc.)
+            scheduleReconnect(reason: "browser failure")
         case .cancelled:
             isScanning = false
         default:
@@ -221,7 +227,12 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
                 // A duplicate explicit call here was removed to prevent multi-connections.
             }
         } else {
+            if currentConnection != nil {
+                print("⚠️ BonjourDiscovery: Lost connection to \(currentConnection!.deviceName)")
+            }
             currentConnection = nil
+            // Node disappeared — start polling for reconnection
+            scheduleReconnect(reason: "node lost")
         }
         
         print("🔍 BonjourDiscovery: \(discoveredNodes.count) node(s) found")
@@ -238,6 +249,51 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
                 await self.handleResultsChanged(results: liveResults, changes: [], retryCount: 1)
             }
         }
+    }
+    
+    // MARK: - Reconnection Polling
+    
+    /// Schedules periodic reconnection attempts when an edge node is lost.
+    /// Cancels automatically when a node reconnects or discovery is stopped.
+    private func scheduleReconnect(reason: String) {
+        // Don't stack multiple reconnect timers
+        guard reconnectTask == nil else { return }
+        
+        print("🔄 BonjourDiscovery: Scheduling reconnect polling (\(reason))...")
+        
+        reconnectTask = Task { [weak self] in
+            var attempt = 0
+            while !Task.isCancelled {
+                attempt += 1
+                try? await Task.sleep(for: .seconds(10))
+                guard !Task.isCancelled, let self else { break }
+                
+                // If we've reconnected, stop polling
+                if await self.currentConnection != nil {
+                    print("✅ BonjourDiscovery: Reconnected — stopping poll")
+                    break
+                }
+                
+                print("🔄 BonjourDiscovery: Reconnect attempt #\(attempt)...")
+                
+                // Restart the browser to scan fresh
+                await self.restartBrowser()
+            }
+            await self?.clearReconnectTask()
+        }
+    }
+    
+    /// Clears the reconnect task reference (actor-isolated).
+    private func clearReconnectTask() {
+        reconnectTask = nil
+    }
+    
+    /// Restarts the NWBrowser for a fresh scan.
+    private func restartBrowser() {
+        browser?.cancel()
+        browser = nil
+        isScanning = false
+        startDiscovery()
     }
     
     /// Parse Bonjour TXT record entries.
