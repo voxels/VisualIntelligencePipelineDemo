@@ -653,20 +653,30 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
             
             if let capturedImage {
                 // Single-pass: image + grounding data → structured output
-                analysisText = try? await runGroundedAnalysis(
-                    image: capturedImage,
-                    visionTags: capturedTags,
-                    enrichmentContext: capturedContext,
-                    transcription: capturedTranscription,
-                    container: container
-                )
+                do {
+                    analysisText = try await runGroundedAnalysis(
+                        image: capturedImage,
+                        visionTags: capturedTags,
+                        enrichmentContext: capturedContext,
+                        transcription: capturedTranscription,
+                        container: container
+                    )
+                } catch {
+                    print("❌ [FastVLM] runGroundedAnalysis failed: \(error)")
+                    analysisText = nil
+                }
             } else if !capturedContext.isEmpty {
                 // Text-only fallback (e.g. link items with no image)
-                analysisText = try? await runTextOnlyAnalysis(
-                    enrichmentContext: capturedContext,
-                    transcription: capturedTranscription,
-                    container: container
-                )
+                do {
+                    analysisText = try await runTextOnlyAnalysis(
+                        enrichmentContext: capturedContext,
+                        transcription: capturedTranscription,
+                        container: container
+                    )
+                } catch {
+                    print("❌ [FastVLM] runTextOnlyAnalysis failed: \(error)")
+                    analysisText = nil
+                }
             } else {
                 analysisText = nil
             }
