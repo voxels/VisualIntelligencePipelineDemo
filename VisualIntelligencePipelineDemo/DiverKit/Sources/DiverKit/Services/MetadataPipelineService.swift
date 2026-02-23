@@ -309,210 +309,22 @@ public final class MetadataPipelineService: @unchecked Sendable {
         if let lastError { throw lastError }
     }
 
+    /// High-priority "Process Now" entry point.
+    /// Cancels the current queue, delegates to `processItemByID` (the single
+    /// canonical reprocessing path), then restarts the queue in background.
     public func processItemImmediately(_ item: ProcessedItem) async throws {
-        // Cancel current queue work to avoid conflict/slowness
+        // Cancel current queue work to prioritize this item
         currentTask?.cancel()
         
-        // Create a private background ModelContext — do NOT use activeContext/modelContext
-        // which are main-thread bound and would cause "Unbinding from the main queue" warnings.
-        let ctx = ModelContext(modelContainer)
-        ctx.autosaveEnabled = false
-        
-        // CRITICAL: Fetch the item from our private context to avoid context mismatch
-        // The passed item may be from a different context (e.g., view's context)
-        let itemID = item.id
-        let fetchDescriptor = FetchDescriptor<ProcessedItem>(
-            predicate: #Predicate { $0.id == itemID }
-        )
-        
-        guard let localItem = try ctx.fetch(fetchDescriptor).first else {
-            print("❌ processItemImmediately: Could not find item \(itemID) in pipeline context")
-            throw NSError(domain: "MetadataPipelineService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Item not found"])
-        }
-        
-        localItem.statusRaw = ProcessingStatus.processing.rawValue
-        localItem.updatedAt = Date() // CRITICAL: Update timestamp to prevent zombie check from marking as stalled
-        localItem.processingLog.append("\(Date().formatted()): Starting high-priority 'Process Now' workflow.")
-        try? ctx.save()
-        
-        do {
-            let localPipeline = LocalPipelineService(modelContext: ctx)
-            
-            let targetURL = localItem.url
-            let targetTitle = localItem.title
-            
-            // CRITICAL: Detect if item has a user-set location that should be preserved
-            // If so, pass nil for locationService to prevent GPS override
-            // Be STRICT here - only detect truly user-explicit overrides
-            let hasUserSetLocation: Bool = {
-                guard let placeContext = localItem.placeContext else { return false }
-                
-                // Contact-set location (explicitly chosen from contacts)
-                if placeContext.contactIdentifier != nil { return true }
-                
-                // MapKit/manual location override (explicitly chosen from map)
-                if let placeID = placeContext.placeID {
-                    if placeID.hasPrefix("mapkit-") || placeID.hasPrefix("mk-") || placeID == "home-location" {
-                        return true
-                    }
-                }
-                
-                // NOTE: Don't just check for name + coordinates, as that catches pipeline-enriched items too
-                return false
-            }()
-            
-            // Skip locationService if user has already set a location
-            let effectiveLocationService = hasUserSetLocation ? nil : locationService
-            
-            if hasUserSetLocation {
-                localItem.processingLog.append("\(Date().formatted()): Preserving user-set location: \(localItem.placeContext?.name ?? "Unknown")")
-            }
-            
-            // Find or create LocalInput
-            // Splitting into two fetches to resolve: 'PredicateExpressions.Disjunction' compiler error
-            var input: LocalInput?
-            
-            if let url = targetURL {
-                let urlFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.url == url })
-                input = try? ctx.fetch(urlFetch).first
-            }
-            
-            if input == nil, let title = targetTitle {
-                let titleFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.text == title })
-                input = try? ctx.fetch(titleFetch).first
-            }
-            
-            // CRITICAL: Clear all calculated data for fresh reprocessing
-            // Preserve: id, url, rawPayload, sessionID, createdAt, source, photosAssetIdentifier
-            localItem.summary = nil
-            localItem.transcription = nil
-            localItem.tags = []
-            localItem.purposes = []
-            localItem.categories = []
-            localItem.questions = []
-            if !hasUserSetLocation {
-                localItem.placeContextData = nil
-            }
-            localItem.webContextData = nil
-            localItem.documentContextData = nil
-            localItem.qrContextData = nil
-            localItem.activityContextData = nil
-            // Note: Don't clear weatherContextData - it's capture-time only
-            localItem.processingLog.append("\(Date().formatted()): Cleared calculated data for fresh reprocessing (preserving user overrides: \(hasUserSetLocation)).")
-            
-            // CRITICAL: Also clear parent session summary so it regenerates with new item data
-            if let sessionID = localItem.sessionID {
-                let sessionFetch = FetchDescriptor<SessionMetadata>(
-                    predicate: #Predicate { $0.sessionID == sessionID }
-                )
-                if let session = try? ctx.fetch(sessionFetch).first {
-                    session.summary = nil
-                    session.updatedAt = Date()
-                    localItem.processingLog.append("\(Date().formatted()): Cleared parent session summary for regeneration.")
-                }
-            }
-            
-            try? ctx.save()
-            
-            // Create descriptor with the item's actual ID to ensure correct item is updated
-            let descriptor = DiverItemDescriptor(
-                id: localItem.id,
-                url: localItem.url ?? "",
-                title: localItem.title ?? "",
-                type: DiverItemType(rawValue: localItem.entityType ?? "web") ?? .web,
-                attributionID: localItem.attributionID,
-                masterCaptureID: localItem.masterCaptureID,
-                sessionID: localItem.sessionID
-            )
-            
-            if let input = input {
-                _ = try await localPipeline.process(
-                    input: input,
-                    descriptor: descriptor,
-                    enrichmentService: enrichmentService,
-                    locationService: effectiveLocationService,
-
-                    indexingService: indexingService,
-                    contextService: contextService,
-                    scoringStrategies: defaultScoringStrategies,
-                    recommender: defaultRecommender
-                )
-            } else {
-                 // Fallback: create a temporary input from item data
-                 // Include rawPayload for image captures
-                 var imageData: Data? = localItem.rawPayload
-                 
-                 // If no rawPayload but has photosAssetIdentifier, load on-demand
-                 if imageData == nil, let assetId = localItem.photosAssetIdentifier {
-                     imageData = await PhotosAssetLoader.shared.loadImageData(identifier: assetId)
-                 }
-                 
-                 // Use original source so pipeline knows how to handle (e.g., photoLibraryImport runs OCR)
-                 let fallbackInput = LocalInput(
-                     createdAt: localItem.createdAt,
-                     url: localItem.url,
-                     text: localItem.title,
-                     source: localItem.source ?? "reprocessing",
-                     inputType: localItem.entityType ?? "web",
-                     rawPayload: imageData
-                 )
-                 
-                 ctx.insert(fallbackInput)
-                 _ = try await localPipeline.process(
-                    input: fallbackInput,
-                    descriptor: descriptor,
-                    enrichmentService: enrichmentService,
-                    locationService: effectiveLocationService,
-                    indexingService: indexingService,
-                    contextService: contextService,
-                    scoringStrategies: defaultScoringStrategies,
-                    recommender: defaultRecommender
-                )
-            }
-            
-            // Mark as ready if processing succeeded
-            // CRITICAL: Set statusRaw directly (not through @Transient status) to ensure SwiftData persistence
-            localItem.statusRaw = ProcessingStatus.ready.rawValue
-            localItem.processingLog.append("\(Date().formatted()): Processing completed successfully.")
-            try ctx.save()
-            
-            // Ingest into CLaRa's in-memory document index for immediate RAG searchability
-            CLaRaLatentService.shared.ingestProcessedItem(
-                id: localItem.id,
-                title: localItem.title,
-                summary: localItem.summary,
-                transcription: localItem.transcription,
-                tags: localItem.tags,
-                visualTags: localItem.visualTags,
-                categories: localItem.categories,
-                location: localItem.location,
-                purposes: localItem.purposes,
-                productMetadata: localItem.productMetadata,
-                url: localItem.url,
-                placeContextData: localItem.placeContextData,
-                webContextData: localItem.webContextData,
-                weatherContextData: localItem.weatherContextData,
-                documentContextData: localItem.documentContextData,
-                qrContextData: localItem.qrContextData,
-                fastVLMAnalysisData: localItem.fastVLMAnalysisData,
-                questions: localItem.questions
-            )
-            
-        } catch {
-            // Handle errors - don't leave item stuck in processing state
-            localItem.statusRaw = ProcessingStatus.failed.rawValue
-            localItem.failureCount += 1
-            localItem.processingLog.append("\(Date().formatted()): Processing failed - \(error.localizedDescription)")
-            try? ctx.save()
-            print("❌ processItemImmediately failed: \(error)")
-            throw error
-        }
+        // Delegate to the single canonical reprocessing path
+        try await processItemByID(item.id)
         
         // Restart the rest of the queue in background
         Task {
             try? await self.processPendingQueue()
         }
     }
+
     
     /// Process a single item by ID using a **private** ModelContext.
     /// Safe to call from any isolation context — does not share state with  
