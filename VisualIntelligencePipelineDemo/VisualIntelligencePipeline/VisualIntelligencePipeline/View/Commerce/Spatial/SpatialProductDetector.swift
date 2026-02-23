@@ -14,9 +14,7 @@ import RealityKit
 import DiverKit
 import DiverShared
 
-#if os(visionOS)
 import ARKit
-#endif
 
 /// Detects products in the spatial environment.
 /// On visionOS: uses ARKitSession + SceneReconstructionProvider for spatial detection.
@@ -81,8 +79,35 @@ final class SpatialProductDetector {
     
     func stopTracking() {
         isTracking = false
+        arSession?.pause()
         detectedProducts.removeAll()
+        print("📷 SpatialDetector: Stopped tracking")
     }
+    
+    /// Pause AR processing (app backgrounded) without clearing detected products.
+    func pauseSession() {
+        isTracking = false
+        arSession?.pause()
+        print("📷 SpatialDetector: Paused (background)")
+    }
+    
+    /// Resume AR processing (app foregrounded). Re-runs session config.
+    func resumeSession() {
+        isTracking = true
+        if let session = arSession {
+            let config = ARWorldTrackingConfiguration()
+            config.planeDetection = [.horizontal, .vertical]
+            if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
+                config.sceneReconstruction = .mesh
+            }
+            session.run(config)
+            print("📷 SpatialDetector: Resumed (foreground)")
+        }
+    }
+    
+    /// Weak reference to the ARSession, set by the Coordinator.
+    /// Used to pause/resume from lifecycle events.
+    weak var arSession: ARSession?
     #endif
     
     // MARK: - Commerce Scoring (Edge-First)
@@ -129,8 +154,21 @@ final class SpatialProductDetector {
         let router = await MainActor.run { Services.shared.edgeRouter }
         let system = await MainActor.run { Services.shared.actorSystem }
         
-        // Government safety data (parallel)
-        let gov = await fetchGovernmentData(product: classification, router: router, system: system)
+        // Government safety data + price trajectory + company ESG + affiliate platforms (parallel)
+        async let govResult = fetchGovernmentData(product: classification, router: router, system: system)
+        async let trajectoryResult = fetchNowcast(category: classification.category, router: router, system: system)
+        async let companyESGResult: CompanyESGProfile? = {
+            if let brand = resolvedProduct.brand {
+                return await self.fetchCompanyESG(brand: brand, router: router, system: system)
+            }
+            return nil
+        }()
+        async let affiliateResult = fetchAffiliatePlatforms(product: classification, router: router, system: system)
+        
+        let gov = await govResult
+        let trajectory = await trajectoryResult
+        let companyESG = await companyESGResult
+        let affiliatePlatforms = await affiliateResult
         
         // Build scores from ESG + Government data
         var scores: [(name: String, score: Float)] = []
@@ -283,6 +321,30 @@ final class SpatialProductDetector {
             summaryParts.append("Durable goods")
         }
         
+        // Company-level ESG — only when B Corp or company data found
+        if let company = companyESG {
+            if company.isBCorp {
+                summaryParts.append("🏅 B Corp certified")
+                // Boost ethics score if we have one, otherwise add as standalone
+                if let ethicsIdx = scores.firstIndex(where: { $0.name == "Ethics" }) {
+                    let boosted = min(1.0, scores[ethicsIdx].score + 0.1)
+                    totalScore += (boosted - scores[ethicsIdx].score)
+                    scores[ethicsIdx] = ("Ethics", boosted)
+                }
+            }
+            if !company.certifications.isEmpty {
+                let certs = company.certifications.filter { cert in
+                    !summaryParts.contains(where: { $0.contains(cert) })
+                }
+                if !certs.isEmpty {
+                    summaryParts.append(certs.prefix(2).joined(separator: ", "))
+                }
+            }
+            if !company.controversies.isEmpty {
+                summaryParts.append("⚠️ \(company.controversies.count) controvers(ies)")
+            }
+        }
+        
         let composite = scoreCount > 0 ? totalScore / scoreCount : 0.5
         
         // Build recommendation with reasoning
@@ -321,6 +383,9 @@ final class SpatialProductDetector {
         detectedProducts[index].hasData = hasRealData
         detectedProducts[index].isScoring = false
         detectedProducts[index].esgEnrichment = esgEnrichment
+        detectedProducts[index].priceTrajectory = trajectory
+        detectedProducts[index].companyESG = companyESG
+        detectedProducts[index].affiliatePlatforms = affiliatePlatforms
         
         if hasRealData {
             print("🛒 SpatialDetector: Scored \(detectedProducts[index].productName) → composite=\(String(format: "%.0f%%", composite * 100)), \(scores.count) strategies")
@@ -445,12 +510,24 @@ struct SpatialDetectedProduct: Identifiable {
     /// Used to project the score card back to screen coordinates each frame.
     var worldAnchor: simd_float4x4 = matrix_identity_float4x4
     
-    /// Screen-space position (x, y in points, z > 0 means visible).
-    /// Updated each AR frame by projecting worldAnchor through the camera.
+    /// Screen-space position of the card (x, y in points, z > 0 means visible).
+    /// Offset above the barcode to avoid occluding it.
     var screenPosition: SIMD3<Float> = SIMD3<Float>(200, 400, 1)
+    
+    /// Screen-space position of the actual barcode (for drawing connector lines).
+    var barcodeScreenPosition: CGPoint = .zero
     
     /// Full ESG enrichment data for expanded detail view.
     var esgEnrichment: ESGEnrichment? = nil
+    
+    /// Price trajectory for trend chart display.
+    var priceTrajectory: PriceTrajectory? = nil
+    
+    /// Company-level ESG profile (B Corp, certifications, controversies).
+    var companyESG: CompanyESGProfile? = nil
+    
+    /// Ranked ethical shopping platforms with affiliate links.
+    var affiliatePlatforms: [PlatformMatch]? = nil
     
     var scoreColor: Color {
         if compositeScore >= 0.7 { return .green }

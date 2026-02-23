@@ -9,11 +9,16 @@
 
 import SwiftUI
 import RealityKit
+import SwiftData
+import DiverKit
+import DiverShared
 
 /// Spatial AR view that overlays product score cards on detected objects.
 struct SpatialScoreOverlayView: View {
     @State private var detector = SpatialProductDetector()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         ZStack {
@@ -65,6 +70,86 @@ struct SpatialScoreOverlayView: View {
         .onDisappear {
             detector.stopTracking()
         }
+        .onChange(of: scenePhase) { _, newPhase in
+            switch newPhase {
+            case .background, .inactive:
+                detector.pauseSession()
+            case .active:
+                detector.resumeSession()
+            @unknown default:
+                break
+            }
+        }
+    }
+    
+    // MARK: - Ownership Persistence
+    
+    private func persistOwnership(product: SpatialDetectedProduct, status: OwnershipStatus) {
+        let itemID = UUID().uuidString
+        
+        // Create ProcessedItem with all fetched metadata
+        let item = ProcessedItem(
+            id: itemID,
+            title: product.productName,
+            summary: product.summary,
+            status: .ready,
+            mediaType: "product"
+        )
+        
+        // Persist all enrichment data so nothing is lost
+        item.esgContext = product.esgEnrichment
+        if let trajectory = product.priceTrajectory {
+            let nowcast = NowcastResult(
+                direction: trajectory.projectedDirection,
+                confidence: trajectory.confidenceInterval,
+                projectedChange: 0
+            )
+            item.nowcastContext = nowcast
+        }
+        item.affiliateContext = product.affiliatePlatforms
+        
+        // Build commerce context from strategy scores
+        let scores = product.strategyScores.map { strategy in
+            ProductScore(
+                strategyID: strategy.name.lowercased(),
+                overallScore: strategy.score,
+                dimensions: []
+            )
+        }
+        let purchaseOption = PurchaseOption(
+            platform: "ar_scan",
+            productName: product.productName,
+            brand: product.brand,
+            price: 0,
+            scores: scores,
+            affiliateURL: URL(string: "https://example.com")!
+        )
+        let recommendation = RankedRecommendation(
+            option: purchaseOption,
+            brandAffinity: 0.5,
+            compositeScore: product.compositeScore
+        )
+        item.commerceContext = [recommendation]
+        
+        modelContext.insert(item)
+        
+        // Create OwnedProduct linked to the ProcessedItem
+        let owned = OwnedProduct(
+            productID: product.barcode ?? itemID,
+            productName: product.productName,
+            brand: product.brand,
+            category: product.classification,
+            barcode: product.barcode,
+            status: status,
+            source: .tagScan,
+            scoringStrategyIDs: product.strategyScores.map { $0.name.lowercased() },
+            recommendedScore: Double(product.compositeScore),
+            captureItemID: itemID
+        )
+        modelContext.insert(owned)
+        
+        try? modelContext.save()
+        print("💾 AR Ownership: \(product.productName) → \(status.rawValue) (item=\(itemID))")
     }
     
     // MARK: - iOS/iPadOS (ARView with world-anchored cards)
@@ -80,6 +165,32 @@ struct SpatialScoreOverlayView: View {
             let productsWithData = detector.detectedProducts.filter { $0.hasData }
             let stillScoring = detector.detectedProducts.contains { $0.isScoring }
             
+            // Connector lines from barcode to card
+            Canvas { context, size in
+                for product in productsWithData where product.screenPosition.z > 0 {
+                    let barcodePoint = product.barcodeScreenPosition
+                    let cardPoint = CGPoint(
+                        x: CGFloat(product.screenPosition.x),
+                        y: CGFloat(product.screenPosition.y) + 20 // top of card
+                    )
+                    
+                    // Draw connector line
+                    var path = Path()
+                    path.move(to: barcodePoint)
+                    path.addLine(to: cardPoint)
+                    context.stroke(path, with: .color(.white.opacity(0.5)), lineWidth: 1.5)
+                    
+                    // Draw barcode indicator dot
+                    let dotRect = CGRect(
+                        x: barcodePoint.x - 4,
+                        y: barcodePoint.y - 4,
+                        width: 8, height: 8
+                    )
+                    context.fill(Path(ellipseIn: dotRect), with: .color(.white.opacity(0.8)))
+                }
+            }
+            .allowsHitTesting(false)
+            
             ForEach(productsWithData) { product in
                 ProductScoreAttachment(
                     productName: product.productName,
@@ -87,14 +198,18 @@ struct SpatialScoreOverlayView: View {
                     compositeScore: product.compositeScore,
                     strategyScores: product.strategyScores,
                     recommendation: product.recommendation,
-                    summary: product.summary
+                    summary: product.summary,
+                    priceTrajectory: product.priceTrajectory,
+                    onOwnershipChange: { _, _, _, status in
+                        persistOwnership(product: product, status: status)
+                    }
                 )
                 .scaleEffect(0.85)
                 .position(
                     x: CGFloat(product.screenPosition.x),
                     y: CGFloat(product.screenPosition.y)
                 )
-                .opacity(product.screenPosition.z > 0 ? 1 : 0) // Hide if behind camera
+                .opacity(product.screenPosition.z > 0 ? 1 : 0)
                 .animation(.easeInOut(duration: 0.15), value: product.screenPosition.x)
                 .animation(.easeInOut(duration: 0.15), value: product.screenPosition.y)
             }
@@ -152,7 +267,11 @@ struct SpatialScoreOverlayView: View {
                         compositeScore: product.compositeScore,
                         strategyScores: product.strategyScores,
                         recommendation: product.recommendation,
-                        summary: product.summary
+                        summary: product.summary,
+                        priceTrajectory: product.priceTrajectory,
+                        onOwnershipChange: { _, _, _, status in
+                            persistOwnership(product: product, status: status)
+                        }
                     )
                 }
             }
@@ -194,12 +313,16 @@ struct ARCameraView: UIViewRepresentable {
         arView.session.delegate = context.coordinator
         arView.session.run(config)
         
+        // Wire session reference so detector lifecycle methods can pause/resume
+        detector.arSession = arView.session
+        
         return arView
     }
     
     func updateUIView(_ uiView: ARView, context: Context) {}
     
     static func dismantleUIView(_ uiView: ARView, coordinator: Coordinator) {
+        coordinator.detector.stopTracking()
         uiView.session.pause()
     }
     
@@ -217,6 +340,8 @@ struct ARCameraView: UIViewRepresentable {
         }
         
         func session(_ session: ARSession, didUpdate frame: ARFrame) {
+            guard detector.isTracking else { return }
+            
             let now = CACurrentMediaTime()
             
             // Project all existing products to screen coordinates every frame
@@ -253,14 +378,48 @@ struct ARCameraView: UIViewRepresentable {
                             
                             print("🛒 SpatialDetector (AR): Barcode detected: \(payload)")
                             
-                            // Estimate world position from barcode screen location
+                            // Compute screen point for raycast
                             let bbox = observation.boundingBox
-                            let worldTransform = self.estimateWorldPosition(
-                                normalizedCenter: CGPoint(x: bbox.midX, y: bbox.midY),
-                                cameraTransform: cameraTransform,
-                                intrinsics: intrinsics,
-                                imageResolution: imageResolution
-                            )
+                            let normalizedCenter = CGPoint(x: bbox.midX, y: bbox.midY)
+                            
+                            // Try raycast on main thread (ARView is UIKit)
+                            let worldTransform = await MainActor.run { [weak self] () -> simd_float4x4 in
+                                guard let self, let arView = self.arView else {
+                                    return self?.estimateWorldPosition(
+                                        normalizedCenter: normalizedCenter,
+                                        cameraTransform: cameraTransform,
+                                        intrinsics: intrinsics,
+                                        imageResolution: imageResolution
+                                    ) ?? matrix_identity_float4x4
+                                }
+                                
+                                // Convert Vision normalized coords to ARView screen coords
+                                let screenX = normalizedCenter.x * arView.bounds.width
+                                let screenY = (1.0 - normalizedCenter.y) * arView.bounds.height
+                                let screenPoint = CGPoint(x: screenX, y: screenY)
+                                
+                                // Raycast from barcode screen position into ARKit scene
+                                let raycastResults = arView.raycast(
+                                    from: screenPoint,
+                                    allowing: .estimatedPlane,
+                                    alignment: .any
+                                )
+                                
+                                if let hit = raycastResults.first {
+                                    let hitPos = SIMD3<Float>(hit.worldTransform.columns.3.x, hit.worldTransform.columns.3.y, hit.worldTransform.columns.3.z)
+                                    let camPos = SIMD3<Float>(cameraTransform.columns.3.x, cameraTransform.columns.3.y, cameraTransform.columns.3.z)
+                                    print("🎯 Raycast hit at depth: \(String(format: "%.2f", simd_length(hitPos - camPos)))m")
+                                    return hit.worldTransform
+                                }
+                                
+                                // Fallback: intrinsics-based estimate
+                                return self.estimateWorldPosition(
+                                    normalizedCenter: normalizedCenter,
+                                    cameraTransform: cameraTransform,
+                                    intrinsics: intrinsics,
+                                    imageResolution: imageResolution
+                                )
+                            }
                             
                             await MainActor.run {
                                 let product = SpatialDetectedProduct(
@@ -290,11 +449,11 @@ struct ARCameraView: UIViewRepresentable {
             }
         }
         
-        // MARK: - World Position Estimation
+        // MARK: - World Position Estimation (Fallback)
         
-        /// Estimates world position from a normalized Vision bounding box center.
-        /// Uses camera intrinsics to create a ray from the camera through the
-        /// barcode's screen position, placed at an estimated depth of ~0.5m.
+        /// Fallback: estimates world position from camera intrinsics when
+        /// ARKit raycast doesn't find a surface (e.g., barcode on a curved
+        /// object or at an oblique angle). Uses 0.4m estimated depth.
         private func estimateWorldPosition(
             normalizedCenter: CGPoint,
             cameraTransform: simd_float4x4,
@@ -302,9 +461,8 @@ struct ARCameraView: UIViewRepresentable {
             imageResolution: CGSize
         ) -> simd_float4x4 {
             // Vision coordinates are (0,0) bottom-left, (1,1) top-right
-            // Camera image coordinates: pixel space
             let pixelX = Float(normalizedCenter.x * imageResolution.width)
-            let pixelY = Float((1.0 - normalizedCenter.y) * imageResolution.height) // Flip Y
+            let pixelY = Float((1.0 - normalizedCenter.y) * imageResolution.height)
             
             // Unproject pixel to camera-space ray using intrinsics
             let fx = intrinsics[0][0]
@@ -312,16 +470,14 @@ struct ARCameraView: UIViewRepresentable {
             let cx = intrinsics[2][0]
             let cy = intrinsics[2][1]
             
-            // Ray direction in camera space (pointing forward along -Z)
             let dirX = (pixelX - cx) / fx
             let dirY = (pixelY - cy) / fy
             let rayDir = simd_normalize(SIMD3<Float>(dirX, -dirY, -1.0))
             
-            // Place the anchor at estimated depth (~0.5m for handheld scanning)
-            let estimatedDepth: Float = 0.5
+            // Place at estimated arm's-length distance
+            let estimatedDepth: Float = 0.4
             let pointInCamera = rayDir * estimatedDepth
             
-            // Transform to world space
             let worldPoint = cameraTransform * SIMD4<Float>(pointInCamera.x, pointInCamera.y, pointInCamera.z, 1.0)
             
             var transform = matrix_identity_float4x4
@@ -331,8 +487,8 @@ struct ARCameraView: UIViewRepresentable {
         
         // MARK: - Screen Projection
         
-        /// Projects all products' world anchors to screen coordinates.
-        /// Called every AR frame to keep cards tracking their real-world positions.
+        /// Projects all products' world anchors to screen coordinates every frame.
+        /// Tracks both the raw barcode position and the offset card position.
         private func projectWorldPositionsToScreen(frame: ARFrame) {
             guard let arView else { return }
             let viewSize = arView.bounds.size
@@ -353,8 +509,11 @@ struct ARCameraView: UIViewRepresentable {
                     let screenPoint = arView.project(worldPos)
                     
                     if let projected = screenPoint {
-                        // Offset card slightly above the barcode position
-                        let cardY = max(60, projected.y - 80)
+                        // Store raw barcode screen position (where the physical barcode is)
+                        self.detector.detectedProducts[i].barcodeScreenPosition = projected
+                        
+                        // Offset card above the barcode (enough to not occlude it)
+                        let cardY = max(80, projected.y - 120)
                         self.detector.detectedProducts[i].screenPosition = SIMD3<Float>(
                             Float(projected.x),
                             Float(cardY),

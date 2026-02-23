@@ -2,6 +2,32 @@
 
 ## 2026-02-23
 
+### Commerce Intelligence — Full Pipeline Hookup & AR Session Lifecycle
+- **ARKit Raycast Anchoring**: Barcode world positions now use `ARView.raycast(from:allowing:alignment:)` for accurate surface-hit depth instead of fixed 0.5m estimate. Falls back to camera intrinsics at 0.4m if no surface found.
+- **Unified Session Lifecycle**: `detector.isTracking` is the single source of truth for AR processing. Removed parallel `isActive` flag. Coordinator checks `detector.isTracking` on every frame — stops immediately when view dismisses.
+  - `pauseSession()` / `resumeSession()` for app background/foreground via `scenePhase`.
+  - `detector.arSession` weak reference wired from `makeUIView` so detector can pause/resume the underlying ARSession.
+  - `dismantleUIView` calls `detector.stopTracking()` as safety net.
+- **Parallel Data Fetching**: `scoreProduct()` now fetches all 5 data sources concurrently via `async let`:
+  1. ESG Enrichment (Open Facts / UPC Item DB) — already existed
+  2. Government Data (CPSC/FDA/EPA/Energy Star) — already existed
+  3. Price Nowcast (World Bank / BLS PPI) — **newly wired**
+  4. Company ESG / B Corp (OpenESG) — **newly wired**
+  5. Affiliate Platforms (ethical routing) — **newly wired**
+- **Price Trend Sparkline**: `ProductScoreAttachment` now accepts optional `PriceTrajectory`. When expanded, shows a compact Swift Charts sparkline with trend direction pill (Rising/Falling/Stable) and confidence percentage.
+- **Company ESG Integration**: B Corp certification boosts Ethics score by 10%. Company certifications and controversies surface in summary text.
+- **Visual Connector Lines**: Canvas layer draws connector line + indicator dot from barcode's screen position to the offset score card, making the spatial relationship clear.
+- **`barcodeScreenPosition`**: New property on `SpatialDetectedProduct` tracks the raw projected barcode position separate from the offset card position.
+- **AR Ownership Buttons**: "Want" and "Own" compact pill buttons on every AR score card. Tapping creates both:
+  - `OwnedProduct` (SwiftData) with barcode, brand, status, composite score, strategy IDs, and `captureItemID` link.
+  - `ProcessedItem` storing **all fetched metadata**: ESG enrichment, government data, nowcast trajectory, affiliate platforms, strategy scores, and summary. No commerce data is lost when marking a product from the AR view.
+  - Products marked `.wishlisted` from AR can be reviewed in bulk via `OwnedProductsView`.
+
+### Files Changed (Pipeline Hookup & Lifecycle)
+- `[MODIFY]` `View/Commerce/Spatial/SpatialProductDetector.swift` — `pauseSession`/`resumeSession`/`arSession` ref, parallel fetches, B Corp integration, `priceTrajectory`/`companyESG`/`affiliatePlatforms` fields
+- `[MODIFY]` `View/Commerce/Spatial/SpatialScoreOverlayView.swift` — Raycast anchoring, unified lifecycle, connector lines, `scenePhase` handling, `persistOwnership`, `modelContext`
+- `[MODIFY]` `View/Commerce/Spatial/ProductScoreAttachment.swift` — Sparkline chart, trend pill, ownership buttons, `onOwnershipChange` closure
+
 ### Commerce Intelligence — Product Identity & Barcode Resolution
 - **UPC Item DB Fallback**: Added `upcitemdb.com` as 5th barcode lookup cascade step in `ESGEnrichmentService`. Covers millions of non-food UPC/EAN barcodes (free tier, no API key). Returns product name, brand, category, and description.
 - **Product Name & Brand from Open Facts**: `ESGEnrichment` now carries `productName` and `brand` fields parsed from Open Facts `product_name` / `brands` API fields. Context summary updated to prefer `productName` over `genericName`.
