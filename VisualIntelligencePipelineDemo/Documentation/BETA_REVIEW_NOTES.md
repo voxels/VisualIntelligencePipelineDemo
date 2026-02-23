@@ -138,6 +138,27 @@ This is the **first public beta**. Your feedback is critical to shaping the fina
 - Are the scoring dimensions logically calculated based on the product?
 - Is the UI smooth when rendering the 3D overlay and the charts in the detail view?
 
+### 11. Two-Phase Pipeline Speed
+
+- Take a capture or import an item.
+- Open the sidebar immediately.
+- Verify that the item appears almost instantly with a `.captured` status.
+- Wait a few seconds and watch as the item seamlessly updates with the Phase 2 analysis (CLaRa, FastVLM, Commerce).
+
+**What to look for:**
+- Is the initial save (Phase 1) instantaneous?
+- Does the UI update smoothly when Phase 2 finishes in the background?
+- Are there any UI blocking issues during Phase 2?
+
+### 12. macOS Edge Routing (If Applicable)
+
+- If you have the macOS Edge Daemon running on your local network, verify that your iOS device connects to it (check the Settings > Edge Node status).
+- Take a capture and verify that CLaRa/FastVLM requests are offloaded to the Mac.
+
+**What to look for:**
+- Does the app successfully discover the Edge Node via Bonjour?
+- Is processing noticeably faster when connected to the Mac?
+
 ---
 
 ## Known Issues

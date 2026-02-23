@@ -34,14 +34,15 @@ Hear something you love? Capture it to recognize the track via Apple Music or Sp
 
 *   **Intelligent Sifting:** Automatically detects and lifts subjects from their background using Apple's Vision framework, giving you clean, focused images with proper alpha channels.
 *   **Deep Contextual Enrichment:** Every capture is enriched with location (Foursquare venues & Apple Maps), weather, web intelligence, aesthetics scoring, and music recognition — creating a complete memory of the moment.
-*   **AI-Powered Understanding:** On-device Apple Intelligence generates summaries, identifies purposes, and suggests intelligent concept tags — all processed locally for maximum privacy.
+*   **Lightning Fast Two-Phase Pipeline:** An optimized processing split ensures your items are saved and visible in your library instantly, while heavy AI analysis seamlessly finishes in the background.
+*   **AI-Powered Understanding:** On-device Apple Intelligence and edge-routed CLaRa generate summaries, identify purposes, and suggest intelligent concept tags — all processed privately.
 *   **Smart Sessions:** Captures are automatically grouped by location and time into cohesive sessions with AI-generated summaries, so you stay organized without the effort.
 *   **Context Tags & Daily Focus:** Add custom tags like "Gift for Mom" to any capture. A Daily Focus brief aggregates your activity into an AI-generated summary each day.
 *   **Universal Link Hub:** Save links from Safari, YouTube, TikTok, or any app via the Share Sheet. Links are automatically enriched with metadata, previews, and context.
 *   **Document Detection:** Automatically detects, corrects perspective, and saves documents found in your captures.
 *   **QR Code Intelligence:** QR codes are automatically detected and enriched with web metadata — titles, descriptions, and previews extracted from the target URL.
 *   **Siri, Shortcuts & Widgets:** Save, share, and search your library with voice commands, automation workflows, and at-a-glance Home & Lock screen widgets.
-*   **Privacy First:** Built with on-device intelligence at its core. Your visual data is processed locally, ensuring your personal research and memories stay private.
+*   **Privacy & Edge Intelligence:** Built with on-device intelligence at its core. When at home, automatically offload heavy processing to your Mac via edge computing, keeping your personal research and memories private and lightning fast.
 
 ---
 

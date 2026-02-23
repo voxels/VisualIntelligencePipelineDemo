@@ -46,6 +46,7 @@ Any device on your home network can offload ML inference to a more powerful M-se
 - **Automatic discovery** — Bonjour-based (`_visualintel._tcp`) with TLS 1.3 transport
 - **Transparent fallback** — If no edge node is reachable, all inference runs locally on-device
 - **macOS Edge Daemon** — Standalone menu-bar app with dashboard showing connected clients, model status, inference throughput, and data cache health
+- **ML-Sharp Bridge (Planned)** — Executes advanced Python-based semantic masking via Foundation `Process()` when native Swift solutions are inadequate
 
 ### Universal Link Organization & Deep Linking
 Save links from Safari, YouTube, TikTok, or any app via the Share Sheet extension. Links are wrapped in a proprietary format (HMAC-signed, tamper-proof URLs via `DiverLinkWrapper`) and processed through the enrichment pipeline for automatic metadata extraction. The app supports both Universal Links (`https://secretatomics.com/...`) and custom scheme links (`secretatomics://...`) for deep linking. Shared links appear in Apple's **Shared with You** section via `SharedWithYouManager`.
@@ -212,18 +213,21 @@ Scores image quality for thumbnail selection and context weighting. As of v1.1, 
 
 ### Pipeline Orchestration
 
-`LocalPipelineService` orchestrates all stages:
+`LocalPipelineService` orchestrates all stages using a **fast Two-Phase Pipeline**:
 
+**Phase 1: Capture Fast Path (Instantaneous)**
 1. **Ingest** — `DiverQueueItem` enters the processing queue
 2. **Metadata** — `MetadataPipelineService` extracts EXIF, GPS, file metadata
 3. **Vision** — `IntelligenceProcessor.performRequests()` runs Stage 1 (OCR, QR, semantic, document, sifting, aesthetics)
 4. **Enrichment** — Location, web, music services populate `PipelineContext`
 5. **QR Enrichment** — QR URLs discovered in Stage 1 get full web enrichment (title, summary, metadata)
-6. **FastVLM** — If enabled, `FastVLMEnrichmentService.analyze()` adds multimodal context
-7. **Commerce** — `performCommerceEnrichment()` runs 8-step pipeline: classify → ESG + Government data (parallel) → price nowcast → score (7 strategies) → learn preferences → recommend → affiliate routing → record snapshot
-8. **LLM** — `ContextQuestionService.processContext()` generates summary, tags, purpose
-9. **Persist** — All results written to `ProcessedItem` (SwiftData) and synced via CloudKit
-10. **Session** — Item auto-grouped into `DiverSession` by location+time proximity
+6. **Save & Show** — Item is saved to SwiftData with `.captured` status and instantly appears in the sidebar.
+
+**Phase 2: Heavy Intelligence (Background)**
+7. **FastVLM** — If enabled, `FastVLMEnrichmentService.analyze()` adds multimodal context
+8. **Commerce** — `performCommerceEnrichment()` runs 8-step pipeline (classification, scoring, ESG, recommendations)
+9. **LLM** — `ContextQuestionService.processContext()` generates summary, tags, purpose (Edge CLaRa if available)
+10. **Persist & Group** — Status updates to `.enriched`, item auto-grouped into `SessionMetadata` by location+time proximity
 
 **Service:** `DiverKit/Services/LocalPipelineService.swift`
 

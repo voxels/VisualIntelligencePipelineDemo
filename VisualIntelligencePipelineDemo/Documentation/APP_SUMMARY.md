@@ -26,8 +26,8 @@ Every capture is automatically enriched with layers of real-world context:
 
 ### AI-Powered Semantic Understanding
 
-#### Apple Intelligence (SystemLanguageModel)
-`ContextQuestionService` uses Apple's Foundation Models framework (`LanguageModelSession`) for on-device structured generation. Produces summaries, evidence-based statements, user intent identification, and descriptive tags. Supports context chaining for large inputs and structured output via the `@Generable` macro. Requires iOS 26.0+.
+#### Apple Intelligence & CLaRa
+`ContextQuestionService` uses Apple's Foundation Models framework (`LanguageModelSession`) for on-device structured generation. If an edge node is available, generation is transparently routed to **Edge CLaRa 7B** for superior context extraction. Produces summaries, evidence-based statements, user intent identification, and descriptive tags. Supports context chaining for large inputs and structured output via the `@Generable` macro. On-device SLM requires iOS 26.0+.
 
 #### FastVLM (Opt-In)
 `FastVLMEnrichmentService` runs Apple's FastVLM 0.5B model (~500MB) locally via MLX Swift for multimodal image understanding. Performs two-pass analysis: image description and context synthesis. Model is downloaded on-demand and managed with automatic memory pressure eviction.
@@ -54,9 +54,9 @@ Products detected via barcode or visual classification are automatically scored 
 
 ### Edge Computing (Home Network ML Offloading)
 
-Any device on your home network can offload ML inference to a more powerful M-series Mac or iPad via **Swift Distributed Actors** over Bonjour (`_visualintel._tcp`, TLS 1.3). The edge node hosts larger models (FastVLM 3B+), runs nowcasting projections, and handles ESG/commerce data enrichment — while your iPhone stays responsive. Transparent fallback to on-device when no edge node is reachable.
+Any device on your home network can offload ML inference to a more powerful M-series Mac or iPad via **Swift Distributed Actors** over Bonjour (`_visualintel._tcp`, TLS 1.3). The edge node hosts larger models (FastVLM 1.5B, CLaRa 7B), runs nowcasting projections, and handles ESG/commerce data enrichment — while your iPhone stays responsive. Transparent fallback to on-device occurs when no edge node is reachable.
 
-A standalone **macOS Edge Daemon** (menu-bar app) provides a dashboard showing connected clients, model status, inference throughput, and data cache health.
+A standalone **macOS Edge Daemon** (menu-bar app) provides a dashboard showing connected clients, model status, inference throughput, and data cache health. It also plans to orchestrate **ML-Sharp**, a Python bridge utilizing `Process()` to execute advanced semantic edge masking scripts that are unsuited for native Swift implementation.
 
 ### Intelligent Session Management
 
@@ -87,8 +87,10 @@ Fully integrated with Apple's system — 6 App Intents, pre-built shortcut templ
 - **On-Device ML** — Apple Vision (6 request types per pass), FastVLM via MLX Swift, Apple Intelligence via Foundation Models.
 - **Edge Computing** — Swift Distributed Actors over Bonjour for transparent ML offloading to M-series Macs.
 - **Commerce Intelligence** — 7 scoring strategies, Open *Facts cascade, preference learning, score snapshots.
+- **Two-Phase Pipeline** — Processing is split into an instantaneous Phase 1 (Capture/Vision/Location) and a background Phase 2 (FastVLM, Commerce, SLM), drastically improving perceived speed.
 - **Queue-Based Reliability** — File-based queue ensures no capture or link is ever lost.
 - **Protocol-Based DI** — 18 service protocols (`IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`, `ProductScoringStrategy`, `ProductRecommending`, `ESGEnriching`, etc) enable mock injection for testing.
+- **ViewModel Separation** — Strict UI decoupling via `ModelUIExtensions` to keep SwiftData models pure.
 
 ---
 
