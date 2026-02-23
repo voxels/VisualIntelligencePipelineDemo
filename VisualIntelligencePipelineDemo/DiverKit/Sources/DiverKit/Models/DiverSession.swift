@@ -64,12 +64,6 @@ public final class SessionMetadata: Identifiable, DiverObject {
     
     // MARK: - DiverObject Conformance
     
-    public var displayTitle: String {
-        if let title = title, !title.isEmpty { return title }
-        if let location = locationName, !location.isEmpty { return location }
-        return createdAt.formatted(date: .abbreviated, time: .shortened)
-    }
-    
     public func asDTO() -> DiverObjectDTO {
         DiverObjectDTO(
             id: sessionID,

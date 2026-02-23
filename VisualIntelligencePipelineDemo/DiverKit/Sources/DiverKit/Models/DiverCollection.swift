@@ -10,7 +10,6 @@ public final class DiverCollection: Identifiable, DiverObject {
     @Transient
     public var id: String { collectionID }
     
-    public var displayTitle: String { name }
     public var name: String = "Untitled Collection"
     
     /// User-defined contextual summary (editable)

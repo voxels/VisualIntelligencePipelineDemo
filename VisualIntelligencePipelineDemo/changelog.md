@@ -2,6 +2,11 @@
 
 ## 2026-02-22
 
+### UI Logic Refactoring
+- **Model UI Extraction**: Extracted SwiftUI-specific presentation properties (`displayTitle`, `relativeUpdatedDate`, `icon`, `levelColor`, `formattedDuration`) out of core SwiftData `@Model` classes (`ProcessedItem`, `SessionMetadata`, `DiverCollection`) and data enums. 
+- **ModelUIExtensions.swift**: Moved all extracted formatters to a newly created `ModelUIExtensions.swift` file located in the `ViewModel` module to properly decouple the Data Core from the UI Presentation Layer.
+- **Internal Schemes Update**: Enforced strict internal URL scheme routing by ensuring `ProcessedItem` display logic only registers `secretatomics://` as an internal scheme.
+
 ### Two-Phase Pipeline Split
 - **Capture-Time Phase 1**: `LocalPipelineService.process()` now accepts `captureOnly` parameter. Phase 1 runs Vision analysis (OCR, QR, sift, aesthetics, saliency, classification), Location enrichment (GPS + MapKit), and Web metadata. Items appear in sidebar immediately with `.captured` status (~1-2s).
 - **Background Phase 2**: `MetadataPipelineService.enrichCapturedItems()` sweeps `.captured` items after batch completion. Runs CLaRa/SLM analysis, FastVLM, Commerce scoring, Concept extraction, and Session sync. Items transition `.enriching` → `.ready`.

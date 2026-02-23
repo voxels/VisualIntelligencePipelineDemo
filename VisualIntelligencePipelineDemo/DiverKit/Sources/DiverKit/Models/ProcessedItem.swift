@@ -268,36 +268,6 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
         )
     }
     
-    // Internal URL schemes that should never be shown to the user as titles
-    private static let internalSchemes: [String] = [
-        "secretatomics://", "diver-capture://", "diver-product://", "diver-media://"
-    ]
-    
-    /// A human-readable label derived from the item's type/categories, used when title is nil
-    /// and the URL is an internal scheme that shouldn't be displayed.
-    public var displayLabel: String {
-        if let title, !title.isEmpty { return title }
-        
-        // If URL is a real external URL, show it
-        if let url, !ProcessedItem.internalSchemes.contains(where: { url.hasPrefix($0) }) {
-            return url
-        }
-        
-        // Fallback: derive a label from categories or entity type
-        if categories.contains("document") { return "Scanned Document" }
-        if categories.contains("product") { return "Product" }
-        if categories.contains("media") { return "Media" }
-        if categories.contains("web") || categories.contains("qr") { return "Web Link" }
-        if categories.contains("place") { return "Place" }
-        if categories.contains("visual_intelligence") { return "Capture" }
-        
-        return "Processing..."
-    }
-    
-    public var displayTitle: String {
-        displayLabel
-    }
-    
     public func asDTO() -> DiverObjectDTO {
         DiverObjectDTO(
             id: id,

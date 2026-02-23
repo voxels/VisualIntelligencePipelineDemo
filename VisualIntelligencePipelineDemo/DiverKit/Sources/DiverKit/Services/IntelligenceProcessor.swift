@@ -146,35 +146,6 @@ extension IntelligenceResult {
         }
     }
     
-    public var icon: String {
-        switch self {
-        case .qr: return "qrcode"
-        case .richWeb: return "safari"
-        case .text: return "text.magnifyingglass"
-        case .semantic: return "brain"
-        case .entertainment(_, let type, _):
-            switch type {
-            case .movie: return "film"
-            case .concert: return "music.mic"
-            case .book: return "book"
-            case .podcast: return "podcast.arrow.up.universal"
-            }
-        case .siftedSubject(_, _, let label):
-            if let l = label?.lowercased() {
-                if l.contains("dog") || l.contains("cat") { return "pawprint.fill" }
-                if l.contains("coffee") || l.contains("mug") { return "cup.and.saucer.fill" }
-                if l.contains("laptop") || l.contains("screen") { return "laptopcomputer" }
-                if l.contains("plant") || l.contains("flower") { return "leaf.fill" }
-            }
-            return "hand.raised.fingers.spread"
-        case .product: return "barcode.viewfinder"
-        case .document: return "doc.text.below.ecg.fill" // More distinct document icon
-        case .purpose: return "sparkles.rectangle.stack"
-        case .aesthetics: return "sparkle.magnifyingglass"
-        case .saliency: return "eye.trianglebadge.exclamationmark"
-        }
-    }
-    
     public var secondaryAction: (title: String, url: String)? {
         switch self {
         case .entertainment(let title, let type, _):

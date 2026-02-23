@@ -213,37 +213,8 @@ enum SSEEvent: Codable, Identifiable {
         }
     }
     
-    /// Display color based on log level
-    var levelColor: String {
-        switch level.lowercased() {
-        case "info": return "blue"
-        case "warning": return "orange"
-        case "error": return "red"
-        case "debug": return "gray"
-        default: return "primary"
-        }
     }
-    
-    /// Display icon based on message content
-    var icon: String {
-        // TikTok-specific icon
-        if case .tiktokMetadata = self {
-            return "video.fill"
-        }
-        
-        if message.contains("📦") { return "shippingbox.fill" }
-        if message.contains("🔍") { return "magnifyingglass" }
-        if message.contains("📥") { return "arrow.down.circle.fill" }
-        if message.contains("✅") { return "checkmark.circle.fill" }
-        if message.contains("🎵") { return "music.note" }
-        if message.contains("🤖") { return "cpu" }
-        if message.contains("📊") { return "chart.bar.fill" }
-        if message.contains("🔎") { return "magnifyingglass.circle" }
-        if message.contains("💾") { return "externaldrive.fill" }
-        if message.contains("✨") { return "sparkles" }
-        return "circle.fill"
-    }
-}
+
 
 // MARK: - Helper for AnyCodable
 

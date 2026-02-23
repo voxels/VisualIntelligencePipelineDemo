@@ -39,10 +39,5 @@ public enum DiverObjectType: String, Sendable, Codable {
 }
 
 public extension DiverObject {
-    /// Helper to convert a relative date to a string.
-    var relativeUpdatedDate: String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: updatedAt, relativeTo: Date())
-    }
+    // Moved UI properties to ModelUIExtensions.swift
 }

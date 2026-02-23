@@ -87,17 +87,4 @@ class JobProgress {
         let end = completedAt ?? Date()
         return end.timeIntervalSince(start)
     }
-    
-    var formattedDuration: String {
-        guard let duration = duration else { return "—" }
-        
-        let minutes = Int(duration) / 60
-        let seconds = Int(duration) % 60
-        
-        if minutes > 0 {
-            return "\(minutes)m \(seconds)s"
-        } else {
-            return "\(seconds)s"
-        }
-    }
 }
