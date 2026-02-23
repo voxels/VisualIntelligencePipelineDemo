@@ -1,0 +1,112 @@
+name: VisualIntelligenceMac
+options:
+  bundleIdPrefix: com.secretatomics.visualintelligence
+  deploymentTarget:
+    macOS: "26.0"
+  xcodeVersion: "26.0"
+  createIntermediateGroups: true
+  defaultConfig: Debug
+
+packages:
+  DiverKit:
+    path: ../DiverKit
+  DiverShared:
+    path: ../DiverShared
+
+targets:
+
+  # ── Main macOS companion app ──────────────────────────────────────────────
+  VisualIntelligenceMac:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources
+        excludes: []
+      - path: Sources/App/Assets.xcassets
+        type: file
+    dependencies:
+      - package: DiverKit
+      - package: DiverShared
+      # Embed the EdgeDaemon as a Login Item helper
+      - target: VisualIntelligenceMacEdgeNode
+        embed: true
+        codeSign: true
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: Visual Intelligence
+        CFBundleShortVersionString: "1.2"
+        CFBundleVersion: "1"
+        LSApplicationCategoryType: public.app-category.productivity
+        NSLocalNetworkUsageDescription: >
+          Visual Intelligence communicates with the Edge Node helper on your
+          local network to offload ML inference to your Mac.
+        NSBonjourServices:
+          - _visualintel._tcp
+        SMPrivilegedExecutables: {}   # not needed — loginItem doesn't require this
+    settings:
+      base:
+        PRODUCT_NAME: "Visual Intelligence"
+        PRODUCT_BUNDLE_IDENTIFIER: com.secretatomics.visualintelligence.mac
+        SWIFT_VERSION: "6.0"
+        MACOSX_DEPLOYMENT_TARGET: "26.0"
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: VisualIntelligenceMac.entitlements
+        DEVELOPMENT_TEAM: ""
+        ENABLE_HARDENED_RUNTIME: YES
+        SWIFT_STRICT_CONCURRENCY: complete
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  # ── EdgeNode Login Item helper — embedded inside the main app ─────────────
+  VisualIntelligenceMacEdgeNode:
+    type: application
+    platform: macOS
+    sources:
+      - path: ../EdgeDaemon
+        excludes:
+          - project.yml
+          - "*.xcodeproj"
+          - "*.xcworkspace"
+          - "*.entitlements"
+          - Info.plist
+          - build.log
+          - export
+          - run_daemon.sh
+          - README.md
+    dependencies:
+      - package: DiverKit
+      - package: DiverShared
+    info:
+      path: ../EdgeDaemon/Info.plist
+      properties:
+        LSUIElement: true
+        CFBundleDisplayName: "Visual Intelligence Edge Node"
+        LSApplicationCategoryType: public.app-category.utilities
+        NSLocalNetworkUsageDescription: >
+          The Edge Node advertises via Bonjour to serve ML inference
+          to Visual Intelligence on your iPhone.
+        NSBonjourServices:
+          - _visualintel._tcp
+    settings:
+      base:
+        PRODUCT_NAME: "VisualIntelligenceMacEdgeNode"
+        # Must be child of the parent app for SMAppService.loginItem to work
+        PRODUCT_BUNDLE_IDENTIFIER: com.secretatomics.visualintelligence.mac.edgenode
+        SWIFT_VERSION: "6.0"
+        MACOSX_DEPLOYMENT_TARGET: "26.0"
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: ../EdgeDaemon/EdgeDaemon.entitlements
+        DEVELOPMENT_TEAM: ""
+        ENABLE_HARDENED_RUNTIME: YES
+        SWIFT_STRICT_CONCURRENCY: complete
+
+schemes:
+  VisualIntelligenceMac:
+    build:
+      targets:
+        VisualIntelligenceMac: all
+        VisualIntelligenceMacEdgeNode: all
+    run:
+      config: Debug
+    profile:
+      config: Release

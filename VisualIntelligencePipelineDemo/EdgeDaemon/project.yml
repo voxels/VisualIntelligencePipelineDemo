@@ -37,13 +37,13 @@ targets:
       properties:
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.utilities
-        CFBundleDisplayName: Visual Intelligence Edge
-        NSLocalNetworkUsageDescription: Edge Daemon advertises via Bonjour to serve ML inference to iOS devices on your local network.
+        CFBundleDisplayName: Visual Intelligence Node
+        NSLocalNetworkUsageDescription: The Visual Intelligence Node serves AI inference to your iPhone over your local network via Bonjour.
         NSBonjourServices:
           - _visualintel._tcp
     settings:
       base:
-        PRODUCT_NAME: EdgeDaemon
+        PRODUCT_NAME: "Visual Intelligence Node"
         SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "26.0"
         CODE_SIGN_STYLE: Automatic
@@ -51,7 +51,7 @@ targets:
         DEVELOPMENT_TEAM: ""
         ENABLE_HARDENED_RUNTIME: YES
         SWIFT_STRICT_CONCURRENCY: complete
-        PRODUCT_BUNDLE_IDENTIFIER: com.secretatomics.visualintelligence.EdgeDaemon
+        PRODUCT_BUNDLE_IDENTIFIER: com.secretatomics.visualintelligence.node
 
 schemes:
   EdgeDaemon:
