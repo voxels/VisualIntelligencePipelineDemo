@@ -160,36 +160,31 @@ struct ReprocessMetadataView: View {
     }
     
     private func startReprocessing() {
-        guard let imageData = effectiveImageData else { return }
+        guard effectiveImageData != nil else { return }
         
         isLoading = true
         
         // 0. Reset Purposes/Intent to force fresh generation
         item.purposes = []
         item.questions = []
-        Task { @MainActor in try? modelContext.save() }
         
-        // 1. Set Shared Context - Preserve Session ID if possible to maintain continuity
-        let sessionID = item.sessionID ?? UUID().uuidString
-        
-        let context = ReprocessContext(
-            imageData: imageData,
-            sessionID: sessionID,
-            sessionTitle: sessionTitle.isEmpty ? nil : sessionTitle,
-            location: item.location,
-            placeID: item.placeContext?.placeID,
-            placeName: item.placeContext?.name,
-            mediaType: item.mediaType
-        )
+        // Store the refreshed image data on the item so the ViewModel can load it
+        if item.rawPayload == nil, let loaded = loadedImageData {
+            item.rawPayload = loaded
+        }
         
         Task { @MainActor in
-            print("🔄 [ReprocessMetadataView] Setting pending context. Image Size: \(context.imageData.count) bytes")
-            Services.shared.pendingReprocessContext = context
+            try? modelContext.save()
+        }
+        
+        Task { @MainActor in
+            print("🔄 [ReprocessMetadataView] Setting pending reprocess item ID: \(item.id)")
+            Services.shared.pendingReprocessItemID = item.id
             
-            // 2. Dismiss this sheet
+            // Dismiss this sheet
             dismiss()
             
-            // 3. Trigger Visual Intelligence
+            // Trigger Visual Intelligence
             try? await Task.sleep(nanoseconds: 300_000_000)
             NotificationCenter.default.post(name: .openVisualIntelligence, object: nil)
         }

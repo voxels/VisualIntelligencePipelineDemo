@@ -18,10 +18,12 @@
 
 ### Files Changed
 - `[MODIFY]` `DiverKit/Services/CLaRaLatentService.swift` — Persistent index (Codable, zlib, load/save/scheduleSave), `removeDocument(id:)`, `clearIndex` wipes disk + UserDefaults
-- `[MODIFY]` `DiverKit/Services/Services.swift` — Added `discoveryService: (any EdgeNodeDiscovering)?`
+- `[MODIFY]` `DiverKit/Services/Services.swift` — Added `discoveryService: (any EdgeNodeDiscovering)?`; replaced `pendingReprocessContext: ReprocessContext?` with `pendingReprocessItemID: String?`; removed `ReprocessContext` struct
 - `[MODIFY]` `DiverKit/ViewModel/SidebarViewModel.swift` — `rebuildLibrary` clears + repopulates CLaRa index, `deleteSelectedSessions` removes items from index
+- `[MODIFY]` `DiverKit/ViewModel/VisualIntelligenceViewModel.swift` — `checkPendingReprocess()` fetches full `ProcessedItem` by ID from SwiftData instead of reading from `ReprocessContext`; added `loadImageFromData` helper; Photos library fallback for missing rawPayload
 - `[MODIFY]` `VisualIntelligencePipeline/View/SettingsView.swift` — `deleteDatabase` calls `CLaRaLatentService.shared.clearIndex()`
 - `[MODIFY]` `VisualIntelligencePipeline/View/SidebarView.swift` — `edgeNodeAvailable` polling, conditional `agenticSearchSection`
+- `[MODIFY]` `VisualIntelligencePipeline/View/ReprocessMetadataView.swift` — Simplified to just set `pendingReprocessItemID` instead of building `ReprocessContext`; persists refreshed Photos data to `rawPayload` if missing
 - `[MODIFY]` `VisualIntelligencePipeline/VisualIntelligencePipelineApp.swift` — Register `discoveryService` in `Services.shared`
 
 ## 2026-02-23

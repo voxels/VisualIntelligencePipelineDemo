@@ -461,20 +461,37 @@ public class VisualIntelligenceViewModel {
     
     // MARK: - Reprocessing
     public func checkPendingReprocess() {
-        guard let context = Services.shared.pendingReprocessContext else { return }
+        guard let itemID = Services.shared.pendingReprocessItemID else { return }
         
-        print("🔄 VI ViewModel: Found pending reprocess context for session \(context.sessionID)")
+        // Clear immediately so we don't loop
+        Services.shared.pendingReprocessItemID = nil
         
-        // 1. Set Session & Metadata FIRST — CRITICAL: Pin location from the item's
-        // existing data so locateContextOnLoad skips fresh GPS lookup.
-        // This MUST run before any early returns.
-        self.activeSessionID = context.sessionID
-        self.sessionTitle = context.sessionTitle  // Preserve user's custom title
-        self.currentCapturePlaceID = context.placeID
+        // Fetch the full ProcessedItem from SwiftData
+        guard let context = Services.shared.modelContext else {
+            print("❌ VI ViewModel: No modelContext for reprocess fetch")
+            return
+        }
+        
+        let fetch = FetchDescriptor<ProcessedItem>(
+            predicate: #Predicate { $0.id == itemID }
+        )
+        guard let item = try? context.fetch(fetch).first else {
+            print("❌ VI ViewModel: ProcessedItem not found for ID: \(itemID)")
+            return
+        }
+        
+        print("🔄 VI ViewModel: Found pending reprocess item: \(item.title ?? "Untitled") (session: \(item.sessionID ?? "none"))")
+        
+        // 1. Set Session & Metadata — Pin location from the item's existing data
+        // so locateContextOnLoad skips fresh GPS lookup.
+        let sessionID = item.sessionID ?? UUID().uuidString
+        self.activeSessionID = sessionID
+        self.sessionTitle = item.title
+        self.currentCapturePlaceID = item.placeContext?.placeID
         
         var reprocessLat: Double?
         var reprocessLon: Double?
-        if let loc = context.location {
+        if let loc = item.location {
             let parts = loc.split(separator: ",")
             if parts.count == 2, let lat = Double(parts[0]), let lon = Double(parts[1]) {
                 self.currentCaptureCoordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
@@ -484,29 +501,29 @@ public class VisualIntelligenceViewModel {
         }
         
         // Build selectedPlace from item context to prevent location override
-        if let placeName = context.placeName, let lat = reprocessLat, let lon = reprocessLon {
+        if let placeContext = item.placeContext, let lat = reprocessLat, let lon = reprocessLon {
             let itemPlace = EnrichmentData(
-                title: placeName,
+                title: placeContext.name,
                 descriptionText: "From original capture",
-                categories: ["Reprocess"],
-                location: context.location ?? placeName,
+                categories: placeContext.categories,
+                location: item.location ?? placeContext.name,
                 placeContext: PlaceContext(
-                    name: placeName,
-                    categories: [],
-                    placeID: context.placeID,
+                    name: placeContext.name,
+                    categories: placeContext.categories,
+                    placeID: placeContext.placeID,
                     latitude: lat,
                     longitude: lon
                 )
             )
             self.selectPlace(itemPlace)
             self.isLocationPinned = true
-            print("📍 [Reprocess] Pinned location from item: \(placeName)")
+            print("📍 [Reprocess] Pinned location from item: \(placeContext.name)")
         } else if let lat = reprocessLat, let lon = reprocessLon {
             let coordPlace = EnrichmentData(
-                title: context.location ?? "Original Location",
+                title: item.location ?? "Original Location",
                 descriptionText: "From original capture",
                 categories: ["Reprocess"],
-                location: context.location ?? "\(lat),\(lon)",
+                location: item.location ?? "\(lat),\(lon)",
                 placeContext: PlaceContext(
                     name: "Original Location",
                     categories: [],
@@ -525,20 +542,33 @@ public class VisualIntelligenceViewModel {
         }
         
         // 2. Load Media (Image vs Video)
-        // Use mediaType from the item's model to determine type.
-        // Only fall back to byte-sniffing when mediaType is unknown.
-        let isVideo: Bool = {
-            if let mediaType = context.mediaType {
-                return mediaType == "video"
+        // Try rawPayload first, fall back to Photos library
+        let imageData: Data? = {
+            if let payload = item.rawPayload, !payload.isEmpty {
+                // Guard: JSON payloads aren't image data
+                let first = payload[0]
+                if first != 0x7B && first != 0x5B { // Not '{' or '['
+                    return payload
+                }
             }
-            return self.isDataVideo(context.imageData)
+            return nil
         }()
         
-        if isVideo {
-            print("🎥 VI ViewModel: Detected Video Data for session \(context.sessionID)")
+        let isVideo: Bool = {
+            if let mediaType = item.mediaType {
+                return mediaType == "video"
+            }
+            if let data = imageData {
+                return self.isDataVideo(data)
+            }
+            return false
+        }()
+        
+        if isVideo, let videoData = imageData {
+            print("🎥 VI ViewModel: Detected Video Data for session \(sessionID)")
             let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString).appendingPathExtension("mov")
             do {
-                try context.imageData.write(to: tempURL)
+                try videoData.write(to: tempURL)
                 self.capturedVideoURL = tempURL
                 
                 // Generate Thumbnail
@@ -560,26 +590,36 @@ public class VisualIntelligenceViewModel {
             } catch {
                 print("❌ VI ViewModel: Failed to prepare video for reprocessing: \(error)")
             }
-        } else {
-            // Image Path
-            #if canImport(UIKit)
-            if let image = UIImage(data: context.imageData) {
-                self.setCapturedImage(image)
-                self.siftedImage = self.capturedImage
-            } else {
-                 print("❌ VI ViewModel: UIImage(data:) failed for session \(context.sessionID). Size: \(context.imageData.count) bytes. Trying fallbacks...")
-                 
-                 if let source = CGImageSourceCreateWithData(context.imageData as CFData, nil),
-                    let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) {
-                     let image = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
-                     self.setCapturedImage(image)
-                     self.siftedImage = self.capturedImage
-                     print("✅ VI ViewModel: Recovered image via CGImageSource.")
-                 } else {
-                     print("❌ VI ViewModel: All image recovery attempts failed.")
-                 }
+        } else if let data = imageData {
+            // Image from rawPayload
+            loadImageFromData(data, sessionID: sessionID)
+        } else if let assetId = item.photosAssetIdentifier {
+            // Fall back to Photos library
+            Task {
+                if let photosData = await PhotosAssetLoader.shared.loadImageData(identifier: assetId) {
+                    await MainActor.run {
+                        self.loadImageFromData(photosData, sessionID: sessionID)
+                        // Proceed with analysis now that we have the image
+                        if let image = self.capturedImage {
+                            self.analyzeReprocessImage(image)
+                        }
+                    }
+                } else {
+                    await MainActor.run {
+                        print("❌ VI ViewModel: Failed to load image from Photos for reprocessing")
+                        self.pipelineStatus = .failed
+                        self.isAnalyzing = false
+                    }
+                }
             }
-            #endif
+            // Enter review mode but defer analysis until Photos load completes
+            self.isReviewing = true
+            return
+        } else {
+            print("❌ VI ViewModel: No image data available for reprocessing")
+            self.pipelineStatus = .failed
+            self.isAnalyzing = false
+            return
         }
         
         // 3. Enter Review Mode
@@ -593,9 +633,27 @@ public class VisualIntelligenceViewModel {
             self.pipelineStatus = .failed
             self.isAnalyzing = false
         }
-        
-        // 5. Clear context so we don't loop
-        Services.shared.pendingReprocessContext = nil
+    }
+    
+    private func loadImageFromData(_ data: Data, sessionID: String) {
+        #if canImport(UIKit)
+        if let image = UIImage(data: data) {
+            self.setCapturedImage(image)
+            self.siftedImage = self.capturedImage
+        } else {
+            print("❌ VI ViewModel: UIImage(data:) failed for session \(sessionID). Size: \(data.count) bytes. Trying fallbacks...")
+            
+            if let source = CGImageSourceCreateWithData(data as CFData, nil),
+               let cgImage = CGImageSourceCreateImageAtIndex(source, 0, nil) {
+                let image = UIImage(cgImage: cgImage, scale: 1.0, orientation: .up)
+                self.setCapturedImage(image)
+                self.siftedImage = self.capturedImage
+                print("✅ VI ViewModel: Recovered image via CGImageSource.")
+            } else {
+                print("❌ VI ViewModel: All image recovery attempts failed.")
+            }
+        }
+        #endif
     }
     
     private func isDataVideo(_ data: Data) -> Bool {
