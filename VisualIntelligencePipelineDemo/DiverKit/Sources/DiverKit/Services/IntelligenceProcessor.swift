@@ -48,7 +48,7 @@ extension IntelligenceResult: Hashable {
             hasher.combine(3)
             hasher.combine(title)
             hasher.combine(type)
-        case .siftedSubject(let mask, let bounds, let label):
+        case .siftedSubject(_, let bounds, let label):
             hasher.combine(4)
             hasher.combine(bounds.origin.x)
             hasher.combine(bounds.origin.y)
@@ -326,7 +326,7 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
          
          // --- Process Vision SDK Foreground Instance Mask (Subject Lifting) ---
          if let observation = foregroundMaskRequest.results?.first,
-            let cg = sourceImage {
+            sourceImage != nil {
              do {
                  // Generate a masked image with proper alpha channel using Vision SDK
                  let maskedImage = try observation.generateMaskedImage(
@@ -416,7 +416,7 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
              let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
              
              if let baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer) {
-                 let floatBuffer = baseAddress.assumingMemoryBound(to: Float.self)
+                 _ = baseAddress.assumingMemoryBound(to: Float.self)
                  var heatmap: [Float] = []
                  heatmap.reserveCapacity(width * height)
                  

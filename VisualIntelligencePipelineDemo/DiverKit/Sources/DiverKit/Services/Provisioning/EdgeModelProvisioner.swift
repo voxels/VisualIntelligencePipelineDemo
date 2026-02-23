@@ -221,8 +221,27 @@ public actor EdgeModelProvisioner {
             try process.run()
             process.waitUntilExit()
             print("✅ cloned ml-sharp.")
+            
+            // Set up a dedicated virtual environment
+            print("⚙️ Setting up Python virtual environment for ml-sharp...")
+            let venvProcess = Process()
+            venvProcess.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+            venvProcess.arguments = ["python3", "-m", "venv", "venv"]
+            venvProcess.currentDirectoryURL = sharpPath
+            try venvProcess.run()
+            venvProcess.waitUntilExit()
+            
+            let pipProcess = Process()
+            pipProcess.executableURL = URL(fileURLWithPath: sharpPath.path + "/venv/bin/pip")
+            pipProcess.arguments = ["install", "-r", "requirements.txt"]
+            pipProcess.currentDirectoryURL = sharpPath
+            try pipProcess.run()
+            pipProcess.waitUntilExit()
+            
+            print("✅ ml-sharp virtual environment ready.")
+            
         } catch {
-            print("⚠️ Failed to clone ml-sharp: \(error)")
+            print("⚠️ Failed to provision ml-sharp: \(error)")
         }
     }
     

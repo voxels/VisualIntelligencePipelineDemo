@@ -36,10 +36,10 @@ public final class APIKeyService: Sendable {
     private static let recordType = "APIKey"
     
     /// The CloudKit container for key storage.
-    private let container: CKContainer
+    private let container: CKContainer?
     
     /// The private database in the Keys container.
-    private var database: CKDatabase { container.privateCloudDatabase }
+    private var database: CKDatabase? { container?.privateCloudDatabase }
     
     /// In-memory cache for fast synchronous reads.
     /// Populated on first fetch and updated on store/delete.
@@ -47,13 +47,22 @@ public final class APIKeyService: Sendable {
     nonisolated(unsafe) private let cache = NSCache<NSString, NSString>()
     
     public init() {
-        self.container = CKContainer(identifier: Self.containerID)
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
+            self.container = nil // Evade CKContainer._allocating_init crashes in Simulator tests
+        } else {
+            self.container = CKContainer(identifier: Self.containerID)
+        }
     }
     
     // MARK: - Async API (Primary)
     
     /// Store an API key in CloudKit.
     public func store(key: String, for identifier: APIKey) async throws {
+        guard let database = database else {
+            cache.setObject(key as NSString, forKey: identifier.rawValue as NSString)
+            return
+        }
+        
         let recordID = CKRecord.ID(recordName: identifier.rawValue)
         
         // Fetch existing record or create new one
@@ -80,6 +89,8 @@ public final class APIKeyService: Sendable {
             return cached as String
         }
         
+        guard let database = database else { return nil }
+        
         let recordID = CKRecord.ID(recordName: identifier.rawValue)
         
         do {
@@ -105,14 +116,16 @@ public final class APIKeyService: Sendable {
     
     /// Delete an API key from CloudKit.
     public func delete(for identifier: APIKey) async throws {
+        cache.removeObject(forKey: identifier.rawValue as NSString)
+        guard let database = database else { return }
         let recordID = CKRecord.ID(recordName: identifier.rawValue)
         try await database.deleteRecord(withID: recordID)
-        cache.removeObject(forKey: identifier.rawValue as NSString)
     }
     
     /// Delete synchronous variant (fire-and-forget).
     public func delete(for identifier: APIKey) {
         cache.removeObject(forKey: identifier.rawValue as NSString)
+        guard let database = database else { return }
         Task {
             try? await database.deleteRecord(withID: CKRecord.ID(recordName: identifier.rawValue))
         }

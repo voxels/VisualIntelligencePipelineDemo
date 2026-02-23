@@ -2,6 +2,12 @@
 
 ## 2026-02-22
 
+### ML-Sharp Edge Integration & RealityKit 3D
+- **EdgeDaemon Capabilities**: Created `MLSharpService.swift` on the macOS daemon to wrap Apple's `ml-sharp` Python execution via `Process()`. Added the `runMLSharp` method to the distributed `EdgeInferenceActor`, securely exposing the capability to the iOS client.
+- **Architecture Pivot (USDZ vs Splats)**: Transitioned from `LowLevelMesh` raw Gaussian Splats to native `.usdz` format for RealityKit performance improvements. Edge nodes now execute `python3 enhance.py --export-usdz`.
+- **Spatial UI**: Created `MLSharpSplatView.swift` to natively load the 3D meshes using RealityKit's asynchronous `Entity.load(contentsOf:)`. Integrated seamless orbit and zoom gestures.
+- **Auto-Provisioning**: Updated `EdgeModelProvisioner.swift` to automatically clone `apple/ml-sharp` on startup. Wire-framed `EdgeDaemonService.swift` `TXT` records to actively discover and broadcast `"ml-sharp"` capability.
+
 ### UI Logic Refactoring
 - **Model UI Extraction**: Extracted SwiftUI-specific presentation properties (`displayTitle`, `relativeUpdatedDate`, `icon`, `levelColor`, `formattedDuration`) out of core SwiftData `@Model` classes (`ProcessedItem`, `SessionMetadata`, `DiverCollection`) and data enums. 
 - **ModelUIExtensions.swift**: Moved all extracted formatters to a newly created `ModelUIExtensions.swift` file located in the `ViewModel` module to properly decouple the Data Core from the UI Presentation Layer.

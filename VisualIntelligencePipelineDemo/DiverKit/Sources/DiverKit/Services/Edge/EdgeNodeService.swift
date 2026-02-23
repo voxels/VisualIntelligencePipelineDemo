@@ -131,6 +131,17 @@ public distributed actor EdgeInferenceActor {
             imageDescription: nil
         )
     }
+    
+    /// Executes the Apple `ml-sharp` semantic edge cutting Python script locally on the macOS edge node.
+    /// Returns the binary Gaussian Splat data (or PNG data) produced by the model.
+    distributed public func runMLSharp(imageData: Data) async throws -> Data {
+        #if os(macOS)
+        let service = MLSharpService()
+        return try await service.processImage(imageData: imageData)
+        #else
+        throw EdgeInferenceError.serviceUnavailable("ML-Sharp is only supported on macOS edge nodes.")
+        #endif
+    }
 }
 
 /// Errors for edge inference operations.

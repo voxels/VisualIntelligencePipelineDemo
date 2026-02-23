@@ -141,7 +141,7 @@ cd DiverShared && swift test
 *   **SwiftUI:** Views are organized in `VisualIntelligencePipeline/VisualIntelligencePipeline/View/`.
 *   **View Models:** Located in `DiverKit/Sources/DiverKit/ViewModel/` — `VisualIntelligenceViewModel`, `SidebarViewModel`, `ReferenceDetailViewModel`, `ProcessedItemViewModel`, `AgenticChatViewModel`, `ModelUIExtensions`.
 *   **Protocols:** 18 protocols across `DiverKit/Sources/DiverKit/Protocols/` and inline in service files — `IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`, `ProductScoringStrategy`, `ProductRecommending`, `ESGEnriching`, `EdgeNodeDiscovering`, `CommerceRouting`, `PriceNowcasting`, `ContactServiceProvider`, `KnowledgeGraphIndexingService`, `LinkEnrichmentService`, `ContextualEnrichmentService`, `EdgeTransportProtocol`, `KnowledgeGraphRetrievalService`, `LocationProvider`.
-### App & UI (52 views)
+### App & UI (63 views)
 *   `VisualIntelligencePipelineApp.swift` — App entry point, service initialization, foreground/background lifecycle
 *   `View/VisualIntelligenceView.swift` — Camera and capture UI
 *   `View/SidebarView.swift` — Main navigation sidebar (942 lines, delegates to 7 child views in `View/Sidebar/`)
@@ -214,7 +214,7 @@ cd DiverShared && swift test
 *   `Storage/StorageClient.swift` — Storage access and multi-stage cryptographic erasure client
 *   `Storage/UnifiedDataManager.swift` — Unified data management layer
 
-### Models (DiverKit — 20 files)
+### Models (DiverKit — 21 files)
 *   **Scoring Engines:** Located in `DiverKit/Sources/DiverKit/Services/Scoring/` — 7 strategy implementations conforming to `ProductScoringStrategy`.
 *   **Test Mocks:** Located in `DiverKit/Tests/DiverKitTests/Mocks/` — `MockFastVLMService` (conforms to `FastVLMAnalyzing`), `MockEnrichmentService`, etc.
 *   **Swift Packages:** Shared code modularized into `DiverKit` and `DiverShared`.

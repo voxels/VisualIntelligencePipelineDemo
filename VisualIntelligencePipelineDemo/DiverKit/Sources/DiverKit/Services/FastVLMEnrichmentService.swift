@@ -351,7 +351,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         }
         
         // Cap MLX GPU buffer cache to 256 MB to reduce memory pressure
-        GPU.set(cacheLimit: 256 * 1024 * 1024)
+        MLX.Memory.cacheLimit = 256 * 1024 * 1024
         
         let currentModelID = Self.modelID
         print("📦 [FastVLMService] Loading model \(currentModelID) into GPU memory...")

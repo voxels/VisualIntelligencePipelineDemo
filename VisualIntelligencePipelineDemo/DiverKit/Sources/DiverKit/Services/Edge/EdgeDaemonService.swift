@@ -728,6 +728,11 @@ public final class EdgeDaemonService {
             models.append("clara-7b-mlx")
         }
         
+        // Check for ML-Sharp python scripts
+        if FileManager.default.fileExists(atPath: dir.appendingPathComponent("ml-sharp/enhance.py").path) {
+            models.append("ml-sharp")
+        }
+        
         return models
     }
     

@@ -19,6 +19,8 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
     public var depthPayload: Data?
     @Attribute(.externalStorage)
     public var siftedMask: Data?
+    @Attribute(.externalStorage)
+    public var mlSharpData: Data?
 
     // Phase 1 additions
     // Phase 1 additions

@@ -1367,7 +1367,7 @@ struct GeocodingLocationViewWrapper: View {
             do {
                 if let request = MKGeocodingRequest(addressString: locationName) {
                     let mapItems = try await request.mapItems
-                    if let coordinate = mapItems.first?.placemark.coordinate {
+                    if let coordinate = mapItems.first?.location.coordinate {
                         self.coordinate = coordinate
                     }
                 }
@@ -2605,5 +2605,59 @@ private func gradeColor(_ grade: String) -> Color {
     case "D": return .orange
     case "E": return .red
     default: return .secondary
+    }
+}
+
+// MARK: - EXIF Metadata Component
+struct EXIFMetadataSection: View {
+    let item: ProcessedItem
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("File Information")
+                .font(.headline)
+            
+            VStack(spacing: 8) {
+                if let date = item.originalDate {
+                    InfoRow(icon: "calendar", title: "Date Captured", value: date.formatted(date: .abbreviated, time: .shortened))
+                }
+                
+                if let location = item.location {
+                    InfoRow(icon: "mappin.and.ellipse", title: "Location", value: location)
+                }
+                
+                if let filename = item.filename {
+                    InfoRow(icon: "doc", title: "Filename", value: filename)
+                }
+                
+                if let size = item.fileSize {
+                    InfoRow(icon: "externaldrive", title: "File Size", value: ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file))
+                }
+            }
+            .padding()
+            .glassEffect()
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+    }
+}
+
+private struct InfoRow: View {
+    let icon: String
+    let title: String
+    let value: String
+    
+    var body: some View {
+        HStack {
+            Image(systemName: icon)
+                .frame(width: 24)
+                .foregroundStyle(.secondary)
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.medium)
+        }
     }
 }

@@ -39,3 +39,4 @@ Icon
 *.txt
 /VisualIntelligencePipelineDemo/SourcePackages/checkouts
 /VisualIntelligencePipelineDemo/SourcePackages
+/VisualIntelligencePipelineDemo/EdgeDaemon.xcarchive
