@@ -22,7 +22,7 @@ By combining advanced on-device AI with rich contextual data, Visual Intelligenc
 Never lose a reference again. Snap a photo of a book cover, a document, or a whiteboard, and Visual Intelligence instantly captures the text, detects and corrects document perspective, and organizes it into a dedicated session. Your visual notes are searchable, citeable, and ready for your next project.
 
 **For the Shopper**
-Make smarter decisions in an instant. See a product you love? Capture it to identify the item, enrich it with web intelligence, and save it to a collection with a context tag like "Gift ideas" or "Home renovation." Whether you're comparing finds or building a wishlist, Visual Intelligence keeps your inspiration organized and accessible.
+Decode the true cost of any product in an instant. See an item you love? Capture it to instantly see its 7-engine score—evaluating Ethics, Durability, Value, Health Fit, and more. Visual Intelligence uses an AR overlay to show you live price trajectories, recall alerts, and personalized "Buy Now / Wait" recommendations from Apple Intelligence, ensuring your purchases align with your values.
 
 **For the Explorer**
 Capture the feeling of a place, not just the view. When you snap a photo of a landmark or a hidden gem, Visual Intelligence enriches it with precise location data from Apple Maps and Foursquare, current weather conditions, and AI-generated context. Build a rich visual diary of your travels that remembers where you were, what the weather was like, and why it mattered.
@@ -39,8 +39,8 @@ Hear something you love? Capture it to recognize the track via Apple Music or Sp
 *   **Smart Sessions:** Captures are automatically grouped by location and time into cohesive sessions with AI-generated summaries, so you stay organized without the effort.
 *   **Context Tags & Daily Focus:** Add custom tags like "Gift for Mom" to any capture. A Daily Focus brief aggregates your activity into an AI-generated summary each day.
 *   **Universal Link Hub:** Save links from Safari, YouTube, TikTok, or any app via the Share Sheet. Links are automatically enriched with metadata, previews, and context.
-*   **Document Detection:** Automatically detects, corrects perspective, and saves documents found in your captures.
 *   **QR Code Intelligence:** QR codes are automatically detected and enriched with web metadata — titles, descriptions, and previews extracted from the target URL.
+*   **Commerce Intelligence:** Snap any product to score it across 7 strategies (Ethics, Value, Durability, etc.) using free open databases. See price nowcasts, ESG ratings, and personalized purchase timing advisories directly in AR.
 *   **Siri, Shortcuts & Widgets:** Save, share, and search your library with voice commands, automation workflows, and at-a-glance Home & Lock screen widgets.
 *   **Privacy & Edge Intelligence:** Built with on-device intelligence at its core. When at home, automatically offload heavy processing to your Mac via edge computing, keeping your personal research and memories private and lightning fast.
 
