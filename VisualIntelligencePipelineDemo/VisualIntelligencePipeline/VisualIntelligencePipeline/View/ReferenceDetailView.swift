@@ -1,21 +1,19 @@
 import SwiftUI
+import SwiftData
 import DiverKit
 import DiverShared
 import SharedWithYou
 import MapKit
-import SwiftData
 import LinkPresentation
 import WebKit
 import AVKit
 import ImageIO
+import Photos
 
 struct ReferenceDetailView: View {
     let item: ProcessedItem
     
     var body: some View {
-        // Simplified: Just show the passed item directly.
-        // The TabView carousel was broken - selection didn't update properly.
-        // Can be re-added later with a working implementation.
         ReferenceDetailContent(item: item)
             .navigationTitle("Details")
             .navigationBarTitleDisplayMode(.inline)
@@ -29,32 +27,11 @@ struct ReferenceDetailContent: View {
     let item: ProcessedItem
     @StateObject private var viewModel = ReferenceDetailViewModel()
     @EnvironmentObject private var sharedWithYouManager: SharedWithYouManager
-    @State private var showingMap = false
     @State private var showingEditLocation = false
-    @State private var showingPlaceDetails = false // New State
     @State private var isEditingTitle = false
     @State private var editedTitle = ""
     
     @Environment(\.modelContext) private var modelContext
-    
-    @State private var cachedSession: SessionMetadata?
-    @State private var sessionLoaded = false
-    
-    var session: SessionMetadata? {
-        if sessionLoaded { return cachedSession }
-        guard let sessionID = item.sessionID else { return nil }
-        var descriptor = FetchDescriptor<SessionMetadata>(
-            predicate: #Predicate { $0.sessionID == sessionID }
-        )
-        descriptor.fetchLimit = 1
-        let result = try? modelContext.fetch(descriptor).first
-        DispatchQueue.main.async {
-            cachedSession = result
-            sessionLoaded = true
-        }
-        return result
-    }
-    
     
     private func buildSiblingContext() -> String {
         guard let sessionID = item.sessionID else { return "" }
@@ -66,877 +43,464 @@ struct ReferenceDetailContent: View {
         return siblings.prefix(20).map { "- \($0.title ?? "Item"): \($0.summary ?? "")" }.joined(separator: "\n")
     }
     
-    
     var body: some View {
-        // Guard against deleted items - SwiftUI may re-render after swipe-delete
-        // before navigation pops. Accessing faulted properties on a detached
-        // SwiftData object (e.g. .questions) causes a fatal crash.
         if item.modelContext == nil {
             ContentUnavailableView("Item Deleted", systemImage: "trash", description: Text("This item has been removed."))
         } else {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Header
-                VStack(alignment: .leading, spacing: 12) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // MARK: - Generic Header
+                    buildHeader()
                     
-                    // 0. Purpose Header (Removed - Moved to Intent Section)
-
-                    // Show text editor for ANY document with transcription (notes, detected documents, etc.)
-                    // This unifies the UX for all text-based content
-                    // Check if rawPayload is actually an image before showing image preview
-                    // 1. Media Content (Video or Image)
-                    if item.mediaType == "video" {
-                        if let assetID = item.photosAssetIdentifier {
-                            // Video Player for Photos Asset
-                            PhotosVideoPlayerView(assetIdentifier: assetID)
-                                .frame(height: 300)
-                                .cornerRadius(12)
-                                .shadow(radius: 4)
-                                .padding(.bottom, 12)
-                        } else if let data = item.rawPayload {
-                            // Video Player for Raw Data (Imports/Reprocessed)
-                            DataVideoPlayer(data: data)
-                                .frame(height: 300)
-                                .cornerRadius(12)
-                                .shadow(radius: 4)
-                                .padding(.bottom, 12)
-                        }
-                    } else {
-                        AsyncItemImageView(item: item)
-                    }
-                    
-                    // 2. Text Editor / Content
-                    // Show if we have text content OR it's a manual note (which implies text intent)
-                    let showTextEditor = (item.transcription != nil && !item.transcription!.isEmpty) ||
-                                         item.source == "ManualNote" ||
-                                         (item.entityType == "document" && item.transcription != nil)
-                    
-                    if showTextEditor {
-                        // Text editor for all text documents
-                        TextEditorView(item: item)
-                            .padding(.bottom, 12)
-                    }
-                    
-                    if isEditingTitle {
-                        TextField("Title", text: $editedTitle, onCommit: {
-                            if !editedTitle.isEmpty {
-                                item.title = editedTitle
-                                Task { @MainActor in try? item.modelContext?.save() }
-                            }
-                            isEditingTitle = false
-                        })
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .textFieldStyle(.roundedBorder)
-                        .onAppear {
-                            editedTitle = item.title ?? "Untitled"
-                        }
-                    } else {
-                        Text(item.title ?? "Untitled")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .onLongPressGesture {
-                                editedTitle = item.title ?? "Untitled"
-                                isEditingTitle = true
-                            }
-                    }
-                    
-                    if let url = item.resolvedWebURL {
-                        Link(url.absoluteString, destination: url)
-                            .foregroundStyle(.blue)
-                            .font(.body)
-                    }
-                    
-                    if let summary = item.summary {
-                        let parsed = parseSummaryModelBadge(from: summary)
-                        Text(parsed.text)
-                            .font(.body)
-                            .foregroundStyle(.primary)
-                            .padding(.top, 4)
+                    // References
+                    if let refs = item.childItems, !refs.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("References")
+                                .font(.title2)
+                                .bold()
+                                .padding(.horizontal)
                             
-                        if let badge = parsed.badge {
-                            HStack {
-                                Image(systemName: "sparkles")
-                                    .font(.caption2)
-                                Text(badge)
-                                    .font(.caption)
-                                    .fontWeight(.medium)
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 300))], spacing: 16) {
+                                ForEach(refs) { ref in
+                                    ReferenceCardWrapper(item: ref)
+                                }
                             }
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(.ultraThinMaterial, in: Capsule())
-                            .padding(.top, 2)
-                        }
-                    }
-                    
-                    // Divider removed
-
-                    HStack {
-                        StatusBadge(status: item.status)
-
-                    }
-
-                    // Shared with You Attribution
-                    if let attributionID = item.attributionID,
-                       let highlight = sharedWithYouManager.findHighlight(id: attributionID) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Shared with You")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            
-                            AttributionViewWrapper(highlight: highlight)
-                                .frame(height: 50)
-                            
-                            Divider()
-                        }
-                    }
-                }
-                .detailCardStyle()
-                .toolbar {
-                    ToolbarItem(placement: .primaryAction) {
-                        Button {
-                            item.isFavorite.toggle()
-                            Task { @MainActor in try? item.modelContext?.save() }
-                        } label: {
-                            Label(item.isFavorite ? "Unfavorite" : "Favorite", systemImage: item.isFavorite ? "star.fill" : "star")
-                                .foregroundStyle(item.isFavorite ? .yellow : .primary)
-                        }
-                    }
-                }
-                
-                // References
-                if let refs = item.childItems, !refs.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("References")
-                            .font(.title2)
-                            .bold()
                             .padding(.horizontal)
-                        
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 300))], spacing: 16) {
-                            ForEach(refs) { ref in
-                                ReferenceCardWrapper(item: ref)
-                            }
                         }
-                        .padding(.horizontal)
-                    }
-                    .detailCardStyle()
-                }
-
-                
-                // Grouped Capture Content
-                if let masterID = item.masterCaptureID {
-                    CaptureSiblingsView(masterID: masterID, currentID: item.id)
-                        .padding(.bottom, 12)
                         .detailCardStyle()
-                    // Divider removed
+                    }
+                    
+                    // Capture Siblings
+                    if let masterID = item.masterCaptureID {
+                        CaptureSiblingsView(masterID: masterID, currentID: item.id)
+                            .padding(.bottom, 12)
+                            .detailCardStyle()
+                    }
+                    
+                    // MARK: - Specialized Profile Switch
+                    buildSpecializedProfile()
+                    
+                    // MARK: - Generic Footer
+                    buildFooter()
                 }
+                .padding(.horizontal)
+                .padding(.top, 20)
+            }
+            .toolbar {
+                ToolbarItemGroup(placement: .primaryAction) {
+                    // Edit Location
+                    Button {
+                        showingEditLocation = true
+                    } label: {
+                        Label("Edit Location", systemImage: "pencil.and.outline")
+                    }
+                    .sheet(isPresented: $showingEditLocation) {
+                        EditLocationView(item: item)
+                    }
+                    
+                    // Retry button for failed items
+                    if item.status == .failed {
+                        Button {
+                            viewModel.retryProcessing(item: item)
+                        } label: {
+                            Label("Retry", systemImage: "arrow.clockwise")
+                        }
+                    }
+                    
+                    // Process Now button
+                    Button {
+                        viewModel.refreshLinkMetadata(item: item)
+                    } label: {
+                        Label("Process Now", systemImage: "bolt.fill")
+                    }
 
-                // Semantic Tags Section
-                let semanticTags = Array(Set(item.visualTags + item.tags + item.categories + item.purposes)).sorted()
-                if !semanticTags.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Semantic Tags")
-                            .font(.title3)
-                            .bold()
-                        
-                        FlowLayout(spacing: 8) {
-                            ForEach(semanticTags, id: \.self) { tag in
-                                Button {
-                                    if let sessionID = item.sessionID, let context = item.modelContext {
-                                        let descriptor = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
-                                        if let session = try? context.fetch(descriptor).first {
-                                            session.title = tag.capitalized
-                                            session.updatedAt = Date()
-                                        } else {
-                                            let newSession = SessionMetadata(sessionID: sessionID, title: tag.capitalized)
-                                            context.insert(newSession)
-                                        }
-                                        Task { @MainActor in try? context.save() }
-                                        
-                                        // Feedback
-                                        let generator = UIImpactFeedbackGenerator(style: .medium)
-                                        generator.impactOccurred()
-                                    }
-                                } label: {
-                                    Text("#\(tag)")
-                                        .font(.caption)
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
-                                        .glass(cornerRadius: 8)
-                                        .foregroundStyle(.blue)
-                                }
-                                .contextMenu {
-                                    Button(role: .destructive) {
-                                        viewModel.removeSemanticTag(tag, from: item)
-                                    } label: {
-                                        Label("Delete Tag", systemImage: "trash")
-                                    }
-                                }
-                            }
+                    // Open original URL
+                    if let url = item.resolvedWebURL {
+                        Link(destination: url) {
+                            Label("Open Original", systemImage: "safari")
                         }
                     }
-                    .detailCardStyle()
                     
-                    // Divider removed
+                    // Favorite button
+                    Button {
+                        item.isFavorite.toggle()
+                        Task { @MainActor in try? item.modelContext?.save() }
+                    } label: {
+                        Label(item.isFavorite ? "Unfavorite" : "Favorite", systemImage: item.isFavorite ? "star.fill" : "star")
+                            .foregroundStyle(item.isFavorite ? .yellow : .primary)
+                    }
                 }
-                
-                // Full Text / Transcription Section
-                if let text = item.transcription, !text.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Text("Full Text")
-                                .font(.title3)
-                                .bold()
-                            Spacer()
-                            Button {
-                                #if os(iOS)
-                                UIPasteboard.general.string = text
-                                UINotificationFeedbackGenerator().notificationOccurred(.success)
-                                print("📋 Copied text to clipboard: \(text.prefix(50))...")
-                                #else
-                                //NOTE: NSPasteboard logic for macOS
-                                let pasteboard = NSPasteboard.general
-                                pasteboard.clearContents()
-                                pasteboard.setString(text, forType: .string)
-                                #endif
-                            } label: {
-                                Label("Copy", systemImage: "doc.on.doc")
-                                    .font(.caption)
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.blue)
-                            
-                            // Only show Open button for actual web URLs, not deeplinks to visual capture
-                            if let urlString = item.url, 
-                               let url = URL(string: urlString),
-                               !urlString.hasPrefix("secretatomics://") {
-                                Button {
-                                    #if os(iOS)
-                                    print("🔗 Opening URL: \(url)")
-                                    UIApplication.shared.open(url)
-                                    #elseif os(macOS)
-                                    NSWorkspace.shared.open(url)
-                                    #endif
-                                } label: {
-                                    Label("Open", systemImage: "arrow.up.right.square")
-                                        .font(.caption)
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .tint(.green)
-                            }
-                        }
-                        
-                        ScrollView {
-                            Text(text)
-                                .font(.body)
-                                .foregroundStyle(.primary)
-                                .padding()
-                        }
-                        .frame(maxHeight: 300)
-                        .background(Color(uiColor: .secondarySystemBackground))
+            }
+        }
+    }
+    
+    // MARK: - Header Builder
+    @ViewBuilder
+    private func buildHeader() -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Media Content (Video or Image)
+            if item.mediaType == "video" {
+                if let assetID = item.photosAssetIdentifier {
+                    PhotosVideoPlayerView(assetIdentifier: assetID)
+                        .frame(height: 300)
                         .cornerRadius(12)
+                        .shadow(radius: 4)
+                        .padding(.bottom, 12)
+                } else if let data = item.rawPayload {
+                    DataVideoPlayer(data: data)
+                        .frame(height: 300)
+                        .cornerRadius(12)
+                        .shadow(radius: 4)
+                        .padding(.bottom, 12)
+                }
+            } else {
+                AsyncItemImageView(item: item)
+            }
+            
+            // Text Editor Content for Note type
+            let showTextEditor = item.source == "ManualNote" || (item.entityType != "document" && item.entityType != "web_link" && item.transcription != nil && !(item.transcription!.isEmpty))
+            if showTextEditor {
+                TextEditorView(item: item).padding(.bottom, 12)
+            }
+            
+            if isEditingTitle {
+                TextField("Title", text: $editedTitle, onCommit: {
+                    if !editedTitle.isEmpty {
+                        item.title = editedTitle
+                        Task { @MainActor in try? item.modelContext?.save() }
                     }
-                    .detailCardStyle()
+                    isEditingTitle = false
+                })
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .textFieldStyle(.roundedBorder)
+                .onAppear {
+                    editedTitle = item.title ?? "Untitled"
+                }
+            } else {
+                Text(item.title ?? "Untitled")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .onLongPressGesture {
+                        editedTitle = item.title ?? "Untitled"
+                        isEditingTitle = true
+                    }
+            }
+            
+            if let url = item.resolvedWebURL {
+                Link(url.absoluteString, destination: url)
+                    .foregroundStyle(.blue)
+                    .font(.body)
+            }
+            
+            if let summary = item.summary, !summary.isEmpty, item.entityType != "product" {
+                let parsed = parseSummaryModelBadge(from: summary)
+                Text(parsed.text)
+                    .font(.body)
+                    .foregroundStyle(.primary)
+                    .padding(.top, 4)
                     
-                    // Divider removed
-                }
-                
-                // Media Info Section (Using Abstraction)
-                let mediaInfo = item.mediaInfo
-                if mediaInfo.mediaType != nil || mediaInfo.filename != nil || mediaInfo.fileSize != nil || item.aestheticsScore != nil {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Media Information")
-                            .font(.title3)
-                            .bold()
-                        
-                        if let mediaType = mediaInfo.mediaType {
-                            HStack {
-                                Text("Type:")
-                                    .foregroundStyle(.secondary)
-                                Text(mediaType.capitalized)
-                            }
+                if let badge = parsed.badge {
+                    HStack {
+                        Image(systemName: "sparkles")
+                            .font(.caption2)
+                        Text(badge)
                             .font(.caption)
-                        }
-                        
-                        if let filename = mediaInfo.filename {
-                            HStack {
-                                Text("File:")
-                                    .foregroundStyle(.secondary)
-                                Text(filename)
-                            }
-                            .font(.caption)
-                        }
-                        
-                        if let fileSize = mediaInfo.fileSize {
-                            HStack {
-                                Text("Size:")
-                                    .foregroundStyle(.secondary)
-                                Text(ByteCountFormatter.string(fromByteCount: Int64(fileSize), countStyle: .file))
-                            }
-                            .font(.caption)
-                        }
-                        
-                        if let score = item.aestheticsScore {
-                            HStack {
-                                Text("Aesthetics:")
-                                    .foregroundStyle(.secondary)
-                                Text(String(format: "%.0f%%", score * 100))
-                            }
-                            .font(.caption)
-                        }
+                            .fontWeight(.medium)
                     }
-                    .detailCardStyle()
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .padding(.top, 2)
+                }
+            }
+            
+            HStack {
+                StatusBadge(status: item.status)
+            }
+
+            // Shared with You Attribution
+            if let attributionID = item.attributionID,
+               let highlight = sharedWithYouManager.findHighlight(id: attributionID) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Shared with You")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     
-                    // Divider removed
-                }
-                
-                // Commerce Intelligence Section
-                if item.productMetadata != nil || item.commerceContext != nil {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "cart.fill")
-                                .foregroundStyle(.green)
-                            Text("Commerce Intelligence")
-                                .font(.title3)
-                                .bold()
-                        }
-                        
-                        // Compact Score Card (at-a-glance summary)
-                        if let recommendations = item.commerceContext, let first = recommendations.first {
-                            ProductScoreAttachment(
-                                productName: first.option.productName,
-                                compositeScore: first.compositeScore,
-                                strategyScores: first.option.scores.map { ($0.strategyID.capitalized, $0.overallScore) },
-                                recommendation: first.compositeScore >= 0.7 ? "Buy Now" :
-                                    first.compositeScore >= 0.4 ? "Consider" : "Wait"
-                            )
-                            
-                            // Full Strategy Breakdown
-                            ProductScoreOverlayView(
-                                recommendation: first,
-                                allScores: first.option.scores,
-                                insight: nil,
-                                advisorySignal: nil,
-                                advisoryExplanation: nil
-                            )
-                        }
-                        
-                        // Ownership Button
-                        OwnershipButton(
-                            productName: item.title ?? "Product",
-                            barcode: item.productMetadata
-                        )
-                        
-                        // Score History Chart
-                        if !viewModel.scoreSnapshots.isEmpty {
-                            ScoreHistoryChartView(
-                                snapshots: viewModel.scoreSnapshots,
-                                strategyID: "esg"
-                            )
-                        }
-                        
-                        // Nowcast Result (direction + confidence)
-                        if let nowcast = item.nowcastContext {
-                            HStack(spacing: 12) {
-                                Image(systemName: nowcast.direction == .rising ? "arrow.up.right.circle.fill" :
-                                        nowcast.direction == .falling ? "arrow.down.right.circle.fill" :
-                                        "equal.circle.fill")
-                                    .font(.title2)
-                                    .foregroundStyle(nowcast.direction == .rising ? .green :
-                                                        nowcast.direction == .falling ? .red : .secondary)
-                                
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Price Trend: \(nowcast.direction.rawValue.capitalized)")
-                                        .font(.subheadline.weight(.medium))
-                                    Text("Confidence: \(Int(nowcast.confidence * 100))%")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                
-                                Spacer()
-                                
-                                Text(String(format: "%+.1f%%", nowcast.projectedChange * 100))
-                                    .font(.headline.monospacedDigit())
-                                    .foregroundStyle(nowcast.projectedChange > 0 ? .red : .green)
-                            }
-                            .padding()
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                        }
-                        
-                        // Commerce Action (Affiliate Links)
-                        if let platforms = item.affiliateContext, !platforms.isEmpty {
-                            CommerceActionView(platforms: platforms)
-                        }
-                        
-                        // Government Safety Alerts
-                        if let gov = item.governmentContext, gov.hasConcerns {
-                            VStack(alignment: .leading, spacing: 6) {
-                                HStack {
-                                    Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundStyle(.orange)
-                                    Text("Safety Alerts")
-                                        .font(.subheadline.weight(.semibold))
-                                }
-                                
-                                ForEach(gov.recalls) { recall in
-                                    HStack(alignment: .top) {
-                                        Image(systemName: "arrow.uturn.backward.circle.fill")
-                                            .foregroundStyle(.red)
-                                            .font(.caption)
-                                        VStack(alignment: .leading) {
-                                            Text(recall.title)
-                                                .font(.caption.weight(.medium))
-                                            if let hazard = recall.hazard {
-                                                Text(hazard)
-                                                    .font(.caption2)
-                                                    .foregroundStyle(.secondary)
-                                            }
-                                        }
-                                    }
-                                }
-                                
-                                ForEach(gov.fdaAlerts) { alert in
-                                    HStack(alignment: .top) {
-                                        Image(systemName: "cross.circle.fill")
-                                            .foregroundStyle(.orange)
-                                            .font(.caption)
-                                        VStack(alignment: .leading) {
-                                            Text("FDA \(alert.classification)")
-                                                .font(.caption.weight(.medium))
-                                            Text(alert.reason)
-                                                .font(.caption2)
-                                                .foregroundStyle(.secondary)
-                                                .lineLimit(2)
-                                        }
-                                    }
-                                }
-                            }
-                            .padding()
-                            .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
-                        }
-                    }
-                    .detailCardStyle()
-                    .onAppear {
-                        if let barcode = item.productMetadata {
-                            viewModel.fetchScoreHistory(productID: barcode)
-                        }
-                    }
-                }
-                
-                // Product Details Section (ESG / Open *Facts data)
-                if let esg = item.esgContext {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "leaf.fill")
-                                .foregroundStyle(.green)
-                            Text("Product Details")
-                                .font(.title3)
-                                .bold()
-                            Spacer()
-                            Text(esg.source)
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        // Product name
-                        if let name = esg.genericName {
-                            DetailRow(label: "Product", value: name)
-                        }
-                        if let qty = esg.quantity {
-                            DetailRow(label: "Size", value: qty)
-                        }
-                        
-                        // Scores row
-                        HStack(spacing: 16) {
-                            if let eco = esg.ecoScore {
-                                ScoreBadge(label: "Eco-Score", value: eco.uppercased(), color: gradeColor(eco))
-                            }
-                            if let nutri = esg.nutriScore {
-                                ScoreBadge(label: "Nutri-Score", value: nutri.uppercased(), color: gradeColor(nutri))
-                            }
-                            if let nova = esg.novaGroup {
-                                ScoreBadge(label: "NOVA", value: "\(nova)/4", color: nova <= 2 ? .green : nova == 3 ? .orange : .red)
-                            }
-                            if let carbon = esg.carbonIntensity {
-                                ScoreBadge(label: "CO₂", value: String(format: "%.1f", carbon), color: carbon < 2 ? .green : carbon < 5 ? .orange : .red)
-                            }
-                        }
-                        
-                        // Ingredients
-                        if let ingredients = esg.ingredientsText, !ingredients.isEmpty {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Ingredients")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.secondary)
-                                Text(ingredients)
-                                    .font(.caption)
-                                    .lineLimit(5)
-                            }
-                        }
-                        
-                        // Allergens & Traces
-                        if !esg.allergens.isEmpty {
-                            DetailRow(label: "Allergens", value: esg.allergens.joined(separator: ", "))
-                        }
-                        if !esg.traces.isEmpty {
-                            DetailRow(label: "May contain", value: esg.traces.joined(separator: ", "))
-                        }
-                        
-                        // Origin & Packaging
-                        if let origin = esg.origins {
-                            DetailRow(label: "Origin", value: origin)
-                        }
-                        if let mfg = esg.manufacturingPlaces {
-                            DetailRow(label: "Made in", value: mfg)
-                        }
-                        if let packaging = esg.packagingText {
-                            DetailRow(label: "Packaging", value: packaging)
-                        }
-                        
-                        // Certifications
-                        if !esg.certifications.isEmpty {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Certifications")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.secondary)
-                                FlowLayout(spacing: 6) {
-                                    ForEach(esg.certifications, id: \.self) { cert in
-                                        Text(cert)
-                                            .font(.caption2)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 3)
-                                            .background(.green.opacity(0.15), in: Capsule())
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Nutrition highlights
-                        if !esg.nutriments.isEmpty {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Nutrition (per serving)")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.secondary)
-                                let sorted = esg.nutriments.sorted { $0.key < $1.key }.prefix(8)
-                                ForEach(Array(sorted), id: \.key) { key, value in
-                                    HStack {
-                                        Text(key.replacingOccurrences(of: "_", with: " ").capitalized)
-                                            .font(.caption)
-                                        Spacer()
-                                        Text(String(format: "%.1f", value))
-                                            .font(.caption.monospacedDigit())
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Availability
-                        if !esg.stores.isEmpty {
-                            DetailRow(label: "Available at", value: esg.stores.joined(separator: ", "))
-                        }
-                    }
-                    .detailCardStyle()
-                }
-                
-                // EXIF Metadata Section (Camera, Exposure, etc.)
-                EXIFMetadataSection(item: item)
-                
-                // MARK: - New Enriched Data Sections
-                
-                // 1. Context Row (Weather + Activity)
-                if item.weatherContext != nil || item.activityContext != nil {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            if let weather = item.weatherContext {
-                                WeatherContextView(context: weather)
-                            }
-                            if let activity = item.activityContext {
-                                ActivityContextView(context: activity)
-                            }
-                        }
-                    }
-                    .padding(.vertical, 8)
-                    .detailCardStyle()
+                    AttributionViewWrapper(highlight: highlight)
+                        .frame(height: 50)
+                    
                     Divider()
                 }
+            }
+        }
+        .detailCardStyle()
+        
+        // Semantic Tags Section
+        let semanticTags = Array(Set(item.visualTags + item.tags + item.categories + item.purposes)).sorted()
+        if !semanticTags.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Semantic Tags")
+                    .font(.title3)
+                    .bold()
                 
-                // 2. Specific Type Info
-                VStack(spacing: 20) {
-                    if let url = item.resolvedWebURL {
-                        if let web = item.webContext {
-                             WebInfoView(context: web, url: url)
-                             if let json = web.structuredData {
-                                 StructuredDataView(jsonString: json)
-                             }
-                        } else {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Web Preview")
-                                    .font(.title3)
-                                    .bold()
-                                RichWebView(url: url) { title in
-                                    // Update title if valid and different
-                                    if !title.isEmpty && title != item.title {
-                                        viewModel.updateTitle(title, for: item)
-                                    }
+                FlowLayout(spacing: 8) {
+                    ForEach(semanticTags, id: \.self) { tag in
+                        Button {
+                            if let sessionID = item.sessionID, let context = item.modelContext {
+                                let descriptor = FetchDescriptor<SessionMetadata>(predicate: #Predicate { $0.sessionID == sessionID })
+                                if let session = try? context.fetch(descriptor).first {
+                                    session.title = tag.capitalized
+                                    session.updatedAt = Date()
+                                } else {
+                                    let newSession = SessionMetadata(sessionID: sessionID, title: tag.capitalized)
+                                    context.insert(newSession)
                                 }
-                                    .frame(height: 300)
-                                    .cornerRadius(12)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                                    )
-                                
-                                Button {
-                                    viewModel.refreshLinkMetadata(item: item)
-                                } label: {
-                                    Label("Refresh Preview", systemImage: "arrow.clockwise")
-                                        .font(.caption)
-                                }
-                                .buttonStyle(.bordered)
+                                Task { @MainActor in try? context.save() }
+                                #if os(iOS)
+                                let generator = UIImpactFeedbackGenerator(style: .medium)
+                                generator.impactOccurred()
+                                #endif
                             }
-                            .contextCard()
+                        } label: {
+                            Text("#\(tag)")
+                                .font(.caption)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .glass(cornerRadius: 8)
+                                .foregroundStyle(.blue)
                         }
-                    }
-                    
-                    if let doc = item.documentContext {
-                        DocumentInfoView(context: doc)
-                    }
-                    
-                    if let place = item.placeContext {
-                        PlaceContextView(context: place, baseLocation: item.location)
-                            .onTapGesture {
-                                showingPlaceDetails = true
-                            }
-                            .sheet(isPresented: $showingPlaceDetails) {
-                                PlaceDetailSheet(context: place) { tag in
-                                    // Add tag to item
-                                    var updated = false
-                                    if !item.tags.contains(tag) {
-                                        item.tags.append(tag)
-                                        updated = true
-                                    }
-                                    if !item.categories.contains(tag) {
-                                        item.categories.append(tag)
-                                        updated = true
-                                    }
-                                    
-                                    if updated {
-                                        Task { @MainActor in try? item.modelContext?.save() }
-                                    }
-                                }
-                            }
-                    }
-                    
-    // Product Search Preview
-                    if item.isProduct, let searchURL = item.productSearchURL {
-                         VStack(alignment: .leading, spacing: 8) {
-                             Text("Product Search Result")
-                                 .font(.headline)
-                             
-                             RichWebView(url: searchURL)
-                                .frame(height: 350)
-                                .cornerRadius(12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                                )
-                         }
-                         .contextCard()
-                    }
-                    
-                }
-                .detailCardStyle()
-                
-                // 3. Purposes & Intent (Enhanced)
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text("Purposes & Intent")
-                            .font(.headline)
-                        Spacer()
-                        
-                        if viewModel.isGeneratingPurposes {
-                            ProgressView()
-                                .controlSize(.small)
-                        } else {
-                            Button {
-                                viewModel.generatePurposes(for: item, siblingContext: buildSiblingContext())
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                viewModel.removeSemanticTag(tag, from: item)
                             } label: {
-                                Image(systemName: "sparkles")
-                                    .symbolEffect(.bounce, value: viewModel.isGeneratingPurposes)
+                                Label("Delete Tag", systemImage: "trash")
                             }
                         }
                     }
-                    
-                    // Active Purposes
-                    if !item.purposes.isEmpty {
-                        FlowLayout(spacing: 8) {
-                            ForEach(item.purposes.sorted(), id: \.self) { purpose in
-                                Text(purpose)
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .glass(cornerRadius: 16)
-                                    .foregroundStyle(.blue)
-                                    .contextMenu {
-                                        Button(role: .destructive) {
-                                            viewModel.removePurpose(purpose, from: item)
-                                        } label: {
-                                            Label("Delete Purpose", systemImage: "trash")
-                                        }
-                                    }
-                            }
-                        }
-                    } else {
-                        Text("No specific purpose defined yet.")
-                            .font(.caption)
+                }
+            }
+            .detailCardStyle()
+        }
+    }
+    
+    // MARK: - Specialized Profile Switch
+    @ViewBuilder
+    private func buildSpecializedProfile() -> some View {
+        let type = item.entityType?.lowercased() ?? ""
+        
+        switch type {
+        case "product":
+            ProductProfileView(item: item)
+        case "location", "place":
+            PlaceProfileView(item: item)
+        case "document":
+            DocumentProfileView(item: item)
+        case "web_link":
+            WebLinkProfileView(item: item)
+        case "person":
+            PersonProfileView(item: item)
+        case "qr_code":
+            QRCodeProfileView(item: item)
+        case "environment":
+            EnvironmentProfileView(item: item)
+        default:
+            // Fallback: If type isn't perfectly mapped, rely on contexts
+            if item.isProduct {
+                ProductProfileView(item: item)
+            } else if item.placeContext != nil {
+                PlaceProfileView(item: item)
+            } else if item.documentContext != nil {
+                DocumentProfileView(item: item)
+            } else if item.resolvedWebURL != nil {
+                WebLinkProfileView(item: item)
+            } else if item.qrContext != nil {
+                QRCodeProfileView(item: item)
+            } else {
+                // Image Profile acts as the visual fallback for unsupported or no-context items
+                ImageProfileView(item: item)
+            }
+        }
+    }
+    
+    // MARK: - Footer Builder
+    @ViewBuilder
+    private func buildFooter() -> some View {
+        // Media Info (kept in footer/generic)
+        let mediaInfo = item.mediaInfo
+        if mediaInfo.mediaType != nil || mediaInfo.filename != nil || mediaInfo.fileSize != nil {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Media Information")
+                    .font(.title3)
+                    .bold()
+                
+                if let mediaType = mediaInfo.mediaType {
+                    HStack {
+                        Text("Type:")
                             .foregroundStyle(.secondary)
+                        Text(mediaType.capitalized)
                     }
-                    
-                    // AI Suggestions
-                    if !viewModel.suggestedPurposes.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Suggestions (Tap to Add)")
-                                .font(.caption2)
-                                .textCase(.uppercase)
-                                .foregroundStyle(.secondary)
-                            
-                            FlowLayout(spacing: 8) {
-                                ForEach(viewModel.suggestedPurposes, id: \.self) { suggestion in
-                                    Button {
-                                        viewModel.addPurpose(suggestion, to: item)
-                                    } label: {
-                                        HStack(spacing: 4) {
-                                            Image(systemName: "plus")
-                                                .font(.caption2)
-                                            Text(suggestion)
-                                        }
-                                        .font(.caption)
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 5)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .strokeBorder(Color.blue.opacity(0.5), lineWidth: 1)
-                                        )
-                                        .foregroundStyle(.primary)
-                                    }
-                                    .buttonStyle(.plain)
+                    .font(.caption)
+                }
+                
+                if let filename = mediaInfo.filename {
+                    HStack {
+                        Text("File:")
+                            .foregroundStyle(.secondary)
+                        Text(filename)
+                    }
+                    .font(.caption)
+                }
+                
+                if let fileSize = mediaInfo.fileSize {
+                    HStack {
+                        Text("Size:")
+                            .foregroundStyle(.secondary)
+                        Text(ByteCountFormatter.string(fromByteCount: Int64(fileSize), countStyle: .file))
+                    }
+                    .font(.caption)
+                }
+            }
+            .detailCardStyle()
+        }
+
+        // Environment Context (if not already handled strictly by entityType)
+        if item.entityType?.lowercased() != "environment" && (item.weatherContext != nil || item.activityContext != nil) {
+            EnvironmentProfileView(item: item)
+        }
+        
+        // Purposes & Intent
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Purposes & Intent")
+                    .font(.headline)
+                Spacer()
+                
+                if viewModel.isGeneratingPurposes {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Button {
+                        viewModel.generatePurposes(for: item, siblingContext: buildSiblingContext())
+                    } label: {
+                        Image(systemName: "sparkles")
+                            .symbolEffect(.bounce, value: viewModel.isGeneratingPurposes)
+                    }
+                }
+            }
+            
+            if !item.purposes.isEmpty {
+                FlowLayout(spacing: 8) {
+                    ForEach(item.purposes.sorted(), id: \.self) { purpose in
+                        Text(purpose)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .glass(cornerRadius: 16)
+                            .foregroundStyle(.blue)
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    viewModel.removePurpose(purpose, from: item)
+                                } label: {
+                                    Label("Delete Purpose", systemImage: "trash")
                                 }
                             }
-                        }
-                        .padding(.top, 4)
-                        .transition(.move(edge: .top).combined(with: .opacity))
                     }
+                }
+            } else {
+                Text("No specific purpose defined yet.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            if !viewModel.suggestedPurposes.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Suggestions (Tap to Add)")
+                        .font(.caption2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(.secondary)
                     
-                    // VLM Insights (factual statements from visual analysis)
-                    if let vlm = item.fastVLMAnalysis, !vlm.statements.isEmpty {
-                        Divider()
-                        Text("Insights")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        
-                        ForEach(vlm.statements, id: \.self) { statement in
-                            HStack(alignment: .top, spacing: 6) {
-                                Image(systemName: "eye.fill")
-                                    .foregroundStyle(.purple)
-                                    .font(.caption)
-                                    .padding(.top, 2)
-                                
-                                Text(statement)
-                                    .font(.caption)
-                                    .foregroundStyle(.primary)
+                    FlowLayout(spacing: 8) {
+                        ForEach(viewModel.suggestedPurposes, id: \.self) { suggestion in
+                            Button {
+                                viewModel.addPurpose(suggestion, to: item)
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "plus")
+                                        .font(.caption2)
+                                    Text(suggestion)
+                                }
+                                .font(.caption)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .strokeBorder(Color.blue.opacity(0.5), lineWidth: 1)
+                                )
+                                .foregroundStyle(.primary)
                             }
+                            .buttonStyle(.plain)
                         }
                     }
-                    
-                    // Reflection Questions
-                     if !item.questions.isEmpty {
-                         Divider()
-                         Text("Reflection Questions")
-                         .font(.subheadline)
-                         .foregroundStyle(.secondary)
+                }
+                .padding(.top, 4)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+            
+            if let vlm = item.fastVLMAnalysis, !vlm.statements.isEmpty {
+                Divider()
+                Text("Insights")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                
+                ForEach(vlm.statements, id: \.self) { statement in
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: "eye.fill")
+                            .foregroundStyle(.purple)
+                            .font(.caption)
+                            .padding(.top, 2)
+                        
+                        Text(statement)
+                            .font(.caption)
+                            .foregroundStyle(.primary)
+                    }
+                }
+            }
+            
+             if !item.questions.isEmpty {
+                 Divider()
+                 Text("Reflection Questions")
+                 .font(.subheadline)
+                 .foregroundStyle(.secondary)
+                 
+                 ForEach(Array(Set(item.questions)).sorted(), id: \.self) { question in
+                     HStack(alignment: .top) {
+                         Image(systemName: "lightbulb.fill")
+                             .foregroundStyle(.yellow)
+                             .font(.caption)
+                             .padding(.top, 2)
                          
-                         ForEach(Array(Set(item.questions)).sorted(), id: \.self) { question in
-                             HStack(alignment: .top) {
-                                 Image(systemName: "lightbulb.fill")
-                                     .foregroundStyle(.yellow)
-                                     .font(.caption)
-                                     .padding(.top, 2)
-                                 
-                                 Text(question)
-                                     .font(.caption)
-                                     .italic()
-                                     .foregroundStyle(.secondary)
-                             }
-                         }
+                         Text(question)
+                             .font(.caption)
+                             .italic()
+                             .foregroundStyle(.secondary)
                      }
-                }
-                .padding(.top, 8)
-                .padding(.bottom, 8)
-                .detailCardStyle()
-                // Divider removed
-
-                // 4. Concept Weighting
-                ConceptWeightingSection(item: item)
-                    .padding(.bottom, 20)
-                    .detailCardStyle()
-            }
-            .padding(.horizontal)
-            .padding(.top, 20)
+                 }
+             }
         }
-        .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                // Edit Location
-                Button {
-                    showingEditLocation = true
-                } label: {
-                    Label("Edit Location", systemImage: "pencil.and.outline")
-                }
-                .sheet(isPresented: $showingEditLocation) {
-                    EditLocationView(item: item)
-                }
-                
-                // Retry button for failed items
-                if item.status == .failed {
-                    Button {
-                        viewModel.retryProcessing(item: item)
-                    } label: {
-                        Label("Retry", systemImage: "arrow.clockwise")
-                    }
-                }
-                
-                // Process Now button - always visible
-                Button {
-                    viewModel.refreshLinkMetadata(item: item)
-                } label: {
-                    Label("Process Now", systemImage: "bolt.fill")
-                }
+        .padding(.top, 8)
+        .padding(.bottom, 8)
+        .detailCardStyle()
 
-                // Open original URL
-                if let url = item.resolvedWebURL {
-                    Link(destination: url) {
-                        Label("Open Original", systemImage: "safari")
-                    }
-                }
-            }
-        }
-        } // else (item not deleted)
-    }
-    // Brace removed
-    
-    // Card Modifier
-    private func cardStyle() -> some View {
-        self
-            .padding()
-            .background(Color(normalize(color: .secondarySystemGroupedBackground)))
-            .cornerRadius(12)
-            .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+        ConceptWeightingSection(item: item)
+            .padding(.bottom, 20)
+            .detailCardStyle()
     }
     
-    /// Parses `[Model: ModelName]` from the end of the summary.
+    // MARK: - Utilities
     private func parseSummaryModelBadge(from summary: String) -> (text: String, badge: String?) {
         let pattern = #"^\s*(.*?)\s*\[Model:\s*(.*?)\]\s*$"#
         guard let regex = try? NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators]) else {
@@ -956,6 +520,7 @@ struct ReferenceDetailContent: View {
     }
 }
 
+
 extension View {
     func detailCardStyle() -> some View {
         self
@@ -965,6 +530,7 @@ extension View {
             .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 }
+
 
 struct StatusBadge: View {
     let status: ProcessingStatus
@@ -993,7 +559,6 @@ struct StatusBadge: View {
     }
 }
 
-// MARK: - Specialized Reference Views
 
 struct ReferenceCardWrapper: View {
     let item: ProcessedItem
@@ -1014,8 +579,7 @@ struct ReferenceCardWrapper: View {
     }
 }
 
-// Ported from main/Generic
-// Ported from main/Generic
+
 struct ReferenceCardView: View {
     let item: ProcessedItem
     
@@ -1064,8 +628,7 @@ struct ReferenceCardView: View {
     }
 }
 
-// Ported from main/BookReferenceView
-// Ported from main/BookReferenceView
+
 struct BookReferenceView: View {
     let item: ProcessedItem
     
@@ -1180,8 +743,7 @@ struct BookReferenceView: View {
     }
 }
 
-// Ported from main/SpotifyReferenceView (simplified for no-auth initially)
-// Ported from main/SpotifyReferenceView (simplified for no-auth initially)
+
 struct SpotifyReferenceView: View {
     let item: ProcessedItem
     
@@ -1241,32 +803,6 @@ struct SpotifyReferenceView: View {
     }
 }
 
-// Helper for Color compatibility
-func normalize(color: UIColor) -> Color {
-    #if os(iOS)
-    return Color(uiColor: color)
-    #else
-    return Color(nsColor: .windowBackgroundColor) // Fallback for Mac
-    #endif
-}
-
-#if os(macOS)
-import AppKit
-typealias UIColor = NSColor
-extension NSColor {
-    static var secondarySystemBackground: NSColor { windowBackgroundColor } // Approximation
-}
-#endif
-
-// Helper to access dictionary metadata
-// extension ReferenceEntity {
-//    var metadataDictionary: [String: Any]? {
-//        guard let data = metadataJSON else { return nil }
-//        return try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-//    }
-// }
-
-// MARK: - Flow Layout
 
 struct FlowLayout: Layout {
     var spacing: CGFloat = 8
@@ -1320,13 +856,7 @@ struct FlowLayout: Layout {
     }
 }
 
-// MARK: - Shared with You Helper
 
-
-
-// MARK: - Map Popover
-
-// MARK: - Geocoding Wrapper for LocationMapView
 struct GeocodingLocationViewWrapper: View {
     let locationName: String
     @State private var coordinate: CLLocationCoordinate2D?
@@ -1379,83 +909,6 @@ struct GeocodingLocationViewWrapper: View {
     }
 }
 
-// MARK: - Local Location Map View
-public struct LocationMapView: View {
-    @State private var position: MapCameraPosition
-    let locationName: String?
-    let coordinate: CLLocationCoordinate2D?
-    let onOpenPlaces: () -> Void
-    
-    @Environment(\.dismiss) private var dismiss
-    
-    public init(coordinate: CLLocationCoordinate2D?, locationName: String?, onOpenPlaces: @escaping () -> Void) {
-        self.coordinate = coordinate
-        self.locationName = locationName
-        self.onOpenPlaces = onOpenPlaces
-        
-        if let coordinate = coordinate {
-            self._position = State(initialValue: .region(MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))))
-        } else {
-            self._position = State(initialValue: .automatic)
-        }
-    }
-    
-    public var body: some View {
-        ZStack(alignment: .bottom) {
-            Map(position: $position) {
-                if let coordinate = coordinate {
-                    Marker(locationName ?? "Location", coordinate: coordinate)
-                }
-            }
-            .mapControls {
-                MapUserLocationButton()
-                MapCompass()
-            }
-            
-            // Floating Card for Place Details
-            HStack {
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(locationName ?? "Unknown Location")
-                            .font(.headline)
-                        if let coordinate {
-                            Text("\(coordinate.latitude), \(coordinate.longitude)")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    Spacer()
-                    Button(action: onOpenPlaces) {
-                        Image(systemName: "map.fill")
-                            .font(.title2)
-                            .padding(12)
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .clipShape(Circle())
-                    }
-                }
-                .padding()
-                .background(Color(uiColor: .systemBackground))
-                .cornerRadius(16)
-                .shadow(radius: 5)
-            }
-            .padding()
-        }
-        .navigationTitle("Location")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Done") { dismiss() }
-            }
-        }
-    }
-}
-
-import SwiftUI
-import DiverKit
-import CoreImage.CIFilterBuiltins
-
-// MARK: - Reusable Styles
 
 struct ContextCardStyle: ViewModifier {
     func body(content: Content) -> some View {
@@ -1466,6 +919,7 @@ struct ContextCardStyle: ViewModifier {
     }
 }
 
+
 extension View {
     func contextCard() -> some View {
         modifier(ContextCardStyle())
@@ -1473,350 +927,6 @@ extension View {
 }
 
 
-// MARK: - Weather Context
-struct WeatherContextView: View {
-    let context: WeatherContext
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: context.symbolName)
-                .symbolRenderingMode(.multicolor)
-                .font(.title2)
-                .frame(width: 32, height: 32)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(context.condition)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Text("\(Int(context.temperatureCelsius))°C")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .glassEffect()
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-}
-
-// MARK: - Activity Context
-struct ActivityContextView: View {
-    let context: ActivityContext
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: iconForActivity(context.type))
-                .font(.title2)
-                .foregroundStyle(.orange)
-                .frame(width: 32, height: 32)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(context.type.capitalized)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Text(context.confidence.capitalized)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .glassEffect()
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-    
-    private func iconForActivity(_ type: String) -> String {
-        switch type.lowercased() {
-        case "walking": return "figure.walk"
-        case "running": return "figure.run"
-        case "automotive", "driving": return "car.fill"
-        case "cycling": return "bicycle"
-        case "stationary": return "figure.stand"
-        default: return "figure.mixed.cardio"
-        }
-    }
-}
-
-// MARK: - Web Info
-struct WebInfoView: View {
-    let context: WebContext
-    let url: URL?
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Web Preview")
-                    .font(.title3)
-                    .bold()
-                Spacer()
-                if let url = url {
-                    Link(destination: url) {
-                        Image(systemName: "safari")
-                            .font(.body)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.blue)
-                }
-            }
-            
-            if let snapshotPath = context.snapshotURL {
-                AsyncImage(url: URL(fileURLWithPath: snapshotPath)) { phase in
-                    if let image = phase.image {
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(height: 200)
-                            .cornerRadius(12)
-                            .clipped()
-                    }
-                }
-            }
-
-            if let url = url {
-                RichWebView(url: url)
-                    .frame(height: 300)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                    )
-            } else {
-                GroupBox {
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "safari")
-                            .font(.title3)
-                            .foregroundStyle(.blue)
-                            .frame(width: 24, height: 24)
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(context.siteName ?? "Website")
-                                .font(.headline)
-                                .foregroundStyle(.primary)
-                            
-                            if let time = context.readingTimeMinutes {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "clock")
-                                    Text("\(time) min read")
-                                }
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                            }
-                        }
-                        
-                        Spacer()
-                    }
-                }
-                .groupBoxStyle(.automatic)
-            }
-        }
-        .contextCard()
-    }
-}
-
-// MARK: - Document Info
-struct DocumentInfoView: View {
-    let context: DocumentContext
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: "doc.fill")
-                .font(.largeTitle)
-                .foregroundStyle(.blue)
-                .shadow(radius: 2, y: 1)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(context.fileType.uppercased())
-                    .font(.headline)
-                
-                if let pages = context.pageCount {
-                    Text("\(pages) Pages")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                
-                if let author = context.author {
-                    Text("By \(author)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Spacer()
-        }
-        .contextCard()
-    }
-}
-
-// MARK: - Detailed Place Info
-struct PlaceContextView: View {
-    let context: PlaceContext
-    let baseLocation: String?
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header: Name and Category
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(context.name ?? baseLocation ?? "Location")
-                        .font(.headline)
-                    
-                    if let category = context.categories.first {
-                        Text(category)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    if let addr = context.address {
-                         Text(addr)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                    }
-                }
-                Spacer()
-                
-                Image(systemName: "mappin.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.red)
-            }
-            
-            Divider()
-            
-            // Details Row: Rating, Price, Status
-            HStack(spacing: 12) {
-                if let rating = context.rating {
-                    Label(String(format: "%.1f", rating), systemImage: "star.fill")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                        .padding(6)
-                        .glass(cornerRadius: 6)
-                }
-                
-                if let price = context.priceLevel {
-                    Text(price)
-                        .font(.caption)
-                        .foregroundStyle(.green)
-                        .padding(6)
-                        .glass(cornerRadius: 6)
-                }
-                
-                if let isOpen = context.isOpen {
-                    Text(isOpen ? "Open" : "Closed")
-                        .font(.caption)
-                        .fontWeight(.bold)
-                        .foregroundStyle(isOpen ? .green : .red)
-                        .padding(6)
-                        .glass(cornerRadius: 6)
-                }
-                
-                Spacer()
-            }
-            
-            // Actions: Phone & Website
-            if context.phoneNumber != nil || context.website != nil {
-                Divider()
-                HStack(spacing: 16) {
-                    if let phone = context.phoneNumber, let url = URL(string: "tel://\(phone.replacingOccurrences(of: " ", with: ""))") {
-                        Button {
-                            #if os(iOS)
-                            UIApplication.shared.open(url)
-                            #endif
-                        } label: {
-                            Label("Call", systemImage: "phone.fill")
-                                .font(.caption)
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                    
-                    if let website = context.website, let url = URL(string: website) {
-                         Link(destination: url) {
-                             Label("Website", systemImage: "globe")
-                                 .font(.caption)
-                         }
-                         .buttonStyle(.bordered)
-                    }
-                }
-            }
-            
-            // Tips
-            if let tips = context.tips, !tips.isEmpty {
-                Divider()
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Tips & Highlights")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                    
-                    ForEach(tips.prefix(3), id: \.self) { tip in
-                        HStack(alignment: .top, spacing: 8) {
-                            Image(systemName: "quote.opening")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                            Text(tip)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .italic()
-                        }
-                    }
-                }
-            }
-            
-            // Photos
-            if let photos = context.photos, !photos.isEmpty {
-                Divider()
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(photos, id: \.self) { photoUrl in
-                            if let url = URL(string: photoUrl) {
-                                AsyncImage(url: url) { phase in
-                                    if let image = phase.image {
-                                        image
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                            .frame(width: 100, height: 100)
-                                            .cornerRadius(8)
-                                    } else if phase.error != nil {
-                                        Color.gray.opacity(0.3)
-                                            .frame(width: 100, height: 100)
-                                            .cornerRadius(8)
-                                            .overlay(Image(systemName: "photo").foregroundStyle(.secondary))
-                                    } else {
-                                        ProgressView()
-                                            .frame(width: 100, height: 100)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        .padding()
-        .background(Color(uiColor: .systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-    }
-}
-
-
-// MARK: - Rich Web View Support
-
-// Helper for Product Logic
-extension ProcessedItem {
-    var isProduct: Bool {
-        let type = entityType?.lowercased() ?? ""
-        return type == "product" || categories.contains("shopping") || purposes.contains("shopping")
-    }
-    
-    var productSearchURL: URL? {
-        guard let title = title, !title.isEmpty else { return nil }
-        let query = title.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-        return URL(string: "https://duckduckgo.com/?q=\(query)&ia=web")
-    }
-}
-
-// MARK: - Capture Siblings View
 struct CaptureSiblingsView: View {
     let masterID: String
     let currentID: String
@@ -1868,6 +978,7 @@ struct CaptureSiblingsView: View {
     }
 }
 
+
 struct SiblingThumbnailView: View {
     let item: ProcessedItem
     
@@ -1880,346 +991,6 @@ struct SiblingThumbnailView: View {
     }
 }
 
-// MARK: - Safe URL Resolution
-extension ProcessedItem {
-    /// Returns a navigable HTTP/HTTPS URL, resolving `secretatomics://` schemes to their wrapped content if possible.
-    var resolvedWebURL: URL? {
-        // 1. Try wrappedLink (explicit web link)
-        if let wrapped = wrappedLink, let url = URL(string: wrapped), ["http", "https"].contains(url.scheme?.lowercased()) {
-            return url
-        }
-        
-
-        
-        // 3. Try main URL if it's http/https
-        if let mainUrlStr = url, let url = URL(string: mainUrlStr), ["http", "https"].contains(url.scheme?.lowercased()) {
-            return url
-        }
-        
-        return nil
-    }
-    
-    var displayURLString: String {
-        return resolvedWebURL?.absoluteString ?? url ?? "No URL"
-    }
-}
-// MARK: - Structured Data View
-struct StructuredDataView: View {
-    let jsonString: String
-    
-    var body: some View {
-        if let data = parseJSON(), !data.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Structured Data")
-                    .font(.title3)
-                    .bold()
-                
-                ForEach(data.indices, id: \.self) { index in
-                    let item = data[index]
-                    VStack(alignment: .leading, spacing: 8) {
-                        if let type = item["@type"] as? String {
-                            Text(type)
-                                .font(.headline)
-                                .foregroundStyle(.blue)
-                        }
-                        
-                        // Limit display to simple string values to avoid clutter
-                        ForEach(item.keys.sorted().filter { $0 != "@type" && $0 != "@context" }, id: \.self) { key in
-                            if let value = item[key] as? String {
-                                HStack(alignment: .top) {
-                                    Text(formatKey(key))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                        .frame(width: 80, alignment: .leading)
-                                    Text(value)
-                                        .font(.caption)
-                                        .lineLimit(3)
-                                }
-                            }
-                        }
-                    }
-                    .padding()
-                    .glass(cornerRadius: 12)
-                }
-            }
-            .padding()
-            .padding(.bottom, 12)
-            Divider()
-        }
-    }
-    
-    private func formatKey(_ key: String) -> String {
-        return key.replacingOccurrences(of: "([A-Z])", with: " $1", options: .regularExpression).capitalized
-    }
-    
-    private func parseJSON() -> [[String: Any]]? {
-        guard let data = jsonString.data(using: .utf8) else { return nil }
-        if let array = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
-            return array
-        }
-        if let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            return [object]
-        }
-        return nil
-    }
-}
-
-// MARK: - Place Detail Sheet
-struct PlaceDetailSheet: View {
-    let context: PlaceContext
-    var onAddTag: ((String) -> Void)? = nil // Callback for adding context
-    @Environment(\.dismiss) private var dismiss
-    
-    @State private var position: MapCameraPosition
-    
-    init(context: PlaceContext, onAddTag: ((String) -> Void)? = nil) {
-        self.context = context
-        self.onAddTag = onAddTag
-        
-        if let lat = context.latitude, let lon = context.longitude {
-            self._position = State(initialValue: .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: lat, longitude: lon), span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005))))
-        } else {
-            self._position = State(initialValue: .automatic)
-        }
-    }
-    
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    
-                    // 1. Map Header
-                    if let lat = context.latitude, let lon = context.longitude {
-                        Map(position: $position) {
-                            Marker(context.name ?? "Location", coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon))
-                        }
-                        .frame(height: 250)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .shadow(radius: 4)
-                        .overlay(alignment: .bottomTrailing) {
-                            Button {
-                                openInMaps(lat: lat, lon: lon, name: context.name)
-                            } label: {
-                                Image(systemName: "location.fill")
-                                    .padding(8)
-                                    .glassEffect()
-                                    .clipShape(Circle())
-                                    .padding(8)
-                            }
-                        }
-                    }
-                    
-                    // 2. Title & Basic Info
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(context.name ?? "Unknown Place")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                        
-                        // Categories / Taste Chips
-                        if !context.categories.isEmpty {
-                            FlowLayout(spacing: 8) {
-                                ForEach(context.categories, id: \.self) { category in
-                                    Button {
-                                        onAddTag?(category)
-                                        // Optional feedback
-                                        let generator = UIImpactFeedbackGenerator(style: .medium)
-                                        generator.impactOccurred()
-                                    } label: {
-                                        Text(category)
-                                            .font(.subheadline.bold())
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 6)
-                                            .background(Color.orange.opacity(0.1))
-                                            .foregroundStyle(.orange)
-                                            .clipShape(Capsule())
-                                            .overlay(
-                                                Capsule()
-                                                    .stroke(Color.orange.opacity(0.3), lineWidth: 1)
-                                            )
-                                    }
-                                }
-                            }
-                        }
-                        
-                        if let address = context.address {
-                            Text(address)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    // 3. Status Pills (Rating, Price, Open)
-                    HStack(spacing: 12) {
-                        if let rating = context.rating {
-                            Label(String(format: "%.1f", rating), systemImage: "star.fill")
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.yellow.opacity(0.2))
-                                .foregroundStyle(.yellow)
-                                .clipShape(Capsule())
-                        }
-                        
-                        if let price = context.priceLevel {
-                            Text(price)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.green.opacity(0.2))
-                                .foregroundStyle(.green)
-                                .clipShape(Capsule())
-                        }
-                        
-                        if let isOpen = context.isOpen {
-                            Text(isOpen ? "Open Now" : "Closed")
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(isOpen ? Color.green.opacity(0.2) : Color.red.opacity(0.2))
-                                .foregroundStyle(isOpen ? .green : .red)
-                                .clipShape(Capsule())
-                        }
-                    }
-                    .font(.caption.bold())
-                    .padding(.horizontal)
-                    
-                    Divider().padding(.horizontal)
-                    
-                    // 4. Actions
-                    HStack(spacing: 20) {
-                        if let phone = context.phoneNumber {
-                            ActionButton(icon: "phone.fill", label: "Call") {
-                                if let url = URL(string: "tel://\(phone.replacingOccurrences(of: " ", with: ""))") {
-                                    UIApplication.shared.open(url)
-                                }
-                            }
-                        }
-                        
-                        if let website = context.website, let url = URL(string: website) {
-                            ActionButton(icon: "globe", label: "Website") {
-                                UIApplication.shared.open(url)
-                            }
-                        }
-                        
-                        ActionButton(icon: "square.and.arrow.up", label: "Share") {
-                            // Simple share action
-                            sharePlace(name: context.name, url: context.website)
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    // 5. Photos
-                    if let photos = context.photos, !photos.isEmpty {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Photos")
-                                .font(.title3.bold())
-                                .padding(.horizontal)
-                            
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
-                                    ForEach(photos, id: \.self) { photoUrl in
-                                        AsyncImage(url: URL(string: photoUrl)) { image in
-                                            image.resizable()
-                                                 .scaledToFill()
-                                                 .frame(width: 200, height: 150)
-                                                 .clipShape(RoundedRectangle(cornerRadius: 12))
-                                        } placeholder: {
-                                            RoundedRectangle(cornerRadius: 12)
-                                                .fill(Color.gray.opacity(0.2))
-                                                .frame(width: 200, height: 150)
-                                                .overlay(ProgressView())
-                                        }
-                                    }
-                                }
-                                .padding(.horizontal)
-                            }
-                        }
-                    }
-                    
-                    // 6. Tips & Reviews
-                    if let tips = context.tips, !tips.isEmpty {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Highlights & Tips")
-                                .font(.title3.bold())
-                                .padding(.horizontal)
-                            
-                            ForEach(tips, id: \.self) { tip in
-                                HStack(alignment: .top, spacing: 12) {
-                                    Image(systemName: "quote.opening")
-                                        .foregroundStyle(.secondary)
-                                    Text(tip)
-                                        .font(.body)
-                                        .italic()
-                                        .foregroundStyle(.primary.opacity(0.9))
-                                }
-                                .padding()
-                                .background(Color.secondary.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                                .padding(.horizontal)
-                            }
-                        }
-                    }
-                    
-                    Spacer(minLength: 50)
-                }
-            }
-            .navigationTitle("Place Details")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
-        }
-    }
-    
-    private func openInMaps(lat: Double, lon: Double, name: String?) {
-        let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
-        let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
-        mapItem.name = name
-        mapItem.openInMaps()
-    }
-    
-    private func sharePlace(name: String?, url: String?) {
-        let text = "Check out \(name ?? "this place")!"
-        var items: [Any] = [text]
-        if let u = url, let link = URL(string: u) {
-            items.append(link)
-        }
-        
-        let av = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        
-        // Find top controller to present
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let root = windowScene.windows.first?.rootViewController {
-            root.present(av, animated: true)
-        }
-    }
-}
-
-struct ActionButton: View {
-    let icon: String
-    let label: String
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.title3)
-                Text(label)
-                    .font(.caption.bold())
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(Color.blue.opacity(0.1))
-            .foregroundStyle(.blue)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
-    }
-}
-
-// MARK: - Photos Video Player View
-/// A video player view that loads video from Photos library using PHAsset
-import Photos
 
 struct PhotosVideoPlayerView: View {
     let assetIdentifier: String
@@ -2307,7 +1078,6 @@ struct PhotosVideoPlayerView: View {
     }
 }
 
-// MARK: - Text Editor View
 
 struct TextEditorView: View {
     let item: ProcessedItem
@@ -2366,7 +1136,7 @@ struct TextEditorView: View {
     }
 }
 
-// MARK: - Async Image View
+
 struct AsyncItemImageView: View {
     let item: ProcessedItem
     @State private var image: UIImage?
@@ -2527,7 +1297,7 @@ struct AsyncItemImageView: View {
     }
 }
 
-// MARK: - Data Video Player
+
 struct DataVideoPlayer: View {
     let data: Data
     @State private var player: AVPlayer?
@@ -2558,106 +1328,14 @@ struct DataVideoPlayer: View {
     }
 }
 
-// MARK: - Product Details Helpers
 
-private struct DetailRow: View {
-    let label: String
-    let value: String
-    
-    var body: some View {
-        HStack(alignment: .top) {
-            Text(label)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .frame(width: 80, alignment: .leading)
-            Text(value)
-                .font(.caption)
-        }
-    }
-}
 
-private struct ScoreBadge: View {
-    let label: String
-    let value: String
-    let color: Color
-    
-    var body: some View {
-        VStack(spacing: 2) {
-            Text(value)
-                .font(.headline.weight(.bold))
-                .foregroundStyle(color)
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
-        .frame(minWidth: 60)
-        .padding(.vertical, 6)
-        .padding(.horizontal, 8)
-        .background(color.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
-    }
-}
-
-private func gradeColor(_ grade: String) -> Color {
-    switch grade.uppercased() {
-    case "A": return .green
-    case "B": return .mint
-    case "C": return .yellow
-    case "D": return .orange
-    case "E": return .red
-    default: return .secondary
-    }
-}
-
-// MARK: - EXIF Metadata Component
-struct EXIFMetadataSection: View {
-    let item: ProcessedItem
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("File Information")
-                .font(.headline)
-            
-            VStack(spacing: 8) {
-                if let date = item.originalDate {
-                    InfoRow(icon: "calendar", title: "Date Captured", value: date.formatted(date: .abbreviated, time: .shortened))
-                }
-                
-                if let location = item.location {
-                    InfoRow(icon: "mappin.and.ellipse", title: "Location", value: location)
-                }
-                
-                if let filename = item.filename {
-                    InfoRow(icon: "doc", title: "Filename", value: filename)
-                }
-                
-                if let size = item.fileSize {
-                    InfoRow(icon: "externaldrive", title: "File Size", value: ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file))
-                }
-            }
-            .padding()
-            .glassEffect()
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
-    }
-}
-
-private struct InfoRow: View {
-    let icon: String
-    let title: String
-    let value: String
-    
-    var body: some View {
-        HStack {
-            Image(systemName: icon)
-                .frame(width: 24)
-                .foregroundStyle(.secondary)
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.medium)
-        }
-    }
+func normalize(color: UIColor) -> UIColor {
+    #if os(iOS)
+    var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+    color.getRed(&r, green: &g, blue: &b, alpha: &a)
+    return UIColor(red: r, green: g, blue: b, alpha: a)
+    #else
+    return color
+    #endif
 }

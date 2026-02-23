@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import DiverShared
+import DiverKit
 
 /// A specialized profile view for displaying passive environmental and activity contexts 
 /// gathered during a capture, such as weather conditions and CoreMotion activity states.

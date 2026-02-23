@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import DiverShared
+import DiverKit
 import CoreImage.CIFilterBuiltins
 
 /// Specialized profile view for displaying QR Code captures, rendering the barcode payload,

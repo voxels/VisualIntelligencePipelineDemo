@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -32,6 +32,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1E7F41992F4C6B7C000002CB /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				"TEMP_345C469B-AA58-4ADC-9092-536B9684209F" /* EdgeDaemonApp.swift */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		5358C2C19259525698816B4C /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -45,6 +53,7 @@
 			children = (
 				E5D349A03069000D51E8DDB2 /* Packages */,
 				5358C2C19259525698816B4C /* Products */,
+				1E7F41992F4C6B7C000002CB /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -55,14 +64,6 @@
 				F45ECD9D12119E0BCB884B2B /* DiverShared */,
 			);
 			name = Packages;
-			sourceTree = "<group>";
-		};
-		"TEMP_E1206006-C1AC-4325-A2D3-EB48BB2B4E40" /* EdgeDaemon */ = {
-			isa = PBXGroup;
-			children = (
-				"TEMP_345C469B-AA58-4ADC-9092-536B9684209F" /* EdgeDaemonApp.swift */,
-			);
-			path = EdgeDaemon;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -98,7 +99,6 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					692C3A52E3AF87669D3D5347 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -117,7 +117,6 @@
 				D1F58A3B67944A033D363AAC /* XCLocalSwiftPackageReference "../DiverKit" */,
 				795B6FC1F885EABFD0B9D93F /* XCLocalSwiftPackageReference "../DiverShared" */,
 			);
-			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -199,9 +198,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = EdgeDaemon.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 23264QUM9A;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -222,9 +222,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = EdgeDaemon.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 23264QUM9A;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

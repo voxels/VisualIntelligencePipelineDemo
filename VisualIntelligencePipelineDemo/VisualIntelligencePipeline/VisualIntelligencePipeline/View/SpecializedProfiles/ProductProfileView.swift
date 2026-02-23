@@ -13,40 +13,123 @@ public struct ProductProfileView: View {
         VStack(alignment: .leading, spacing: 16) {
             
             // Core Commerce Data & AR Scores
-            if let commerce = item.commerceContext {
+            if item.productMetadata != nil || item.commerceContext != nil {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Image(systemName: "cart.fill")
-                            .foregroundStyle(.blue)
-                        Text("Commerce Engine")
+                            .foregroundStyle(.green)
+                        Text("Commerce Intelligence")
                             .font(.title3)
                             .bold()
-                        Spacer()
                     }
                     
-                    // Ownership Actions
+                    if let recommendations = item.commerceContext, let first = recommendations.first {
+                        ProductScoreAttachment(
+                            productName: first.option.productName,
+                            compositeScore: first.compositeScore,
+                            strategyScores: first.option.scores.map { ($0.strategyID.capitalized, $0.overallScore) },
+                            recommendation: first.compositeScore >= 0.7 ? "Buy Now" :
+                                first.compositeScore >= 0.4 ? "Consider" : "Wait"
+                        )
+                        
+                        ProductScoreOverlayView(
+                            recommendation: first,
+                            allScores: first.option.scores,
+                            insight: nil,
+                            advisorySignal: nil,
+                            advisoryExplanation: nil
+                        )
+                    }
+                    
                     OwnershipButton(productName: item.displayTitle, barcode: item.productMetadata)
                         .padding(.vertical, 4)
                     
-                    // Affiliate Routing Block
+                    if !viewModel.scoreSnapshots.isEmpty {
+                        ScoreHistoryChartView(snapshots: viewModel.scoreSnapshots, strategyID: "esg")
+                            .frame(height: 200)
+                    }
+                    
+                    // Nowcast Result
+                    if let nowcast = item.nowcastContext {
+                        HStack(spacing: 12) {
+                            Image(systemName: nowcast.direction == .rising ? "arrow.up.right.circle.fill" :
+                                    nowcast.direction == .falling ? "arrow.down.right.circle.fill" :
+                                    "equal.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(nowcast.direction == .rising ? .green :
+                                                    nowcast.direction == .falling ? .red : .secondary)
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Price Trend: \(nowcast.direction.rawValue.capitalized)")
+                                    .font(.subheadline.weight(.medium))
+                                Text("Confidence: \(Int(nowcast.confidence * 100))%")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Text(String(format: "%+.1f%%", nowcast.projectedChange * 100))
+                                .font(.headline.monospacedDigit())
+                                .foregroundStyle(nowcast.projectedChange > 0 ? .red : .green)
+                        }
+                        .padding()
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    
                     if let platforms = item.affiliateContext, !platforms.isEmpty {
                         CommerceActionView(platforms: platforms)
                     }
+                    
+                    // Government Safety Alerts
+                    if let gov = item.governmentContext, gov.hasConcerns {
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                Text("Safety Alerts")
+                                    .font(.subheadline.weight(.semibold))
+                            }
+                            
+                            ForEach(gov.recalls) { recall in
+                                HStack(alignment: .top) {
+                                    Image(systemName: "arrow.uturn.backward.circle.fill")
+                                        .foregroundStyle(.red)
+                                        .font(.caption)
+                                    VStack(alignment: .leading) {
+                                        Text(recall.title)
+                                            .font(.caption.weight(.medium))
+                                        if let hazard = recall.hazard {
+                                            Text(hazard)
+                                                .font(.caption2)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            ForEach(gov.fdaAlerts) { alert in
+                                HStack(alignment: .top) {
+                                    Image(systemName: "cross.circle.fill")
+                                        .foregroundStyle(.orange)
+                                        .font(.caption)
+                                    VStack(alignment: .leading) {
+                                        Text("FDA \(alert.classification)")
+                                            .font(.caption.weight(.medium))
+                                        Text(alert.reason)
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(2)
+                                    }
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                    }
                 }
                 .padding()
-                .background(Color(uiColor: .secondarySystemGroupedBackground))
-                .cornerRadius(12)
-                .padding(.horizontal)
-            }
-            
-            // Commerce Charts Context
-            if item.productMetadata != nil {
-                VStack(alignment: .leading, spacing: 16) {
-                    ScoreHistoryChartView(snapshots: viewModel.scoreSnapshots, strategyID: "esg")
-                        .frame(height: 200)
-                }
-                .padding()
-                .background(Color(uiColor: .secondarySystemGroupedBackground))
+                .background(Color(normalize(color: .secondarySystemGroupedBackground)))
                 .cornerRadius(12)
                 .padding(.horizontal)
             }
@@ -115,11 +198,71 @@ public struct ProductProfileView: View {
                     if let packaging = esg.packagingText {
                         DetailRow(label: "Packaging", value: packaging)
                     }
+                    
+                    if !esg.certifications.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Certifications")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                            FlowLayout(spacing: 6) {
+                                ForEach(esg.certifications, id: \.self) { cert in
+                                    Text(cert)
+                                        .font(.caption2)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(.green.opacity(0.15), in: Capsule())
+                                }
+                            }
+                        }
+                    }
+                    
+                    if !esg.nutriments.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Nutrition (per serving)")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.secondary)
+                            let sorted = esg.nutriments.sorted { $0.key < $1.key }.prefix(8)
+                            ForEach(Array(sorted), id: \.key) { key, value in
+                                HStack {
+                                    Text(key.replacingOccurrences(of: "_", with: " ").capitalized)
+                                        .font(.caption)
+                                    Spacer()
+                                    Text(String(format: "%.1f", value))
+                                        .font(.caption.monospacedDigit())
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    
+                    if !esg.stores.isEmpty {
+                        DetailRow(label: "Available at", value: esg.stores.joined(separator: ", "))
+                    }
                 }
                 .padding()
-                .background(Color(uiColor: .secondarySystemGroupedBackground))
+                .background(Color(normalize(color: .secondarySystemGroupedBackground)))
                 .cornerRadius(12)
                 .padding(.horizontal)
+            }
+            
+            // Product Search Preview
+            if item.isProduct, let searchURL = item.productSearchURL {
+                 VStack(alignment: .leading, spacing: 8) {
+                     Text("Product Search Result")
+                         .font(.headline)
+                     
+                     RichWebView(url: searchURL)
+                        .frame(height: 350)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                        )
+                 }
+                 .padding()
+                 .background(Color(normalize(color: .secondarySystemGroupedBackground)))
+                 .cornerRadius(12)
+                 .padding(.horizontal)
             }
         }
         .padding(.vertical)
