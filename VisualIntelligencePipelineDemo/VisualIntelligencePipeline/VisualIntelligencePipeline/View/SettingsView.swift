@@ -118,6 +118,26 @@ struct SettingsView: View {
                     Text("Configure ethical purchasing preferences, manage API keys for product data, and view owned products.")
                 }
                 
+                // Edge Node Section
+                Section {
+                    NavigationLink {
+                        EdgeNodeSetupView()
+                    } label: {
+                        HStack {
+                            Label("Edge Node", systemImage: "desktopcomputer")
+                                .foregroundStyle(.blue)
+                            Spacer()
+                            if Services.shared.discoveryService != nil {
+                                EdgeNodeStatusPill()
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Home Network Intelligence")
+                } footer: {
+                    Text("Offload heavy AI to a nearby M-series Mac for larger models and 3D scene generation.")
+                }
+
                 // Maintenance Section
                 Section {
                     Button {
