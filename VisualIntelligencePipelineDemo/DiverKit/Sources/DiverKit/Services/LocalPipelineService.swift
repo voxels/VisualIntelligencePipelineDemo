@@ -1879,6 +1879,45 @@ public final class LocalPipelineService {
                 item.aestheticsScore = Double(score)
                 contextLog += "• Quality Score: \(String(format: "%.0f%%", score * 100))\n"
                 
+            case .faceFeaturePrint(let capturedPrint, let bounds):
+                do {
+                    // Fetch existing vectors locally
+                    let fetchDescriptor = FetchDescriptor<PersonVector>()
+                    let knownFaces = try modelContext.fetch(fetchDescriptor)
+                    
+                    var bestMatch: PersonVector?
+                    var bestDistance: Float = Float.greatestFiniteMagnitude
+                    let threshold: Float = 0.4 // Adjust 0.3 - 0.5 based on strictness
+                    
+                    for person in knownFaces {
+                        if let storedData = try? NSKeyedUnarchiver.unarchivedObject(ofClass: VNFeaturePrintObservation.self, from: person.featurePrintData) {
+                            var distance: Float = 0
+                            try capturedPrint.computeDistance(&distance, to: storedData)
+                            if distance < threshold && distance < bestDistance {
+                                bestDistance = distance
+                                bestMatch = person
+                            }
+                        }
+                    }
+                    
+                    if let match = bestMatch {
+                        contextLog += "• Face Identified: \(match.name ?? match.localIdentifier) (dist: \(String(format: "%.2f", bestDistance)))\n"
+                        newTags.append("Person")
+                        if let name = match.name, !newTags.contains(name) {
+                            newTags.append(name)
+                        }
+                        if !item.contactIdentifiers.contains(match.localIdentifier) {
+                            item.contactIdentifiers.append(match.localIdentifier)
+                        }
+                        DiverLogger.pipeline.info("👤 Face Match: \(match.localIdentifier) at distance \(bestDistance)")
+                    } else {
+                        contextLog += "• Unknown Face Detected\n"
+                        newTags.append("Person")
+                    }
+                } catch {
+                    DiverLogger.pipeline.error("⚠️ Face comparison failed: \(error)")
+                }
+                
             default: break
             }
         }

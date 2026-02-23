@@ -705,7 +705,10 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     ) -> String {
         // FastVLM best practice: short, image-focused prompt with vision grounding.
         // Avoid large metadata dumps — they overwhelm the 1.5B model (GIGO).
-        var prompt = "Describe this image in detail. Focus on the main subject, objects, text, and activities visible."
+        var prompt = """
+        Describe the physical activities, objects, and environment in this image in detail.
+        IMPORTANT: Do NOT attempt to identify people by name. Refer to people only by their actions (e.g. "a person is walking").
+        """
         
         if !visionTags.isEmpty {
             prompt += "\nDetected: \(visionTags.prefix(8).joined(separator: ", "))."
@@ -720,12 +723,12 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         
         Respond in this exact format:
         TITLE: [short descriptive title]
-        SUMMARY: [one sentence describing what is shown]
+        SUMMARY: [one sentence describing the main action or scene]
         PURPOSE: [capture intent]
         TAGS: [tag1, tag2, tag3]
         STATEMENTS:
-        - [factual observation]
-        - [factual observation]
+        - [factual observation about activities]
+        - [factual observation about the environment]
         """
         
         return prompt
@@ -824,13 +827,18 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         transcription: String?
     ) -> String {
         var prompt = """
-        Analyze the following data about a captured item.
+        Analyze this raw text extracted from an image or location data.
+        What is the core subject, purpose, or activity described here?
+        IMPORTANT: Summarize the content without inventing identities.
         
         Respond in this exact format:
         TITLE: [short descriptive title]
         SUMMARY: [one sentence summary]
         PURPOSE: [the user's likely intent]
         TAGS: [tag1, tag2, tag3]
+        STATEMENTS:
+        - [key extraction 1]
+        - [key extraction 2]
         
         Context Data:
         \(String(enrichmentContext.prefix(2000)))

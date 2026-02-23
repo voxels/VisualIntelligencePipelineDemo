@@ -61,6 +61,7 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
     public var price: Double?
     public var rating: Double?
     public var purposes: [String] = [] // Migrated from single purpose
+    public var contactIdentifiers: [String] = [] // Matched PersonVectors identifiers
     public var productSearchURL: URL?
     public var productMetadata: String? // Added for persistent context consistency
     /// Aesthetic score for images/videos (0.0-1.0) - used for thumbnail selection and context weighting
@@ -204,6 +205,7 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
         isFavorite: Bool = false,
         purpose: String? = nil, // Deprecated argument
         purposes: Set<String> = [], // New argument
+        contactIdentifiers: [String] = [],
         productMetadata: String? = nil,
         processingLog: [String] = [],
         failureCount: Int = 0
@@ -244,6 +246,7 @@ public final class ProcessedItem: Identifiable, DiverObject, @unchecked Sendable
         self.originalDate = originalDate
         self.price = price
         self.rating = rating
+        self.contactIdentifiers = contactIdentifiers
         self.productMetadata = productMetadata
 
         
