@@ -47,11 +47,17 @@ public final class APIKeyService: Sendable {
     nonisolated(unsafe) private let cache = NSCache<NSString, NSString>()
     
     public init() {
-        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil {
-            self.container = nil // Evade CKContainer._allocating_init crashes in Simulator tests
-        } else {
-            self.container = CKContainer(identifier: Self.containerID)
-        }
+        let shouldSkipCloudKit: Bool = {
+            // Skip in unit tests
+            if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return true }
+            // EdgeDaemon has no CloudKit entitlement
+            #if os(macOS)
+            if Bundle.main.bundleIdentifier?.contains("EdgeDaemon") == true { return true }
+            #endif
+            return false
+        }()
+        
+        self.container = shouldSkipCloudKit ? nil : CKContainer(identifier: Self.containerID)
     }
     
     // MARK: - Async API (Primary)
