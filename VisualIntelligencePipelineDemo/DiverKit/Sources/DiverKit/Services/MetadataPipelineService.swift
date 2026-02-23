@@ -802,11 +802,15 @@ public final class MetadataPipelineService: @unchecked Sendable {
             queueCurrentItemTitle = item.title ?? item.filename ?? "Processing item"
             queueStatusMessage = "Processing queued item…"
             
-            // No LocalInput? Process this orphaned item directly
+            // No LocalInput? Process this orphaned item via processItemByID
+            // IMPORTANT: Do NOT use processItemImmediately here — it cancels currentTask,
+            // which would cancel this very loop (we're running INSIDE the queue task).
+            // processItemByID creates its own private ModelContext and runs both pipeline phases.
+            let itemID = item.id
             do {
-                try await processItemImmediately(item)
+                try await processItemByID(itemID)
             } catch {
-                DiverLogger.pipeline.error("Failed to process orphaned queued item \(item.id): \(error)")
+                DiverLogger.pipeline.error("Failed to process orphaned queued item \(itemID): \(error)")
                 item.status = .failed
                 item.failureCount += 1
                 item.processingLog.append("\(Date().formatted()): Failed to resume - \(error.localizedDescription)")

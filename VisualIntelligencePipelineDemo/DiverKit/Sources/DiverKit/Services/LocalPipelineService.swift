@@ -146,7 +146,9 @@ public final class LocalPipelineService {
             var pipelineContext = PipelineContext()
             
             if let urlString = input.url, let url = URL(string: urlString), let enrichmentService {
-                if url.scheme?.lowercased().hasPrefix("secretatomics") == false {
+                // Only enrich actual web URLs (http/https) — skip custom schemes like foursquare://, secretatomics://, etc.
+                let scheme = url.scheme?.lowercased() ?? ""
+                if scheme == "http" || scheme == "https" {
                     do {
                         let enrichment = try await withTimeout(seconds: 10) {
                             try await self.cachedEnrich(url: url, service: enrichmentService)

@@ -2,6 +2,12 @@
 
 ## 2026-02-23 (c)
 
+### Pipeline Queue Stability
+- **Orphaned item self-cancellation fix**: `processQueuedOrphanItems()` was calling `processItemImmediately()` which does `currentTask?.cancel()` — cancelling the very queue task it's running inside. Now uses `processItemByID()` which creates its own private `ModelContext` and runs the full pipeline without interrupting the queue.
+- **URL enrichment whitelist**: Link enrichment now only runs on `http://` and `https://` URLs. Custom URL schemes like `foursquare://`, `secretatomics://` are skipped instead of timing out with `CancellationError`.
+- `[MODIFY]` `DiverKit/Services/MetadataPipelineService.swift` — `processQueuedOrphanItems` uses `processItemByID` instead of `processItemImmediately`
+- `[MODIFY]` `DiverKit/Services/LocalPipelineService.swift` — URL scheme whitelist for link enrichment
+
 ### Self-Healing Edge Transport
 - **Connection invalidation on framing errors**: When `responseTooLarge`, `connectionFailed`, or any receive error occurs, the connection is now cancelled and removed from stores. The next request automatically creates a fresh TCP connection, preventing cascading failures where one bad frame corrupts all subsequent requests.
 - **0-length response guard**: Daemon error responses (`Data()`) now return `Data()` immediately without calling `NWConnection.receive(minimumIncompleteLength: 0, maximumLength: 0)`, which has undefined behavior.
