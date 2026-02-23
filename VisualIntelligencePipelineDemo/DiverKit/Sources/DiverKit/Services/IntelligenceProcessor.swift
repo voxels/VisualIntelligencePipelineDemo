@@ -15,6 +15,7 @@ public enum IntelligenceResult {
     case document(VNRectangleObservation, text: String?, label: String?, rectifiedImage: Data? = nil)
     case purpose(statements: [String])
     case aesthetics(score: Float)
+    case faceFeaturePrint(VNFeaturePrintObservation, bounds: CGRect)
     case saliency(SaliencyResult)
     
     case richWeb(url: URL, data: EnrichmentData)
@@ -47,7 +48,7 @@ extension IntelligenceResult: Hashable {
             hasher.combine(3)
             hasher.combine(title)
             hasher.combine(type)
-        case .siftedSubject(let mask, let bounds, let label):
+        case .siftedSubject(_, let bounds, let label):
             hasher.combine(4)
             hasher.combine(bounds.origin.x)
             hasher.combine(bounds.origin.y)
@@ -68,6 +69,10 @@ extension IntelligenceResult: Hashable {
         case .aesthetics(let score):
             hasher.combine(8)
             hasher.combine(score)
+        case .faceFeaturePrint(let obs, let bounds):
+            hasher.combine(11)
+            hasher.combine(obs)
+            hasher.combine(bounds.origin.x)
         case .saliency(let result):
             hasher.combine(10)
             hasher.combine(result.width)
@@ -90,6 +95,7 @@ extension IntelligenceResult: Hashable {
         case (.document(let o1, let t1, let l1, let r1), .document(let o2, let t2, let l2, let r2)): return o1 === o2 && t1 == t2 && l1 == l2 && r1 == r2
         case (.purpose(let s1), .purpose(let s2)): return s1 == s2
         case (.aesthetics(let s1), .aesthetics(let s2)): return s1 == s2
+        case (.faceFeaturePrint(let o1, let b1), .faceFeaturePrint(let o2, let b2)): return o1 === o2 && b1 == b2
         case (.saliency(let r1), .saliency(let r2)): return r1.width == r2.width && r1.height == r2.height
         case (.richWeb(let u1, let d1), .richWeb(let u2, let d2)): return u1 == u2 && d1.title == d2.title
         default: return false
@@ -116,6 +122,7 @@ extension IntelligenceResult {
             return prefix + (label?.capitalized ?? "Scanned")
         case .purpose(let statements): return statements.first ?? "Purpose"
         case .aesthetics: return "Quality Score"
+        case .faceFeaturePrint: return "Face Detected"
         case .saliency: return "Saliency Map"
         }
     }
@@ -142,6 +149,7 @@ extension IntelligenceResult {
             }
             return "Suggested Purpose"
         case .aesthetics(let score): return String(format: "%.0f%%", score * 100)
+        case .faceFeaturePrint: return "Biometric Match Ready"
         case .saliency(let result): return "\(result.salientRegions.count) region(s)"
         }
     }
@@ -196,6 +204,7 @@ extension IntelligenceResult {
         case .purpose: return 7 // Questions appear last
         case .semantic: return 4
         case .siftedSubject: return 5
+        case .faceFeaturePrint: return 6
         case .aesthetics: return 6
         case .saliency: return 6  // Same priority as aesthetics
         }
@@ -241,8 +250,9 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
          let barcodeRequest = VNDetectBarcodesRequest()
          let aestheticsRequest = VNCalculateImageAestheticsScoresRequest()
          let foregroundMaskRequest = VNGenerateForegroundInstanceMaskRequest()
+         let faceRequest = VNDetectFaceRectanglesRequest()
          
-         var allRequests: [VNRequest] = [barcodeRequest, aestheticsRequest, foregroundMaskRequest]
+         var allRequests: [VNRequest] = [barcodeRequest, aestheticsRequest, foregroundMaskRequest, faceRequest]
          
          // For full analysis, add all requests upfront so they run in ONE parallel perform() call.
          // We dropped the ROI optimization (where classification focused on the sifted subject region)
@@ -278,9 +288,45 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
              finalResults.append(.aesthetics(score: aestheticResult.overallScore))
          }
          
+         // --- Process Face Rectangles -> Feature Prints ---
+         if let faces = faceRequest.results, !faces.isEmpty, let cg = sourceImage {
+             for face in faces {
+                 // Convert normalized coordinates to image coordinates
+                 let width = CGFloat(cg.width)
+                 let height = CGFloat(cg.height)
+                 let boundingBox = face.boundingBox
+                 
+                 let rect = CGRect(
+                     x: boundingBox.origin.x * width,
+                     y: (1 - boundingBox.origin.y - boundingBox.height) * height,
+                     width: boundingBox.width * width,
+                     height: boundingBox.height * height
+                 )
+                 
+                 let expandedRect = rect.insetBy(dx: -rect.width * 0.1, dy: -rect.height * 0.1)
+                     .intersection(CGRect(x: 0, y: 0, width: width, height: height))
+                 
+                 if let faceCrop = cg.cropping(to: expandedRect) {
+                     let featurePrintRequest = VNGenerateImageFeaturePrintRequest()
+                     featurePrintRequest.imageCropAndScaleOption = .scaleFill
+                     
+                     do {
+                         let cropHandler = VNImageRequestHandler(cgImage: faceCrop, options: [:])
+                         try cropHandler.perform([featurePrintRequest])
+                         
+                         if let featurePrint = featurePrintRequest.results?.first {
+                             finalResults.append(.faceFeaturePrint(featurePrint, bounds: face.boundingBox))
+                         }
+                     } catch {
+                         print("⚠️ Failed to generate face feature print: \(error)")
+                     }
+                 }
+             }
+         }
+         
          // --- Process Vision SDK Foreground Instance Mask (Subject Lifting) ---
          if let observation = foregroundMaskRequest.results?.first,
-            let cg = sourceImage {
+            sourceImage != nil {
              do {
                  // Generate a masked image with proper alpha channel using Vision SDK
                  let maskedImage = try observation.generateMaskedImage(
@@ -370,7 +416,7 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
              let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
              
              if let baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer) {
-                 let floatBuffer = baseAddress.assumingMemoryBound(to: Float.self)
+                 _ = baseAddress.assumingMemoryBound(to: Float.self)
                  var heatmap: [Float] = []
                  heatmap.reserveCapacity(width * height)
                  
@@ -531,6 +577,8 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
                         contextParts.append("Image Quality: \(String(format: "%.0f%%", score * 100))")
                     case .saliency(let result):
                         contextParts.append("Saliency: \(result.salientRegions.count) region(s)")
+                    case .faceFeaturePrint:
+                        break
                     }
                 }
                 

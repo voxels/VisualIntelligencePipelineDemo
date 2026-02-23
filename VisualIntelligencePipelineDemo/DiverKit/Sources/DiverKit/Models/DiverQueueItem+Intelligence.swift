@@ -143,9 +143,10 @@ public extension DiverQueueItem {
                 childDescriptors.append((desc, rectifiedImage))
                 
             case .purpose: break
-            case .siftedSubject(_, _, _): break
+            case .siftedSubject: break
             case .aesthetics: break
             case .saliency: break
+            case .faceFeaturePrint: break
             case .qr(let url):
                 findingsSummary += "• Found QR Code\n"
                 let id = DiverLinkWrapper.id(for: url)

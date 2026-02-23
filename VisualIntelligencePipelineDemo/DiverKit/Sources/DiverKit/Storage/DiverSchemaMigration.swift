@@ -33,7 +33,8 @@ public enum DiverSchemaV1: VersionedSchema {
             SessionMetadata.self,
             SessionCollection.self,
             OwnedProduct.self,
-            ScoreSnapshot.self
+            ScoreSnapshot.self,
+            PersonVector.self
         ]
     }
 }
@@ -53,7 +54,8 @@ public enum DiverSchemaV2: VersionedSchema {
             SessionMetadata.self,
             SessionCollection.self,
             OwnedProduct.self,
-            ScoreSnapshot.self
+            ScoreSnapshot.self,
+            PersonVector.self
         ]
     }
 }

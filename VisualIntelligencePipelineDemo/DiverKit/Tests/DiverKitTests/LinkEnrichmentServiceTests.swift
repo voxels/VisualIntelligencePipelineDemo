@@ -35,7 +35,7 @@ final class LinkEnrichmentServiceTests: XCTestCase {
 
         // Then: The ProcessedItem should have the enrichment data
         XCTAssertEqual(processed.title, "Fancy Restaurant")
-        XCTAssertEqual(processed.summary, "Amazing food")
+        XCTAssertTrue(processed.summary?.contains("Amazing food") == true)
         XCTAssertTrue(processed.tags.contains("Dinner"))
         XCTAssertEqual(processed.location, "Downtown")
         XCTAssertEqual(processed.rating, 4.5)

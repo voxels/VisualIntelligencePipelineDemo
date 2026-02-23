@@ -19,7 +19,8 @@ public final class DiverDataStore {
         SessionCollection.self,
         OwnedProduct.self,
         ScoreSnapshot.self,
-        EthicalPolicySettings.self
+        EthicalPolicySettings.self,
+        PersonVector.self
     ]
 
     public init(schema: Schema, configurations: [ModelConfiguration]) {

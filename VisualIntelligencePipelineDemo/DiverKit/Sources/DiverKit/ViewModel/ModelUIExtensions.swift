@@ -144,6 +144,7 @@ public extension IntelligenceResult {
         case .purpose: return "sparkles.rectangle.stack"
         case .aesthetics: return "sparkle.magnifyingglass"
         case .saliency: return "eye.trianglebadge.exclamationmark"
+        case .faceFeaturePrint: return "person.crop.square.fill"
         }
     }
 }
