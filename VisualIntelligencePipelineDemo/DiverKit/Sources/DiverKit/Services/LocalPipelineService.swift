@@ -1189,202 +1189,108 @@ public final class LocalPipelineService {
         progressHandler: (@Sendable (Double) -> Void)? = nil,
         logHandler: (@Sendable (String) -> Void)? = nil
     ) async throws {
-        // 1. Clear existing queue items (processing or queued) to avoid duplicates or stalls
-        // We delete the ProcessedItem but ensure the LocalInput is preserved for the main loop if within date range,
-        // OR we just reset them to be processed immediately.
-        // The user asked to "take everything ... out first", implying a reset of the queue.
-        // We will fetch all pending items, delete them, and recreate them as inputs if needed.
-        let queueFetch = FetchDescriptor<ProcessedItem>(
-            predicate: #Predicate {
-                $0.createdAt >= cutoffDate && (
-                    $0.statusRaw == "queued" ||
-                    $0.statusRaw == "processing" ||
-                    $0.statusRaw == "failed"
-                )
-            }
-        )
-        if let queuedItems: [ProcessedItem] = try? modelContext.fetch(queueFetch) {
-            let msg = "Resetting \(queuedItems.count) stalled items in queue for reprocessing."
-            DiverLogger.pipeline.info("\(msg)")
-            await MainActor.run { logHandler?(msg) }
-            
-            for item in queuedItems {
-                // Reset status to queued instead of deleting, to preserve sessionID and other metadata
-                item.status = .queued
-                item.processingLog.append("\(Date().formatted()): Reset to queued during maintenance.")
-                
-                // Safety: Still ensure a LocalInput exists for the main loop fallback, 
-                // but the batch logic below will handle the actual processing efficiently.
-                if let inputIdStr = item.inputId, let inputID = UUID(uuidString: inputIdStr) {
-                    let inputDesc = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.id == inputID })
-                    let existingInputs: [LocalInput]? = try? modelContext.fetch(inputDesc)
-                    if existingInputs?.isEmpty ?? true {
-                         let input = LocalInput(
-                            id: inputID,
-                            createdAt: item.createdAt,
-                            url: item.url,
-                            text: item.summary,
-                            source: item.source,
-                            inputType: item.entityType ?? "web",
-                            rawPayload: item.rawPayload
-                        )
-                        modelContext.insert(input)
-                    }
-                }
-            }
-            do { try modelContext.save() } catch { DiverLogger.pipeline.error("Save failed (library maintain): \(error)") }
-        }
-
-        // Fetch items created after the cutoff
+        // ── Phase 1: Durably mark all matching items as .queued ──
+        // This is crash-safe: if the app dies here, the next foreground resume
+        // will pick up .queued items via processQueuedOrphanItems → processItemByID.
         let fetch = FetchDescriptor<ProcessedItem>(
             predicate: #Predicate { $0.createdAt >= cutoffDate }
         )
         let items = try modelContext.fetch(fetch)
-        let countMsg = "Reprocessing \(items.count) items created after \(cutoffDate.formatted(date: .abbreviated, time: .shortened))"
+        let countMsg = "Queuing \(items.count) items for reprocessing (created after \(cutoffDate.formatted(date: .abbreviated, time: .shortened)))"
         DiverLogger.pipeline.info("\(countMsg)")
         await MainActor.run { logHandler?(countMsg) }
         
-        var completedCount = 0
-        let totalCount = Double(items.count)
+        var affectedSessionIDs = Set<String>()
         
-        // Batched Processing for Concurrency Control
-        // Lowered from 10 to 3 to prevent Simulator WebContent process exhaustion/crashes
-        let batchSize = 3
-        let batches = items.chunked(into: batchSize)
-        
-        for (batchIndex, batch) in batches.enumerated() {
-            let batchMsg = "Processing batch \(batchIndex + 1)/\(batches.count)"
-            DiverLogger.pipeline.debug("\(batchMsg)")
-            await MainActor.run { logHandler?(batchMsg) }
+        for item in items {
+            // Collect affected sessions for summary regeneration
+            if let sessionID = item.sessionID {
+                affectedSessionIDs.insert(sessionID)
+            }
             
-            var batchTasks: [Task<Void, Never>] = []
+            // Clear calculated data so processItemByID runs fresh enrichment
+            item.summary = nil
+            item.transcription = nil
+            item.tags = []
+            item.purposes = []
+            item.categories = []
+            item.questions = []
+            item.webContextData = nil
+            item.documentContextData = nil
+            item.qrContextData = nil
+            item.activityContextData = nil
+            // Don't clear placeContextData — processItemByID handles user-set detection
             
-            for item in batch {
-                let itemID = item.persistentModelID
-                let previousPlaceID = item.placeContext?.placeID
-                let previousPlaceName = item.placeContext?.name ?? item.location
-                
-                let task = Task(priority: .utility) { @PipelineActor in
-                    // Fetch fresh instance to ensure MainActor safety
-                    guard let freshItem = self.modelContext.model(for: itemID) as? ProcessedItem else { return }
-                    
-                    // Reconstruct LocalInput
-                    let inputId = UUID(uuidString: freshItem.inputId ?? "") ?? UUID()
-                    let input = LocalInput(
-                        id: inputId,
-                        createdAt: freshItem.createdAt,
-                        url: freshItem.url,
-                        text: freshItem.summary, // Use current summary as text input if original text is lost
-                        source: freshItem.source,
-                        inputType: freshItem.entityType ?? "web",
-                        rawPayload: freshItem.rawPayload
-                    )
-                    
-                    // Re-insert input to simulate fresh processing
-                    self.modelContext.insert(input)
-                    
-                    // Reset status to queued
-                    freshItem.status = .queued
-                    freshItem.processingLog.append("\(Date().formatted()): Queued for maintenance reprocessing")
-                    
-                    // User Request: "if i'm reprocessing my data at home it should not override my content location"
-                    // Strip existing "Home" location to force a fresh lookup (e.g. from Image Metadata or Session)
-                    // We check if the ID is explicitly "home-location"
-                    if freshItem.placeContext?.placeID == "home-location" {
-                         freshItem.placeContext = nil
-                         freshItem.location = nil
-                         freshItem.processingLog.append("\(Date().formatted()): Stripped generic 'Home' location to allow content-based discovery.")
-                    }
-                    
-                    // User Request: "All the items named home shjould have their titles replaced by the document semantic context"
-                    // If title is "Home" or "Untitled", strip it so it can be regenerated by LLM or Enrichment
-                    if freshItem.title == "Home" || freshItem.title == "Untitled" {
-                        freshItem.title = nil
-                        freshItem.processingLog.append("\(Date().formatted()): Stripped generic title to allow semantic generation.")
-                    }
-                    
-                    // CRITICAL: Clear parent session summary so it regenerates with new item data
-                    if let sessionID = freshItem.sessionID {
-                        let sessionFetch = FetchDescriptor<SessionMetadata>(
-                            predicate: #Predicate<SessionMetadata> { $0.sessionID == sessionID }
-                        )
-                        if let session = try? self.modelContext.fetch(sessionFetch).first, session.summary != nil {
-                            session.summary = nil
-                            session.updatedAt = Date()
-                            freshItem.processingLog.append("\(Date().formatted()): Cleared parent session summary for regeneration.")
-                        }
-                    }
-                    
-                    do {
-                        // Create a minimal descriptor with the existing ID to force an update instead of insert.
-                        // This prevents duplicate items from being created during reprocessing.
-                        let maintenanceDescriptor = DiverItemDescriptor(
-                            id: freshItem.id, // CRITICAL: Use existing ID
-                            url: freshItem.url ?? "",
-                            title: freshItem.title ?? "Untitled",
-                            categories: freshItem.categories,
-                            location: freshItem.location,
-                            createdAt: freshItem.createdAt,
-                            type: DiverItemType(rawValue: freshItem.entityType ?? "web") ?? .web,
-                            attributionID: freshItem.attributionID,
-                            masterCaptureID: freshItem.masterCaptureID,
-                            photosAssetIdentifier: freshItem.photosAssetIdentifier,
-                            sessionID: freshItem.sessionID,
-                            purposes: Set(freshItem.purposes)
-                        )
-                        
-                        logHandler?("Analyzing: \(freshItem.title ?? "Untitled")")
-                        
-                        // Trigger process
-                        let processed = try await self.process(
-                            input: input,
-                            descriptor: maintenanceDescriptor,
-                            enrichmentService: enrichmentService,
-                            locationService: nil, // Prevent using current GPS for historical items; rely on Session location
-                            indexingService: indexingService,
-                            fastVLMService: fastVLMService
-                        )
-                        
-                        // Conflict Detection
-                        let newPlaceID = processed.placeContext?.placeID
-                        let newPlaceName = processed.placeContext?.name ?? processed.location
-                        
-                        // If place ID changed (and wasn't nil before), flag it
-                        if let oldID = previousPlaceID, let newID = newPlaceID, oldID != newID {
-                            processed.status = .reviewRequired
-                            processed.processingLog.append("\(Date().formatted()): ⚠️ Conflict: Place changed from '\(previousPlaceName ?? "Unknown")' to '\(newPlaceName ?? "Unknown")'. Please confirm purpose alignment.")
-                        } else if previousPlaceID != nil && newPlaceID == nil {
-                            // Lost place context?
-                            processed.status = .reviewRequired
-                            processed.processingLog.append("\(Date().formatted()): ⚠️ Conflict: Lost place context (was '\(previousPlaceName ?? "Unknown")')")
-                        }
-                    } catch {
-                        DiverLogger.pipeline.error("Failed to reprocess item \(freshItem.id): \(error)")
-                        freshItem.status = .failed
-                        freshItem.processingLog.append("\(Date().formatted()): Reprocessing failed: \(error.localizedDescription)")
-                    }
+            // Mark as queued — this is the durable state that survives app lifecycle
+            item.status = .queued
+            item.processingLog.append("\(Date().formatted()): Queued for pipeline reprocessing.")
+            
+            // Clear parent session summary so it regenerates with new data
+            if let sessionID = item.sessionID {
+                let sessionFetch = FetchDescriptor<SessionMetadata>(
+                    predicate: #Predicate<SessionMetadata> { $0.sessionID == sessionID }
+                )
+                if let session = try? modelContext.fetch(sessionFetch).first {
+                    session.summary = nil
+                    session.updatedAt = Date()
                 }
-                batchTasks.append(task)
             }
-            
-            // Await all tasks in the batch
-            for task in batchTasks {
-                _ = await task.result
-            }
-            
-            // Save after each batch to persist progress and free memory pressure
-            try await saveWithRetry()
-            
-            // Update progress
-             completedCount += batchSize
-             let currentCount = min(Double(completedCount), totalCount) // Clamp
-             if totalCount > 0 {
-                 let progress = currentCount / totalCount
-                 await MainActor.run {
-                     progressHandler?(progress)
-                 }
-             }
         }
+        
+        // Persist the queued state — this is the crash-safety checkpoint
+        do { try modelContext.save() } catch {
+            DiverLogger.pipeline.error("Save failed (reprocess queue): \(error)")
+            throw error
+        }
+        
+        await MainActor.run {
+            progressHandler?(0.05)
+            logHandler?("Queued \(items.count) items. Starting pipeline…")
+        }
+        
+        // ── Phase 2: Process through existing queue infrastructure ──
+        // processQueuedOrphanItems picks up .queued items → processItemByID (canonical path)
+        guard let metadataPipeline = Services.shared.metadataPipelineService else {
+            DiverLogger.pipeline.error("❌ reprocessPipeline: MetadataPipelineService not available")
+            throw NSError(domain: "LocalPipelineService", code: 500, userInfo: [NSLocalizedDescriptionKey: "MetadataPipelineService not available"])
+        }
+        
+        // Process items sequentially through the canonical path
+        let itemIDs = items.map { $0.id }
+        let totalCount = Double(itemIDs.count)
+        
+        for (index, itemID) in itemIDs.enumerated() {
+            if Task.isCancelled { break }
+            
+            let itemTitle = items[index].title ?? "Untitled"
+            await MainActor.run { logHandler?("Analyzing (\(index + 1)/\(itemIDs.count)): \(itemTitle)") }
+            
+            do {
+                try await metadataPipeline.processItemByID(itemID)
+            } catch {
+                DiverLogger.pipeline.error("Failed to reprocess item \(itemID): \(error)")
+            }
+            
+            if totalCount > 0 {
+                // Reserve last 15% for session summaries
+                let progress = 0.05 + (Double(index + 1) / totalCount) * 0.80
+                await MainActor.run { progressHandler?(progress) }
+            }
+        }
+        
+        // ── Phase 3: Regenerate session summaries ──
+        let sessionCount = affectedSessionIDs.count
+        await MainActor.run { logHandler?("Regenerating \(sessionCount) session summaries…") }
+        
+        for (index, sessionID) in affectedSessionIDs.enumerated() {
+            await MainActor.run { logHandler?("Session summary \(index + 1)/\(sessionCount)") }
+            await generateAndSaveSessionSummary(sessionID: sessionID)
+            let sessionProgress = 0.85 + (Double(index + 1) / Double(max(sessionCount, 1)) * 0.15)
+            await MainActor.run { progressHandler?(sessionProgress) }
+        }
+        
+        await MainActor.run { progressHandler?(1.0) }
+        DiverLogger.pipeline.info("✅ Reprocess pipeline complete: \(itemIDs.count) items, \(sessionCount) sessions")
     }
 
     private func applyEnrichment(_ enrichment: EnrichmentData, to item: ProcessedItem, overwriteTitle: Bool = false, preservePlaceIdentity: Bool = false) {

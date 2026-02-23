@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-02-23 (d)
+
+### Lifecycle-Safe Reprocessing Pipeline
+- **Durable queue state**: `reprocessPipeline` now marks all matching items as `.queued` in SwiftData before processing begins. If the app is killed, backgrounded, or crashes, the next foreground resume picks up remaining items via `processQueuedOrphanItems` → `processItemByID`.
+- **Session summary regeneration**: After all items are reprocessed, session summaries are regenerated for every affected session. Previously, summaries were cleared but never regenerated — requiring manual "Analyze Session" to restore them.
+- **Unified reprocessing path**: `reprocessPipeline` and `reprocessSession` now both delegate per-item work to `processItemByID` (the single canonical path). Eliminates ~150 lines of duplicated pipeline logic from `reprocessPipeline` and ensures every enrichment step runs (Vision, LLM, FastVLM, Commerce, CLaRa RAG).
+- **reprocessSession summary regen**: `SidebarViewModel.reprocessSession` now uses `processItemByID` + `generateAndSaveSessionSummary` instead of setting `.queued` and calling `processPendingQueue`.
+- `[MODIFY]` `DiverKit/Services/LocalPipelineService.swift` — lifecycle-safe `reprocessPipeline` with 3-phase design
+- `[MODIFY]` `DiverKit/ViewModel/SidebarViewModel.swift` — `reprocessSession` delegates to `processItemByID`
+
 ## 2026-02-23 (c)
 
 ### Pipeline Queue Stability

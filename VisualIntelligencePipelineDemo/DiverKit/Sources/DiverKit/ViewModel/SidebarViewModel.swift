@@ -792,16 +792,25 @@ public final class SidebarViewModel {
             let items = try context.fetch(fetch)
             if items.isEmpty { return }
             
-            print("🔄 Reprocessing \(items.count) items for session \(sessionID) via pipeline")
+            let itemIDs = items.map { $0.id }
+            let container = context.container
+            print("🔄 Reprocessing \(itemIDs.count) items for session \(sessionID) via processItemByID")
             
-            for item in items {
-                item.status = .queued
-                item.processingLog.append("\(Date().formatted()): Queued for reprocessing by user")
-            }
-            try context.save()
-            
-            Task {
-                try? await pipeline.processPendingQueue()
+            Task.detached(priority: .utility) { [pipeline] in
+                // Process each item through the single canonical path
+                for itemID in itemIDs {
+                    do {
+                        try await pipeline.processItemByID(itemID)
+                    } catch {
+                        print("❌ Failed to reprocess item \(itemID): \(error)")
+                    }
+                }
+                
+                // Regenerate session summary after all items are reprocessed
+                let bgCtx = ModelContext(container)
+                let localPipeline = LocalPipelineService(modelContext: bgCtx)
+                await localPipeline.generateAndSaveSessionSummary(sessionID: sessionID)
+                print("✅ Session \(sessionID) reprocessing complete with summary regeneration")
             }
         } catch {
             print("❌ Failed to fetch session items for reprocessing: \(error)")
