@@ -8,6 +8,12 @@
 - `[MODIFY]` `DiverKit/Services/MetadataPipelineService.swift` — `processQueuedOrphanItems` uses `processItemByID` instead of `processItemImmediately`
 - `[MODIFY]` `DiverKit/Services/LocalPipelineService.swift` — URL scheme whitelist for link enrichment
 
+### Unified Reprocessing Path (-195 lines)
+- **Single code path**: Collapsed `processItemImmediately` from ~200 lines of duplicated logic into a 10-line wrapper that delegates to `processItemByID`. All reprocessing (Process Now, orphaned items, location edits) flows through one canonical path.
+- **ModelContext thread safety**: `processItemByID` creates its own private `ModelContext(modelContainer)` per call. Eliminates "Unbinding from the main queue" warnings.
+- **FastVLM parity**: Previous `processItemImmediately` was missing `fastVLMService` parameter — "Process Now" skipped FastVLM entirely. Now runs the full pipeline.
+- `[MODIFY]` `DiverKit/Services/MetadataPipelineService.swift` — `processItemImmediately` delegates to `processItemByID`
+
 ### Self-Healing Edge Transport
 - **Connection invalidation on framing errors**: When `responseTooLarge`, `connectionFailed`, or any receive error occurs, the connection is now cancelled and removed from stores. The next request automatically creates a fresh TCP connection, preventing cascading failures where one bad frame corrupts all subsequent requests.
 - **0-length response guard**: Daemon error responses (`Data()`) now return `Data()` immediately without calling `NWConnection.receive(minimumIncompleteLength: 0, maximumLength: 0)`, which has undefined behavior.
