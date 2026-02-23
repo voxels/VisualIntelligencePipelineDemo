@@ -3,20 +3,20 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		43E89DD2C4BD3562F16295E3 /* EdgeDaemonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_345C469B-AA58-4ADC-9092-536B9684209F" /* EdgeDaemonApp.swift */; };
 		723F7E7F7ABAA483B9B3427B /* DiverKit in Frameworks */ = {isa = PBXBuildFile; productRef = E6DD6FED5917D8D5EC96638B /* DiverKit */; };
 		AA2FF8F5DB9E83001C2228B6 /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = E2DDBB02337B8C0B60CFE562 /* DiverShared */; };
-		DB1FA741DAE327ED0A1ECFEB /* EdgeDaemonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = "TEMP_2E8D39F6-026F-4C89-9CCB-D8A8E1748B09" /* EdgeDaemonApp.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A9BE75782C00C424EA827524 /* EdgeDaemon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EdgeDaemon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F45ECD9D12119E0BCB884B2B /* DiverShared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DiverShared; path = ../DiverShared; sourceTree = SOURCE_ROOT; };
 		F85E736AC35C8DF0291DC7D2 /* DiverKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DiverKit; path = ../DiverKit; sourceTree = SOURCE_ROOT; };
-		"TEMP_2E8D39F6-026F-4C89-9CCB-D8A8E1748B09" /* EdgeDaemonApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeDaemonApp.swift; sourceTree = "<group>"; };
+		"TEMP_345C469B-AA58-4ADC-9092-536B9684209F" /* EdgeDaemonApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeDaemonApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,14 +32,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		1E5C81BE2F4B7D7800D9663F /* Recovered References */ = {
-			isa = PBXGroup;
-			children = (
-				"TEMP_2E8D39F6-026F-4C89-9CCB-D8A8E1748B09" /* EdgeDaemonApp.swift */,
-			);
-			name = "Recovered References";
-			sourceTree = "<group>";
-		};
 		5358C2C19259525698816B4C /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -53,7 +45,6 @@
 			children = (
 				E5D349A03069000D51E8DDB2 /* Packages */,
 				5358C2C19259525698816B4C /* Products */,
-				1E5C81BE2F4B7D7800D9663F /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -64,6 +55,14 @@
 				F45ECD9D12119E0BCB884B2B /* DiverShared */,
 			);
 			name = Packages;
+			sourceTree = "<group>";
+		};
+		"TEMP_E1206006-C1AC-4325-A2D3-EB48BB2B4E40" /* EdgeDaemon */ = {
+			isa = PBXGroup;
+			children = (
+				"TEMP_345C469B-AA58-4ADC-9092-536B9684209F" /* EdgeDaemonApp.swift */,
+			);
+			path = EdgeDaemon;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -99,6 +98,7 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					692C3A52E3AF87669D3D5347 = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -117,6 +117,7 @@
 				D1F58A3B67944A033D363AAC /* XCLocalSwiftPackageReference "../DiverKit" */,
 				795B6FC1F885EABFD0B9D93F /* XCLocalSwiftPackageReference "../DiverShared" */,
 			);
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -130,7 +131,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DB1FA741DAE327ED0A1ECFEB /* EdgeDaemonApp.swift in Sources */,
+				43E89DD2C4BD3562F16295E3 /* EdgeDaemonApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -200,7 +201,7 @@
 				CODE_SIGN_ENTITLEMENTS = EdgeDaemon.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 23264QUM9A;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -223,7 +224,7 @@
 				CODE_SIGN_ENTITLEMENTS = EdgeDaemon.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 23264QUM9A;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
