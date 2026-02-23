@@ -1890,7 +1890,7 @@ public final class LocalPipelineService {
                     let threshold: Float = 0.4 // Adjust 0.3 - 0.5 based on strictness
                     
                     for person in knownFaces {
-                        if let storedData = try? NSKeyedUnarchiver.unarchivedObject(ofClass: VNFeaturePrintObservation.self, from: person.featurePrintData) {
+                        if let data = person.featurePrintData, let storedData = try? NSKeyedUnarchiver.unarchivedObject(ofClass: VNFeaturePrintObservation.self, from: data) {
                             var distance: Float = 0
                             try capturedPrint.computeDistance(&distance, to: storedData)
                             if distance < threshold && distance < bestDistance {
@@ -1901,15 +1901,15 @@ public final class LocalPipelineService {
                     }
                     
                     if let match = bestMatch {
-                        contextLog += "• Face Identified: \(match.name ?? match.localIdentifier) (dist: \(String(format: "%.2f", bestDistance)))\n"
+                        contextLog += "• Face Identified: \(match.name ?? match.localIdentifier ?? "Unknown") (dist: \(String(format: "%.2f", bestDistance)))\n"
                         newTags.append("Person")
                         if let name = match.name, !newTags.contains(name) {
                             newTags.append(name)
                         }
-                        if !item.contactIdentifiers.contains(match.localIdentifier) {
-                            item.contactIdentifiers.append(match.localIdentifier)
+                        if let localId = match.localIdentifier, !item.contactIdentifiers.contains(localId) {
+                            item.contactIdentifiers.append(localId)
                         }
-                        DiverLogger.pipeline.info("👤 Face Match: \(match.localIdentifier) at distance \(bestDistance)")
+                        DiverLogger.pipeline.info("👤 Face Match: \(match.localIdentifier ?? "Unknown") at distance \(bestDistance)")
                     } else {
                         contextLog += "• Unknown Face Detected\n"
                         newTags.append("Person")

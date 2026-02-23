@@ -49,7 +49,7 @@ final class PersonVectorTests: XCTestCase {
         try modelContext.save()
         
         // When we attempt to unarchive the observation from garbage it should throw
-        XCTAssertThrowsError(try NSKeyedUnarchiver.unarchivedObject(ofClass: VNFeaturePrintObservation.self, from: vector.featurePrintData)) { error in
+        XCTAssertThrowsError(try NSKeyedUnarchiver.unarchivedObject(ofClass: VNFeaturePrintObservation.self, from: vector.featurePrintData!)) { error in
             XCTAssertNotNil(error)
         }
     }

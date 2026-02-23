@@ -16,7 +16,7 @@ public struct PersonProfileView: View {
         // Only fetch vectors that match the item's contact identifiers
         let ids = item.contactIdentifiers
         _vectors = Query(filter: #Predicate<PersonVector> { vector in
-            ids.contains(vector.localIdentifier)
+            ids.contains(vector.localIdentifier ?? "")
         })
     }
     

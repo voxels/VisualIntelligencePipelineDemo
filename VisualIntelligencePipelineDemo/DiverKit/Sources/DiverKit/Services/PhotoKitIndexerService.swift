@@ -51,7 +51,7 @@ public actor PhotoKitIndexerService {
         // Fetch existing vectors to prevent duplicate indexing
         let existingDescriptor = FetchDescriptor<PersonVector>()
         let existingVectors = (try? context.fetch(existingDescriptor)) ?? []
-        let existingLocalIdentifiers = Set(existingVectors.map { $0.localIdentifier })
+        let existingLocalIdentifiers = Set(existingVectors.compactMap { $0.localIdentifier })
         
         logger.info("Starting Face Indexing. Found \(existingLocalIdentifiers.count) existing vectors.")
         
