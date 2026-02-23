@@ -34,7 +34,6 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
     // Dependencies
     private let barcodeScanner: VNDetectBarcodesRequest
     private let documentScanner: VNDetectDocumentSegmentationRequest
-    nonisolated private let samSegmentationService: (any SAM2Segmenting)?
     
     // Thread-safe state for the background capture queue
     private final class BackgroundState: @unchecked Sendable {
@@ -56,17 +55,8 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
     nonisolated(unsafe) public var currentLocation: CLLocation?
     
     public override init() {
-        // Default initializer for testing or when dependencies are not needed immediately
-        // In a real app, you might want to inject these.
         self.barcodeScanner = VNDetectBarcodesRequest()
         self.documentScanner = VNDetectDocumentSegmentationRequest()
-        
-        #if os(iOS)
-        // SAM 2.1 is available on iOS native client
-        self.samSegmentationService = SAM2SegmentationService()
-        #else
-        self.samSegmentationService = nil
-        #endif
         
         super.init()
         if !isTesting {
@@ -78,13 +68,6 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
     public init(barcodeScanner: VNDetectBarcodesRequest = VNDetectBarcodesRequest()) {
         self.barcodeScanner = barcodeScanner
         self.documentScanner = VNDetectDocumentSegmentationRequest()
-        
-        #if os(iOS)
-        // SAM 2.1 is available on iOS native client
-        self.samSegmentationService = SAM2SegmentationService()
-        #else
-        self.samSegmentationService = nil
-        #endif
         
         super.init()
         if !isTesting {
@@ -313,20 +296,29 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
             }
         }
         
-        let samService = self.samSegmentationService
-        
-        // 3. Run SAM 2.1 Segmentation (Pixel-Perfect AR Mask)
-        if let sam = samService {
-            Task.detached(priority: .utility) { [weak self] in
-                do {
-                    // This runs the CVPixelBuffer through the A-Series Neural Engine
-                    let maskCGImage = try await sam.segment(pixelBuffer: sBuffer.buffer)
-                    await MainActor.run { [weak self] in
-                        self?.currentSegmentationMask = maskCGImage
+        // 3. Run Vision SDK Foreground Instance Mask (Subject Lifting preview)
+        Task.detached(priority: .utility) { [weak self] in
+            do {
+                let maskRequest = VNGenerateForegroundInstanceMaskRequest()
+                let handler = VNImageRequestHandler(cvPixelBuffer: sBuffer.buffer, orientation: .up, options: [:])
+                try handler.perform([maskRequest])
+                
+                if let observation = maskRequest.results?.first {
+                    let maskedPixels = try observation.generateMaskedImage(
+                        ofInstances: observation.allInstances,
+                        from: handler,
+                        croppedToInstancesExtent: false
+                    )
+                    let ciImage = CIImage(cvPixelBuffer: maskedPixels)
+                    let ciContext = CIContext(options: [.useSoftwareRenderer: false])
+                    if let cgMask = ciContext.createCGImage(ciImage, from: ciImage.extent) {
+                        await MainActor.run { [weak self] in
+                            self?.currentSegmentationMask = cgMask
+                        }
                     }
-                } catch {
-                    // Suppress excessive logging if no subject is found
                 }
+            } catch {
+                // Suppress excessive logging if no subject is found
             }
         }
         

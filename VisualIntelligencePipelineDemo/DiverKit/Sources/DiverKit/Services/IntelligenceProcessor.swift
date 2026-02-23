@@ -269,8 +269,9 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
          // Build the request list based on mode
          let barcodeRequest = VNDetectBarcodesRequest()
          let aestheticsRequest = VNCalculateImageAestheticsScoresRequest()
+         let foregroundMaskRequest = VNGenerateForegroundInstanceMaskRequest()
          
-         var allRequests: [VNRequest] = [barcodeRequest, aestheticsRequest]
+         var allRequests: [VNRequest] = [barcodeRequest, aestheticsRequest, foregroundMaskRequest]
          
          // For full analysis, add all requests upfront so they run in ONE parallel perform() call.
          // We dropped the ROI optimization (where classification focused on the sifted subject region)
@@ -306,17 +307,28 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
              finalResults.append(.aesthetics(score: aestheticResult.overallScore))
          }
          
-         // --- Process SAM 2.1 Sifting Results ---
-         let samService = await MainActor.run { Services.shared.samService }
-         if let cg = sourceImage, let sam = samService {
+         // --- Process Vision SDK Foreground Instance Mask (Subject Lifting) ---
+         if let observation = foregroundMaskRequest.results?.first,
+            let cg = sourceImage {
              do {
-                 if let mask = try await sam.segment(image: cg, orientation: orientation) {
-                     // For SAM2, default bounds to full frame since the mask is a structural map.
-                     let bounds = CGRect(x: 0, y: 0, width: 1, height: 1)
-                     finalResults.append(.siftedSubject(mask, bounds: bounds, label: nil))
+                 // Generate a masked image with proper alpha channel using Vision SDK
+                 let maskedImage = try observation.generateMaskedImage(
+                     ofInstances: observation.allInstances,
+                     from: handler,
+                     croppedToInstancesExtent: false
+                 )
+                 // Convert CVPixelBuffer to CGImage
+                 let ciImage = CIImage(cvPixelBuffer: maskedImage)
+                 let ciContext = CIContext(options: [.useSoftwareRenderer: false])
+                 if let maskCGImage = ciContext.createCGImage(ciImage, from: ciImage.extent) {
+                     // Calculate tight bounding box from the instance mask
+                     let maskBuffer = observation.instanceMask
+                     let bounds = Self.calculateInstanceBounds(from: maskBuffer)
+                     finalResults.append(.siftedSubject(maskCGImage, bounds: bounds, label: nil))
+                     print("✅ Vision SDK subject lifting: mask \(maskCGImage.width)x\(maskCGImage.height), bounds \(bounds)")
                  }
              } catch {
-                 print("⚠️ SAM 2.1 Mask Generation Failed: \(error)")
+                 print("⚠️ Vision SDK subject mask generation failed: \(error)")
              }
          }
          
@@ -592,3 +604,50 @@ public final class IntelligenceProcessor: IntelligenceProcessing, Sendable {
     }
 }
 
+// MARK: - Vision SDK Helpers
+
+extension IntelligenceProcessor {
+    /// Calculates the normalized bounding box of foreground pixels in an instance mask.
+    static func calculateInstanceBounds(from maskBuffer: CVPixelBuffer) -> CGRect {
+        CVPixelBufferLockBaseAddress(maskBuffer, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(maskBuffer, .readOnly) }
+        
+        guard let baseAddress = CVPixelBufferGetBaseAddress(maskBuffer) else {
+            return CGRect(x: 0, y: 0, width: 1, height: 1)
+        }
+        
+        let width = CVPixelBufferGetWidth(maskBuffer)
+        let height = CVPixelBufferGetHeight(maskBuffer)
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(maskBuffer)
+        let buffer = baseAddress.assumingMemoryBound(to: UInt8.self)
+        
+        var minX = width, maxX = 0
+        var minY = height, maxY = 0
+        var found = false
+        
+        for y in 0..<height {
+            for x in 0..<width {
+                let pixel = buffer[y * bytesPerRow + x]
+                if pixel > 0 {
+                    minX = min(minX, x)
+                    maxX = max(maxX, x)
+                    minY = min(minY, y)
+                    maxY = max(maxY, y)
+                    found = true
+                }
+            }
+        }
+        
+        guard found else {
+            return CGRect(x: 0, y: 0, width: 1, height: 1)
+        }
+        
+        // Return normalized coordinates (0-1 range)
+        return CGRect(
+            x: Double(minX) / Double(width),
+            y: Double(minY) / Double(height),
+            width: Double(maxX - minX) / Double(width),
+            height: Double(maxY - minY) / Double(height)
+        )
+    }
+}

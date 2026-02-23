@@ -1447,24 +1447,37 @@ public class VisualIntelligenceViewModel {
     private func analyzeStaticImage(cgImage: CGImage) {
         Task.detached(priority: .userInitiated) {
              do {
-                 let samService = await MainActor.run { Services.shared.samService }
-                 guard let sam = samService else { return }
+                 // Use Vision SDK's built-in subject lifting (no model download needed)
+                 let maskRequest = VNGenerateForegroundInstanceMaskRequest()
+                 let handler = VNImageRequestHandler(cgImage: cgImage, orientation: .up, options: [:])
+                 try handler.perform([maskRequest])
                  
-                 if let mask = try await sam.segment(image: cgImage, orientation: .up) {
-                    if let (sImage, sBounds) = await self.extractSiftedImage(
-                        mask: mask,
-                        bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
-                        frame: cgImage,
-                        orientation: .up
-                    ) {
-                        await MainActor.run { [weak self] in
-                            self?.siftedImage = sImage
-                            self?.siftedBoundingBox = sBounds
-                        }
-                    }
-                }
+                 if let observation = maskRequest.results?.first {
+                     let maskedPixels = try observation.generateMaskedImage(
+                         ofInstances: observation.allInstances,
+                         from: handler,
+                         croppedToInstancesExtent: false
+                     )
+                     let ciImage = CIImage(cvPixelBuffer: maskedPixels)
+                     let ciContext = CIContext(options: [.useSoftwareRenderer: false])
+                     if let maskCGImage = ciContext.createCGImage(ciImage, from: ciImage.extent) {
+                         let maskBuffer = observation.instanceMask
+                         let bounds = IntelligenceProcessor.calculateInstanceBounds(from: maskBuffer)
+                         if let (sImage, sBounds) = await self.extractSiftedImage(
+                             mask: maskCGImage,
+                             bounds: bounds,
+                             frame: cgImage,
+                             orientation: .up
+                         ) {
+                             await MainActor.run { [weak self] in
+                                 self?.siftedImage = sImage
+                                 self?.siftedBoundingBox = sBounds
+                             }
+                         }
+                     }
+                 }
              } catch {
-                 print("❌ Generic static analysis failed: \(error)")
+                 print("❌ Static image subject lifting failed: \(error)")
              }
         }
     }
@@ -1475,32 +1488,15 @@ public class VisualIntelligenceViewModel {
         frame: CGImage,
         orientation: CGImagePropertyOrientation
     ) async -> (PlatformImage, CGRect)? {
-        let ciImage = CIImage(cgImage: frame)
-        let maskImage = CIImage(cgImage: mask)
-        
-        let scaleX = ciImage.extent.width / maskImage.extent.width
-        let scaleY = ciImage.extent.height / maskImage.extent.height
-        let scaledMask = maskImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
-        
-        // Blend Original with mask
-        let blendFilter = CIFilter.blendWithMask()
-        blendFilter.inputImage = ciImage
-        blendFilter.maskImage = scaledMask
-        blendFilter.backgroundImage = CIImage(color: .clear).cropped(to: ciImage.extent)
-        
-        guard let output = blendFilter.outputImage else { return nil }
-        
-        let context = CIContext(options: [.useSoftwareRenderer: false])
-        if let cgImage = context.createCGImage(output, from: output.extent) {
-            #if canImport(UIKit)
-            let uiOrientation = self.uiImageOrientation(from: orientation)
-            let uiImage = UIImage(cgImage: cgImage, scale: 1.0, orientation: uiOrientation)
-            return (uiImage, bounds)
-            #else
-            return (NSImage(cgImage: cgImage, size: .zero), bounds)
-            #endif
-        }
-        return nil
+        // Vision SDK's generateMaskedImage returns a fully composited image
+        // (subject pixels on transparent background). Just convert to PlatformImage.
+        #if canImport(UIKit)
+        let uiOrientation = self.uiImageOrientation(from: orientation)
+        let uiImage = UIImage(cgImage: mask, scale: 1.0, orientation: uiOrientation)
+        return (uiImage, bounds)
+        #else
+        return (NSImage(cgImage: mask, size: .zero), bounds)
+        #endif
     }
     
     /// Transforms a normalized bounding box from sensor coordinates to display coordinates
