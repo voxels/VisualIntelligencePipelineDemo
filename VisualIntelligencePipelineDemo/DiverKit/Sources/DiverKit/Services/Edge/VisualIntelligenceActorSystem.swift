@@ -98,7 +98,13 @@ public final class VisualIntelligenceActorSystem: DistributedActorSystem, Sendab
             return response as! Res
         }
         
-        return try JSONDecoder().decode(Res.self, from: response)
+        do {
+            return try JSONDecoder().decode(Res.self, from: response)
+        } catch {
+            let preview = String(data: response.prefix(200), encoding: .utf8) ?? "<non-utf8, \(response.count) bytes>"
+            print("⚠️ [ActorSystem] Failed to decode \(Res.self) from edge response (\(response.count) bytes). Preview: \(preview)")
+            throw error
+        }
     }
     
     public func remoteCallVoid<Act, Err>(
