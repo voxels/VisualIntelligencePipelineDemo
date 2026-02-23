@@ -16,16 +16,23 @@ Stop wondering and start knowing. Visual Intelligence transforms your iPhone int
 
 Whether you're trying to decode the ethical and health impact of a product on a store shelf, instantly scanning and organizing a whiteboard session, or building a deeply contextual travel diary, Visual Intelligence does the heavy lifting for you—instantly, privately, and entirely on-device.
 
-### Designed for Your Real Life
+### Designed for Every Modality
+Whether you're saving a receipt, scanning a product, or capturing a portrait, Visual Intelligence adapts to what it sees:
 
-**🛍️ Shop Smarter, Not Harder**
-Never be fooled by marketing again. Point your camera at any product to instantly reveal its "True Cost." Our AR overlay scores items across 7 dimensions: Ethics, Durability, Value, Health Fit, and more. See live price trajectories, active recall alerts, and get a personalized "Buy Now or Wait" recommendation from Apple Intelligence before you reach the checkout.
+**🛍️ Products & Commerce**
+Never be fooled by marketing again. Point your camera at any product to instantly reveal its "True Cost." Our AR overlay scores items across 7 dimensions (Ethics, Durability, Value, Health Fit). See live price trajectories, active recall alerts, and get a personalized "Buy Now or Wait" recommendation before checkout.
 
-**🧠 Your Visual Second Brain**
-Found a great article, a brilliant whiteboard, or a QR code you need later? Visual Intelligence is your universal inbox for the physical and digital world. Snap a photo or share a link from Safari, TikTok, or YouTube, and our on-device AI instantly reads, summarizes, and auto-tags it so you can always find what you need.
+**📄 Documents & Whiteboards**
+Automatically detect, crop, and perspective-correct receipts, business cards, and whiteboards. On-device OCR reads the text, making every printed word instantly searchable and selectable in your library.
 
-**🌍 Context is Everything**
-A photo is just a moment; Visual Intelligence captures the whole memory. Every snap is automatically enriched with the exact venue, current weather, and even the music playing in the background. Your captures are magically grouped into intelligent "Sessions" so you can effortlessly relive your travels or find that one great restaurant from last year.
+**👤 People & Portraits**
+Leverage secure, on-device PhotoKit intelligence to recognize faces. Instantly match people in your captures to your existing photo library, automatically identifying subjects without ever sending facial data to the cloud.
+
+**🌍 Places & Exploration**
+A photo is just a moment; Visual Intelligence captures the whole memory. Every snap is automatically enriched with the exact venue, current weather, and even the music playing in the background. Your captures are magically grouped into intelligent "Sessions" so you can effortlessly relive your travels.
+
+**🔗 Links & The Web**
+Your universal inbox for the digital world. Share links directly from Safari, TikTok, or YouTube, and our AI instantly fetches previews, reads the content, and categorizes it alongside your physical captures.
 
 ### Powerful Features
 
