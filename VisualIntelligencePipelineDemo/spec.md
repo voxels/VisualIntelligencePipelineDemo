@@ -456,6 +456,7 @@ struct FinancialSnapshot: Codable, Sendable {
 | **NowcastingService** | `distributed actor` | **The Accelerate Engine:** Receives a commercial category. Executes CPU-intensive Dynamic Factor Model (DFM) LAPACK tensor math over dense historical BLS/FRED arrays locally on the Mac to return a simple 14-day price trajectory to the Vision Pro or iPhone HUD. |
 | **ESGEnrichmentService** | `distributed actor` | **The Cache Guardian:** Prevents the iPhone from making redundant, battery-draining network calls. The Mac queries Climate TRACE and Open Food Facts, caches the results locally for 24h, and serves instant carbon scores to local network peers. |
 | **APIKeyService** | `distributed actor` | Prevents credential leakage. API Keys are stored strictly in the Edge Node's encrypted `.Keys` CloudKit container and are never transmitted to iOS clients. The Edge Node makes all exterior API queries on behalf of the client. |
+| **MLSharpService** | `distributed actor` | **The Python Bridge (Planned):** Orchestrates CLI execution of Python algorithms via `Process()`. Manages the local `apple/ml-sharp` repository for advanced semantic edge manipulation that is unsuited for native Swift implementation. |
 
 ### 4.8 Library Maintenance Pipeline
 
@@ -557,42 +558,17 @@ When a capture or link enters the system, it proceeds through these stages **seq
 
 ### 6.1 View Hierarchy
 
-| View | Description |
+Visual Intelligence relies on heavily reusable, standardized generic components for tags, chips, and cards.
+
+| Primary Domain | Description |
 |------|-------------|
-| **ContentView** | Root navigation — sidebar + detail split view |
-| **VisualIntelligenceView** | Camera interface — live preview, subject glow overlay, capture controls, detection results |
-| **SidebarView** | Session-based navigation, collections, favorites, search, drag-and-drop |
-| **ReferenceDetailView** | Full item detail — media, metadata, location, enrichments, siblings, editing |
-| **SettingsView** | App configuration, library maintenance, Edge Node status, diagnostics |
-| **ResultsOverlayView** | Detection results overlay on camera preview |
-| **SiftedOverlayView** | Subject sifting glow/cutout overlay on camera preview |
-| **ContextChipBar** | Horizontal scrolling context tag chips for capture review |
-| **PipelineStatusView** | Real-time pipeline processing status display |
-| **QueueProgressView** | Pipeline queue processing progress |
-| **EditLocationView** | Unified location editing UI — works for individual items (`ProcessedItem`) and session-level bulk editing (`SessionMetadata`) via `LocationEditTarget` enum |
-| **EditSessionLocationView** | Thin wrapper — delegates to `EditLocationView(session:)` |
-| **PlaceSelectionMapView** | Full-screen map for place selection during location editing |
-| **SessionLocationBar** | Inline session location display/edit bar |
-| **ConceptListView** | Browse and manage UserConcept entries |
-| **ConceptWeightingSection** | Concept weight display/editing within detail views |
-| **LinkPreviewView** | Rich link preview rendering for URL items |
-| **RichWebView** | WKWebView wrapper for full web page display |
-| **AppleMusicReferenceView** | Apple Music item display with playback controls |
-| **DiverAppAttributionView** | App attribution/branding display |
-| **ReprocessingWizardView** | Guided reprocessing workflow |
-| **ReprocessMetadataView** | Metadata review during reprocessing |
-| **ShortcutGalleryView** | App Intents / Shortcuts gallery |
-| **SharedWithYouView** | iMessage Shared with You integration |
+| **Core Navigation** | `ContentView` (root), `SidebarView` (session-based hierarchy). |
+| **Capture & Camera** | `VisualIntelligenceView` (lens, glow overlays, detection results). |
+| **Review & Edit** | `ReferenceDetailView` (metadata, relationships), `EditLocationView` (map coordinates), `ConceptWeightingSection`. |
+| **Edge & Settings** | `SettingsView` (library maintenance, edge node connection status), `QueueProgressView`. |
+| **Commerce (iOS/visionOS)** | `ProductScoreOverlayView`, `NowcastChartView`, `SpatialProductPanelView` (AR HUDs). |
 
-**Ethical Commerce views** *(future — requires edge node)*:
-
-| View | Platform | Description |
-|------|----------|-------------|
-| **ProductScoreOverlayView** | iOS/iPadOS | Camera overlay showing ESG data quality tier badge, carbon intensity, certifications |
-| **NowcastChartView** | iOS/iPadOS | 14-day sparkline price trajectory with directional indicator |
-| **CommerceActionView** | iOS/iPadOS | "Buy on [Platform]" CTA with ethical match indicator |
-| **BudgetAlertView** | iOS/iPadOS | Financial context inline — budget remaining, category spend |
-| **SpatialProductPanelView** | visionOS | RealityKit spatial panel anchored to detected product |
+> **Note:** For the exhaustively mapped line-by-line file breakdown of all 52+ specific `View/` structs, refer to `GEMINI.md` under *Development Conventions*.
 
 
 ### 6.2 View Models
@@ -750,8 +726,8 @@ The Mac/iPad edge node maintains local caches that never sync to CloudKit or lea
 | **Minimum Device** | iPhone 16 / iPad (M-series) | Mac (M4+) | Apple Vision Pro |
 | **Apple Intelligence** | Required | Required | Required |
 | **FastVLM** | 0.5B (optional, ~500MB) | 1.5B (required, ~1GB) | — |
-| **SAM 2.1 / CLaRa** | sam2.1-small (optional) | CLaRa 7B MLX (required) | — |
-| **Key Frameworks** | Swift, SwiftUI, SwiftData, Vision, MapKit, Foundation Models, MLX Swift, AVFoundation, CoreLocation, Contacts, MusicKit, Distributed, Network, Charts, FinanceKit | Swift, Distributed, Network, CoreML, MLX Swift, Accelerate, Charts | Swift, SwiftUI, RealityKit, ARKit, Distributed, Network, Charts |
+| **SAM 2.1 / CLaRa / ML-Sharp** | sam2.1-small (optional) | CLaRa 7B MLX, Python 3.10+ (required) | — |
+| **Key Frameworks** | Swift, SwiftUI, SwiftData, Vision, MapKit, Foundation Models, MLX Swift, AVFoundation, CoreLocation, Contacts, MusicKit, Distributed, Network, Charts, FinanceKit | Swift, Distributed, Network, CoreML, MLX Swift, Accelerate, Charts, Foundation.Process (Python Interop) | Swift, SwiftUI, RealityKit, ARKit, Distributed, Network, Charts |
 | **Key APIs** | Spotify, DuckDuckGo | Climate TRACE, Open Food Facts, OpenESG, World Bank, BLS, FRED, Plaid | — |
 | **Financial** | FinanceKit (Apple Wallet) | Plaid (OAuth2 bank data) | — |
 | **Entitlements** | Camera, Location, Contacts, Photo Library, App Groups, CloudKit, Shared with You, Local Network, FinanceKit | Local Network, App Sandbox | Camera, Local Network, Enterprise (optional) |

@@ -203,6 +203,7 @@ cd DiverShared && swift test
 *   `Services/Edge/BonjourDiscoveryService.swift` — NWBrowser actor, Bonjour TXT records
 *   `Services/Edge/NWTransportLayer.swift` — TLS 1.3, OSAllocatedUnfairLock, length-prefixed framing
 *   `Services/Edge/EdgeNodeService.swift` — 5 distributed actors + PipelineEdgeRouter
+*   `Services/Edge/MLSharpService.swift` — (Planned) Python interop for `apple/ml-sharp` semantic edge masking
 *   `Storage/DiverDataStore.swift` — SwiftData container management (8 models incl. OwnedProduct, ScoreSnapshot, EthicalPolicySettings)
 *   `Storage/PersistenceActor.swift` — `@ModelActor` for actor-isolated background SwiftData operations
 *   `Storage/DiverSchemaMigration.swift` — VersionedSchema baseline (V1), V2 schema with temporal/social updates
@@ -280,104 +281,11 @@ cd DiverShared && swift test
 
 ## Terminology
 
-*   **DiverSession:** Typealias for `SessionMetadata`. Use `DiverSession` in new code.
+*   **DiverSession:** Typealias for `SessionMetadata`. Use `SessionMetadata` for all SwiftData model references.
 *   **ProcessedItem:** The primary data model for enriched captures and links.
-*   **SidebarViewModel:** Centralizes sidebar state, session management, drag-and-drop, and library maintenance.
+*   **SidebarViewModel:** Centralizes sidebar state, session management, and library maintenance.
 *   **VisualIntelligenceViewModel:** Manages camera, detection, sifting, and capture review state.
-
-## Key Files
-
-### App & UI (42 views)
-*   `VisualIntelligencePipelineApp.swift` — App entry point, service initialization, foreground/background lifecycle
-*   `View/VisualIntelligenceView.swift` — Camera and capture UI
-*   `View/SidebarView.swift` — Main navigation sidebar (942 lines, delegates to 7 child views in `View/Sidebar/`)
-*   `View/Sidebar/` — Extracted child views: `SessionRowLabel`, `SidebarSessionRow`, `ItemRow`, `ItemRowWithActions`, `ThumbnailView`, `DailySummaryCard`, `ItemIconConfig`
-*   `View/ReferenceDetailView.swift` — Item detail view (media info, aesthetics score, capture siblings, references)
-*   `View/ContentView.swift` — Root content view
-*   `View/EditLocationView.swift` — Location editing for individual items
-*   `View/EditSessionLocationView.swift` — Bulk location editing for sessions
-*   `View/SettingsView.swift` — App settings and library maintenance UI
-*   `View/QueueProgressView.swift` — Pipeline queue processing progress
-*   `View/ReprocessingWizardView.swift` — Guided reprocessing workflow
-*   `View/ReprocessMetadataView.swift` — Metadata reprocessing UI
-*   `View/ResultsOverlayView.swift` — Detection results overlay
-*   `View/SiftedOverlayView.swift` — Sifted subject overlay
-*   `View/AppleMusicReferenceView.swift` — Apple Music rich link preview
-*   `View/ConceptListView.swift` — Concept tag list
-*   `View/ConceptWeightingSection.swift` — Concept weight adjustments
-*   `View/ContextChipBar.swift` — Context tag chip bar
-*   `View/DiverAppAttributionView.swift` — App attribution
-*   `View/LinkPreviewView.swift` — Rich link preview
-*   `View/PlaceSelectionMapView.swift` — Map-based place picker
-*   `View/RichWebView.swift` — Web content viewer
-*   `View/SessionLocationBar.swift` — Session location display bar
-*   `View/SharedWithYouView.swift` — Shared With You content
-*   `View/ShortcutGalleryView.swift` — Shortcuts gallery
-*   `View/AgenticChatView.swift` — Interactive chat view for querying library via CLaRa
-*   `View/Commerce/ProductScoreOverlayView.swift` — 7-engine score overlay with timing pill
-*   `View/Commerce/OwnershipButton.swift` — "I Own This" / "I Want This" toggle with spring animations
-*   `View/Commerce/OwnedProductsView.swift` — Brand-grouped owned products list
-*   `View/Commerce/ScoreHistoryChartView.swift` — Swift Charts time-series score history
-*   `View/Commerce/NowcastChartView.swift` — Price trajectory with trend pills
-*   `View/Commerce/CommerceActionView.swift` — Ethical platform ranking with affiliate CTAs
-*   `View/Commerce/EthicalPolicyConfigView.swift` — RankingPolicy preferences (carbon/labor/certification/platform/price/speed). Persisted via SwiftData `EthicalPolicySettings` model, syncs across devices via CloudKit.
-*   `View/Commerce/APIKeyConfigView.swift` — API key configuration UI
-*   `View/Commerce/Spatial/ProductScoreAttachment.swift` — visionOS score attachment
-*   `View/Commerce/Spatial/SpatialProductDetector.swift` — AR product detection
-*   `View/Commerce/Spatial/SpatialScoreOverlayView.swift` — Spatial score overlay
-
-### Core Services (DiverKit)
-*   `Services/LocalPipelineService.swift` — Core pipeline orchestrator
-*   `Services/MetadataPipelineService.swift` — Metadata extraction and queue processing
-*   `Services/IntelligenceProcessor.swift` — On-device LLM processing
-*   `Services/FastVLMEnrichmentService.swift` — FastVLM multimodal image analysis
-*   `Services/LocationSearchAggregator.swift` — Unified Foursquare + MapKit search
-*   `Services/SessionClusteringService.swift` — Time/location-based session grouping
-*   `Services/CameraManager.swift` — AVFoundation camera management
-*   `Services/DailyContextService.swift` — Daily focus summary generation
-*   `Services/ESGEnrichmentService.swift` — 4-database Open *Facts cascade + Climate TRACE
-*   `Services/ProductRecommendationService.swift` — Multi-strategy composite scoring + SLM advisory
-*   `Services/PreferenceLearner.swift` — Ownership history → learned strategy weights
-*   `Services/Scoring/` — 7 scoring engines (ESG, Brand, Value, Durability, Social, Health, TotalCost)
-*   `Services/Commerce/GovernmentDataService.swift` — CPSC, FDA, EPA, Energy Star (4 APIs, parallel)
-*   `Services/Commerce/APIKeyService.swift` — CloudKit-backed key storage (iCloud.com.secretatomics.knowmaps.Keys container)
-*   `Services/Commerce/OpenESGService.swift` — B Corp directory, company-level ESG
-*   `Services/Commerce/PricingDataService.swift` — World Bank + BLS PPI (PriceNowcasting)
-*   `Services/Commerce/NowcastingEngine.swift` — Dynamic Factor Model via Accelerate vDSP
-*   `Services/Commerce/AffiliateRoutingService.swift` — 5 platforms, ethical profiles (CommerceRouting)
-*   `Services/Edge/VisualIntelligenceActorSystem.swift` — Custom DistributedActorSystem
-*   `Services/Edge/BonjourDiscoveryService.swift` — NWBrowser actor, Bonjour TXT records
-*   `Services/Edge/NWTransportLayer.swift` — TLS 1.3, OSAllocatedUnfairLock, length-prefixed framing
-*   `Services/Edge/EdgeNodeService.swift` — 5 distributed actors + PipelineEdgeRouter
-*   `Storage/DiverDataStore.swift` — SwiftData container management (8 models incl. OwnedProduct, ScoreSnapshot, EthicalPolicySettings)
-*   `Storage/PersistenceActor.swift` — `@ModelActor` for actor-isolated background SwiftData operations
-*   `Storage/DiverSchemaMigration.swift` — VersionedSchema baseline (V1) and migration plan
-*   `Storage/DataSeeder.swift` — Initial data seeding
-*   `Storage/ReferencePayloadStore.swift` — Reference payload persistence
-*   `Storage/StorageClient.swift` — Storage access client
-*   `Storage/UnifiedDataManager.swift` — Unified data management layer
-
-### Models (DiverKit — 20 files)
-*   `Models/ProcessedItem.swift` — Primary enriched item model
-*   `Models/DiverSession.swift` — Session grouping model
-*   `Models/DiverCollection.swift` — User-created collections
-*   `Models/DiverObject.swift` — Base object model
-*   `Models/DiverQueueItem+Intelligence.swift` — Queue item intelligence extensions
-*   `Models/UserConcept.swift` — Concept/tag model
-*   `Models/AestheticsTypes.swift` — Image quality scoring types
-*   `Models/QueueProgressEvent.swift` — AsyncStream event enum for queue progress delivery
-*   `Models/OwnedProduct.swift` — Product ownership tracking (CloudKit synced)
-*   `Models/ScoreSnapshot.swift` — Time-series score history for Swift Charts
-*   `Models/CommerceGenerable.swift` — `@Generable` types for SLM commerce prompts
-*   `Models/EdgeTypes.swift` — Edge computing types: `EdgeNodeInfo`, `VisionAnalysisResult`, `SaliencyResult`, `LLMAnalysisResult`, `EdgeNodeStatus`, `ModelStatus`
-*   `Models/EthicalPolicySettings.swift` — Persisted ethical policy preferences
-*   `Models/JSONCoding.swift` — JSON coding helpers
-*   `Models/JobProgress.swift` — Pipeline job progress tracking
-*   `Models/LocalInput.swift` — Local pipeline input type
-*   `Models/ProcessingStatus.swift` — Item processing status enum
-*   `Models/SSEEvent.swift` — Server-sent event model
-*   `Models/TikTokMetadata.swift` — TikTok link metadata
-*   `Models/TypeAliases.swift` — Cross-module type aliases
+*   **ModelUIExtensions:** Extracts SwiftUI presentation logic from core SwiftData models.
 
 ## Code Cleanliness & Known Technical Debt
 
