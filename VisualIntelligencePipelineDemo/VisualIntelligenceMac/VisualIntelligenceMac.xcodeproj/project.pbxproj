@@ -1,0 +1,558 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1692CD0E2DCBEEBEF2D353F6 /* EdgeDaemonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF7FE3B270A31E27D2910346 /* EdgeDaemonApp.swift */; };
+		1D393457885C6EBF5FC2BAA9 /* VisualIntelligenceMacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2834EB484744439A6950AA0 /* VisualIntelligenceMacApp.swift */; };
+		379B43E65B46A564F526E281 /* MacContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E5D36B94D0A05A5C4908E60 /* MacContentView.swift */; };
+		4CC3D1D95064F769EB858B20 /* DiverKit in Frameworks */ = {isa = PBXBuildFile; productRef = 5B609EED3F25F7EA8321B32F /* DiverKit */; };
+		5410A02CD4D0C69E83CF6BEB /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = DDE556A49D2EC58E428FB14A /* DiverShared */; };
+		54AA860865FCDDE2DCE814B4 /* EdgeNodeOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D710365DF869C97E4CAF6F /* EdgeNodeOnboardingView.swift */; };
+		5EC218B6FE753865CC203C5B /* EdgeNodeInstallService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EACA0ADD62CC3A588AA6495C /* EdgeNodeInstallService.swift */; };
+		7F21F77228BDB911D847A6EB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6FE0B057AE753644516843A8 /* Assets.xcassets */; };
+		A1D2469F4098E8A12897DFE2 /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = E0C74270DEF6055306D13649 /* DiverShared */; };
+		D04D03132FB102C5E0229DE6 /* MacIngestionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1368A9A0DD2417A1F1DCC0E /* MacIngestionService.swift */; };
+		D6CB4051B343BDC81255D4CA /* VisualIntelligenceMacEdgeNode.app in Resources */ = {isa = PBXBuildFile; fileRef = 0CEB53C183DD2E0E9708B805 /* VisualIntelligenceMacEdgeNode.app */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		DB150F61F44F2CE0824B309D /* DiverKit in Frameworks */ = {isa = PBXBuildFile; productRef = 6B8B066926576E8102656835 /* DiverKit */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2C1F17506D56E0BD8DEB88DD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3BF4E395774127FC7616EF12 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = BEF55EF9FB2E08797EE8C886;
+			remoteInfo = VisualIntelligenceMacEdgeNode;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0CEB53C183DD2E0E9708B805 /* VisualIntelligenceMacEdgeNode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisualIntelligenceMacEdgeNode.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1DD79B9541C19AF437EFFFA5 /* DiverKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DiverKit; path = ../DiverKit; sourceTree = SOURCE_ROOT; };
+		6FE0B057AE753644516843A8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		86D03CEA031D14603525CB6A /* VisualIntelligenceMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisualIntelligenceMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		9E5D36B94D0A05A5C4908E60 /* MacContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacContentView.swift; sourceTree = "<group>"; };
+		A1368A9A0DD2417A1F1DCC0E /* MacIngestionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacIngestionService.swift; sourceTree = "<group>"; };
+		A2834EB484744439A6950AA0 /* VisualIntelligenceMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualIntelligenceMacApp.swift; sourceTree = "<group>"; };
+		C9D710365DF869C97E4CAF6F /* EdgeNodeOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeNodeOnboardingView.swift; sourceTree = "<group>"; };
+		D090F229E84124691231B2E9 /* DiverShared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DiverShared; path = ../DiverShared; sourceTree = SOURCE_ROOT; };
+		EACA0ADD62CC3A588AA6495C /* EdgeNodeInstallService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeNodeInstallService.swift; sourceTree = "<group>"; };
+		FF7FE3B270A31E27D2910346 /* EdgeDaemonApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeDaemonApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		22C833161DCC79094D3FD843 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DB150F61F44F2CE0824B309D /* DiverKit in Frameworks */,
+				5410A02CD4D0C69E83CF6BEB /* DiverShared in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		444F3A524EFF89D9B178CD8B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4CC3D1D95064F769EB858B20 /* DiverKit in Frameworks */,
+				A1D2469F4098E8A12897DFE2 /* DiverShared in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		018A3ED47D086C6E3F8CD37B /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				EACA0ADD62CC3A588AA6495C /* EdgeNodeInstallService.swift */,
+				A1368A9A0DD2417A1F1DCC0E /* MacIngestionService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		239986100DC67D004CB7FA54 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				1DD79B9541C19AF437EFFFA5 /* DiverKit */,
+				D090F229E84124691231B2E9 /* DiverShared */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		2DB6CBD4E58748B4CCDBFBFD /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				C9D710365DF869C97E4CAF6F /* EdgeNodeOnboardingView.swift */,
+				9E5D36B94D0A05A5C4908E60 /* MacContentView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AC4DC173A4264DEF8EE0A5F5 = {
+			isa = PBXGroup;
+			children = (
+				239986100DC67D004CB7FA54 /* Packages */,
+				E84E2123B364F36140152248 /* Sources */,
+				F3B0662AC5326D4C2B083F52 /* VisualIntelligencePipelineDemo */,
+				FA3217FE4058624F238A24A1 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		BADE5478EE201DCD7F78AE67 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				6FE0B057AE753644516843A8 /* Assets.xcassets */,
+				A2834EB484744439A6950AA0 /* VisualIntelligenceMacApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		E5B56AA2EBBBA0166AB30CF9 /* EdgeDaemon */ = {
+			isa = PBXGroup;
+			children = (
+				FF7FE3B270A31E27D2910346 /* EdgeDaemonApp.swift */,
+			);
+			path = EdgeDaemon;
+			sourceTree = "<group>";
+		};
+		E84E2123B364F36140152248 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				BADE5478EE201DCD7F78AE67 /* App */,
+				018A3ED47D086C6E3F8CD37B /* Services */,
+				2DB6CBD4E58748B4CCDBFBFD /* Views */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		F3B0662AC5326D4C2B083F52 /* VisualIntelligencePipelineDemo */ = {
+			isa = PBXGroup;
+			children = (
+				E5B56AA2EBBBA0166AB30CF9 /* EdgeDaemon */,
+			);
+			name = VisualIntelligencePipelineDemo;
+			path = ..;
+			sourceTree = "<group>";
+		};
+		FA3217FE4058624F238A24A1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				86D03CEA031D14603525CB6A /* VisualIntelligenceMac.app */,
+				0CEB53C183DD2E0E9708B805 /* VisualIntelligenceMacEdgeNode.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		37EF435987B68CAE99C00722 /* VisualIntelligenceMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AE2DB298242DEB0BA05A0DCB /* Build configuration list for PBXNativeTarget "VisualIntelligenceMac" */;
+			buildPhases = (
+				DBDD228637895B88E433365B /* Sources */,
+				54E2A50B7DD5F73C5BBB41B2 /* Resources */,
+				444F3A524EFF89D9B178CD8B /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BB750AF3EA9C7AC387E70B61 /* PBXTargetDependency */,
+			);
+			name = VisualIntelligenceMac;
+			packageProductDependencies = (
+				5B609EED3F25F7EA8321B32F /* DiverKit */,
+				E0C74270DEF6055306D13649 /* DiverShared */,
+			);
+			productName = VisualIntelligenceMac;
+			productReference = 86D03CEA031D14603525CB6A /* VisualIntelligenceMac.app */;
+			productType = "com.apple.product-type.application";
+		};
+		BEF55EF9FB2E08797EE8C886 /* VisualIntelligenceMacEdgeNode */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 03B15A5DC07DB16A78300CBC /* Build configuration list for PBXNativeTarget "VisualIntelligenceMacEdgeNode" */;
+			buildPhases = (
+				91A9499B882D2127AABEEA07 /* Sources */,
+				22C833161DCC79094D3FD843 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VisualIntelligenceMacEdgeNode;
+			packageProductDependencies = (
+				6B8B066926576E8102656835 /* DiverKit */,
+				DDE556A49D2EC58E428FB14A /* DiverShared */,
+			);
+			productName = VisualIntelligenceMacEdgeNode;
+			productReference = 0CEB53C183DD2E0E9708B805 /* VisualIntelligenceMacEdgeNode.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3BF4E395774127FC7616EF12 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					37EF435987B68CAE99C00722 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					BEF55EF9FB2E08797EE8C886 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 799AB44E63184CE8DB83B3BC /* Build configuration list for PBXProject "VisualIntelligenceMac" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = AC4DC173A4264DEF8EE0A5F5;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				797DAD5B376153F260E70756 /* XCLocalSwiftPackageReference "../DiverKit" */,
+				E75FC4F6079E381ABB1AACA9 /* XCLocalSwiftPackageReference "../DiverShared" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				37EF435987B68CAE99C00722 /* VisualIntelligenceMac */,
+				BEF55EF9FB2E08797EE8C886 /* VisualIntelligenceMacEdgeNode */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		54E2A50B7DD5F73C5BBB41B2 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7F21F77228BDB911D847A6EB /* Assets.xcassets in Resources */,
+				D6CB4051B343BDC81255D4CA /* VisualIntelligenceMacEdgeNode.app in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		91A9499B882D2127AABEEA07 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1692CD0E2DCBEEBEF2D353F6 /* EdgeDaemonApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DBDD228637895B88E433365B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5EC218B6FE753865CC203C5B /* EdgeNodeInstallService.swift in Sources */,
+				54AA860865FCDDE2DCE814B4 /* EdgeNodeOnboardingView.swift in Sources */,
+				379B43E65B46A564F526E281 /* MacContentView.swift in Sources */,
+				D04D03132FB102C5E0229DE6 /* MacIngestionService.swift in Sources */,
+				1D393457885C6EBF5FC2BAA9 /* VisualIntelligenceMacApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		BB750AF3EA9C7AC387E70B61 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = BEF55EF9FB2E08797EE8C886 /* VisualIntelligenceMacEdgeNode */;
+			targetProxy = 2C1F17506D56E0BD8DEB88DD /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		02DA95F9B7D8C5FC35228FAB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		2D54116044A90556F535EB54 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = ../EdgeDaemon/EdgeDaemon.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = ../EdgeDaemon/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.visualintelligence.mac.edgenode;
+				PRODUCT_NAME = VisualIntelligenceMacEdgeNode;
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		36877FAAEF1F78AAD0B9730B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = VisualIntelligenceMac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.visualintelligence.mac;
+				PRODUCT_NAME = "Visual Intelligence";
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		64714ADB5898F9AF867D4A89 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = VisualIntelligenceMac.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.visualintelligence.mac;
+				PRODUCT_NAME = "Visual Intelligence";
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		F471F102B7601B6BF96140E2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FDB793081CC734DA662974F5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = ../EdgeDaemon/EdgeDaemon.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = ../EdgeDaemon/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.secretatomics.visualintelligence.mac.edgenode;
+				PRODUCT_NAME = VisualIntelligenceMacEdgeNode;
+				SDKROOT = macosx;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		03B15A5DC07DB16A78300CBC /* Build configuration list for PBXNativeTarget "VisualIntelligenceMacEdgeNode" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FDB793081CC734DA662974F5 /* Debug */,
+				2D54116044A90556F535EB54 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		799AB44E63184CE8DB83B3BC /* Build configuration list for PBXProject "VisualIntelligenceMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F471F102B7601B6BF96140E2 /* Debug */,
+				02DA95F9B7D8C5FC35228FAB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AE2DB298242DEB0BA05A0DCB /* Build configuration list for PBXNativeTarget "VisualIntelligenceMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				36877FAAEF1F78AAD0B9730B /* Debug */,
+				64714ADB5898F9AF867D4A89 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		797DAD5B376153F260E70756 /* XCLocalSwiftPackageReference "../DiverKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../DiverKit;
+		};
+		E75FC4F6079E381ABB1AACA9 /* XCLocalSwiftPackageReference "../DiverShared" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../DiverShared;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5B609EED3F25F7EA8321B32F /* DiverKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DiverKit;
+		};
+		6B8B066926576E8102656835 /* DiverKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DiverKit;
+		};
+		DDE556A49D2EC58E428FB14A /* DiverShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DiverShared;
+		};
+		E0C74270DEF6055306D13649 /* DiverShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DiverShared;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 3BF4E395774127FC7616EF12 /* Project object */;
+}
