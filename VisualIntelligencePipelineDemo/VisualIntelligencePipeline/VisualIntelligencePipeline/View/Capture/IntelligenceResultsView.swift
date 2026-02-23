@@ -396,15 +396,34 @@ struct IntelligenceResultsView: View {
             // Extract product info from results
             let productResult = viewModel.results.first { if case .product = $0 { return true }; return false }
             if case .product(let code, _, _) = productResult {
-                ProductScoreAttachment(
-                    productName: "Product (\(code))",
-                    compositeScore: 0.0,
-                    strategyScores: [],
-                    recommendation: "Scoring…"
-                )
+                if viewModel.commerceProductName != nil {
+                    ProductScoreAttachment(
+                        productName: viewModel.commerceProductName ?? code,
+                        brand: viewModel.commerceBrand,
+                        compositeScore: viewModel.commerceCompositeScore,
+                        strategyScores: viewModel.commerceStrategyScores,
+                        recommendation: viewModel.commerceRecommendation ?? "Scoring…",
+                        summary: viewModel.commerceSummary
+                    )
+                } else {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                            .tint(.white)
+                        Text("Looking up barcode \(code)…")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .task {
+                        await viewModel.lookupBarcode(code)
+                    }
+                }
                 
                 OwnershipButton(
-                    productName: "Product",
+                    productName: viewModel.commerceProductName ?? "Product",
                     barcode: code
                 )
             }

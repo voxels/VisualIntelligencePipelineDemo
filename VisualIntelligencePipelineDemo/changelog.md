@@ -42,6 +42,27 @@
 - `[MODIFY]` `View/Commerce/ProductScoreOverlayView.swift` — Added methodology info sheet with ⓘ button
 - `[MODIFY]` `DiverKit/Sources/DiverKit/Services/CameraManager.swift` — Dynamic photo dimensions
 
+### Commerce Intelligence — World-Anchored AR & Conditional Scoring
+- **World-Anchored Score Cards (iOS)**: Rewrote `ARCameraView` to compute barcode world positions using ARFrame camera intrinsics + depth estimation. Score cards now track their physical product position in 3D space as the camera moves, creating a true AR experience instead of bottom-docked overlays.
+- **Screen Projection Loop**: ARSessionDelegate projects all product world anchors to screen coordinates every frame via `ARView.project()`. Cards smoothly animate with 0.15s easing.
+- **Inconclusive Data Hidden**: Products without real ESG or government data are silently hidden from the AR view. `SpatialDetectedProduct.hasData` flag gates card visibility — no more misleading default 50% scores.
+- **Conditional Scores Only**: Scoring strategies only appear when backed by real data:
+  - **Safety**: Only shown when CPSC recalls, FDA alerts, EPA violations, or Energy Star certification found.
+  - **Energy Star**: Automatically hidden for food products (irrelevant metric).
+  - **Durability**: Only shown for durable goods (electronics, appliances, tools, furniture).
+  - **Health**: Only shown when NOVA group or Nutri-Score data exists.
+- **Expanded Government Data**: Safety score now surfaces CPSC recall hazards, FDA alert classifications/reasons, EPA violation counts, and Energy Star kWh/cost — not just a binary hasConcerns check.
+- **More ESG Data in Summaries**: Allergens, package quantity, retail availability now surfaced in intelligence summary when available.
+- **Live Barcode Lookup (IntelligenceResultsView)**: Added `lookupBarcode()` to `VisualIntelligenceViewModel` — commerce section now runs real ESG + Government data lookups instead of showing placeholder "Scoring…" cards.
+- **ProductProfileView**: Now passes `brand` and generates data-driven recommendation text with score reasoning.
+
+### Files Changed (Commerce AR & Scoring)
+- `[MODIFY]` `View/Commerce/Spatial/SpatialProductDetector.swift` — `hasData`/`isScoring`/`worldAnchor`/`screenPosition`/`esgEnrichment` on product, conditional scores, expanded gov data
+- `[MODIFY]` `View/Commerce/Spatial/SpatialScoreOverlayView.swift` — World-anchored iOS AR, screen projection loop, filter by hasData
+- `[MODIFY]` `View/Capture/IntelligenceResultsView.swift` — Live barcode lookup, loading state, real scores
+- `[MODIFY]` `View/SpecializedProfiles/ProductProfileView.swift` — Brand pass-through, data-driven recommendation
+- `[MODIFY]` `DiverKit/Sources/DiverKit/ViewModel/VisualIntelligenceViewModel.swift` — Commerce state properties, `lookupBarcode()` method
+
 ### ML-Sharp Edge Integration & RealityKit 3D
 - **EdgeDaemon Capabilities**: Created `MLSharpService.swift` on the macOS daemon to wrap Apple's `ml-sharp` Python execution via `Process()`. Added the `runMLSharp` method to the distributed `EdgeInferenceActor`, securely exposing the capability to the iOS client.
 - **Architecture Pivot (USDZ vs Splats)**: Transitioned from `LowLevelMesh` raw Gaussian Splats to native `.usdz` format for RealityKit performance improvements. Edge nodes now execute `python3 enhance.py --export-usdz`.

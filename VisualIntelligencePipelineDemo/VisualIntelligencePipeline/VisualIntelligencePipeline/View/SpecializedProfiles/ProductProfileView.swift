@@ -26,10 +26,22 @@ public struct ProductProfileView: View {
                     if let recommendations = item.commerceContext, let first = recommendations.first {
                         ProductScoreAttachment(
                             productName: first.option.productName,
+                            brand: first.option.brand,
                             compositeScore: first.compositeScore,
                             strategyScores: first.option.scores.map { ($0.strategyID.capitalized, $0.overallScore) },
-                            recommendation: first.compositeScore >= 0.7 ? "Buy Now" :
-                                first.compositeScore >= 0.4 ? "Consider" : "Wait"
+                            recommendation: {
+                                let sorted = first.option.scores.sorted { $0.overallScore > $1.overallScore }
+                                let top = sorted.first.map { "\($0.strategyID.capitalized) \(Int($0.overallScore * 100))%" } ?? ""
+                                if first.compositeScore >= 0.7 {
+                                    return "✅ Recommended — \(top)"
+                                } else if first.compositeScore >= 0.4 {
+                                    let weak = sorted.filter { $0.overallScore < 0.5 }.map { "\($0.strategyID.capitalized) \(Int($0.overallScore * 100))%" }.joined(separator: ", ")
+                                    return "⏳ Wait — \(weak.isEmpty ? "moderate scores" : weak)"
+                                } else {
+                                    let weak = sorted.filter { $0.overallScore < 0.4 }.map { "\($0.strategyID.capitalized) \(Int($0.overallScore * 100))%" }.joined(separator: ", ")
+                                    return "❌ Not recommended — \(weak.isEmpty ? "low scores" : weak)"
+                                }
+                            }()
                         )
                         
                         ProductScoreOverlayView(

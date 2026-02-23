@@ -302,6 +302,130 @@ public class VisualIntelligenceViewModel {
     public var saveErrorMessage: String?
     public var isSaving = false
     
+    // MARK: - Commerce Barcode Lookup (IntelligenceResultsView)
+    public var commerceProductName: String? = nil
+    public var commerceBrand: String? = nil
+    public var commerceCompositeScore: Float = 0.0
+    public var commerceStrategyScores: [(name: String, score: Float)] = []
+    public var commerceRecommendation: String? = nil
+    public var commerceSummary: String? = nil
+    
+    /// Looks up a barcode via ESG + Government data and populates commerce state.
+    public func lookupBarcode(_ barcode: String) async {
+        let esgService = ESGEnrichmentService()
+        let govService = GovernmentDataService()
+        let product = ProductClassification(productID: barcode, name: barcode, category: "barcode", brand: nil, barcode: barcode, confidence: 1.0)
+        
+        async let esgResult = { try? await esgService.enrich(barcode: barcode) }()
+        async let govResult = govService.enrich(product: product)
+        
+        let esg = await esgResult
+        let gov = await govResult
+        
+        // Resolve product name
+        let name = esg?.productName ?? esg?.genericName ?? "Product (\(barcode))"
+        let brand = esg?.brand
+        
+        // Build scores and summary (mirrors SpatialProductDetector logic)
+        var scores: [(name: String, score: Float)] = []
+        var summaryParts: [String] = []
+        var total: Float = 0
+        var count: Float = 0
+        
+        if let enrichment = esg {
+            var esgScore: Float = 0.5
+            if let eco = enrichment.ecoScore?.lowercased() {
+                switch eco {
+                case "a": esgScore = 0.95; summaryParts.append("Eco-Score A")
+                case "b": esgScore = 0.75; summaryParts.append("Eco-Score B")
+                case "c": esgScore = 0.55; summaryParts.append("Eco-Score C")
+                case "d": esgScore = 0.35; summaryParts.append("Eco-Score D")
+                case "e": esgScore = 0.15; summaryParts.append("Eco-Score E")
+                default: break
+                }
+            }
+            if !enrichment.certifications.isEmpty {
+                esgScore = min(1.0, esgScore + Float(enrichment.certifications.count) * 0.05)
+                summaryParts.append("Certified: \(enrichment.certifications.prefix(3).joined(separator: ", "))")
+            }
+            if let carbon = enrichment.carbonIntensity {
+                let cs: Float = carbon < 1 ? 0.9 : carbon < 3 ? 0.7 : carbon < 10 ? 0.4 : 0.2
+                esgScore = (esgScore + cs) / 2.0
+                summaryParts.append(String(format: "%.1f kg CO₂e", carbon))
+            }
+            scores.append(("Ethics", esgScore)); total += esgScore; count += 1
+            
+            if enrichment.novaGroup != nil || enrichment.nutriScore != nil {
+                var hs: Float = 0.5
+                if let nova = enrichment.novaGroup { hs = Float(5 - nova) / 4.0; summaryParts.append("NOVA \(nova)/4") }
+                if let ns = enrichment.nutriScore?.lowercased() {
+                    let nsVal: Float = switch ns { case "a": 0.95; case "b": 0.75; case "c": 0.55; case "d": 0.35; case "e": 0.15; default: 0.5 }
+                    hs = (hs + nsVal) / 2.0; summaryParts.append("Nutri-Score \(ns.uppercased())")
+                }
+                scores.append(("Health", hs)); total += hs; count += 1
+            }
+            if let origin = enrichment.origins, !origin.isEmpty { summaryParts.append("Origin: \(origin)") }
+            if !enrichment.allergens.isEmpty { summaryParts.append("⚠️ Allergens: \(enrichment.allergens.prefix(4).joined(separator: ", "))") }
+            if let qty = enrichment.quantity, !qty.isEmpty { summaryParts.append(qty) }
+            summaryParts.append("via \(enrichment.source)")
+        }
+        
+        // Safety — only when government APIs found actionable data
+        let hasRecalls = !gov.recalls.isEmpty
+        let hasFDA = !gov.fdaAlerts.isEmpty
+        let hasEPA = gov.epaCompliance?.hasViolations == true
+        let isFood = esg?.source.contains("Food") == true || esg?.novaGroup != nil
+        let hasEnergyStar = gov.energyStarRating?.isCertified == true && !isFood
+        
+        if hasRecalls || hasFDA || hasEPA || hasEnergyStar {
+            var safetyScore: Float = 0.9
+            if hasRecalls {
+                safetyScore = max(0.1, safetyScore - Float(gov.recalls.count) * 0.25)
+                summaryParts.insert("🚨 \(gov.recalls.count) recall(s)", at: 0)
+            }
+            if hasFDA { safetyScore = max(0.1, safetyScore - Float(gov.fdaAlerts.count) * 0.2) }
+            if hasEPA { safetyScore = max(0.1, safetyScore - 0.3) }
+            if hasEnergyStar {
+                safetyScore = min(1.0, safetyScore + 0.1)
+                summaryParts.append("⭐ Energy Star")
+            }
+            scores.append(("Safety", safetyScore)); total += safetyScore; count += 1
+        }
+        
+        let composite = count > 0 ? total / count : 0.5
+        let hasData = esg != nil || gov.hasConcerns
+        
+        // Build recommendation
+        let recommendation: String
+        if gov.hasConcerns {
+            recommendation = "⚠️ Safety concern(s) — review before purchasing"
+        } else {
+            let sorted = scores.sorted { $0.score > $1.score }
+            let top = sorted.first.map { "\($0.name) \(Int($0.score * 100))%" } ?? ""
+            if composite >= 0.7 {
+                recommendation = "✅ Recommended — \(top)"
+            } else if composite >= 0.4 {
+                let weak = sorted.filter { $0.score < 0.5 }.map { "\($0.name) \(Int($0.score * 100))%" }.joined(separator: ", ")
+                recommendation = "⏳ Wait — \(weak.isEmpty ? "moderate scores" : weak)"
+            } else {
+                recommendation = "❌ Not recommended"
+            }
+        }
+        
+        // Update UI (only if we have real data)
+        if hasData {
+            self.commerceProductName = name
+            self.commerceBrand = brand
+            self.commerceCompositeScore = composite
+            self.commerceStrategyScores = scores
+            self.commerceRecommendation = recommendation
+            self.commerceSummary = summaryParts.isEmpty ? nil : summaryParts.joined(separator: " · ")
+        } else {
+            self.commerceProductName = name // Still show the barcode even without data
+            self.commerceRecommendation = "No product data available"
+        }
+    }
+    
     public init(linkGenerator: DiverLinkGenerator? = nil) {
         if let linkGenerator {
             self.linkGenerator = linkGenerator

@@ -204,20 +204,83 @@ final class SpatialProductDetector {
                 summaryParts.append("Origin: \(origin)")
             }
             
+            // Allergens (health-critical)
+            if !enrichment.allergens.isEmpty {
+                summaryParts.append("⚠️ Allergens: \(enrichment.allergens.prefix(4).joined(separator: ", "))")
+            }
+            
+            // Package size (useful for value comparison)
+            if let qty = enrichment.quantity, !qty.isEmpty {
+                summaryParts.append(qty)
+            }
+            
+            // Where to buy
+            if !enrichment.stores.isEmpty {
+                summaryParts.append("Available at: \(enrichment.stores.prefix(3).joined(separator: ", "))")
+            }
+            
             // Source attribution
             summaryParts.append("via \(enrichment.source)")
         }
         
-        // Safety Score — from government data
+        // Safety Score — only when government data found something actionable
         if let gov {
-            let safetyScore: Float = gov.hasConcerns ? 0.2 : 0.9
-            scores.append(("Safety", safetyScore))
-            totalScore += safetyScore
-            scoreCount += 1
+            let hasRecalls = !gov.recalls.isEmpty
+            let hasFDA = !gov.fdaAlerts.isEmpty
+            let hasEPA = gov.epaCompliance?.hasViolations == true
+            let isFood = esgEnrichment?.source.contains("Food") == true || esgEnrichment?.novaGroup != nil
+            let hasEnergyStar = gov.energyStarRating?.isCertified == true && !isFood // Energy Star irrelevant for food
             
-            if gov.hasConcerns {
-                summaryParts.insert("⚠️ \(gov.recalls.count) safety recall(s)", at: 0)
+            // Only show Safety score if there's actual safety data
+            if hasRecalls || hasFDA || hasEPA || hasEnergyStar {
+                var safetyScore: Float = 0.9
+                
+                if hasRecalls {
+                    safetyScore = max(0.1, safetyScore - Float(gov.recalls.count) * 0.25)
+                    let firstRecall = gov.recalls.first
+                    let hazardText = firstRecall?.hazard ?? firstRecall?.title ?? "safety recall"
+                    summaryParts.insert("🚨 CPSC: \(hazardText)", at: 0)
+                }
+                
+                if hasFDA {
+                    safetyScore = max(0.1, safetyScore - Float(gov.fdaAlerts.count) * 0.2)
+                    if let first = gov.fdaAlerts.first {
+                        summaryParts.insert("⚠️ FDA \(first.classification): \(first.reason.prefix(60))", at: min(1, summaryParts.count))
+                    }
+                }
+                
+                if hasEPA, let epa = gov.epaCompliance {
+                    safetyScore = max(0.1, safetyScore - 0.3)
+                    summaryParts.append("🏭 EPA: \(epa.violationCount) violation(s) — \(epa.complianceStatus)")
+                }
+                
+                if hasEnergyStar, let energy = gov.energyStarRating {
+                    safetyScore = min(1.0, safetyScore + 0.1)
+                    var energyLine = "⭐ Energy Star certified"
+                    if let kwh = energy.annualEnergyUseKWh {
+                        energyLine += String(format: " (%.0f kWh/yr", kwh)
+                        if let cost = energy.energyCostPerYear {
+                            energyLine += String(format: ", $%.0f/yr)", cost)
+                        } else {
+                            energyLine += ")"
+                        }
+                    }
+                    summaryParts.append(energyLine)
+                }
+                
+                scores.append(("Safety", safetyScore))
+                totalScore += safetyScore
+                scoreCount += 1
             }
+        }
+        
+        // Durability — only meaningful for durable goods categories
+        let category = resolvedProduct.classification.lowercased()
+        if ["electronics", "appliance", "hardware", "tools", "furniture", "equipment"].contains(where: { category.contains($0) }) {
+            scores.append(("Durability", 0.7))
+            totalScore += 0.7
+            scoreCount += 1
+            summaryParts.append("Durable goods")
         }
         
         let composite = scoreCount > 0 ? totalScore / scoreCount : 0.5
@@ -246,14 +309,24 @@ final class SpatialProductDetector {
         // Build summary
         let summary = summaryParts.isEmpty ? nil : summaryParts.joined(separator: " · ")
         
+        // Only show results backed by real data
+        let hasRealData = esgEnrichment != nil || (gov?.hasConcerns == true)
+        
         // Update product
         guard index < detectedProducts.count else { return }
         detectedProducts[index].compositeScore = composite
         detectedProducts[index].strategyScores = scores
-        detectedProducts[index].recommendation = recommendation
+        detectedProducts[index].recommendation = hasRealData ? recommendation : "No data found"
         detectedProducts[index].summary = summary
+        detectedProducts[index].hasData = hasRealData
+        detectedProducts[index].isScoring = false
+        detectedProducts[index].esgEnrichment = esgEnrichment
         
-        print("🛒 SpatialDetector: Scored \(detectedProducts[index].productName) → composite=\(String(format: "%.0f%%", composite * 100)), \(scores.count) strategies")
+        if hasRealData {
+            print("🛒 SpatialDetector: Scored \(detectedProducts[index].productName) → composite=\(String(format: "%.0f%%", composite * 100)), \(scores.count) strategies")
+        } else {
+            print("🛒 SpatialDetector: No data found for barcode \(detectedProducts[index].barcode ?? "unknown") — hiding card")
+        }
     }
     
     // MARK: - Edge-First Service Routing
@@ -360,6 +433,24 @@ struct SpatialDetectedProduct: Identifiable {
     var compositeScore: Float = 0.0
     var strategyScores: [(name: String, score: Float)] = []
     var recommendation: String = "Analyzing…"
+    
+    /// Whether real data was found for this product. If false, the card
+    /// should be hidden — we don't show inconclusive default scores.
+    var hasData: Bool = false
+    
+    /// True while scoring is in progress (show spinner, not card).
+    var isScoring: Bool = true
+    
+    /// World-space transform of where the barcode was detected.
+    /// Used to project the score card back to screen coordinates each frame.
+    var worldAnchor: simd_float4x4 = matrix_identity_float4x4
+    
+    /// Screen-space position (x, y in points, z > 0 means visible).
+    /// Updated each AR frame by projecting worldAnchor through the camera.
+    var screenPosition: SIMD3<Float> = SIMD3<Float>(200, 400, 1)
+    
+    /// Full ESG enrichment data for expanded detail view.
+    var esgEnrichment: ESGEnrichment? = nil
     
     var scoreColor: Color {
         if compositeScore >= 0.7 { return .green }
