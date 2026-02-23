@@ -286,43 +286,115 @@ struct ReferenceDetailContent: View {
         }
     }
     
-    // MARK: - Specialized Profile Switch
+    // MARK: - Additive Context Sections
+    // The original monolith showed ALL applicable sections via `if let` context checks.
+    // A product with a place context shows BOTH commerce AND place sections.
+    // This is NOT an exclusive switch — every section that has data is rendered.
     @ViewBuilder
     private func buildSpecializedProfile() -> some View {
-        let type = item.entityType?.lowercased() ?? ""
-        
-        switch type {
-        case "product":
-            ProductProfileView(item: item)
-        case "location", "place":
-            PlaceProfileView(item: item)
-        case "document":
-            DocumentProfileView(item: item)
-        case "web_link":
-            WebLinkProfileView(item: item)
-        case "person":
-            PersonProfileView(item: item)
-        case "qr_code":
-            QRCodeProfileView(item: item)
-        case "environment":
-            EnvironmentProfileView(item: item)
-        default:
-            // Fallback: If type isn't perfectly mapped, rely on contexts
-            if item.isProduct {
-                ProductProfileView(item: item)
-            } else if item.placeContext != nil {
-                PlaceProfileView(item: item)
-            } else if item.documentContext != nil {
-                DocumentProfileView(item: item)
-            } else if item.resolvedWebURL != nil {
-                WebLinkProfileView(item: item)
-            } else if item.qrContext != nil {
-                QRCodeProfileView(item: item)
-            } else {
-                // Image Profile acts as the visual fallback for unsupported or no-context items
-                ImageProfileView(item: item)
+        // 1. Full Text / Transcription (generic — shown for ALL types with text)
+        if let text = item.transcription, !text.isEmpty,
+           item.entityType?.lowercased() != "document" { // Document profile has its own text section
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Full Text")
+                        .font(.title3)
+                        .bold()
+                    Spacer()
+                    Button {
+                        #if os(iOS)
+                        UIPasteboard.general.string = text
+                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                        #endif
+                    } label: {
+                        Label("Copy", systemImage: "doc.on.doc")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.blue)
+                    
+                    if let urlString = item.url,
+                       let url = URL(string: urlString),
+                       !urlString.hasPrefix("secretatomics://") {
+                        Button {
+                            #if os(iOS)
+                            UIApplication.shared.open(url)
+                            #endif
+                        } label: {
+                            Label("Open", systemImage: "arrow.up.right.square")
+                                .font(.caption)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.green)
+                    }
+                }
+                
+                ScrollView {
+                    Text(text)
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                        .padding()
+                }
+                .frame(maxHeight: 300)
+                .background(Color(uiColor: .secondarySystemBackground))
+                .cornerRadius(12)
             }
+            .detailCardStyle()
         }
+        
+        // 2. Commerce Intelligence (shown for any item with product data)
+        if item.productMetadata != nil || item.commerceContext != nil {
+            ProductProfileView(item: item)
+        }
+        
+        // 3. Image profile (aesthetics + EXIF + ML-Sharp) — shown for any item with image data
+        if item.rawPayload != nil || item.photosAssetIdentifier != nil {
+            ImageProfileView(item: item)
+        }
+        
+        // 4. Web context (shown for any item with a web URL)
+        if item.resolvedWebURL != nil || item.webContext != nil {
+            WebLinkProfileView(item: item)
+        }
+        
+        // 5. Document context (shown for any item with document data)
+        if item.documentContext != nil {
+            DocumentProfileView(item: item)
+        }
+        
+        // 6. Place context (shown for any item with place data)
+        if item.placeContext != nil {
+            PlaceProfileView(item: item)
+        }
+        
+        // 7. QR Code context
+        if item.qrContext != nil {
+            QRCodeProfileView(item: item)
+        }
+        
+        // 8. Person context
+        if !item.contactIdentifiers.isEmpty {
+            PersonProfileView(item: item)
+        }
+        
+        // 9. Product Search Preview (for products without direct commerce data)
+        if item.isProduct, item.commerceContext == nil, let searchURL = item.productSearchURL {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Product Search Result")
+                    .font(.headline)
+                
+                RichWebView(url: searchURL)
+                    .frame(height: 350)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                    )
+            }
+            .contextCard()
+            .detailCardStyle()
+        }
+        
     }
     
     // MARK: - Footer Builder

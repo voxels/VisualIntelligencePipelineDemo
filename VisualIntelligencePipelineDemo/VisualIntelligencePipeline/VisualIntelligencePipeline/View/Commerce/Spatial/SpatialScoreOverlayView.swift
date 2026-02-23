@@ -73,7 +73,7 @@ struct SpatialScoreOverlayView: View {
     private var iOSContent: some View {
         ZStack {
             // ARView with live camera feed
-            ARCameraView()
+            ARCameraView(detector: detector)
                 .ignoresSafeArea()
             
             // Score cards floating at bottom
@@ -99,9 +99,11 @@ struct SpatialScoreOverlayView: View {
                             ForEach(detector.detectedProducts) { product in
                                 ProductScoreAttachment(
                                     productName: product.productName,
+                                    brand: product.brand,
                                     compositeScore: product.compositeScore,
                                     strategyScores: product.strategyScores,
-                                    recommendation: product.recommendation
+                                    recommendation: product.recommendation,
+                                    summary: product.summary
                                 )
                             }
                         }
@@ -142,9 +144,11 @@ struct SpatialScoreOverlayView: View {
                 Attachment(id: product.id) {
                     ProductScoreAttachment(
                         productName: product.productName,
+                        brand: product.brand,
                         compositeScore: product.compositeScore,
                         strategyScores: product.strategyScores,
-                        recommendation: product.recommendation
+                        recommendation: product.recommendation,
+                        summary: product.summary
                     )
                 }
             }
@@ -157,9 +161,16 @@ struct SpatialScoreOverlayView: View {
 
 #if !os(visionOS)
 import ARKit
+import Vision
 
-/// Wraps RealityKit's ARView for live camera passthrough on iOS.
+/// Wraps RealityKit's ARView for live camera passthrough on iOS,
+/// with barcode detection via ARSessionDelegate frame callbacks.
 struct ARCameraView: UIViewRepresentable {
+    let detector: SpatialProductDetector
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(detector: detector)
+    }
     
     func makeUIView(context: Context) -> ARView {
         let arView = ARView(frame: .zero)
@@ -172,17 +183,86 @@ struct ARCameraView: UIViewRepresentable {
         if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
             config.sceneReconstruction = .mesh
         }
+        
+        arView.session.delegate = context.coordinator
         arView.session.run(config)
         
         return arView
     }
     
-    func updateUIView(_ uiView: ARView, context: Context) {
-        // No dynamic updates needed
+    func updateUIView(_ uiView: ARView, context: Context) {}
+    
+    static func dismantleUIView(_ uiView: ARView, coordinator: Coordinator) {
+        uiView.session.pause()
     }
     
-    static func dismantleUIView(_ uiView: ARView, coordinator: ()) {
-        uiView.session.pause()
+    // MARK: - Coordinator (ARSessionDelegate)
+    
+    class Coordinator: NSObject, ARSessionDelegate {
+        let detector: SpatialProductDetector
+        private var lastAnalysisTime: CFTimeInterval = 0
+        private let analysisInterval: CFTimeInterval = 0.5 // 2 fps for barcode scanning
+        private var seenBarcodes: Set<String> = []
+        
+        init(detector: SpatialProductDetector) {
+            self.detector = detector
+        }
+        
+        func session(_ session: ARSession, didUpdate frame: ARFrame) {
+            let now = CACurrentMediaTime()
+            guard now - lastAnalysisTime >= analysisInterval else { return }
+            lastAnalysisTime = now
+            
+            let pixelBuffer = frame.capturedImage
+            
+            Task.detached(priority: .userInitiated) { [weak self] in
+                guard let self else { return }
+                
+                let request = VNDetectBarcodesRequest()
+                let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: .right, options: [:])
+                
+                do {
+                    try handler.perform([request])
+                    
+                    guard let results = request.results, !results.isEmpty else { return }
+                    
+                    for observation in results {
+                        guard let payload = observation.payloadStringValue,
+                              !payload.isEmpty,
+                              observation.confidence > 0.8 else { continue }
+                        
+                        if !self.seenBarcodes.contains(payload) {
+                            self.seenBarcodes.insert(payload)
+                            
+                            print("🛒 SpatialDetector (AR): Barcode detected: \(payload) (confidence: \(observation.confidence))")
+                            
+                            // Convert normalized barcode position to 3D space estimate
+                            let center = observation.boundingBox
+                            let x = Float(center.midX - 0.5) * 2.0
+                            let y = Float(center.midY - 0.5) * 2.0
+                            
+                            await MainActor.run {
+                                let product = SpatialDetectedProduct(
+                                    anchorID: UUID(),
+                                    position: SIMD3<Float>(x, y, -1),
+                                    classification: "barcode",
+                                    productName: payload,
+                                    barcode: payload
+                                )
+                                self.detector.detectedProducts.append(product)
+                                
+                                let index = self.detector.detectedProducts.count - 1
+                                Task {
+                                    await self.detector.scoreProduct(at: index)
+                                }
+                            }
+                        }
+                    }
+                } catch {
+                    // Vision barcode detection failed — skip this frame
+                }
+            }
+        }
     }
 }
 #endif

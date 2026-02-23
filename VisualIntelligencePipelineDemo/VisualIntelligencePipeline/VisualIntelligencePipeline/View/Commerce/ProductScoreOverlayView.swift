@@ -19,6 +19,7 @@ struct ProductScoreOverlayView: View {
     var onOwnThis: (() -> Void)? = nil
     
     @State private var selectedStrategy: String?
+    @State private var showingMethodology = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -70,6 +71,9 @@ struct ProductScoreOverlayView: View {
         .onAppear {
             selectedStrategy = allScores.first?.strategyID
         }
+        .sheet(isPresented: $showingMethodology) {
+            methodologySheet
+        }
     }
     
     // MARK: - Sections
@@ -96,6 +100,17 @@ struct ProductScoreOverlayView: View {
                 }
             }
             Spacer()
+            
+            // Methodology info button
+            Button {
+                showingMethodology = true
+            } label: {
+                Image(systemName: "info.circle")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            
             compositeScoreBadge
         }
     }
@@ -263,6 +278,138 @@ struct ProductScoreOverlayView: View {
         default: return .secondary
         }
     }
+    
+    // MARK: - Methodology Info Sheet
+    
+    private var methodologySheet: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Text("Scores are computed from open product databases, government safety records, and your ownership history. All data is processed on-device — nothing is sent to external servers.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Section("Scoring Strategies") {
+                    ForEach(methodologyEntries, id: \.id) { entry in
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Image(systemName: entry.icon)
+                                    .foregroundStyle(entry.color)
+                                    .frame(width: 20)
+                                Text(entry.name)
+                                    .font(.subheadline.weight(.semibold))
+                                Spacer()
+                                // Show actual score if available
+                                if let score = allScores.first(where: { $0.strategyID == entry.id }) {
+                                    Text("\(Int(score.overallScore * 100))%")
+                                        .font(.caption.weight(.bold).monospacedDigit())
+                                        .foregroundStyle(scoreColor(score.overallScore))
+                                }
+                            }
+                            
+                            Text(entry.description)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            
+                            HStack(spacing: 12) {
+                                Label(entry.source, systemImage: "building.columns")
+                                Label("Weight: \(entry.weight)", systemImage: "scalemass")
+                            }
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                
+                Section("Recommendation Logic") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        recommendationRow(icon: "checkmark.circle.fill", color: .green, label: "Buy Now",
+                                        desc: "Composite score ≥ 70% with no safety concerns")
+                        recommendationRow(icon: "clock.fill", color: .orange, label: "Wait",
+                                        desc: "Composite 40–70%, or any strategy below 50%")
+                        recommendationRow(icon: "xmark.circle.fill", color: .red, label: "Not Recommended",
+                                        desc: "Composite < 40%, or active safety recalls")
+                        recommendationRow(icon: "arrow.triangle.branch", color: .blue, label: "Consider Alternatives",
+                                        desc: "Better-scoring options exist in this category")
+                    }
+                }
+                
+                Section("Data Sources") {
+                    Label("Open Food Facts — 3M+ food products (ODbL)", systemImage: "leaf")
+                    Label("Open Beauty / Pet Food / Products Facts", systemImage: "sparkles")
+                    Label("UPC Item DB — UPC/EAN barcode lookup", systemImage: "barcode")
+                    Label("CPSC, FDA, EPA — Government safety recalls", systemImage: "shield.checkered")
+                    Label("B Corp Directory — Corporate sustainability", systemImage: "building.2")
+                    Label("Climate TRACE — Sector emissions averages", systemImage: "cloud")
+                }
+                .font(.caption)
+            }
+            .navigationTitle("Score Methodology")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { showingMethodology = false }
+                }
+            }
+        }
+    }
+    
+    private func recommendationRow(icon: String, color: Color, label: String, desc: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: icon)
+                .foregroundStyle(color)
+                .frame(width: 16)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label).font(.caption.weight(.semibold))
+                Text(desc).font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+    }
+    
+    private var methodologyEntries: [MethodologyEntry] {
+        [
+            MethodologyEntry(id: "esg", name: "Ethics", icon: "leaf.fill", color: .green,
+                           source: "Open *Facts, Climate TRACE",
+                           weight: "30%",
+                           description: "Environmental impact: Eco-Score grade (A–E), carbon footprint (kg CO₂e), certifications (Fair Trade, Organic, B Corp), and packaging recyclability."),
+            MethodologyEntry(id: "brand", name: "Brand Fit", icon: "tag.fill", color: .blue,
+                           source: "Your ownership history",
+                           weight: "15%",
+                           description: "How well this brand matches your preferences, based on past captures and owned products."),
+            MethodologyEntry(id: "value", name: "Value", icon: "dollarsign.circle.fill", color: .purple,
+                           source: "BLS PPI, World Bank",
+                           weight: "15%",
+                           description: "Price positioning relative to category average, price trend direction, and historical price stability."),
+            MethodologyEntry(id: "durability", name: "Durability", icon: "hammer.fill", color: .brown,
+                           source: "Category analysis, iFixit",
+                           weight: "10%",
+                           description: "Expected product lifespan. Consumables score low; durable goods score based on repairability and material quality."),
+            MethodologyEntry(id: "social", name: "Social Proof", icon: "person.2.fill", color: .indigo,
+                           source: "Reddit, community data",
+                           weight: "10%",
+                           description: "Community sentiment, review quality, and discussion volume from public forums."),
+            MethodologyEntry(id: "health", name: "Health Fit", icon: "heart.fill", color: .pink,
+                           source: "Open Food Facts",
+                           weight: "10%",
+                           description: "Nutri-Score grade (A–E), NOVA ultra-processing level (1–4), allergen presence, and nutritional density."),
+            MethodologyEntry(id: "totalcost", name: "Total Cost", icon: "creditcard.fill", color: .orange,
+                           source: "Price analysis",
+                           weight: "10%",
+                           description: "Full ownership cost including shipping, returns, subscription fees, and consumable replenishment."),
+        ]
+    }
+}
+
+private struct MethodologyEntry: Identifiable {
+    let id: String
+    let name: String
+    let icon: String
+    let color: Color
+    let source: String
+    let weight: String
+    let description: String
 }
 
 #Preview {

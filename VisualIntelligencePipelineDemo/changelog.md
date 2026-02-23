@@ -1,6 +1,46 @@
 # Changelog
 
-## 2026-02-22
+## 2026-02-23
+
+### Commerce Intelligence — Product Identity & Barcode Resolution
+- **UPC Item DB Fallback**: Added `upcitemdb.com` as 5th barcode lookup cascade step in `ESGEnrichmentService`. Covers millions of non-food UPC/EAN barcodes (free tier, no API key). Returns product name, brand, category, and description.
+- **Product Name & Brand from Open Facts**: `ESGEnrichment` now carries `productName` and `brand` fields parsed from Open Facts `product_name` / `brands` API fields. Context summary updated to prefer `productName` over `genericName`.
+- **Barcode → Product Name in AR View**: `SpatialProductDetector.scoreProduct()` now calls `ESGEnrichmentService.enrich(barcode:)` first, resolving raw barcode strings (e.g., `0850004694268`) to real product names and brands before scoring.
+
+### Commerce Intelligence — Meaningful Scores
+- **ESG Score Fix**: Fixed critical bug where `CompanyESGProfile.overallScore` (already 0.0–1.0) was divided by 100, producing near-zero ESG scores in AR view.
+- **Real Eco-Score/Nutri-Score/NOVA Scoring**: `scoreProduct()` now builds Ethics score from Eco-Score grade (A–E), carbon intensity, and certifications. Health score from NOVA ultra-processing level (1–4) and Nutri-Score grade. Safety score from government recall data.
+- **Data-Driven Recommendations**: Recommendation text now explains *why* (e.g., "✅ Recommended — Ethics 85%" or "⏳ Wait — Health 35%, Ethics 42%") instead of generic labels.
+- **Intelligence Summary**: Each detected product gets a `summary` string (e.g., "Eco-Score B · Certified: Fair Trade · NOVA 2/4 · via Open Food Facts") displayed in the AR card.
+
+### Commerce Intelligence — AR View UI
+- **Product Brand Display**: `ProductScoreAttachment` now shows brand name below product name.
+- **Intelligence Summary Capsule**: Blue-tinted insight row with ✨ icon displays the intelligence summary (eco-score, certifications, origin, data source).
+- **Card Width**: Expanded from 260pt to 280pt to accommodate richer content.
+
+### Commerce Intelligence — Score Methodology Sheet
+- **Info Button**: Added ⓘ button to `ProductScoreOverlayView` header (reference detail commerce section).
+- **Methodology Sheet**: Tapping reveals a sheet with:
+  - All 7 scoring strategies (Ethics, Brand Fit, Value, Durability, Social Proof, Health Fit, Total Cost) with icons, descriptions, data sources, and weights.
+  - Recommendation logic thresholds (Buy Now ≥70%, Wait 40–70%, Not Recommended <40%, active recalls).
+  - Data source attribution (Open Facts, UPC Item DB, CPSC/FDA/EPA, B Corp, Climate TRACE).
+  - Privacy note: all data processed on-device.
+
+### Camera Capture Fix
+- **Dynamic Photo Dimensions**: `CameraManager.capturePhoto()` now reads `supportedMaxPhotoDimensions` from the active format instead of hardcoding 4032×3024, preventing `NSInvalidArgumentException` crashes on devices where the active format doesn't support that exact size.
+
+### AR Barcode Detection
+- **ARKit Frame Processing**: `SpatialScoreOverlayView.ARCameraView` now uses a `Coordinator` as `ARSessionDelegate` to run `VNDetectBarcodesRequest` on live AR frames at 2fps, feeding detected barcodes into `SpatialProductDetector`.
+- **iOS Camera Polling**: `SpatialProductDetector.startTracking()` on iOS polls `CameraManager.extractedBarcodeURLs` for barcode detections at 500ms intervals.
+
+### Files Changed
+- `[MODIFY]` `DiverKit/Sources/DiverKit/Services/ESGEnrichmentService.swift` — Added `productName`/`brand` parsing, UPC Item DB fallback cascade
+- `[MODIFY]` `DiverShared/Sources/DiverShared/CommerceTypes.swift` — Added `productName`/`brand` to `ESGEnrichment`
+- `[MODIFY]` `View/Commerce/Spatial/SpatialProductDetector.swift` — Rewrote `scoreProduct()` with barcode lookup, real scores, reasoning
+- `[MODIFY]` `View/Commerce/Spatial/ProductScoreAttachment.swift` — Added brand, summary, wider card
+- `[MODIFY]` `View/Commerce/Spatial/SpatialScoreOverlayView.swift` — AR barcode detection, pass brand/summary
+- `[MODIFY]` `View/Commerce/ProductScoreOverlayView.swift` — Added methodology info sheet with ⓘ button
+- `[MODIFY]` `DiverKit/Sources/DiverKit/Services/CameraManager.swift` — Dynamic photo dimensions
 
 ### ML-Sharp Edge Integration & RealityKit 3D
 - **EdgeDaemon Capabilities**: Created `MLSharpService.swift` on the macOS daemon to wrap Apple's `ml-sharp` Python execution via `Process()`. Added the `runMLSharp` method to the distributed `EdgeInferenceActor`, securely exposing the capability to the iOS client.

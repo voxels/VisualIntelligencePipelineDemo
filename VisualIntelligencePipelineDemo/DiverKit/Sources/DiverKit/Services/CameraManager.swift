@@ -227,7 +227,17 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
         }
         
         let settings = AVCapturePhotoSettings()
-        settings.maxPhotoDimensions = CMVideoDimensions(width: 4032, height: 3024) // Replaces `isHighResolutionPhotoEnabled` (iOS 16+)
+        
+        // Use the largest supported photo dimension from the active device format.
+        // Hardcoding 4032x3024 crashes if the active format doesn't list that exact size.
+        #if os(iOS)
+        if let device = (session.inputs.first as? AVCaptureDeviceInput)?.device {
+            let supported = device.activeFormat.supportedMaxPhotoDimensions
+            if let largest = supported.max(by: { ($0.width * $0.height) < ($1.width * $1.height) }) {
+                settings.maxPhotoDimensions = largest
+            }
+        }
+        #endif
         
         // Request depth data if available
         #if os(iOS)

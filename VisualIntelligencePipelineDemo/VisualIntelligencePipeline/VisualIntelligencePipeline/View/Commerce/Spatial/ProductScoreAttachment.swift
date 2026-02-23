@@ -10,23 +10,46 @@
 import SwiftUI
 
 /// Spatial score card attachment for AR overlay.
-/// Displays composite score, strategy breakdown, and recommendation.
+/// Displays composite score, strategy breakdown, recommendation, and intelligence summary.
 struct ProductScoreAttachment: View {
     let productName: String
+    let brand: String?
     let compositeScore: Float
     let strategyScores: [(name: String, score: Float)]
     let recommendation: String
+    let summary: String?
     
     @State private var isExpanded = false
+    
+    init(
+        productName: String,
+        brand: String? = nil,
+        compositeScore: Float,
+        strategyScores: [(name: String, score: Float)],
+        recommendation: String,
+        summary: String? = nil
+    ) {
+        self.productName = productName
+        self.brand = brand
+        self.compositeScore = compositeScore
+        self.strategyScores = strategyScores
+        self.recommendation = recommendation
+        self.summary = summary
+    }
     
     var body: some View {
         VStack(spacing: 12) {
             // Composite score header
             HStack {
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(productName)
                         .font(.headline)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                    if let brand {
+                        Text(brand)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     Text(recommendation)
                         .font(.caption)
                         .foregroundStyle(recommendationColor)
@@ -48,6 +71,23 @@ struct ProductScoreAttachment: View {
                         .monospacedDigit()
                 }
                 .frame(width: 52, height: 52)
+            }
+            
+            // Intelligence summary
+            if let summary, !summary.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.caption2)
+                        .foregroundStyle(.blue)
+                    Text(summary)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.blue.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
             }
             
             // Strategy breakdown (expandable)
@@ -82,7 +122,7 @@ struct ProductScoreAttachment: View {
             }
         }
         .padding()
-        .frame(width: 260)
+        .frame(width: 280)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
         .shadow(color: .black.opacity(0.15), radius: 10, y: 5)
         .onTapGesture {
@@ -115,15 +155,16 @@ struct ProductScoreAttachment: View {
 
 #Preview {
     ProductScoreAttachment(
-        productName: "Organic Coffee Beans",
+        productName: "Organic Dark Chocolate Bar",
+        brand: "Green & Black's",
         compositeScore: 0.78,
         strategyScores: [
             ("Ethics", 0.85),
-            ("Value", 0.72),
-            ("Health", 0.90),
-            ("Durability", 0.55),
+            ("Health", 0.72),
+            ("Safety", 0.90),
         ],
-        recommendation: "Buy Now"
+        recommendation: "✅ Recommended — strong scores",
+        summary: "Eco-Score B (good) · Certified: Fair Trade, Organic · NOVA 2/4 processing · via Open Food Facts"
     )
     .padding(40)
 }

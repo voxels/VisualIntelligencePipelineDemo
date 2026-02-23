@@ -77,8 +77,8 @@ struct ImageProfileView: View {
                 
                 if let router = router, let system = system {
                     
-                    let decision = await router.shouldOffload(task: .visionAnalysis)
-                    if case .edge(let node, _) = decision, node.availableModels.contains("ml-sharp") {
+                    let decision = await router.shouldOffload(task: .mlSharp)
+                    if case .edge(let node, _) = decision {
                         let identity = EdgeActorID(id: "EdgeInference", nodeName: node.deviceName)
                         let edgeActor = try EdgeInferenceActor.resolve(id: identity, using: system)
                         

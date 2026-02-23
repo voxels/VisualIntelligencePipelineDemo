@@ -344,6 +344,10 @@ public struct ESGEnrichment: Codable, Sendable {
     public let countriesSold: [String]      // Countries where sold
     public let stores: [String]             // Retail availability
     
+    // ── Product Identity (from Open Facts) ──
+    public let productName: String?         // e.g., "Organic Dark Chocolate Bar"
+    public let brand: String?               // e.g., "Green & Black's"
+    
     public init(
         carbonIntensity: Float? = nil,
         dataQualityTier: Int,
@@ -363,7 +367,9 @@ public struct ESGEnrichment: Codable, Sendable {
         quantity: String? = nil,
         genericName: String? = nil,
         countriesSold: [String] = [],
-        stores: [String] = []
+        stores: [String] = [],
+        productName: String? = nil,
+        brand: String? = nil
     ) {
         self.carbonIntensity = carbonIntensity
         self.dataQualityTier = dataQualityTier
@@ -384,13 +390,21 @@ public struct ESGEnrichment: Codable, Sendable {
         self.genericName = genericName
         self.countriesSold = countriesSold
         self.stores = stores
+        self.productName = productName
+        self.brand = brand
     }
     
     /// Builds a text summary of all available context for SLM consumption.
     /// Only includes fields that have data — no empty placeholders.
     public var contextSummary: String {
         var parts: [String] = []
-        if let name = genericName { parts.append("Product: \(name)") }
+        if let name = productName ?? genericName {
+            if let b = brand {
+                parts.append("Product: \(name) by \(b)")
+            } else {
+                parts.append("Product: \(name)")
+            }
+        }
         if let qty = quantity { parts.append("Size: \(qty)") }
         if let ingredients = ingredientsText { parts.append("Ingredients: \(ingredients)") }
         if !allergens.isEmpty { parts.append("Allergens: \(allergens.joined(separator: ", "))") }

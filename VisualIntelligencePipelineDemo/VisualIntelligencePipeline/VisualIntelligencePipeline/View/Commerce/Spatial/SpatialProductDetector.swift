@@ -72,9 +72,8 @@ final class SpatialProductDetector {
         print("📷 SpatialDetector: Stopped tracking")
     }
     #else
-    /// On iOS/iPadOS, spatial detection is handled by the camera pipeline.
-    /// This is a no-op — the existing VisualIntelligenceViewModel handles
-    /// product detection via Vision framework barcode/classification.
+    /// On iOS/iPadOS, barcode detection is handled by the ARCameraView coordinator
+    /// which runs VNDetectBarcodesRequest on ARKit frames and adds products directly.
     func startTracking() async throws {
         print("ℹ️ SpatialDetector: Using camera-based detection on iOS")
         isTracking = true
@@ -88,92 +87,173 @@ final class SpatialProductDetector {
     
     // MARK: - Commerce Scoring (Edge-First)
     
-    /// Score a detected product using edge commerce actors when available,
-    /// falling back to local services. Updates the product's scores in place.
+    /// Score a detected product by looking up its barcode in Open Facts / UPC Item DB,
+    /// then enriching with government safety data. Updates the product's name, scores,
+    /// and intelligence summary in place.
     func scoreProduct(at index: Int) async {
         guard index < detectedProducts.count else { return }
         let product = detectedProducts[index]
         
+        // ── Step 1: Barcode → Product Identity (ESG enrichment cascade) ──
+        let esgService = ESGEnrichmentService()
+        var esgEnrichment: ESGEnrichment? = nil
+        
+        if let barcode = product.barcode {
+            esgEnrichment = try? await esgService.enrich(barcode: barcode)
+            
+            if let enrichment = esgEnrichment {
+                // Update product name from database
+                let resolvedName = enrichment.productName ?? enrichment.genericName ?? product.productName
+                let resolvedBrand = enrichment.brand
+                
+                guard index < detectedProducts.count else { return }
+                detectedProducts[index].productName = resolvedName
+                detectedProducts[index].brand = resolvedBrand
+                
+                print("🏷️ SpatialDetector: Resolved barcode \(barcode) → \(resolvedName) by \(resolvedBrand ?? "unknown")")
+            }
+        }
+        
+        // ── Step 2: Build meaningful scores from real data ──
+        let resolvedProduct = index < detectedProducts.count ? detectedProducts[index] : product
+        
         let classification = ProductClassification(
             productID: UUID().uuidString,
-            name: product.productName,
-            category: product.classification,
-            brand: nil,
-            barcode: nil,
+            name: resolvedProduct.productName,
+            category: resolvedProduct.classification,
+            brand: resolvedProduct.brand,
+            barcode: resolvedProduct.barcode,
             confidence: 0.5
         )
         
         let router = await MainActor.run { Services.shared.edgeRouter }
         let system = await MainActor.run { Services.shared.actorSystem }
         
-        // Parallel enrichment — edge-first where available
-        async let govData = fetchGovernmentData(product: classification, router: router, system: system)
-        async let companyESG = fetchCompanyESG(brand: classification.name, router: router, system: system)
-        async let platforms = fetchAffiliatePlatforms(product: classification, router: router, system: system)
-        async let nowcast = fetchNowcast(category: classification.category, router: router, system: system)
+        // Government safety data (parallel)
+        let gov = await fetchGovernmentData(product: classification, router: router, system: system)
         
-        let gov = await govData
-        let esg = await companyESG
-        let ranked = await platforms
-        let price = await nowcast
-        
-        // Composite score from available data
+        // Build scores from ESG + Government data
         var scores: [(name: String, score: Float)] = []
+        var summaryParts: [String] = []
         var totalScore: Float = 0
         var scoreCount: Float = 0
         
-        if let esg {
-            let esgScore = min((esg.overallScore ?? 0.5) / 100.0, 1.0)
-            scores.append(("ESG", esgScore))
+        // ESG Score — from eco-score grade, certifications, data quality
+        if let enrichment = esgEnrichment {
+            var esgScore: Float = 0.5 // Default baseline
+            
+            // Eco-Score (A=0.95, B=0.75, C=0.55, D=0.35, E=0.15)
+            if let ecoGrade = enrichment.ecoScore?.lowercased() {
+                switch ecoGrade {
+                case "a": esgScore = 0.95; summaryParts.append("Eco-Score A (excellent)")
+                case "b": esgScore = 0.75; summaryParts.append("Eco-Score B (good)")
+                case "c": esgScore = 0.55; summaryParts.append("Eco-Score C (moderate)")
+                case "d": esgScore = 0.35; summaryParts.append("Eco-Score D (below average)")
+                case "e": esgScore = 0.15; summaryParts.append("Eco-Score E (poor)")
+                default: break
+                }
+            }
+            
+            // Certification bonus
+            if !enrichment.certifications.isEmpty {
+                esgScore = min(1.0, esgScore + Float(enrichment.certifications.count) * 0.05)
+                let certs = enrichment.certifications.prefix(3).joined(separator: ", ")
+                summaryParts.append("Certified: \(certs)")
+            }
+            
+            // Carbon intensity
+            if let carbon = enrichment.carbonIntensity {
+                let carbonScore: Float = carbon < 1.0 ? 0.9 : carbon < 3.0 ? 0.7 : carbon < 10.0 ? 0.4 : 0.2
+                esgScore = (esgScore + carbonScore) / 2.0
+                summaryParts.append(String(format: "%.1f kg CO₂e", carbon))
+            }
+            
+            scores.append(("Ethics", esgScore))
             totalScore += esgScore
             scoreCount += 1
+            
+            // Health Score — from NOVA group + Nutri-Score
+            if enrichment.novaGroup != nil || enrichment.nutriScore != nil {
+                var healthScore: Float = 0.5
+                
+                if let nova = enrichment.novaGroup {
+                    healthScore = Float(5 - nova) / 4.0 // NOVA 1=1.0, 4=0.25
+                    summaryParts.append("NOVA \(nova)/4 processing")
+                }
+                
+                if let ns = enrichment.nutriScore?.lowercased() {
+                    let nsScore: Float = switch ns {
+                    case "a": 0.95
+                    case "b": 0.75
+                    case "c": 0.55
+                    case "d": 0.35
+                    case "e": 0.15
+                    default: 0.5
+                    }
+                    healthScore = (healthScore + nsScore) / 2.0
+                    summaryParts.append("Nutri-Score \(ns.uppercased())")
+                }
+                
+                scores.append(("Health", healthScore))
+                totalScore += healthScore
+                scoreCount += 1
+            }
+            
+            // Origin/Sourcing
+            if let origin = enrichment.origins, !origin.isEmpty {
+                summaryParts.append("Origin: \(origin)")
+            }
+            
+            // Source attribution
+            summaryParts.append("via \(enrichment.source)")
         }
         
+        // Safety Score — from government data
         if let gov {
-            // Lower score = more concerns
-            let safetyScore: Float = gov.hasConcerns ? 0.3 : 0.9
+            let safetyScore: Float = gov.hasConcerns ? 0.2 : 0.9
             scores.append(("Safety", safetyScore))
             totalScore += safetyScore
             scoreCount += 1
-        }
-        
-        if let price {
-            // Map price trend to score
-            let trendScore: Float = switch price.projectedDirection {
-            case .falling: 0.8     // Good time to buy
-            case .stable: 0.6
-            case .rising: 0.3      // Prices going up
+            
+            if gov.hasConcerns {
+                summaryParts.insert("⚠️ \(gov.recalls.count) safety recall(s)", at: 0)
             }
-            scores.append(("Price", trendScore))
-            totalScore += trendScore
-            scoreCount += 1
-        }
-        
-        if let ranked, !ranked.isEmpty {
-            scores.append(("Platforms", Float(ranked.count) / 5.0))
         }
         
         let composite = scoreCount > 0 ? totalScore / scoreCount : 0.5
         
-        // Build recommendation
+        // Build recommendation with reasoning
         let recommendation: String
         if let gov, gov.hasConcerns {
-            recommendation = "⚠️ Safety concerns — \(gov.recalls.count) recalls"
-        } else if composite >= 0.7 {
-            recommendation = "✅ Good buy — strong ethical score"
-        } else if composite >= 0.4 {
-            recommendation = "⏳ Consider waiting — moderate score"
+            recommendation = "⚠️ \(gov.recalls.count) safety recall(s) found — review before purchasing"
         } else {
-            recommendation = "❌ Low score — review concerns"
+            // Cite the strongest signal driving the recommendation
+            let sorted = scores.sorted { $0.score > $1.score }
+            let topSignal = sorted.first.map { "\($0.name) \(Int($0.score * 100))%" } ?? ""
+            let weakSignal = sorted.last.map { $0.score < 0.5 ? " — \($0.name) low (\(Int($0.score * 100))%)" : "" } ?? ""
+            
+            if composite >= 0.7 {
+                recommendation = "✅ Recommended — \(topSignal)\(weakSignal)"
+            } else if composite >= 0.4 {
+                let reason = sorted.filter { $0.score < 0.5 }.map { "\($0.name) \(Int($0.score * 100))%" }.joined(separator: ", ")
+                recommendation = "⏳ Wait — \(reason.isEmpty ? "moderate scores" : reason)"
+            } else {
+                let reason = sorted.filter { $0.score < 0.4 }.map { "\($0.name) \(Int($0.score * 100))%" }.joined(separator: ", ")
+                recommendation = "❌ Not recommended — \(reason.isEmpty ? "low scores across the board" : reason)"
+            }
         }
+        
+        // Build summary
+        let summary = summaryParts.isEmpty ? nil : summaryParts.joined(separator: " · ")
         
         // Update product
         guard index < detectedProducts.count else { return }
         detectedProducts[index].compositeScore = composite
         detectedProducts[index].strategyScores = scores
         detectedProducts[index].recommendation = recommendation
+        detectedProducts[index].summary = summary
         
-        print("🛒 SpatialDetector: Scored \(classification.name) → composite=\(String(format: "%.2f", composite)), \(scores.count) strategies")
+        print("🛒 SpatialDetector: Scored \(detectedProducts[index].productName) → composite=\(String(format: "%.0f%%", composite * 100)), \(scores.count) strategies")
     }
     
     // MARK: - Edge-First Service Routing
@@ -274,6 +354,9 @@ struct SpatialDetectedProduct: Identifiable {
     
     /// Pipeline-generated scores (populated after scoring).
     var productName: String = "Detected Object"
+    var brand: String? = nil
+    var barcode: String? = nil
+    var summary: String? = nil
     var compositeScore: Float = 0.0
     var strategyScores: [(name: String, score: Float)] = []
     var recommendation: String = "Analyzing…"

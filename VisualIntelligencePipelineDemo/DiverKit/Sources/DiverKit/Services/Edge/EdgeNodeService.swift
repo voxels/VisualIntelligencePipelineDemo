@@ -496,6 +496,12 @@ public final class PipelineEdgeRouter: Sendable {
             
         case .commerceRouting, .agenticSearch:
             return .edge(node: node, reason: "Offloading \(task.rawValue) to \(node.deviceName)")
+            
+        case .mlSharp:
+            guard node.availableModels.contains("ml-sharp") else {
+                return .local(reason: "Edge node does not have ml-sharp capability")
+            }
+            return .edge(node: node, reason: "Offloading ML-Sharp to \(node.deviceName)")
         }
     }
     
@@ -524,6 +530,7 @@ public enum EdgeTask: String, Sendable {
     case esgEnrichment
     case commerceRouting
     case agenticSearch
+    case mlSharp
 }
 
 /// Result of edge routing decision.

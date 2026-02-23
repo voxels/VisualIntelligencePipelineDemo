@@ -68,6 +68,12 @@ public actor ESGEnrichmentService: ESGEnriching {
             }
         }
         
+        // Fallback: UPC Item DB (covers non-food UPC/EAN barcodes)
+        if let enrichment = try await queryUPCItemDB(barcode: barcode) {
+            cache[barcode] = CachedEntry(enrichment: enrichment, expiresAt: Date().addingTimeInterval(cacheTTL))
+            return enrichment
+        }
+        
         return nil
     }
     
@@ -157,6 +163,8 @@ public actor ESGEnrichmentService: ESGEnriching {
         let packagingText = product["packaging_text"] as? String
         let quantity = product["quantity"] as? String
         let genericName = product["generic_name"] as? String
+        let productName = product["product_name"] as? String
+        let brand = product["brands"] as? String
         let countriesTags = (product["countries_tags"] as? [String] ?? []).map { tag in
             tag.replacingOccurrences(of: "en:", with: "").replacingOccurrences(of: "-", with: " ").capitalized
         }
@@ -231,7 +239,56 @@ public actor ESGEnrichmentService: ESGEnriching {
             quantity: quantity,
             genericName: genericName,
             countriesSold: countriesTags,
-            stores: storesList
+            stores: storesList,
+            productName: productName,
+            brand: brand
+        )
+    }
+    
+    // MARK: - UPC Item DB Fallback
+    
+    /// Queries UPC Item DB (https://api.upcitemdb.com) for product identity.
+    /// Free tier: 100 requests/day, no API key needed.
+    /// Returns minimal ESGEnrichment with product name/brand/category for display.
+    private func queryUPCItemDB(barcode: String) async throws -> ESGEnrichment? {
+        let urlString = "https://api.upcitemdb.com/prod/trial/lookup?upc=\(barcode)"
+        guard let url = URL(string: urlString) else { return nil }
+        
+        var request = URLRequest(url: url)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("VisualIntelligence iOS App", forHTTPHeaderField: "User-Agent")
+        
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            return nil
+        }
+        
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let items = json["items"] as? [[String: Any]],
+              let item = items.first else {
+            return nil
+        }
+        
+        let title = item["title"] as? String
+        let brand = item["brand"] as? String
+        let category = item["category"] as? String
+        let description = item["description"] as? String
+        
+        guard title != nil || brand != nil else { return nil }
+        
+        print("🏷️ [ESG] UPC Item DB hit: \(title ?? "unknown") by \(brand ?? "unknown")")
+        
+        return ESGEnrichment(
+            carbonIntensity: nil,
+            dataQualityTier: 4,
+            certifications: [],
+            ecoScore: nil,
+            source: "UPC Item DB",
+            genericName: description ?? category,
+            productName: title,
+            brand: brand
         )
     }
     

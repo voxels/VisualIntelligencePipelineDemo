@@ -19,9 +19,27 @@ extension ProcessedItem {
             return url
         }
         
-        // 2. Try main URL if it's http/https
+        // 2. Try extracting from secretatomics:// deep link query parameter
+        if let mainUrlStr = url, mainUrlStr.hasPrefix("secretatomics://") {
+            if let deepURL = URL(string: mainUrlStr),
+               let components = URLComponents(url: deepURL, resolvingAgainstBaseURL: false),
+               let linkParam = components.queryItems?.first(where: { $0.name == "link" || $0.name == "url" })?.value,
+               let extractedURL = URL(string: linkParam),
+               ["http", "https"].contains(extractedURL.scheme?.lowercased()) {
+                return extractedURL
+            }
+        }
+        
+        // 3. Try main URL if it's http/https
         if let mainUrlStr = url, let url = URL(string: mainUrlStr), ["http", "https"].contains(url.scheme?.lowercased()) {
             return url
+        }
+        
+        // 4. Try QR code payload if it's a URL
+        if let qrPayload = qrContext?.payload,
+           let qrURL = URL(string: qrPayload),
+           ["http", "https"].contains(qrURL.scheme?.lowercased()) {
+            return qrURL
         }
         
         return nil
