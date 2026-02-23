@@ -456,7 +456,7 @@ struct FinancialSnapshot: Codable, Sendable {
 | **NowcastingService** | `distributed actor` | **The Accelerate Engine:** Receives a commercial category. Executes CPU-intensive Dynamic Factor Model (DFM) LAPACK tensor math over dense historical BLS/FRED arrays locally on the Mac to return a simple 14-day price trajectory to the Vision Pro or iPhone HUD. |
 | **ESGEnrichmentService** | `distributed actor` | **The Cache Guardian:** Prevents the iPhone from making redundant, battery-draining network calls. The Mac queries Climate TRACE and Open Food Facts, caches the results locally for 24h, and serves instant carbon scores to local network peers. |
 | **APIKeyService** | `distributed actor` | Prevents credential leakage. API Keys are stored strictly in the Edge Node's encrypted `.Keys` CloudKit container and are never transmitted to iOS clients. The Edge Node makes all exterior API queries on behalf of the client. |
-| **MLSharpService** | `distributed actor` | **The Python Bridge (Planned):** Orchestrates CLI execution of Python algorithms via `Process()`. Manages the local `apple/ml-sharp` repository for advanced semantic edge manipulation that is unsuited for native Swift implementation. |
+| **MLSharpService** | `distributed actor` | **The Python Bridge (Planned):** Orchestrates CLI execution of Python algorithms via `Process()`. Manages the local `apple/ml-sharp` repository to return 3D Gaussian Splats (rendered via RealityKit) for advanced semantic edge manipulation that is unsuited for native Swift implementation. |
 
 ### 4.8 Library Maintenance Pipeline
 
@@ -494,6 +494,7 @@ When a capture or link enters the system, it proceeds through these stages **seq
 
 3. Vision Analysis (single `analyzeVisualContent` pass — `IntelligenceProcessor.executePipeline`)
    ├─ OCR text recognition        → pipelineContext.ocrText
+   ├─ Face Vector Recognition      → item.contactIdentifiers (matches feature prints against PhotoKit-bootstrapped `PersonVector` DB)
    ├─ QR code detection            → pipelineContext.qrPayloads (+ web enrichment if URL)
    ├─ Semantic classification      → pipelineContext.visualTags
    ├─ Document segmentation        → pipelineContext.documentContent (perspective-corrected)
@@ -564,7 +565,7 @@ Visual Intelligence relies on heavily reusable, standardized generic components 
 |------|-------------|
 | **Core Navigation** | `ContentView` (root), `SidebarView` (session-based hierarchy). |
 | **Capture & Camera** | `VisualIntelligenceView` (lens, glow overlays, detection results). |
-| **Review & Edit** | `ReferenceDetailView` (metadata, relationships), `EditLocationView` (map coordinates), `ConceptWeightingSection`. |
+| **Review & Edit** | The `ReferenceDetailView` router dynamically switches to specialized profiles: `ProductProfileView`, `DocumentProfileView`, `WebLinkProfileView`, `PlaceProfileView`, or `PersonProfileView`. Includes `EditLocationView`. |
 | **Edge & Settings** | `SettingsView` (library maintenance, edge node connection status), `QueueProgressView`. |
 | **Commerce (iOS/visionOS)** | `ProductScoreOverlayView`, `NowcastChartView`, `SpatialProductPanelView` (AR HUDs). |
 

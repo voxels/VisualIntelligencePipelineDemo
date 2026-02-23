@@ -24,6 +24,7 @@ The project is modularized using Swift Package Manager:
 ## Visual Intelligence Features
 
 *   **Intelligent Sifting:** Uses Vision framework to detect subjects in images and "sift" them out from the background with proper alpha channel handling.
+*   **Person Capture & Identity:** Leverages Apple's PhotoKit (`PHPerson`, `PHAsset`) to securely bootstrap a local `PersonVector` database, allowing Vision feature prints to identify faces in real-time instantly.
 *   **Context Enrichment:** Enriches captured items with:
     *   **Location:** MapKit reverse geocoding (Landmarks/Addresses) with contact detection (Home, friends), and user-pinnable persistence. Foursquare is available in the location editing UI for manual searches.
     *   **Web:** Link metadata extraction and rich link previews for web URLs and QR codes.
@@ -145,7 +146,8 @@ cd DiverShared && swift test
 *   `View/VisualIntelligenceView.swift` — Camera and capture UI
 *   `View/SidebarView.swift` — Main navigation sidebar (942 lines, delegates to 7 child views in `View/Sidebar/`)
 *   `View/Sidebar/` — Extracted child views: `SessionRowLabel`, `SidebarSessionRow`, `ItemRow`, `ItemRowWithActions`, `ThumbnailView`, `DailySummaryCard`, `ItemIconConfig`
-*   `View/ReferenceDetailView.swift` — Item detail view (media info, aesthetics score, capture siblings, references)
+*   `View/ReferenceDetailView.swift` — Unified router view that dynamically loads domain-specific UI profiles depending on context.
+*   `View/SpecializedProfiles/` — Extracted profile views: `ProductProfileView`, `DocumentProfileView`, `WebLinkProfileView`, `PlaceProfileView`, `PersonProfileView`, and shared headers/footers.
 *   `View/ContentView.swift` — Root content view
 *   `View/EditLocationView.swift` — Location editing for individual items
 *   `View/EditSessionLocationView.swift` — Bulk location editing for sessions
