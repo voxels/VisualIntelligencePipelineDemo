@@ -313,14 +313,19 @@ public final class MetadataPipelineService: @unchecked Sendable {
         // Cancel current queue work to avoid conflict/slowness
         currentTask?.cancel()
         
-        // CRITICAL: Fetch the item from THIS service's context to avoid context mismatch
+        // Create a private background ModelContext — do NOT use activeContext/modelContext
+        // which are main-thread bound and would cause "Unbinding from the main queue" warnings.
+        let ctx = ModelContext(modelContainer)
+        ctx.autosaveEnabled = false
+        
+        // CRITICAL: Fetch the item from our private context to avoid context mismatch
         // The passed item may be from a different context (e.g., view's context)
         let itemID = item.id
         let fetchDescriptor = FetchDescriptor<ProcessedItem>(
             predicate: #Predicate { $0.id == itemID }
         )
         
-        guard let localItem = try activeContext.fetch(fetchDescriptor).first else {
+        guard let localItem = try ctx.fetch(fetchDescriptor).first else {
             print("❌ processItemImmediately: Could not find item \(itemID) in pipeline context")
             throw NSError(domain: "MetadataPipelineService", code: 404, userInfo: [NSLocalizedDescriptionKey: "Item not found"])
         }
@@ -328,10 +333,10 @@ public final class MetadataPipelineService: @unchecked Sendable {
         localItem.statusRaw = ProcessingStatus.processing.rawValue
         localItem.updatedAt = Date() // CRITICAL: Update timestamp to prevent zombie check from marking as stalled
         localItem.processingLog.append("\(Date().formatted()): Starting high-priority 'Process Now' workflow.")
-        try? activeContext.save()
+        try? ctx.save()
         
         do {
-            let localPipeline = LocalPipelineService(modelContext: modelContext)
+            let localPipeline = LocalPipelineService(modelContext: ctx)
             
             let targetURL = localItem.url
             let targetTitle = localItem.title
@@ -369,12 +374,12 @@ public final class MetadataPipelineService: @unchecked Sendable {
             
             if let url = targetURL {
                 let urlFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.url == url })
-                input = try? activeContext.fetch(urlFetch).first
+                input = try? ctx.fetch(urlFetch).first
             }
             
             if input == nil, let title = targetTitle {
                 let titleFetch = FetchDescriptor<LocalInput>(predicate: #Predicate { $0.text == title })
-                input = try? activeContext.fetch(titleFetch).first
+                input = try? ctx.fetch(titleFetch).first
             }
             
             // CRITICAL: Clear all calculated data for fresh reprocessing
@@ -400,14 +405,14 @@ public final class MetadataPipelineService: @unchecked Sendable {
                 let sessionFetch = FetchDescriptor<SessionMetadata>(
                     predicate: #Predicate { $0.sessionID == sessionID }
                 )
-                if let session = try? activeContext.fetch(sessionFetch).first {
+                if let session = try? ctx.fetch(sessionFetch).first {
                     session.summary = nil
                     session.updatedAt = Date()
                     localItem.processingLog.append("\(Date().formatted()): Cleared parent session summary for regeneration.")
                 }
             }
             
-            try? activeContext.save()
+            try? ctx.save()
             
             // Create descriptor with the item's actual ID to ensure correct item is updated
             let descriptor = DiverItemDescriptor(
@@ -452,7 +457,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
                      rawPayload: imageData
                  )
                  
-                 activeContext.insert(fallbackInput)
+                 ctx.insert(fallbackInput)
                  _ = try await localPipeline.process(
                     input: fallbackInput,
                     descriptor: descriptor,
@@ -469,7 +474,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
             // CRITICAL: Set statusRaw directly (not through @Transient status) to ensure SwiftData persistence
             localItem.statusRaw = ProcessingStatus.ready.rawValue
             localItem.processingLog.append("\(Date().formatted()): Processing completed successfully.")
-            try activeContext.save()
+            try ctx.save()
             
             // Ingest into CLaRa's in-memory document index for immediate RAG searchability
             CLaRaLatentService.shared.ingestProcessedItem(
@@ -498,7 +503,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
             localItem.statusRaw = ProcessingStatus.failed.rawValue
             localItem.failureCount += 1
             localItem.processingLog.append("\(Date().formatted()): Processing failed - \(error.localizedDescription)")
-            try? activeContext.save()
+            try? ctx.save()
             print("❌ processItemImmediately failed: \(error)")
             throw error
         }
