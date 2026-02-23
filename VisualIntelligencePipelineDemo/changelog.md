@@ -2,6 +2,12 @@
 
 ## 2026-02-23 (b)
 
+### Edge Transport — Connection Serialization Fix
+- **Root Cause**: `NWTransportLayer.send()` reused a single `NWConnection` per node for concurrent requests. Two simultaneous CLaRa calls would interleave their frames — the second caller's `receive()` would read the first caller's response body bytes as a 4-byte length header, interpreting text like `{"su` as a multi-GB value, triggering `responseTooLarge`.
+- **Fix**: Added `ConnectionSerializer` actor that ensures only one send/receive pair is in-flight per connection at a time. Concurrent callers queue behind the actor's serialization boundary, preventing frame interleaving.
+- **Timeout Bump**: `requestTimeout` increased from 10s to 30s to accommodate CLaRa 7B inference latency.
+- `[MODIFY]` `DiverKit/Services/Edge/NWTransportLayer.swift` — Rewrote with `ConnectionSerializer` actor, separate `serializerStore`, non-nested lock access
+
 ### CLaRa RAG Index Persistence & Reconciliation
 - **Disk-Cached Document Index**: CLaRa's in-memory RAG `DocumentChunk` index is now persisted as compressed JSON (`Application Support/CLaRa/document_index.json.gz`). On relaunch, chunks load from disk instantly instead of re-scanning all ProcessedItems. Incremental indexing now actually works — only items updated since the last index run are re-chunked.
 - **`DocumentChunk` is `Codable`**: Added `Codable` conformance to enable JSON serialization of the term-indexed chunk store.
