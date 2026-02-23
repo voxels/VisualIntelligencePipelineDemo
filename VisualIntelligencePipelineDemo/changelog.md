@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-02-23 (c)
+
+### Self-Healing Edge Transport
+- **Connection invalidation on framing errors**: When `responseTooLarge`, `connectionFailed`, or any receive error occurs, the connection is now cancelled and removed from stores. The next request automatically creates a fresh TCP connection, preventing cascading failures where one bad frame corrupts all subsequent requests.
+- **0-length response guard**: Daemon error responses (`Data()`) now return `Data()` immediately without calling `NWConnection.receive(minimumIncompleteLength: 0, maximumLength: 0)`, which has undefined behavior.
+- **Diagnostic logging**: `responseTooLarge` now prints the raw 4-byte header in hex + ASCII, and `remoteCall` prints the first 200 bytes of failed decode responses.
+- `[MODIFY]` `DiverKit/Services/Edge/NWTransportLayer.swift` — Added `invalidateConnection(to:)`, `onFramingError` callback, 0-length guard
+- `[MODIFY]` `DiverKit/Services/Edge/VisualIntelligenceActorSystem.swift` — Diagnostic logging on decode failure
+
+### Model-Aware Edge Node Routing
+- **VLM/CLaRa model check**: `PipelineEdgeRouter.shouldOffload(.vlmInference)` now verifies the edge node's `availableModels` contains `clara` or `fastvlm` before offloading. Prevents routing CLaRa requests to the iPhone's own local EdgeDaemon (which can never run CLaRa on iOS).
+- **Agentic search model check**: `.agenticSearch` now requires `clara` in `availableModels`.
+- **Auto-connect tie-breaking by RAM**: `BonjourDiscoveryService` now sorts by TOPS (primary) then RAM (secondary). When TXT records haven't resolved yet (all 0 TOPS), the node with more RAM is preferred — Mac 96GB beats iPad 7GB.
+- `[MODIFY]` `DiverKit/Services/Edge/EdgeNodeService.swift` — Model availability guards for `vlmInference` and `agenticSearch`
+- `[MODIFY]` `DiverKit/Services/Edge/BonjourDiscoveryService.swift` — RAM tie-breaking in auto-connect sort
+
 ## 2026-02-23 (b)
 
 ### Edge Transport — Connection Serialization Fix

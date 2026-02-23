@@ -235,11 +235,17 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
             return nodeInfo
         }
         
-        let sortedNodes = discoveredNodes.sorted { $0.neuralEngineTOPS > $1.neuralEngineTOPS }
+        let sortedNodes = discoveredNodes.sorted {
+            // Primary: highest TOPS. Secondary: highest RAM (breaks ties when TXT not yet resolved = 0 TOPS).
+            if $0.neuralEngineTOPS != $1.neuralEngineTOPS {
+                return $0.neuralEngineTOPS > $1.neuralEngineTOPS
+            }
+            return $0.physicalMemoryGB > $1.physicalMemoryGB
+        }
         if let bestNode = sortedNodes.first {
             if currentConnection?.deviceName != bestNode.deviceName {
                 currentConnection = bestNode
-                print("🔗 BonjourDiscovery: Auto-connected to highest TOPS node = \(bestNode.deviceName) (\(bestNode.neuralEngineTOPS) TOPS)")
+                print("🔗 BonjourDiscovery: Auto-connected to best node = \(bestNode.deviceName) (\(bestNode.neuralEngineTOPS) TOPS, \(bestNode.physicalMemoryGB)GB RAM)")
                 // `currentConnection` property observer `didSet` automatically triggers `onNodeConnected?(bestNode.deviceName)`.
                 // A duplicate explicit call here was removed to prevent multi-connections.
             }

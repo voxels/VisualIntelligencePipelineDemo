@@ -484,6 +484,15 @@ public final class PipelineEdgeRouter: Sendable {
             guard node.physicalMemoryGB >= 8 else {
                  return .local(reason: "Edge node RAM (\(node.physicalMemoryGB)GB) too low for VLM inference")
             }
+            
+            // Require the node to actually have CLaRa or FastVLM models
+            let hasVLMCapability = node.availableModels.contains(where: {
+                $0.contains("clara") || $0.contains("fastvlm")
+            })
+            guard hasVLMCapability else {
+                return .local(reason: "Edge node \(node.deviceName) has no VLM/CLaRa models (available: \(node.availableModels))")
+            }
+            
             return .edge(node: node, reason: "Offloading VLM to \(node.deviceName) (\(node.physicalMemoryGB)GB RAM)")
             
         case .nowcasting:
@@ -494,7 +503,14 @@ public final class PipelineEdgeRouter: Sendable {
             // Network-bound tasks can run on either side
             return .local(reason: "Network tasks run locally for latency")
             
-        case .commerceRouting, .agenticSearch:
+        case .commerceRouting:
+            return .edge(node: node, reason: "Offloading \(task.rawValue) to \(node.deviceName)")
+            
+        case .agenticSearch:
+            // Agentic search requires CLaRa 7B — macOS edge only
+            guard node.availableModels.contains(where: { $0.contains("clara") }) else {
+                return .local(reason: "Edge node \(node.deviceName) has no CLaRa model for agentic search")
+            }
             return .edge(node: node, reason: "Offloading \(task.rawValue) to \(node.deviceName)")
             
         case .mlSharp:

@@ -13,6 +13,10 @@
 //  pairs — a second caller's receive would read the first caller's
 //  response body bytes as a length header, causing responseTooLarge.
 //
+//  Self-healing: When any framing error occurs (responseTooLarge,
+//  connectionFailed, decode mismatch), the connection is invalidated
+//  and the next request creates a fresh one.
+//
 
 import Foundation
 import Network
@@ -22,9 +26,12 @@ import os
 /// Without this, concurrent callers would interleave frames and corrupt the length-prefixed protocol.
 private actor ConnectionSerializer {
     private let connection: NWConnection
+    /// Callback to invalidate this connection in the parent transport's stores.
+    private let onFramingError: @Sendable (String) -> Void
     
-    init(connection: NWConnection) {
+    init(connection: NWConnection, onFramingError: @escaping @Sendable (String) -> Void) {
         self.connection = connection
+        self.onFramingError = onFramingError
     }
     
     /// Send a request frame and receive the response, atomically.
@@ -42,46 +49,70 @@ private actor ConnectionSerializer {
         }
         
         // 2. Receive the response (length-prefixed)
-        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Data, Error>) in
-            // Read 4-byte length header
-            connection.receive(minimumIncompleteLength: 4, maximumLength: 4) { content, _, _, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                guard let header = content, header.count == 4 else {
-                    continuation.resume(throwing: EdgeTransportError.connectionFailed)
-                    return
-                }
-                
-                let responseLength = header.withUnsafeBytes { $0.load(as: UInt32.self).bigEndian }
-                
-                guard responseLength < 50_000_000 else { // 50MB limit
-                    continuation.resume(throwing: EdgeTransportError.responseTooLarge)
-                    return
-                }
-                
-                // Read the response body
-                self.connection.receive(
-                    minimumIncompleteLength: Int(responseLength),
-                    maximumLength: Int(responseLength)
-                ) { body, _, _, error in
+        do {
+            return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Data, Error>) in
+                // Read 4-byte length header
+                connection.receive(minimumIncompleteLength: 4, maximumLength: 4) { [weak self] content, _, _, error in
                     if let error = error {
+                        self?.onFramingError("receive header error: \(error)")
                         continuation.resume(throwing: error)
-                    } else if let body = body {
-                        continuation.resume(returning: body)
-                    } else {
+                        return
+                    }
+                    
+                    guard let header = content, header.count == 4 else {
+                        self?.onFramingError("incomplete header (\(content?.count ?? 0) bytes)")
                         continuation.resume(throwing: EdgeTransportError.connectionFailed)
+                        return
+                    }
+                    
+                    let responseLength = header.withUnsafeBytes { $0.load(as: UInt32.self).bigEndian }
+                    
+                    // Handle 0-length response (daemon error/empty response)
+                    guard responseLength > 0 else {
+                        print("⚠️ [NWTransport] Empty response from daemon (0 bytes)")
+                        continuation.resume(returning: Data())
+                        return
+                    }
+                    
+                    guard responseLength < 50_000_000 else { // 50MB limit
+                        let hexBytes = header.map { String(format: "%02X", $0) }.joined(separator: " ")
+                        let asChars = String(data: header, encoding: .utf8) ?? "<non-utf8>"
+                        print("⚠️ [NWTransport] responseTooLarge: header=[\(hexBytes)] (chars='\(asChars)'), decoded length=\(responseLength)")
+                        self?.onFramingError("responseTooLarge: decoded \(responseLength) bytes")
+                        continuation.resume(throwing: EdgeTransportError.responseTooLarge)
+                        return
+                    }
+                    
+                    // Read the response body
+                    self?.connection.receive(
+                        minimumIncompleteLength: Int(responseLength),
+                        maximumLength: Int(responseLength)
+                    ) { [weak self] body, _, _, error in
+                        if let error = error {
+                            self?.onFramingError("receive body error: \(error)")
+                            continuation.resume(throwing: error)
+                        } else if let body = body {
+                            continuation.resume(returning: body)
+                        } else {
+                            self?.onFramingError("nil body after reading \(responseLength) bytes")
+                            continuation.resume(throwing: EdgeTransportError.connectionFailed)
+                        }
                     }
                 }
             }
+        } catch {
+            // Connection is likely corrupted — cancel it so we get a fresh one next time
+            connection.cancel()
+            throw error
         }
     }
 }
 
 /// Network framework transport for distributed actor calls.
 /// Length-prefixed framing over TCP with per-connection request serialization.
+///
+/// Self-healing: any framing error invalidates the connection, and the next
+/// request automatically creates a fresh TCP connection to the same node.
 public final class NWTransportLayer: EdgeTransportProtocol, Sendable {
     
     public let localNodeName: String
@@ -129,10 +160,30 @@ public final class NWTransportLayer: EdgeTransportProtocol, Sendable {
         frame.append(payload)
         
         // Serialize send+receive through the actor to prevent frame interleaving
-        return try await serializer.sendAndReceive(frame: frame)
+        do {
+            return try await serializer.sendAndReceive(frame: frame)
+        } catch {
+            // If it's a framing error, invalidate so next call reconnects
+            invalidateConnection(to: actorID.nodeName)
+            throw error
+        }
     }
     
     // MARK: - Connection Management
+    
+    /// Invalidate a connection and remove from stores.
+    /// The next call to getOrCreateConnection will establish a fresh TCP connection.
+    private func invalidateConnection(to nodeName: String) {
+        let conn: NWConnection? = connectionStore.withLock { connections in
+            let c = connections.removeValue(forKey: nodeName)
+            return c
+        }
+        serializerStore.withLock { serializers in
+            serializers.removeValue(forKey: nodeName)
+        }
+        conn?.cancel()
+        print("🔄 [NWTransport] Invalidated connection to \(nodeName) — next request will reconnect")
+    }
     
     /// Get or create a TCP connection and its serializer.
     private func getOrCreateConnection(to nodeName: String) async throws -> (NWConnection, ConnectionSerializer) {
@@ -150,6 +201,16 @@ public final class NWTransportLayer: EdgeTransportProtocol, Sendable {
             return (conn, ser)
         }
         
+        // Clean up any stale connection before creating a new one
+        connectionStore.withLock { connections in
+            if let old = connections.removeValue(forKey: nodeName) {
+                old.cancel()
+            }
+        }
+        serializerStore.withLock { serializers in
+            serializers.removeValue(forKey: nodeName)
+        }
+        
         // Create new TCP connection
         let params = NWParameters.tcp
         
@@ -162,7 +223,10 @@ public final class NWTransportLayer: EdgeTransportProtocol, Sendable {
         )
         
         let connection = NWConnection(to: endpoint, using: params)
-        let serializer = ConnectionSerializer(connection: connection)
+        let serializer = ConnectionSerializer(connection: connection) { [weak self] reason in
+            print("⚠️ [NWTransport] Framing error on \(nodeName): \(reason)")
+            self?.invalidateConnection(to: nodeName)
+        }
         
         // Store immediately so ARC doesn't deallocate before setup completes
         connectionStore.withLock { connections in
