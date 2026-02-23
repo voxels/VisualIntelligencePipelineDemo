@@ -360,6 +360,9 @@ struct SettingsView: View {
                             try? modelContext.delete(model: RecommendationData.self)
                         }
                         
+                        // Clear the persisted CLaRa RAG index
+                        CLaRaLatentService.shared.clearIndex()
+                        
                         if let cacheService = Services.shared.cloudCacheService as? CloudCacheService {
                             do {
                                 try await cacheService.deleteAllUserCachedGroups()

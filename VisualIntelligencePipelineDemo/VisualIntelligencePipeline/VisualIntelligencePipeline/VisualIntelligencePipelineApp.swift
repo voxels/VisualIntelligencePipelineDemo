@@ -204,6 +204,7 @@ struct VisualIntelligencePipelineApp: App {
         let searchService = AgenticSearchService(router: edgeRouter, system: actorSystem)
         Services.shared.agenticSearchService = searchService
         Services.shared.edgeRouter = edgeRouter
+        Services.shared.discoveryService = discoveryService
         Services.shared.actorSystem = actorSystem
         
         Task {

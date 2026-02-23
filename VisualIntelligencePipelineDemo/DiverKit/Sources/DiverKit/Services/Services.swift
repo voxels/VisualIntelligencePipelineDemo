@@ -24,6 +24,7 @@ public final class Services: @unchecked Sendable {
     public var localPipelineService: LocalPipelineService?
     public var agenticSearchService: AgenticSearchService?
     public var edgeRouter: PipelineEdgeRouter?
+    public var discoveryService: (any EdgeNodeDiscovering)?
     public var localDaemonService: EdgeDaemonService?
     public var actorSystem: VisualIntelligenceActorSystem?
     public var samService: (any SAM2Segmenting)?

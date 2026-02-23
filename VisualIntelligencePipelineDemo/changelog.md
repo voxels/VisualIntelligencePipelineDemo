@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-02-23 (b)
+
+### CLaRa RAG Index Persistence & Reconciliation
+- **Disk-Cached Document Index**: CLaRa's in-memory RAG `DocumentChunk` index is now persisted as compressed JSON (`Application Support/CLaRa/document_index.json.gz`). On relaunch, chunks load from disk instantly instead of re-scanning all ProcessedItems. Incremental indexing now actually works — only items updated since the last index run are re-chunked.
+- **`DocumentChunk` is `Codable`**: Added `Codable` conformance to enable JSON serialization of the term-indexed chunk store.
+- **Debounced Saves**: Disk writes are batched with a 2-second debounce (`scheduleSave`) to avoid rapid I/O during bulk pipeline processing.
+- **`removeDocument(id:)`**: New method to surgically remove a single document's chunks from the index when a ProcessedItem is deleted, with automatic debounced disk save.
+- **Delete Database Reconciliation**: `SettingsView.deleteDatabase()` now calls `CLaRaLatentService.shared.clearIndex()` to wipe the index (memory + disk + UserDefaults high-water mark) when the user erases all data.
+- **Rebuild Library Reconciliation**: After `maintainLibrary` completes, the CLaRa index is cleared and fully re-populated from the reconciled SwiftData container. Status shows "Rebuilding search index…" during this phase.
+- **Session Deletion Reconciliation**: `deleteSelectedSessions()` calls `removeDocument(id:)` for each item before SwiftData deletion, keeping the index in sync.
+
+### Chat with Librarian — Edge-Gated Visibility
+- **Edge Node Polling**: `SidebarView` now polls `BonjourDiscoveryService.isEdgeNodeConnected` every 5 seconds via a `.task` and stores the result in `@State var edgeNodeAvailable`.
+- **Conditional Display**: The "Chat with Librarian" button only appears when `edgeNodeAvailable || ContextQuestionService.isAvailable` — i.e., an actual inference backend (edge CLaRa or on-device SLM) can respond. Previously showed whenever RAM ≥ 8GB, which was misleading on iPads without a connected Mac.
+- **`Services.shared.discoveryService`**: Exposed the `BonjourDiscoveryService` instance from `Services` singleton so views can query edge connectivity without threading through `PipelineEdgeRouter`.
+
+### Files Changed
+- `[MODIFY]` `DiverKit/Services/CLaRaLatentService.swift` — Persistent index (Codable, zlib, load/save/scheduleSave), `removeDocument(id:)`, `clearIndex` wipes disk + UserDefaults
+- `[MODIFY]` `DiverKit/Services/Services.swift` — Added `discoveryService: (any EdgeNodeDiscovering)?`
+- `[MODIFY]` `DiverKit/ViewModel/SidebarViewModel.swift` — `rebuildLibrary` clears + repopulates CLaRa index, `deleteSelectedSessions` removes items from index
+- `[MODIFY]` `VisualIntelligencePipeline/View/SettingsView.swift` — `deleteDatabase` calls `CLaRaLatentService.shared.clearIndex()`
+- `[MODIFY]` `VisualIntelligencePipeline/View/SidebarView.swift` — `edgeNodeAvailable` polling, conditional `agenticSearchSection`
+- `[MODIFY]` `VisualIntelligencePipeline/VisualIntelligencePipelineApp.swift` — Register `discoveryService` in `Services.shared`
+
 ## 2026-02-23
 
 ### Commerce Intelligence — Full Pipeline Hookup & AR Session Lifecycle

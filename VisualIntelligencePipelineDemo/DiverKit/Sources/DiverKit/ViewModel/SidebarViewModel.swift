@@ -837,6 +837,8 @@ public final class SidebarViewModel {
             do {
                 let items = try context.fetch(itemFetch)
                 for item in items {
+                    // Remove from CLaRa RAG index before deleting
+                    _ = CLaRaLatentService.shared.removeDocument(id: item.id)
                     context.delete(item)
                 }
                 
@@ -1146,6 +1148,13 @@ public final class SidebarViewModel {
                         self.maintenanceStatus = status
                     }
                 }
+                
+                // Rebuild CLaRa RAG index after library reconciliation
+                Task { @MainActor in
+                    self.maintenanceStatus = "Rebuilding search index…"
+                }
+                CLaRaLatentService.shared.clearIndex()
+                await CLaRaLatentService.shared.populateIndex(container: context.container)
                 
                 Task { @MainActor in
                     self.isMaintaining = false

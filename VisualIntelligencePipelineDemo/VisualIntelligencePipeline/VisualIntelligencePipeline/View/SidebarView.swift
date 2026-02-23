@@ -48,6 +48,7 @@ struct SidebarView: View {
     @State private var queueCurrentItemTitle: String? = nil
     @State private var queueStatusMessage: String? = nil
     @State private var queueProgress: Double = 0
+    @State private var edgeNodeAvailable = false
     
     // Collection Renaming State
     @State private var collectionToRename: SessionCollection?
@@ -190,6 +191,15 @@ struct SidebarView: View {
                 let bgContext = ModelContext(container)
                 bgContext.autosaveEnabled = false
                 await viewModel.removeEmptySessions(context: bgContext)
+            }
+        }
+        .task {
+            // Poll edge node connectivity for the Chat with Librarian button
+            while !Task.isCancelled {
+                if let discovery = Services.shared.discoveryService {
+                    edgeNodeAvailable = await discovery.isEdgeNodeConnected
+                }
+                try? await Task.sleep(for: .seconds(5))
             }
         }
         .task(id: sessions.first?.sessionID) {
@@ -450,7 +460,7 @@ struct SidebarView: View {
     
     @ViewBuilder
     private var agenticSearchSection: some View {
-        if CLaRaLatentService.shared.isAvailable || Services.shared.agenticSearchService != nil {
+        if edgeNodeAvailable || ContextQuestionService.isAvailable {
             Section {
                 Button {
                     navigationManager.showingAgenticChat = true

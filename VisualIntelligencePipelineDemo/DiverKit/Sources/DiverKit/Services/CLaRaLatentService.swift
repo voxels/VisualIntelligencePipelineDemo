@@ -155,30 +155,95 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
     
     private var isLoading = false
     
-    // MARK: - In-Memory Document Store (RAG Index)
+    // MARK: - Persistent Document Store (RAG Index)
     
     /// A chunk of document text indexed for retrieval.
-    private struct DocumentChunk: Sendable {
+    private struct DocumentChunk: Sendable, Codable {
         let documentID: String
         let text: String
         let terms: Set<String>           // Lowercased, whitespace-split tokens
         let metadata: [String: String]
     }
     
-    /// Thread-safe in-memory document index.
+    /// Thread-safe document index — loaded from disk cache on first access.
     /// Documents are chunked at ingestion and matched by term overlap at query time.
     private var documentIndex: [DocumentChunk] = []
     private let indexLock = NSLock()
+    private var indexLoaded = false
+    private var pendingSaveTask: Task<Void, Never>?
+    
+    /// File URL for the persisted index cache.
+    private static var indexCacheURL: URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let dir = appSupport.appendingPathComponent("CLaRa")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("document_index.json.gz")
+    }
+    
+    /// Load the cached index from disk if not already loaded.
+    private func loadCachedIndexIfNeeded() {
+        guard !indexLoaded else { return }
+        indexLoaded = true
+        
+        let url = Self.indexCacheURL
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            DiverLogger.pipeline.info("🧩 [CLaRa] No cached index found — will build from scratch")
+            return
+        }
+        
+        do {
+            let compressed = try Data(contentsOf: url)
+            let data: Data
+            if let decompressed = try? (compressed as NSData).decompressed(using: .zlib) as Data {
+                data = decompressed
+            } else {
+                data = compressed // Fallback: maybe it's uncompressed
+            }
+            let chunks = try JSONDecoder().decode([DocumentChunk].self, from: data)
+            documentIndex = chunks
+            DiverLogger.pipeline.info("🧩 [CLaRa] Loaded cached index: \(chunks.count) chunks from disk")
+        } catch {
+            DiverLogger.pipeline.error("⚠️ [CLaRa] Failed to load cached index: \(error) — will rebuild")
+        }
+    }
+    
+    /// Save the current index to disk (debounced to avoid rapid writes during bulk ingestion).
+    private func scheduleSave() {
+        pendingSaveTask?.cancel()
+        pendingSaveTask = Task.detached(priority: .utility) { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+            guard !Task.isCancelled else { return }
+            self?.saveIndexToDisk()
+        }
+    }
+    
+    /// Write the index to disk as compressed JSON.
+    private func saveIndexToDisk() {
+        indexLock.lock()
+        let snapshot = documentIndex
+        indexLock.unlock()
+        
+        do {
+            let data = try JSONEncoder().encode(snapshot)
+            let compressed = try (data as NSData).compressed(using: .zlib) as Data
+            try compressed.write(to: Self.indexCacheURL, options: .atomic)
+            DiverLogger.pipeline.debug("🧩 [CLaRa] Saved index to disk: \(snapshot.count) chunks (\(compressed.count / 1024)KB)")
+        } catch {
+            DiverLogger.pipeline.error("⚠️ [CLaRa] Failed to save index: \(error)")
+        }
+    }
     
     /// Number of document chunks currently indexed.
     public var documentCount: Int {
         indexLock.lock()
         defer { indexLock.unlock() }
+        loadCachedIndexIfNeeded()
         return documentIndex.count
     }
     
-    /// Ingest a document into the in-memory RAG index.
+    /// Ingest a document into the RAG index.
     /// Splits text into overlapping chunks and indexes terms for retrieval.
+    /// Persists to disk after a debounced delay.
     /// - Parameters:
     ///   - id: Unique document/item identifier
     ///   - text: Full document text
@@ -189,6 +254,7 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
         let chunks = Self.chunkText(text, chunkSize: 512, overlap: 64)
         
         indexLock.lock()
+        loadCachedIndexIfNeeded()
         // Remove any existing chunks for this document (re-ingestion)
         documentIndex.removeAll { $0.documentID == id }
         
@@ -202,6 +268,8 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
         }
         documentIndex.append(contentsOf: newChunks)
         indexLock.unlock()
+        
+        scheduleSave()
         
         DiverLogger.pipeline.info("🧩 [CLaRa] Ingested document \(id): \(newChunks.count) chunks, index total: \(self.documentCount)")
         return newChunks.count
@@ -217,6 +285,7 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
         guard !queryTerms.isEmpty else { return [] }
         
         indexLock.lock()
+        loadCachedIndexIfNeeded()
         let index = documentIndex
         indexLock.unlock()
         
@@ -241,12 +310,34 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
         return results
     }
     
-    /// Clear the entire document index.
+    /// Remove a single document from the index by ID.
+    /// Call when a ProcessedItem is deleted.
+    /// - Returns: Number of chunks removed
+    @discardableResult
+    public func removeDocument(id: String) -> Int {
+        indexLock.lock()
+        loadCachedIndexIfNeeded()
+        let before = documentIndex.count
+        documentIndex.removeAll { $0.documentID == id }
+        let removed = before - documentIndex.count
+        indexLock.unlock()
+        
+        if removed > 0 {
+            scheduleSave()
+            DiverLogger.pipeline.info("🧩 [CLaRa] Removed document \(id): \(removed) chunks, index total: \(self.documentCount)")
+        }
+        return removed
+    }
+    
+    /// Clear the entire document index (memory and disk).
     public func clearIndex() {
         indexLock.lock()
         documentIndex.removeAll()
+        indexLoaded = true // Mark as loaded so we don't try to read stale file
         indexLock.unlock()
-        DiverLogger.pipeline.info("🧹 [CLaRa] Document index cleared")
+        try? FileManager.default.removeItem(at: Self.indexCacheURL)
+        UserDefaults.standard.removeObject(forKey: "CLaRa_lastIndexedAt")
+        DiverLogger.pipeline.info("🧹 [CLaRa] Document index cleared (memory + disk)")
     }
     
     // MARK: - Text Chunking Utilities
