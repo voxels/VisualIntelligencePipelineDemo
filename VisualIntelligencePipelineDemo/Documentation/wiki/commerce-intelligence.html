@@ -147,7 +147,8 @@
                         </tr>
                         <tr>
                             <td><code>ESGEnrichmentService</code></td>
-                            <td>4 Open *Facts databases (Food, Beauty, Pet Food, Products)</td>
+                            <td>4 Open *Facts databases (Food, Beauty, Pet Food, Products) → UPC Item DB fallback
+                                (upcitemdb.com). 24h cache.</td>
                             <td><code>ESGEnriching</code></td>
                         </tr>
                         <tr>
@@ -167,7 +168,8 @@
                         </tr>
                         <tr>
                             <td><code>APIKeyService</code></td>
-                            <td>iOS Keychain + iCloud Keychain sync</td>
+                            <td>CloudKit-backed key storage (<code>iCloud.com.secretatomics.knowmaps.Keys</code>). Skip
+                                CloudKit init in EdgeDaemon (no entitlement).</td>
                             <td>—</td>
                         </tr>
                         <tr>

@@ -589,7 +589,9 @@ public final class LocalPipelineService {
             let router = await MainActor.run { Services.shared.edgeRouter }
             let system = await MainActor.run { Services.shared.actorSystem }
             
-            if let router = router, let system = system, let imageData = rawPayload ?? existing.rawPayload {
+            if let router = router, let system = system,
+               let imageData = rawPayload ?? existing.rawPayload,
+               !imageData.isEmpty {
                 let decision = await router.shouldOffload(task: .vlmInference)
                 if case .edge(let node, _) = decision {
                     do {

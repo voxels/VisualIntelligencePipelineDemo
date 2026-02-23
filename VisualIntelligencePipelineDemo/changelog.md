@@ -1,6 +1,21 @@
 # Changelog
 
-## 2026-02-23 (d)
+## 2026-02-23 (e)
+
+### Multi-Device Reprocessing Safety
+- **Freshness guard in `processItemByID`**: Re-fetches the item's current status before starting. If it's already `.ready` or `.processing` (synced from another device via CloudKit), skips processing entirely and logs at debug level. Prevents two devices from redundantly reprocessing the same items.
+- **`force` parameter**: `processItemImmediately` passes `force: true` to bypass the guard for explicit "Process Now" user actions. All other callers use the default `force: false`.
+- `[MODIFY]` `DiverKit/Services/MetadataPipelineService.swift` — freshness guard in `processItemByID`, `force` parameter
+
+### EdgeDaemon Log Cleanup
+- **`runVLM` empty data guard**: iOS now checks `!imageData.isEmpty` before offloading to edge FastVLM. Text-only items (web links, QR codes, location pins) had zero-byte payloads that caused `invalidImageData` errors at the daemon.
+- **`imageData nil-decode` noise**: Downgraded from `⚠️ print` to `DiverLogger.pipeline.debug`. `imageData` is optional by design — JSON `null` is expected for text-only items.
+- **`APIKeyService` CloudKit guard**: EdgeDaemon process now skips `CKContainer` initialization, silencing the `com.apple.developer.icloud-services` entitlement warning. Keys are cache-only in the EdgeDaemon (no CloudKit needed).
+- `[MODIFY]` `DiverKit/Services/LocalPipelineService.swift` — `!imageData.isEmpty` guard on edge FastVLM call
+- `[MODIFY]` `DiverKit/Services/Edge/EdgeDaemonService.swift` — debug-level imageData nil-decode logging
+- `[MODIFY]` `DiverKit/Services/Commerce/APIKeyService.swift` — EdgeDaemon CloudKit skip
+
+
 
 ### Lifecycle-Safe Reprocessing Pipeline
 - **Durable queue state**: `reprocessPipeline` now marks all matching items as `.queued` in SwiftData before processing begins. If the app is killed, backgrounded, or crashes, the next foreground resume picks up remaining items via `processQueuedOrphanItems` → `processItemByID`.

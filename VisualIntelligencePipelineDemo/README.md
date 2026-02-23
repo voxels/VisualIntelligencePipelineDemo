@@ -21,7 +21,10 @@ Every capture is automatically enriched with layers of real-world context:
 On-device Apple Intelligence (`FoundationModels.LanguageModelSession`) generates summaries, identifies purposes, and suggests intelligent concept tags via `ContextQuestionService`. LLM prompts are enriched with weather, location, OCR text, and structured web data for deeply contextual results — all processed locally for maximum privacy. An optional **FastVLM** vision-language model (Apple FastVLM 0.5B via MLX Swift) adds multimodal image understanding.
 
 ### Smart Sessions
-Captures are automatically grouped by location and time into cohesive **sessions** with AI-generated summaries. Multiple captures at the same venue merge into a single session history. Sessions support bulk location editing, context resumption, and reprocessing. Session summaries leverage the full metadata of every item — transcription, themes, tags, categories, location, weather, web/document/QR context, FastVLM analysis, product metadata, and more.
+Captures are automatically grouped by location and time into cohesive **sessions** with AI-generated summaries. Multiple captures at the same venue merge into a single session history. Sessions support bulk location editing, context resumption, and reprocessing. Session summaries leverage the full metadata of every item — transcription, themes, tags, categories, location, web/document/QR context, FastVLM analysis, product metadata, and more.
+
+### Lifecycle-Safe Reprocessing
+The **Reprocess Pipeline** (Settings → Reprocess Pipeline) handles app termination mid-run gracefully. It uses a 3-phase durable design: **Phase 1** marks items `.queued` in SwiftData before any processing begins (crash-safe checkpoint). **Phase 2** processes each item via the unified `processItemByID` path. **Phase 3** regenerates session summaries. Interrupted pipelines resume automatically on next foreground. CloudKit multi-device **freshness guard** prevents two devices from redundantly reprocessing the same items.
 
 ### Library Maintenance
 A built-in **Rebuild Library** tool (Settings > Rebuild Library) repairs orphaned items, recovers stuck processing states, consolidates fragmented sessions, reconciles relationships, and regenerates all session summaries — with live progress status.
@@ -46,7 +49,8 @@ Any device on your home network can offload ML inference to a more powerful M-se
 - **Automatic discovery** — Bonjour-based (`_visualintel._tcp`) with TLS 1.3 transport
 - **Transparent fallback** — If no edge node is reachable, all inference runs locally on-device
 - **macOS Edge Daemon** — Standalone menu-bar app with dashboard showing connected clients, model status, inference throughput, and data cache health
-- **ML-Sharp Bridge (Planned)** — Executes advanced Python-based semantic masking via Foundation `Process()` when native Swift solutions are inadequate
+- **ML-Sharp Bridge** — On-demand 3D Gaussian Splat generation: image sent to EdgeDaemon, `enhance.py` executed via Foundation `Process()`, `.usdz` returned and saved to `ProcessedItem`
+- **EdgeDaemon safety** — `APIKeyService` skips CloudKit initialization in EdgeDaemon process (no entitlement), silencing runtime warnings
 
 ### Universal Link Organization & Deep Linking
 Save links from Safari, YouTube, TikTok, or any app via the Share Sheet extension. Links are wrapped in a proprietary format (HMAC-signed, tamper-proof URLs via `DiverLinkWrapper`) and processed through the enrichment pipeline for automatic metadata extraction. The app supports both Universal Links (`https://secretatomics.com/...`) and custom scheme links (`secretatomics://...`) for deep linking. Shared links appear in Apple's **Shared with You** section via `SharedWithYouManager`.
@@ -82,9 +86,9 @@ Camera Frame
 ┌─────────────────────────────────────┐
 │  Stage 1: Vision Analysis           │
 │  IntelligenceProcessor              │
-│  (6 VNRequests in a single pass)    │
+│  (7 VNRequests in a single pass)    │
 │  OCR · QR · Semantic · Document     │
-│  Sifting · Aesthetics Scoring       │
+│  Sifting · Aesthetics · Saliency    │
 └──────────────┬──────────────────────┘
                │
                ▼
@@ -126,7 +130,7 @@ Camera Frame
 
 ### Stage 1: Vision Analysis — `IntelligenceProcessor`
 
-Runs 6 Apple Vision requests in a **single pass** on the captured image:
+Runs 7 Apple Vision requests in a **single pass** on the captured image:
 
 | Request | Output | Maps To |
 |---|---|---|
@@ -136,10 +140,11 @@ Runs 6 Apple Vision requests in a **single pass** on the captured image:
 | `VNClassifyImageRequest` | Semantic labels | `.semantic` → style tags |
 | `VNDetectDocumentSegmentationRequest` | Document rect | `.document` → rectified child item |
 | `VNCalculateImageAestheticsScoresRequest` | Quality score | `.aesthetics` → stored on `ProcessedItem` |
+| `VNGenerateAttentionBasedSaliencyImageRequest` | Saliency heatmap | `.saliency` → salient region data |
 
 **Two modes:**
 - **`liveSifting`** — Sifting request only (real-time camera preview)
-- **`fullAnalysis`** — All 5 requests (after save)
+- **`fullAnalysis`** — All 7 requests (after save)
 
 **Service:** `DiverKit/Services/IntelligenceProcessor.swift` (conforms to `IntelligenceProcessing` protocol)
 
@@ -243,7 +248,7 @@ Scores image quality for thumbnail selection and context weighting. As of v1.1, 
 
 ## Testing
 
-**250 tests** across 32 test files (177 XCTest + 73 Swift Testing `@Test`).
+**250+ tests** across 41 test files (177+ XCTest + 73+ Swift Testing `@Test`).
 
 ```bash
 # Build for iOS Simulator

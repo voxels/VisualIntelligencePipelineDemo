@@ -56,11 +56,21 @@ Products detected via barcode or visual classification are automatically scored 
 
 Any device on your home network can offload ML inference to a more powerful M-series Mac or iPad via **Swift Distributed Actors** over Bonjour (`_visualintel._tcp`, TLS 1.3). The edge node hosts larger models (FastVLM 1.5B, CLaRa 7B), runs nowcasting projections, and handles ESG/commerce data enrichment — while your iPhone stays responsive. Transparent fallback to on-device occurs when no edge node is reachable.
 
-A standalone **macOS Edge Daemon** (menu-bar app) provides a dashboard showing connected clients, model status, inference throughput, and data cache health. It also plans to orchestrate **ML-Sharp**, a Python bridge utilizing `Process()` to execute advanced semantic edge masking scripts that are unsuited for native Swift implementation.
+A standalone **macOS Edge Daemon** (menu-bar app) provides a dashboard showing connected clients, model status, inference throughput, and data cache health.
+
+### 3D Gaussian Splat Generation (ML-Sharp)
+
+Captures can be converted into 3D Gaussian Splats on demand via the **ML-Sharp** edge capability. A button in the image profile triggers the process: the image is sent to the EdgeDaemon, which runs the `enhance.py` script via a `Process()` bridge, and the resulting `.usdz` scene is returned and saved to the `ProcessedItem`. Requires an M-series Mac edge node.
 
 ### Intelligent Session Management
 
 Captures are automatically grouped by location and time into cohesive **sessions** via `SessionClusteringService`. Multiple captures at the same MapKit landmark merge into a single session history. Sessions support bulk location editing, context resumption, and reprocessing. Session summaries aggregate all item metadata for deeply contextual AI-generated summaries.
+
+### Lifecycle-Safe Reprocessing
+
+The **Reprocess Pipeline** (Settings → Reprocess Pipeline) safely handles app termination mid-run. It uses a 3-phase durable design: **Phase 1** marks all matching items as `.queued` in SwiftData before any processing begins (crash-safe checkpoint). **Phase 2** processes each item sequentially via the unified `processItemByID` path. **Phase 3** regenerates session summaries for all affected sessions. If the app is killed during Phase 2, the next foreground resume automatically picks up remaining `.queued` items.
+
+**Multi-device safety:** When two devices are synced via CloudKit and both see `.queued` items, a freshness guard in `processItemByID` re-checks the item's current status before starting work. If another device has already set it to `.ready` or `.processing`, the second device skips it automatically. The "Process Now" button bypasses this guard intentionally.
 
 ### Library Maintenance
 
@@ -82,15 +92,15 @@ Fully integrated with Apple's system — 6 App Intents, pre-built shortcut templ
 
 ## 🏗️ Architecture Highlights
 
-- **Modular Swift Packages** — `DiverKit` (ML & pipeline orchestration, 65 services, 18 protocols), `DiverShared` (data models & utilities), and the main app target.
-- **Local-First with Sync** — SwiftData persistence backed by CloudKit for seamless cross-device access.
-- **On-Device ML** — Apple Vision (6 request types per pass), FastVLM via MLX Swift, Apple Intelligence via Foundation Models.
-- **Edge Computing** — Swift Distributed Actors over Bonjour for transparent ML offloading to M-series Macs.
-- **Commerce Intelligence** — 7 scoring strategies, Open *Facts cascade, preference learning, score snapshots.
+- **Modular Swift Packages** — `DiverKit` (ML & pipeline orchestration, 67 services, 18 protocols), `DiverShared` (data models & utilities), and the main app target.
+- **Local-First with Sync** — SwiftData persistence backed by CloudKit for seamless cross-device access (8 models, VersionedSchema V1/V2 migration plan).
+- **On-Device ML** — Apple Vision (7 request types per single pass), FastVLM via MLX Swift, Apple Intelligence via Foundation Models (`SystemLanguageModel`).
+- **Edge Computing** — Swift Distributed Actors over Bonjour for transparent ML offloading to M-series Macs. 4 distributed actors: `EdgeContextActor` (CLaRa 7B), `EdgeInferenceActor` (FastVLM 1.5B + Vision), `EdgeCommerceActor`, `EdgeAgenticSearchActor`.
+- **Commerce Intelligence** — 7 scoring strategies, Open *Facts 4-database cascade → UPC Item DB, preference learning, score snapshots (Swift Charts).
+- **Lifecycle-Safe Reprocessing** — 3-phase durable design with CloudKit multi-device freshness guard. All reprocessing converges on unified `processItemByID` path.
 - **Two-Phase Pipeline** — Processing is split into an instantaneous Phase 1 (Capture/Vision/Location) and a background Phase 2 (FastVLM, Commerce, SLM), drastically improving perceived speed.
-- **Queue-Based Reliability** — File-based queue ensures no capture or link is ever lost.
-- **Protocol-Based DI** — 18 service protocols (`IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`, `ProductScoringStrategy`, `ProductRecommending`, `ESGEnriching`, etc) enable mock injection for testing.
-- **ViewModel Separation** — Strict UI decoupling via `ModelUIExtensions` to keep SwiftData models pure.
+- **Queue-Based Reliability** — File-based `DiverQueueStore` ensures no capture or link is ever lost.
+- **Protocol-Based DI** — 18 service protocols enable mock injection for testing.
 
 ---
 

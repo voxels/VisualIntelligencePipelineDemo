@@ -14,7 +14,7 @@
         <nav class="sidebar">
             <div class="sidebar-header">
                 <h1>Visual Intelligence Pipeline</h1>
-                <div class="version">v1.1 Developer Wiki</div>
+                <div class="version">v1.2 Developer Wiki</div>
             </div>
             <div class="search-box"><input type="text" id="search" placeholder="Search types…"
                     oninput="filterSidebar(this.value)"></div>
@@ -55,15 +55,15 @@
 
             <div class="stats-bar">
                 <div class="stat">
-                    <div class="stat-value">32</div>
+                    <div class="stat-value">41</div>
                     <div class="stat-label">Test Files</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-value">177</div>
+                    <div class="stat-value">177+</div>
                     <div class="stat-label">XCTest Cases</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-value">73</div>
+                    <div class="stat-value">73+</div>
                     <div class="stat-label">Swift Testing @Test</div>
                 </div>
                 <div class="stat">
@@ -147,6 +147,12 @@
                             <td><code>ReprocessPipelineFilteringTests</code></td>
                             <td>2</td>
                             <td>Reprocess preserves user-pinned location, clears calculated fields</td>
+                        </tr>
+                        <tr>
+                            <td><code>ProcessItemFreshnessGuardTests</code></td>
+                            <td>3</td>
+                            <td>Skip .ready items (multi-device guard), skip .processing items, force=true bypasses
+                                guard</td>
                         </tr>
                     </tbody>
                 </table>

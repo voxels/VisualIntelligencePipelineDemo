@@ -317,7 +317,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
         currentTask?.cancel()
         
         // Delegate to the single canonical reprocessing path
-        try await processItemByID(item.id)
+        try await processItemByID(item.id, force: true)
         
         // Restart the rest of the queue in background
         Task {
@@ -330,7 +330,7 @@ public final class MetadataPipelineService: @unchecked Sendable {
     /// Safe to call from any isolation context — does not share state with  
     /// the service's `activeContext`. Use this instead of `processItemImmediately`
     /// when triggering reprocessing from UI code (e.g., after a location edit).
-    public func processItemByID(_ itemID: String) async throws {
+    public func processItemByID(_ itemID: String, force: Bool = false) async throws {
         let bgCtx = ModelContext(modelContainer)
         bgCtx.autosaveEnabled = false
         
@@ -341,6 +341,17 @@ public final class MetadataPipelineService: @unchecked Sendable {
         guard let localItem = try bgCtx.fetch(fetchDescriptor).first else {
             print("❌ processItemByID: Could not find item \(itemID)")
             return
+        }
+        
+        // Freshness guard: skip items already processed or being processed by another device.
+        // CloudKit sync propagates status changes, so .ready/.processing means another device
+        // likely handled this item. force=true bypasses this (used by "Process Now" button).
+        if !force {
+            let currentStatus = ProcessingStatus(rawValue: localItem.statusRaw) ?? .queued
+            if currentStatus == .ready || currentStatus == .processing {
+                DiverLogger.pipeline.info("⏭️ processItemByID: Skipping \(itemID) — already \(currentStatus.rawValue) (likely processed by another device)")
+                return
+            }
         }
         
         localItem.statusRaw = ProcessingStatus.processing.rawValue

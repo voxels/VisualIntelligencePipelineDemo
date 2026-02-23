@@ -453,7 +453,8 @@ public final class EdgeDaemonService {
                     do {
                         imageData = try decoder.decodeNextArgument() as Data
                     } catch {
-                        print("⚠️ EdgeDaemon: Failed to decode imageData for summarizeStructured: \(error)")
+                        // Expected for text-only items (web links, QR codes) — imageData is optional
+                        DiverLogger.pipeline.debug("EdgeDaemon: summarizeStructured imageData=nil (text-only item)")
                     }
                     print("📦 EdgeDaemon: summarizeStructured text=\(text.count) chars, imageData=\(imageData?.count ?? 0) bytes")
                     let actor = EdgeContextActor(actorSystem: dummySystem)
@@ -468,7 +469,8 @@ public final class EdgeDaemonService {
                     do {
                         imageData = try decoder.decodeNextArgument() as Data
                     } catch {
-                        print("⚠️ EdgeDaemon: Failed to decode imageData for summarize: \(error)")
+                        // Expected for text-only items (web links, QR codes) — imageData is optional
+                        DiverLogger.pipeline.debug("EdgeDaemon: summarize imageData=nil (text-only item)")
                     }
                     print("📦 EdgeDaemon: summarize text=\(text.count) chars, imageData=\(imageData?.count ?? 0) bytes")
                     let actor = EdgeContextActor(actorSystem: dummySystem)
