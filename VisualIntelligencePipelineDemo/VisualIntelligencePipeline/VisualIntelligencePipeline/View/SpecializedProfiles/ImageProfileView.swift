@@ -11,6 +11,8 @@ import DiverShared
 /// 3. RealityKit ML-Sharp 3D Gaussian Splat Data
 struct ImageProfileView: View {
     let item: ProcessedItem
+    @State private var isGeneratingSplat: Bool = false
+    @State private var edgeError: String? = nil
     
     var body: some View {
         VStack(spacing: 16) {
@@ -29,6 +31,71 @@ struct ImageProfileView: View {
             // 3. ML-Sharp RealityKit USDZ Viewer
             if let usdzData = item.mlSharpData {
                  MLSharpSplatView(splatData: usdzData)
+            } else {
+                 Button(action: {
+                     generateSplat()
+                 }) {
+                     if isGeneratingSplat {
+                         ProgressView()
+                             .progressViewStyle(CircularProgressViewStyle())
+                     } else {
+                         Label("Generate 3D Splat (ML-Sharp)", systemImage: "cube.transparent")
+                             .font(.headline)
+                             .foregroundStyle(.white)
+                             .padding(.vertical, 12)
+                             .frame(maxWidth: .infinity)
+                             .background(Color.blue.gradient)
+                             .clipShape(RoundedRectangle(cornerRadius: 12))
+                     }
+                 }
+                 .frame(maxWidth: .infinity)
+                 .padding(.horizontal)
+                 
+                 if let err = edgeError {
+                     Text(err)
+                         .font(.caption)
+                         .foregroundStyle(.red)
+                         .padding(.horizontal)
+                 }
+            }
+        }
+    }
+    
+    private func generateSplat() {
+        guard let imageData = item.rawPayload else {
+            edgeError = "Missing raw image payload"
+            return
+        }
+        isGeneratingSplat = true
+        edgeError = nil
+        
+        Task {
+            do {
+                if let router = await MainActor.run({ Services.shared.edgeRouter }),
+                   let system = await MainActor.run({ Services.shared.actorSystem }) {
+                    
+                    let decision = await router.shouldOffload(task: .visionAnalysis)
+                    if case .edge(let node, _) = decision, node.availableModels.contains("ml-sharp") {
+                        let identity = EdgeActorID(id: "EdgeInference", nodeName: node.deviceName)
+                        let edgeActor = try EdgeInferenceActor.resolve(id: identity, using: system)
+                        
+                        let usdzData = try await edgeActor.runMLSharp(imageData: imageData)
+                        await MainActor.run {
+                            withAnimation {
+                                self.item.mlSharpData = usdzData
+                                try? self.item.modelContext?.save()
+                                self.isGeneratingSplat = false
+                            }
+                        }
+                    } else {
+                       throw NSError(domain: "ImageProfileView", code: 1, userInfo: [NSLocalizedDescriptionKey: "No edge node connected with ml-sharp capability."])
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    self.edgeError = error.localizedDescription
+                    self.isGeneratingSplat = false
+                }
             }
         }
     }

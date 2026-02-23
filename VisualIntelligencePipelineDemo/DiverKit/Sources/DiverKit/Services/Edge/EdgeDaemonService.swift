@@ -360,6 +360,18 @@ public final class EdgeDaemonService {
                     let vlmResult = try await actor.runVLM(imageData: imageData, prompt: prompt)
                     encodedResult = try JSONEncoder().encode(vlmResult)
                     
+                } else if method == "mlsharp" || (method.contains("EdgeInferenceActor") && method.contains("runMLSharp")) {
+                    let imageData: Data
+                    if method == "mlsharp" {
+                        imageData = payload
+                    } else {
+                        let decoder = try EdgeInvocationDecoder(data: payload)
+                        imageData = try decoder.decodeNextArgument()
+                    }
+                    let actor = EdgeInferenceActor(actorSystem: dummySystem)
+                    let usdzData = try await actor.runMLSharp(imageData: imageData)
+                    encodedResult = try JSONEncoder().encode(usdzData)
+                    
                 } else if method == "nowcast" || (method.contains("EdgeNowcastingActor") && method.contains("project")) {
                     let commodityID: String
                     let horizonDays: Int
