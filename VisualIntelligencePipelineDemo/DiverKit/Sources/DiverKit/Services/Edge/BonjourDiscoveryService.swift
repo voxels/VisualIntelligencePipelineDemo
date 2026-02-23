@@ -152,6 +152,23 @@ public actor BonjourDiscoveryService: EdgeNodeDiscovering {
         print("✅ BonjourDiscovery: Updated \(nodeName) via TCP — chip=\(chip), tops=\(tops), ram=\(ram)GB, models=\(models)")
     }
     
+    /// Explicitly mark a node as unavailable when a TCP connection fails (e.g. stale mDNS cache).
+    public func markNodeUnavailable(nodeName: String) {
+        if let idx = discoveredNodes.firstIndex(where: { $0.deviceName == nodeName }) {
+            var node = discoveredNodes[idx]
+            node.isAvailable = false
+            discoveredNodes[idx] = node
+        }
+        
+        if currentConnection?.deviceName == nodeName {
+            print("⚠️ BonjourDiscovery: Marked current connection \(nodeName) as unavailable due to timeout.")
+            currentConnection = nil
+            scheduleReconnect(reason: "connection failed")
+        } else {
+            print("⚠️ BonjourDiscovery: Marked \(nodeName) as unavailable.")
+        }
+    }
+    
     // MARK: - Browser Handlers
     
     private func handleBrowserState(_ state: NWBrowser.State) {

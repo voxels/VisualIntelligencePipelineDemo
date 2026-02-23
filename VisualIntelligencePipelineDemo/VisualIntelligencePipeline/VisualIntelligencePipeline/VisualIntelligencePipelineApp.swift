@@ -158,10 +158,20 @@ struct VisualIntelligencePipelineApp: App {
                         // Query edge node capabilities via TCP (NWBrowser TXT metadata is unreliable)
                         do {
                             let actorID = EdgeActorID(id: "capabilities", nodeName: nodeName)
-                            let capsData = try await transportLayer.send(to: actorID, target: "__capabilities__", payload: Data())
+                            
+                            // 3 second timeout for capabilities to handle stale mDNS records
+                            let capsData = try await withThrowingTaskGroup(of: Data.self) { group in
+                                group.addTask { try await transportLayer.send(to: actorID, target: "__capabilities__", payload: Data()) }
+                                group.addTask { try await Task.sleep(for: .seconds(3)); throw URLError(.timedOut) }
+                                let result = try await group.next()!
+                                group.cancelAll()
+                                return result
+                            }
+                            
                             await discoveryService.updateNodeFromCapabilities(capsData, nodeName: nodeName)
                         } catch {
                             print("⚠️ [VisualIntelligencePipelineApp] Capabilities query failed: \(error)")
+                            await discoveryService.markNodeUnavailable(nodeName: nodeName)
                         }
                         
                         // Automatically trigger silent LLM summary upgrades on the edge node

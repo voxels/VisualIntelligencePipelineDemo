@@ -7,6 +7,7 @@
 
 import SwiftUI
 import DiverKit
+import SwiftData
 
 #if os(iOS)
 import UIKit
@@ -59,17 +60,8 @@ struct SessionRowLabel: View {
         allItems.filter { $0.sessionID == session.sessionID && $0.status == .ready }
     }
     
-    private var heroImage: UIImage? {
-        for item in sessionItems {
-            if let data = item.rawPayload, let image = UIImage(data: data) {
-                return image
-            }
-            if let path = item.webContext?.snapshotURL, let image = UIImage(contentsOfFile: path) {
-                return image
-            }
-        }
-        return nil
-    }
+    @State private var heroImage: UIImage? = nil
+    @Environment(\.modelContext) private var modelContext
     
     private var fallbackConfig: ItemIconConfig {
         // Check for dominant purpose to determine icon (e.g. Activity)
@@ -82,6 +74,53 @@ struct SessionRowLabel: View {
             return ItemIconConfig.forItem(first)
         }
         return ItemIconConfig(iconName: "photo.stack", color: .secondary)
+    }
+    
+    // Core function to fetch thumbnail without blocking main thread
+    private func loadHeroImage() async {
+        // 1. Check shared fast memory cache first
+        if let cached = ThumbnailCache.shared.image(forKey: session.sessionID) {
+            await MainActor.run { self.heroImage = cached }
+            return
+        }
+        
+        let itemIDs = sessionItems.map { $0.persistentModelID }
+        guard !itemIDs.isEmpty else { return }
+        
+        // Pass container to detached task to safely read external storage
+        let container = modelContext.container
+        
+        let loadedImage = await Task.detached(priority: .userInitiated) { () -> UIImage? in
+            let bgContext = ModelContext(container)
+            bgContext.autosaveEnabled = false
+            
+            for id in itemIDs {
+                guard let item = bgContext.model(for: id) as? ProcessedItem else { continue }
+                if let data = item.rawPayload {
+                    if let imageSource = CGImageSourceCreateWithData(data as CFData, nil) {
+                        let options = [
+                            kCGImageSourceCreateThumbnailFromImageAlways: true,
+                            kCGImageSourceThumbnailMaxPixelSize: 300,
+                            kCGImageSourceCreateThumbnailWithTransform: true
+                        ] as CFDictionary
+                        if let cgImage = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options) {
+                            return UIImage(cgImage: cgImage)
+                        }
+                    }
+                    if let image = UIImage(data: data) { return image }
+                }
+                if let path = item.webContext?.snapshotURL, let image = UIImage(contentsOfFile: path) {
+                    return image
+                }
+            }
+            return nil
+        }.value
+        
+        if let img = loadedImage {
+            // Store back to cache for instantaneous sibling redraws
+            ThumbnailCache.shared.insert(img, forKey: session.sessionID)
+            await MainActor.run { self.heroImage = img }
+        }
     }
     
     var body: some View {
@@ -174,6 +213,12 @@ struct SessionRowLabel: View {
             }
         }
         .padding(4)
+        .task {
+            // Load thumbnail async when view appears to prevent UI hang
+            if heroImage == nil {
+                await loadHeroImage()
+            }
+        }
     }
     
     /// Parses `[Model: ModelName]` from the end of the summary.

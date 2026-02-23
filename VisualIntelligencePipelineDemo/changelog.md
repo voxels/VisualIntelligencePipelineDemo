@@ -399,6 +399,19 @@
 - **Sidebar & Navigation**: Created `SidebarView` with session-based navigation, favorites, and collections.
 - **Build Fixes**: Resolved DiverKit build errors and improved startup performance.
 
+## 2026-02-22
+
+**Fixes:**
+- **Splash Screen Main Thread Deadlock**: 
+  - Refactored `SessionRowLabel` and `SidebarIntelligenceSection` to aggressively prevent `O(N^2)` SwiftData `@Attribute(.externalStorage)` blocking the `@MainActor` during app start.
+  - Replaced synchronous `UIImage(data:)` with an async detached task using a novel, background-only `ModelContext`.
+  - Upgraded image rendering to use `CGImageSourceCreateThumbnailAtIndex` for 300px memory-efficient fast downsampling.
+  - Implemented `ThumbnailCache` (`NSCache`) to ensure split-second redraws across navigation views without repeated disk hits.
+- **Edge Node Capabilities Discovery Timeout**:
+  - Found that stale mDNS Bonjour cache led to the 60s default TCP timeout hanging iOS routing pipelines on startup.
+  - Reduced `__capabilities__` query to a strict 3-second `Task.sleep` limit inside a `TaskGroup` array.
+  - Refitted `EdgeNodeInfo.isAvailable` to be mutable (`var`) and implemented `BonjourDiscoveryService.markNodeUnavailable(nodeName:)` to immediately sever stale routes automatically.
+
 ## 2026-02-20
 
 ### Features & Refactoring

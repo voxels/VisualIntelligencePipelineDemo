@@ -20,6 +20,8 @@ struct SidebarIntelligenceSection: View {
     var viewModel: SidebarViewModel
     var cachedRelatedConcepts: [UserConcept]
     
+    @State private var previewImage: UIImage? = nil
+    
     var body: some View {
         Section("Current Context") {
             if let lastSession = sessions.first {
@@ -65,7 +67,7 @@ struct SidebarIntelligenceSection: View {
                 } label: {
                     HStack(spacing: 12) {
                         // Thumbnail Preview
-                        if let preview = previewImage(for: lastSession) {
+                        if let preview = previewImage {
                             Image(uiImage: preview)
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
@@ -141,6 +143,26 @@ struct SidebarIntelligenceSection: View {
                     }
                 }
                 .buttonStyle(.plain)
+                .task {
+                    // Initial load
+                    if previewImage == nil {
+                        previewImage = await viewModel.asyncPreviewImage(
+                            for: lastSession.sessionID,
+                            allItems: readyItems,
+                            container: modelContext.container
+                        )
+                    }
+                }
+                .onChange(of: lastSession) { oldSession, newSession in
+                    // Reload when session changes
+                    Task {
+                        previewImage = await viewModel.asyncPreviewImage(
+                            for: newSession.sessionID,
+                            allItems: readyItems,
+                            container: modelContext.container
+                        )
+                    }
+                }
             } else {
                 Button {
                     navigationManager.scanSessionID = nil
@@ -151,9 +173,5 @@ struct SidebarIntelligenceSection: View {
                 }
             }
         }
-    }
-    
-    private func previewImage(for session: SessionMetadata) -> UIImage? {
-        viewModel.previewImage(for: session, allItems: readyItems)
     }
 }

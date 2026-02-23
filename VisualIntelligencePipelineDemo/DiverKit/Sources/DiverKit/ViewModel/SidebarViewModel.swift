@@ -12,6 +12,24 @@ import Observation
 
 #if canImport(UIKit)
 import UIKit
+
+public final class ThumbnailCache: @unchecked Sendable {
+    public static let shared = ThumbnailCache()
+    private let cache = NSCache<NSString, AnyObject>()
+    
+    private init() {
+        // Keep memory footprint small
+        cache.countLimit = 200
+    }
+    
+    public func image(forKey key: String) -> UIImage? {
+        cache.object(forKey: key as NSString) as? UIImage
+    }
+    
+    public func insert(_ image: UIImage, forKey key: String) {
+        cache.setObject(image as AnyObject, forKey: key as NSString)
+    }
+}
 #endif
 import PhotosUI
 
@@ -1332,9 +1350,60 @@ public final class SidebarViewModel {
     }
     
 #if canImport(UIKit)
+    @MainActor
+    public func asyncPreviewImage(for sessionID: String, allItems: [ProcessedItem], container: ModelContainer) async -> UIImage? {
+        // Check cache first
+        if let cached = ThumbnailCache.shared.image(forKey: sessionID) {
+            return cached
+        }
+
+        // Collect model IDs on the main thread
+        let itemIDs = allItems.filter { $0.sessionID == sessionID }.map { $0.persistentModelID }
+        guard !itemIDs.isEmpty else { return nil }
+        
+        let result = await Task.detached(priority: .userInitiated) { () -> UIImage? in
+            // Background context to prevent blocking main thread with external storage reads
+            let bgContext = ModelContext(container)
+            bgContext.autosaveEnabled = false
+            
+            for id in itemIDs {
+                guard let item = bgContext.model(for: id) as? ProcessedItem else { continue }
+                
+                if let data = item.rawPayload {
+                    // Fast, memory-efficient downsampling without fully decoding
+                    if let imageSource = CGImageSourceCreateWithData(data as CFData, nil) {
+                        let options = [
+                            kCGImageSourceCreateThumbnailFromImageAlways: true,
+                            kCGImageSourceThumbnailMaxPixelSize: 300,
+                            kCGImageSourceCreateThumbnailWithTransform: true
+                        ] as CFDictionary
+                        
+                        if let cgImage = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options) {
+                            return UIImage(cgImage: cgImage)
+                        }
+                    }
+                    // Fallback
+                    if let image = UIImage(data: data) { return image }
+                }
+                
+                if let path = item.webContext?.snapshotURL, let image = UIImage(contentsOfFile: path) {
+                    return image
+                }
+            }
+            return nil
+        }.value
+        
+        if let image = result {
+            ThumbnailCache.shared.insert(image, forKey: sessionID)
+        }
+        return result
+    }
+    
+    // Kept for backward compatibility if needed synchronously
     public func previewImage(for session: SessionMetadata, allItems: [ProcessedItem]) -> UIImage? {
         let items = allItems.filter { $0.sessionID == session.sessionID }
         for item in items {
+            // This blocks the main thread! Prefer asyncPreviewImage
             if let data = item.rawPayload, let image = UIImage(data: data) {
                 return image
             }
