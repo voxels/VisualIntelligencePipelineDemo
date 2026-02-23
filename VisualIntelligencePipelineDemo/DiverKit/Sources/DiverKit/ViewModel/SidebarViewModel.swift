@@ -42,6 +42,12 @@ public final class SidebarViewModel {
     public var importError: String? // For user-facing import notifications
     public var isPerformingAction = false // Immediate feedback for blocking operations
     
+    // Full Analysis (CLaRa) Modal State
+    public var showingFullAnalysis = false
+    public var fullAnalysisText = ""
+    public var isGeneratingAnalysis = false
+    public var fullAnalysisSessionTitle = ""
+    
     // Semantic search results (IDs of items matching via knowledge graph)
     public var semanticMatchIDs: Set<String> = []
     
@@ -505,6 +511,191 @@ public final class SidebarViewModel {
             let actor = PersistenceActor(modelContainer: container)
             await actor.analyzeSession(sessionID: sessionID)
         }
+    }
+    
+    /// Runs a full CLaRa analysis on a **collection** of sessions,
+    /// producing a detailed shareable report that aggregates all items
+    /// across every session in the collection.
+    public func runFullAnalysis(_ collection: SessionCollection, context: ModelContext) {
+        let collectionName = collection.name
+        let sessionIDs = collection.sessionIDs
+        let container = context.container
+        
+        // Set modal state immediately for instant feedback
+        fullAnalysisSessionTitle = collectionName
+        fullAnalysisText = ""
+        isGeneratingAnalysis = true
+        showingFullAnalysis = true
+        
+        Task.detached(priority: .utility) {
+            // Background ModelContext for SwiftData fetch
+            let bgContext = ModelContext(container)
+            bgContext.autosaveEnabled = false
+            
+            // Fetch all items across all sessions in this collection
+            var allItems: [ProcessedItem] = []
+            for sid in sessionIDs {
+                let descriptor = FetchDescriptor<ProcessedItem>(
+                    predicate: #Predicate { $0.sessionID == sid },
+                    sortBy: [SortDescriptor(\.createdAt, order: .forward)]
+                )
+                if let batch = try? bgContext.fetch(descriptor) {
+                    allItems.append(contentsOf: batch)
+                }
+            }
+            allItems.sort { $0.createdAt < $1.createdAt }
+            
+            guard !allItems.isEmpty else {
+                await MainActor.run { [weak self] in
+                    self?.fullAnalysisText = "No items found in this collection."
+                    self?.isGeneratingAnalysis = false
+                }
+                return
+            }
+            let items = allItems
+            
+            // Aggregate rich metadata from all items across the collection
+            let aggregatedContext = SidebarViewModel.aggregateSessionMetadata(
+                items: items, sessionTitle: collectionName
+            )
+            
+            // Send to edge CLaRa for detailed analysis
+            let analysisResult = await SidebarViewModel.generateDetailedAnalysis(
+                context: aggregatedContext
+            )
+            
+            await MainActor.run { [weak self] in
+                self?.fullAnalysisText = analysisResult
+                self?.isGeneratingAnalysis = false
+            }
+        }
+    }
+    
+    /// Aggregates all metadata from session items into a rich text block for CLaRa.
+    nonisolated private static func aggregateSessionMetadata(items: [ProcessedItem], sessionTitle: String) -> String {
+        let calendar = Calendar.current
+        var sections: [String] = []
+        
+        sections.append("SESSION: \(sessionTitle)")
+        sections.append("Items: \(items.count)")
+        
+        if let first = items.first, let last = items.last {
+            let start = first.createdAt.formatted(date: .abbreviated, time: .shortened)
+            let end = last.createdAt.formatted(date: .abbreviated, time: .shortened)
+            sections.append("Time Range: \(start) — \(end)")
+        }
+        
+        // Unique locations
+        let locations = Set(items.compactMap { $0.location }).sorted()
+        if !locations.isEmpty {
+            sections.append("Locations: \(locations.joined(separator: ", "))")
+        }
+        
+        sections.append("---")
+        sections.append("DETAILED ITEM METADATA:")
+        
+        for (index, item) in items.enumerated() {
+            var parts: [String] = []
+            let time = item.createdAt.formatted(date: .omitted, time: .shortened)
+            parts.append("\n[Item \(index + 1)] \(item.title ?? "Untitled") (\(time))")
+            
+            if let loc = item.location { parts.append("  Location: \(loc)") }
+            if let sum = item.summary, !sum.isEmpty { parts.append("  Summary: \(sum)") }
+            if let media = item.mediaType { parts.append("  Media: \(media)") }
+            
+            // FastVLM visual analysis
+            if let vlm = item.fastVLMAnalysis, let desc = vlm.imageDescription, !desc.isEmpty {
+                parts.append("  Visual Analysis: \(desc)")
+            }
+            
+            // Web context
+            if let web = item.webContext {
+                if let site = web.siteName { parts.append("  Web Source: \(site)") }
+                if let content = web.textContent, !content.isEmpty {
+                    parts.append("  Web Content: \(String(content.prefix(300)))")
+                }
+            }
+            
+            // Commerce
+            if let commerce = item.commerceContext, let first = commerce.first {
+                parts.append("  Product: \(first.option.productName) (\(first.option.platform))")
+                parts.append("  Composite Score: \(String(format: "%.2f", first.compositeScore))")
+            }
+            
+            // Transcription
+            if let transcript = item.transcription, !transcript.isEmpty {
+                parts.append("  OCR Text: \(String(transcript.prefix(400)))")
+            }
+            
+            // Tags
+            if !item.tags.isEmpty {
+                parts.append("  Tags: \(item.tags.joined(separator: ", "))")
+            }
+            
+            // Questions
+            if !item.questions.isEmpty {
+                parts.append("  Questions: \(item.questions.joined(separator: "; "))")
+            }
+            
+            sections.append(parts.joined(separator: "\n"))
+        }
+        
+        return sections.joined(separator: "\n")
+    }
+    
+    /// Routes analysis to edge CLaRa 7B or falls back to on-device SLM.
+    nonisolated private static func generateDetailedAnalysis(context: String) async -> String {
+        // Try edge CLaRa first (7B — handles long context well)
+        let router = await MainActor.run { Services.shared.edgeRouter }
+        let system = await MainActor.run { Services.shared.actorSystem }
+        
+        if let router = router, let system = system {
+            let decision = await router.shouldOffload(task: .vlmInference)
+            if case .edge(let node, _) = decision {
+                do {
+                    let identity = EdgeActorID(id: "EdgeContext", nodeName: node.deviceName)
+                    let edgeActor = try EdgeContextActor.resolve(id: identity, using: system)
+                    
+                    let prompt = """
+                    You are a detailed visual intelligence analyst. Produce a comprehensive written report \
+                    about this collection of captured items. The report should:
+                    
+                    1. OVERVIEW: Summarize what this collection is about — the themes, locations, and time patterns
+                    2. KEY INSIGHTS: What stands out? Patterns, notable items, interesting connections
+                    3. DETAILED BREAKDOWN: Walk through the items chronologically, describing what was captured and why it matters
+                    4. METADATA HIGHLIGHTS: Note any significant visual analysis, commerce data, web sources, or OCR text
+                    5. RECOMMENDATIONS: Suggest follow-up actions or areas to explore further
+                    
+                    Write in clear paragraphs, not bullet points. Be thorough but insightful.
+                    
+                    ---
+                    \(context)
+                    """
+                    
+                    let noImage: Data? = nil
+                    let result = try await edgeActor.summarize(text: prompt, imageData: noImage)
+                    return "[Model: Edge-CLaRa-7B]\n\n\(result)"
+                } catch {
+                    print("⚠️ Edge CLaRa failed for full analysis: \(error)")
+                }
+            }
+        }
+        
+        // Fallback: on-device SLM (shorter output)
+        if ContextQuestionService.isAvailable {
+            let service = ContextQuestionService()
+            let prompt = """
+            Create a detailed analysis of this captured collection. Include themes, patterns, \
+            key items, and insights. Write 3-5 paragraphs.
+            
+            \(String(context.prefix(3000)))
+            """
+            if let result = try? await service.summarizeText(prompt) {
+                return "[Model: On-Device SLM]\n\n\(result)"
+            }
+        }
+        
+        return "Analysis unavailable. Connect to your Mac running EdgeDaemon for CLaRa 7B analysis, or ensure Apple Intelligence is enabled."
     }
     
     public func reprocessItem(_ item: ProcessedItem) {

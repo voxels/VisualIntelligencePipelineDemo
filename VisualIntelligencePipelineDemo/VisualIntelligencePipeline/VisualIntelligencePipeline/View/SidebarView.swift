@@ -659,12 +659,41 @@ extension SidebarView {
         }
         .swipeActions(edge: .leading) {
              Button {
+                 viewModel.runFullAnalysis(collection, context: modelContext)
+             } label: {
+                 Label("Full Analysis", systemImage: "sparkles")
+             }
+             .tint(.purple)
+
+             Button {
                  collectionToRename = collection
                  newCollectionName = collection.name
              } label: {
                  Label("Rename", systemImage: "pencil")
              }
              .tint(.blue)
+        }
+        .contextMenu {
+            Button {
+                viewModel.runFullAnalysis(collection, context: modelContext)
+            } label: {
+                Label("Full Analysis", systemImage: "sparkles")
+            }
+            
+            Button {
+                collectionToRename = collection
+                newCollectionName = collection.name
+            } label: {
+                Label("Rename Collection", systemImage: "pencil")
+            }
+            
+            Divider()
+            
+            Button(role: .destructive) {
+                viewModel.deleteCollection(collection, context: modelContext)
+            } label: {
+                Label("Delete Collection", systemImage: "trash")
+            }
         }
     }
     

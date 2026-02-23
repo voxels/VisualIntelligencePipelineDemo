@@ -125,6 +125,7 @@
 		D6AEB6F12EF360FD129E9480 /* ScoreHistoryChartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69FA236814E7611941004C9B /* ScoreHistoryChartView.swift */; };
 		DC3753D760527A132BD7BD79 /* ProductScoreAttachment.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6891DA15160E67D217E6153 /* ProductScoreAttachment.swift */; };
 		E51D78D5F45F8C32044DE892 /* IntelligenceResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BD00C39D0D94140ABE2554D /* IntelligenceResultsView.swift */; };
+		E90BE9FA16A9FAC05190665D /* CollectionAnalysisView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB69CBBA1EC7DD440BC1254D /* CollectionAnalysisView.swift */; };
 		EC2F090ED557029F6DD6EAF7 /* ActionViewControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E07633E6BD803CADEDC71A /* ActionViewControllerTests.swift */; };
 		EE8B1A68CBADF2243245F827 /* SidebarProcessingSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5AF34442D976982D812F438 /* SidebarProcessingSection.swift */; };
 		F03D77C2FBCA039BBAF5426A /* DiverUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D00EAA88E023ADF17BF38A /* DiverUITestsLaunchTests.swift */; };
@@ -289,6 +290,7 @@
 		DCB5AA16443590B3199E2113 /* KnowMapsAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowMapsAdapter.swift; sourceTree = "<group>"; };
 		E7B43CAFE7C5D15E858C87F0 /* TestAnalyticsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestAnalyticsService.swift; sourceTree = "<group>"; };
 		EB38F3388A9D8451F3AAB1C8 /* ProductScoreOverlayView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProductScoreOverlayView.swift; sourceTree = "<group>"; };
+		EB69CBBA1EC7DD440BC1254D /* CollectionAnalysisView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CollectionAnalysisView.swift; sourceTree = "<group>"; };
 		EF59CBF5AC7C5A8030CAE2B1 /* CommerceActionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CommerceActionView.swift; sourceTree = "<group>"; };
 		F47A70012C4EF00123456789 /* FoursquareLinkEnrichmentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoursquareLinkEnrichmentService.swift; sourceTree = "<group>"; };
 		F839A486D17585DAC90936DC /* DiverKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DiverKit; path = ../DiverKit; sourceTree = SOURCE_ROOT; };
@@ -617,6 +619,7 @@
 				4FBC2B4E234A88AB30E2C711 /* SidebarFavoritesSection.swift */,
 				5C5F6D107124378EF158BEC6 /* SidebarIntelligenceSection.swift */,
 				D27B356E47788C5EC221FEE1 /* SidebarInboxSection.swift */,
+				EB69CBBA1EC7DD440BC1254D /* CollectionAnalysisView.swift */,
 			);
 			path = Sidebar;
 			sourceTree = "<group>";
@@ -1027,6 +1030,7 @@
 				4E72F4062203A370FA30C804 /* CaptureHelperViews.swift in Sources */,
 				B4C5E64C344B2ECC0A731C7F /* DocumentDetailView.swift in Sources */,
 				E51D78D5F45F8C32044DE892 /* IntelligenceResultsView.swift in Sources */,
+				E90BE9FA16A9FAC05190665D /* CollectionAnalysisView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

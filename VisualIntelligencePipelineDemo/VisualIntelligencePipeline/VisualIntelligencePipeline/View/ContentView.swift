@@ -191,6 +191,13 @@ struct SessionItemsView: View {
         .sheet(item: $sessionForLocationEdit) { session in
             EditSessionLocationView(session: session)
         }
+        .sheet(isPresented: $viewModel.showingFullAnalysis) {
+            CollectionAnalysisView(
+                sessionTitle: viewModel.fullAnalysisSessionTitle,
+                analysisText: $viewModel.fullAnalysisText,
+                isGenerating: $viewModel.isGeneratingAnalysis
+            )
+        }
         .alert("Rename Session", isPresented: Binding(
             get: { sessionToRename != nil },
             set: { if !$0 { sessionToRename = nil } }
