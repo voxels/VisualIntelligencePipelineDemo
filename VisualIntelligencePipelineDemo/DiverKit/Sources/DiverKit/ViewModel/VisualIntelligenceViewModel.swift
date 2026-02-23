@@ -84,6 +84,11 @@ public class VisualIntelligenceViewModel {
     public var sessionTitle: String? // Explicit user-selected title
     public var shouldDismiss: Bool = false
     
+    /// When non-nil, the current review session is a reprocessing of an existing item.
+    /// commitReviewSave() will update this item in-place via processItemByID
+    /// instead of creating a duplicate through the queue.
+    public var reprocessingItemID: String?
+    
     /// Derived: True when first analysis has produced results (no explicit state needed)
     public var hasCompletedFirstAnalysis: Bool { !results.isEmpty }
     
@@ -481,6 +486,9 @@ public class VisualIntelligenceViewModel {
         }
         
         print("🔄 VI ViewModel: Found pending reprocess item: \(item.title ?? "Untitled") (session: \(item.sessionID ?? "none"))")
+        
+        // Mark as reprocessing so commitReviewSave updates in-place
+        self.reprocessingItemID = item.id
         
         // 1. Set Session & Metadata — Pin location from the item's existing data
         // so locateContextOnLoad skips fresh GPS lookup.
@@ -1883,6 +1891,108 @@ public class VisualIntelligenceViewModel {
         
         print("💾 commitReviewSave: Crystalizing Logic...")
         
+        // ── Reprocessing Path ──
+        // If we're reprocessing an existing item, update it in-place via processItemByID.
+        // This runs the full deterministic pipeline (Vision → Location → Web → SLM/CLaRa
+        // → FastVLM → Commerce → Concepts) — the exact same order as first-time processing.
+        if let itemID = reprocessingItemID {
+            let purposes = Array(self.selectedPurposes)
+            let placeContext = self.selectedPlace?.placeContext
+            let coordinate = self.currentCaptureCoordinate
+            let locationPinned = self.isLocationPinned
+            
+            Task.detached(priority: .utility) { [weak self] in
+                guard let self else { return }
+                
+                do {
+                    // 1. Pin user-selected location BEFORE processItemByID runs
+                    // processItemByID checks hasUserSetLocation via placeContext.placeID prefix.
+                    // We set a "reprocess-" prefixed placeID so the pipeline preserves this location.
+                    if locationPinned, let pc = placeContext, let container = Services.shared.modelContext?.container {
+                        let bgCtx = ModelContext(container)
+                        bgCtx.autosaveEnabled = false
+                        let fetch = FetchDescriptor<ProcessedItem>(
+                            predicate: #Predicate { $0.id == itemID }
+                        )
+                        if let item = try? bgCtx.fetch(fetch).first {
+                            // Mark with mapkit- prefix so processItemByID sees it as user-set
+                            let markedPC = PlaceContext(
+                                name: pc.name,
+                                categories: pc.categories,
+                                placeID: pc.placeID ?? "mapkit-reprocess",
+                                address: pc.address,
+                                rating: pc.rating,
+                                isOpen: pc.isOpen,
+                                latitude: pc.latitude,
+                                longitude: pc.longitude,
+                                priceLevel: pc.priceLevel,
+                                phoneNumber: pc.phoneNumber,
+                                website: pc.website,
+                                photos: pc.photos,
+                                tips: pc.tips
+                            )
+                            item.placeContext = markedPC
+                            if let lat = pc.latitude, let lon = pc.longitude {
+                                item.location = "\(lat),\(lon)"
+                            }
+                            try? bgCtx.save()
+                        }
+                    }
+                    
+                    // 2. Run the full pipeline via processItemByID
+                    // This creates a private ModelContext, clears calculated data,
+                    // and runs LocalPipelineService.process() with captureOnly: false
+                    // (Vision → Location → Web → SLM/CLaRa → FastVLM → Commerce → Concepts)
+                    guard let pipelineService = Services.shared.metadataPipelineService else {
+                        throw NSError(domain: "VisualIntelligenceViewModel", code: 2, userInfo: [NSLocalizedDescriptionKey: "No MetadataPipelineService available"])
+                    }
+                    
+                    try await pipelineService.processItemByID(itemID)
+                    
+                    // 3. Apply user-selected purposes AFTER pipeline completes
+                    // processItemByID clears purposes, so we append them post-pipeline.
+                    if !purposes.isEmpty, let container = Services.shared.modelContext?.container {
+                        let postCtx = ModelContext(container)
+                        postCtx.autosaveEnabled = false
+                        let fetch = FetchDescriptor<ProcessedItem>(
+                            predicate: #Predicate { $0.id == itemID }
+                        )
+                        if let item = try? postCtx.fetch(fetch).first {
+                            let combined = Array(Set(item.purposes + purposes))
+                            item.purposes = combined
+                            try? postCtx.save()
+                        }
+                    }
+                    
+                    print("✅ [Reprocess] Full pipeline complete for item \(itemID)")
+                    
+                    await MainActor.run { [weak self] in
+                        guard let self else { return }
+                        self.isSaving = false
+                        self.reprocessingItemID = nil
+                        #if os(iOS)
+                        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+                        #endif
+                        NotificationCenter.default.post(name: .diverQueueDidUpdate, object: nil)
+                        self.shouldDismiss = true
+                    }
+                } catch {
+                    print("❌ [Reprocess] Pipeline failed: \(error)")
+                    await MainActor.run { [weak self] in
+                        guard let self else { return }
+                        self.isSaving = false
+                        self.reprocessingItemID = nil
+                        self.saveErrorMessage = "Reprocessing failed: \(error.localizedDescription)"
+                        self.showingSaveError = true
+                    }
+                }
+            }
+            return
+        }
+        
+        // ── Fresh Capture Path ──
+        // Create new queue items and enqueue for MetadataPipelineService processing.
+        
         guard let queueStore = linkGenerator?.store else {
             print("❌ QueueStore not available")
             Task { @MainActor in
@@ -2557,6 +2667,7 @@ public class VisualIntelligenceViewModel {
         // hasCompletedFirstAnalysis is now derived from !results.isEmpty (auto-reset)
         pipelineStatus = .idle
         shouldDismiss = false
+        reprocessingItemID = nil
         
         print("🔄 Visual Intelligence VM: State Reset")
         // debugPrint(Thread.callStackSymbols) // Uncomment to trace caller causing loop

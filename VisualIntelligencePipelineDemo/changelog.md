@@ -16,14 +16,21 @@
 - **Conditional Display**: The "Chat with Librarian" button only appears when `edgeNodeAvailable || ContextQuestionService.isAvailable` — i.e., an actual inference backend (edge CLaRa or on-device SLM) can respond. Previously showed whenever RAM ≥ 8GB, which was misleading on iPads without a connected Mac.
 - **`Services.shared.discoveryService`**: Exposed the `BonjourDiscoveryService` instance from `Services` singleton so views can query edge connectivity without threading through `PipelineEdgeRouter`.
 
+### Reprocessing Pipeline Unification
+- **No More Duplicates**: Reprocessing an existing item via ReprocessMetadataView no longer creates a duplicate `DiverQueueItem` through the queue. Instead, `commitReviewSave()` detects `reprocessingItemID` and calls `processItemByID` directly, updating the item in-place.
+- **Same Pipeline for Both Paths**: Both first-time processing and reprocessing now go through `LocalPipelineService.process()` with the same order of operations: Vision → Location → Web → SLM/CLaRa → FastVLM → Commerce → Concepts.
+- **`ReprocessContext` Removed**: The redundant `ReprocessContext` struct (which copied 6 fields from `ProcessedItem`) has been deleted. `Services.shared.pendingReprocessItemID` passes just the item ID; the ViewModel fetches the full `ProcessedItem` from SwiftData with access to all metadata fields.
+- **Photos Library Fallback**: If `rawPayload` is missing during reprocessing (e.g., Live Photos where payload was the MOV component), the ViewModel now falls back to `PhotosAssetLoader` via `photosAssetIdentifier`.
+- **User Choices Preserved**: The user's purpose selection and pinned location from the review UI are applied to the ProcessedItem before the pipeline runs, ensuring they survive the full reprocessing pass.
+
 ### Files Changed
 - `[MODIFY]` `DiverKit/Services/CLaRaLatentService.swift` — Persistent index (Codable, zlib, load/save/scheduleSave), `removeDocument(id:)`, `clearIndex` wipes disk + UserDefaults
 - `[MODIFY]` `DiverKit/Services/Services.swift` — Added `discoveryService: (any EdgeNodeDiscovering)?`; replaced `pendingReprocessContext: ReprocessContext?` with `pendingReprocessItemID: String?`; removed `ReprocessContext` struct
 - `[MODIFY]` `DiverKit/ViewModel/SidebarViewModel.swift` — `rebuildLibrary` clears + repopulates CLaRa index, `deleteSelectedSessions` removes items from index
-- `[MODIFY]` `DiverKit/ViewModel/VisualIntelligenceViewModel.swift` — `checkPendingReprocess()` fetches full `ProcessedItem` by ID from SwiftData instead of reading from `ReprocessContext`; added `loadImageFromData` helper; Photos library fallback for missing rawPayload
+- `[MODIFY]` `DiverKit/ViewModel/VisualIntelligenceViewModel.swift` — Added `reprocessingItemID`; `checkPendingReprocess()` fetches full `ProcessedItem` by ID; `commitReviewSave()` routes reprocessing to `processItemByID` (no duplicate queue items); `reset()` clears reprocessingItemID; extracted `loadImageFromData` helper
 - `[MODIFY]` `VisualIntelligencePipeline/View/SettingsView.swift` — `deleteDatabase` calls `CLaRaLatentService.shared.clearIndex()`
 - `[MODIFY]` `VisualIntelligencePipeline/View/SidebarView.swift` — `edgeNodeAvailable` polling, conditional `agenticSearchSection`
-- `[MODIFY]` `VisualIntelligencePipeline/View/ReprocessMetadataView.swift` — Simplified to just set `pendingReprocessItemID` instead of building `ReprocessContext`; persists refreshed Photos data to `rawPayload` if missing
+- `[MODIFY]` `VisualIntelligencePipeline/View/ReprocessMetadataView.swift` — Simplified to just set `pendingReprocessItemID`; persists refreshed Photos data to `rawPayload` if missing
 - `[MODIFY]` `VisualIntelligencePipeline/VisualIntelligencePipelineApp.swift` — Register `discoveryService` in `Services.shared`
 
 ## 2026-02-23
