@@ -2,52 +2,45 @@
 
 ## App Name
 **Visual Intelligence** (30 chars max)
+*(Consider Rebranding: "Aura: Visual Brain" or "Diver: Second Brain")*
 
 ## Subtitle
-**Capture, Sift, & Enrich** (30 chars max)
-*(Alternative: Your AI-Powered Visual Memory)*
+**Your Physical Second Brain** (30 chars max)
 
 ## Promotional Text
-**Capture the world around you with unprecedented depth. Now with FastVLM vision-language model, consolidated Vision analysis, and QR code intelligence.** (170 chars max)
+**Point your camera at any product, place, or document to instantly reveal its hidden value, history, and context. Private, on-device magic.** (170 chars max)
 
 ## Description
 
-**Visual Intelligence** is your AI-powered companion for understanding, organizing, and remembering the world around you. It transforms your camera into a tool that doesn't just see—it understands.
+Stop wondering and start knowing. Visual Intelligence transforms your iPhone into a magical lens that reveals the hidden layers of the world around you. 
 
-By combining advanced on-device AI with rich contextual data, Visual Intelligence layers meaning onto every capture, turning fleeting moments into actionable knowledge. It also serves as a universal hub for saving and organizing links shared from Safari, TikTok, YouTube, and any app with a share sheet.
+Whether you're trying to decode the ethical and health impact of a product on a store shelf, instantly scanning and organizing a whiteboard session, or building a deeply contextual travel diary, Visual Intelligence does the heavy lifting for you—instantly, privately, and entirely on-device.
 
-### Designed for Your Life
+### Designed for Your Real Life
 
-**For the Researcher**
-Never lose a reference again. Snap a photo of a book cover, a document, or a whiteboard, and Visual Intelligence instantly captures the text, detects and corrects document perspective, and organizes it into a dedicated session. Your visual notes are searchable, citeable, and ready for your next project.
+**🛍️ Shop Smarter, Not Harder**
+Never be fooled by marketing again. Point your camera at any product to instantly reveal its "True Cost." Our AR overlay scores items across 7 dimensions: Ethics, Durability, Value, Health Fit, and more. See live price trajectories, active recall alerts, and get a personalized "Buy Now or Wait" recommendation from Apple Intelligence before you reach the checkout.
 
-**For the Shopper**
-Decode the true cost of any product in an instant. See an item you love? Capture it to instantly see its 7-engine score—evaluating Ethics, Durability, Value, Health Fit, and more. Visual Intelligence uses an AR overlay to show you live price trajectories, recall alerts, and personalized "Buy Now / Wait" recommendations from Apple Intelligence, ensuring your purchases align with your values.
+**🧠 Your Visual Second Brain**
+Found a great article, a brilliant whiteboard, or a QR code you need later? Visual Intelligence is your universal inbox for the physical and digital world. Snap a photo or share a link from Safari, TikTok, or YouTube, and our on-device AI instantly reads, summarizes, and auto-tags it so you can always find what you need.
 
-**For the Explorer**
-Capture the feeling of a place, not just the view. When you snap a photo of a landmark or a hidden gem, Visual Intelligence enriches it with precise location data from Apple Maps and Foursquare, current weather conditions, and AI-generated context. Build a rich visual diary of your travels that remembers where you were, what the weather was like, and why it mattered.
-
-**For the Music Lover**
-Hear something you love? Capture it to recognize the track via Apple Music or Spotify, and save it alongside the moment. Your music discoveries stay linked to the places and experiences where you found them.
+**🌍 Context is Everything**
+A photo is just a moment; Visual Intelligence captures the whole memory. Every snap is automatically enriched with the exact venue, current weather, and even the music playing in the background. Your captures are magically grouped into intelligent "Sessions" so you can effortlessly relive your travels or find that one great restaurant from last year.
 
 ### Powerful Features
 
-*   **Intelligent Sifting:** Automatically detects and lifts subjects from their background using Apple's Vision framework, giving you clean, focused images with proper alpha channels.
-*   **Deep Contextual Enrichment:** Every capture is enriched with location (Foursquare venues & Apple Maps), weather, web intelligence, aesthetics scoring, and music recognition — creating a complete memory of the moment.
-*   **Lightning Fast Two-Phase Pipeline:** An optimized processing split ensures your items are saved and visible in your library instantly, while heavy AI analysis seamlessly finishes in the background.
-*   **AI-Powered Understanding:** On-device Apple Intelligence and edge-routed CLaRa generate summaries, identify purposes, and suggest intelligent concept tags — all processed privately.
-*   **Smart Sessions:** Captures are automatically grouped by location and time into cohesive sessions with AI-generated summaries, so you stay organized without the effort.
-*   **Context Tags & Daily Focus:** Add custom tags like "Gift for Mom" to any capture. A Daily Focus brief aggregates your activity into an AI-generated summary each day.
-*   **Universal Link Hub:** Save links from Safari, YouTube, TikTok, or any app via the Share Sheet. Links are automatically enriched with metadata, previews, and context.
-*   **QR Code Intelligence:** QR codes are automatically detected and enriched with web metadata — titles, descriptions, and previews extracted from the target URL.
-*   **Commerce Intelligence:** Snap any product to score it across 7 strategies (Ethics, Value, Durability, etc.) using free open databases. See price nowcasts, ESG ratings, and personalized purchase timing advisories directly in AR.
-*   **Siri, Shortcuts & Widgets:** Save, share, and search your library with voice commands, automation workflows, and at-a-glance Home & Lock screen widgets.
-*   **Privacy & Edge Intelligence:** Built with on-device intelligence at its core. When at home, automatically offload heavy processing to your Mac via edge computing, keeping your personal research and memories private and lightning fast.
+*   **Commerce AR:** Snap any product to score it using free open databases (Open Food Facts, Climate TRACE, EPA). See price forecasts, ESG ratings, and timing advisories directly in an AR overlay on your screen.
+*   **Magical Cutouts:** Subjects are instantly lifted from their background with clean edges, ready for you to save, share, or collage beautifully.
+*   **Auto-Organization:** Say goodbye to messy camera rolls. AI automatically groups your captures by place and time, generating concise, beautiful summaries of your day.
+*   **Universal Link Hub:** Share links directly into the app. We'll automatically fetch previews, read the content, and categorize it alongside your physical captures.
+*   **Instant Document Scanner:** Automatically detects, corrects perspective, and transcribes documents found in your captures.
+*   **Private by Design:** Your life is your business. All AI analysis—from smart tagging to product scoring—happens locally on your device. Nothing goes to the cloud without your permission.
+*   **Lightning Fast:** Our Two-Phase pipeline ensures your items are saved instantly, so you never miss a moment while heavy AI analysis finishes seamlessly in the background.
 
 ---
 
 ## Keywords
-visual search, camera, ai, sifting, notes, organization, scanner, ocr, context, memory, research, productivity, enrichment, links
+visual search, second brain, smart scanner, ethical shopping, product scanner, ar shopping, memory, save links, auto organize, privacy
 
 ## Copyright
 2026 Secret Atomics
