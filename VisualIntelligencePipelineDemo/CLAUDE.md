@@ -178,7 +178,7 @@ KnowMapsServiceContainer(configuration: config, analyticsService: analytics)
 
 ### Main Thread Safety
 - Keep long-running pipeline tasks off the main thread
-- Use `Task.detached` or background actors for heavy processing
+- Use `Task` or background actors for heavy processing
 - Provide immediate visual feedback on user actions even when model updates are in progress
 
 ### Extension Constraints

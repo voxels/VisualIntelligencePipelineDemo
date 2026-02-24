@@ -43,7 +43,7 @@ final class MetadataPipelineServiceTests: XCTestCase {
         try queueStore.enqueue(item)
 
         // When: We process the queue
-        // Note: processPendingQueue() internally uses Task.detached(priority: .utility),
+        // Note: processPendingQueue() internally uses Task(priority: .utility),
         // so the await returns before processing is complete.
         try await service.processPendingQueue()
         

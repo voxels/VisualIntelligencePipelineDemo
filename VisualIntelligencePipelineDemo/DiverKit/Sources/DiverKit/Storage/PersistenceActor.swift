@@ -3,7 +3,7 @@
 //  DiverKit
 //
 //  A @ModelActor for background SwiftData operations.
-//  Replaces manual ModelContext(container) + Task.detached patterns
+//  Replaces manual ModelContext(container) + Task patterns
 //  with proper actor-isolated SwiftData access.
 //
 //  Usage:

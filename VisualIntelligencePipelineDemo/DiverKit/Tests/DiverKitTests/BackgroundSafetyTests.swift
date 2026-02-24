@@ -120,7 +120,7 @@ final class BackgroundSafetyTests: XCTestCase {
     
     /// Verifies that a detached task also respects cancellation.
     func testDetachedTaskCancellation() async {
-        let task = Task.detached(priority: .utility) { () -> Bool in
+        let task = Task(priority: .utility) { () -> Bool in
             // Return whether isCancelled was true at entry
             guard !Task.isCancelled else {
                 return true // guard triggered

@@ -180,7 +180,7 @@ struct EdgeNodeSetupView: View {
             ForEach(availableNodes, id: \.deviceName) { node in
                 Button {
                     Task {
-                        await Services.shared.discoveryService?.connect(to: node)
+                        try? await Services.shared.discoveryService?.connect(to: node)
                         await refresh()
                     }
                 } label: {
@@ -212,25 +212,25 @@ struct EdgeNodeSetupView: View {
                 icon: "lock.shield.fill",
                 color: .green,
                 title: "Encrypted Local Network",
-                body: "All traffic between your iPhone and Mac uses TLS 1.3. Nothing leaves your home network."
+                descriptionText: "All traffic between your iPhone and Mac uses TLS 1.3. Nothing leaves your home network."
             )
             FeatureBullet(
                 icon: "iphone.and.arrow.right.inward",
                 color: .blue,
                 title: "Automatic Fallback",
-                body: "If no Mac is found, all AI runs on-device. Edge offloading is always optional and transparent."
+                descriptionText: "If no Mac is found, all AI runs on-device. Edge offloading is always optional and transparent."
             )
             FeatureBullet(
                 icon: "cpu.fill",
                 color: .purple,
                 title: "Larger Models",
-                body: "The Mac node runs CLaRa 7B and FastVLM 1.5B for richer summaries and higher-fidelity image understanding than the on-device models."
+                descriptionText: "The Mac node runs CLaRa 7B and FastVLM 1.5B for richer summaries and higher-fidelity image understanding than the on-device models."
             )
             FeatureBullet(
                 icon: "wand.and.stars",
                 color: .orange,
                 title: "3D Scene Generation",
-                body: "With an M-series Mac node, any capture can be converted into a 3D Gaussian Splat viewable in AR."
+                descriptionText: "With an M-series Mac node, any capture can be converted into a 3D Gaussian Splat viewable in AR."
             )
         }
     }
@@ -266,7 +266,7 @@ private struct FeatureBullet: View {
     let icon: String
     let color: Color
     let title: String
-    let body: String
+    let descriptionText: String
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -279,7 +279,7 @@ private struct FeatureBullet: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline.weight(.semibold))
-                Text(body)
+                Text(descriptionText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -120,7 +120,7 @@ final class ArchitectureTests: XCTestCase {
     }
     
     /// Guard: No for-loop should spawn multiple Tasks that each call processItemByID.
-    /// Session-level operations must serialize reprocessing into a single Task.detached.
+    /// Session-level operations must serialize reprocessing into a single Task.
     func testNoForLoopTaskSpawningInViewModels() throws {
         let viewModelDir = findSourcesDirectory()?.appendingPathComponent("ViewModel")
         guard let dir = viewModelDir, FileManager.default.fileExists(atPath: dir.path) else {
@@ -148,7 +148,7 @@ final class ArchitectureTests: XCTestCase {
         
         XCTAssertTrue(violations.isEmpty,
             "For-loops must NOT spawn individual Tasks per item for reprocessing. " +
-            "Collect IDs and use a single Task.detached with sequential loop. " +
+            "Collect IDs and use a single Task with sequential loop. " +
             "Violations: \(violations.joined(separator: ", "))")
     }
     

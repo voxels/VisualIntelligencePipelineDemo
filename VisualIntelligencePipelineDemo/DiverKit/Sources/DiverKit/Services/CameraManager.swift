@@ -280,7 +280,7 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         let sBuffer = UncheckedBuffer(buffer: pixelBuffer)
         
         // 2. Run standard high-speed Vision tasks
-        Task.detached(priority: .userInitiated) { [weak self] in
+        Task(priority: .userInitiated) { [weak self] in
             guard let self = self else { return }
             do {
                 // Safely create request within detached task thread bound context.
@@ -307,7 +307,7 @@ extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
         
         // 3. Run Vision SDK Foreground Instance Mask (Subject Lifting preview)
-        Task.detached(priority: .utility) { [weak self] in
+        Task(priority: .utility) { [weak self] in
             do {
                 let maskRequest = VNGenerateForegroundInstanceMaskRequest()
                 let handler = VNImageRequestHandler(cvPixelBuffer: sBuffer.buffer, orientation: .up, options: [:])

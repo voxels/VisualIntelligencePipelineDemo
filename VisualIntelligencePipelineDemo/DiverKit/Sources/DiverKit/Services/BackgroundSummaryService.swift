@@ -21,7 +21,7 @@ public actor BackgroundSummaryService {
   public func startUpgradesIfNeeded(router: PipelineEdgeRouter, system: VisualIntelligenceActorSystem) {
     guard currentTask == nil else { return }
 
-    currentTask = Task.detached(priority: .background) {
+    currentTask = Task(priority: .background) {
       let decision = await router.shouldOffload(task: .vlmInference)
       print("🔄 [BackgroundSummaryService] Routing decision: \(decision)")
       guard case .edge(let node, _) = decision else {

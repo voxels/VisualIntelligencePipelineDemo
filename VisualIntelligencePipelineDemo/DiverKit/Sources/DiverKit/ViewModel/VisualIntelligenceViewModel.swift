@@ -40,7 +40,14 @@ extension IntelligenceResult: @unchecked Sendable {}
 @Observable
 public class VisualIntelligenceViewModel {
     // MARK: - App State & Dependencies
-
+    // Background Tasks
+    @ObservationIgnored private var currentAnalysisTask: Task<Void, Error>?
+    @ObservationIgnored private var siftingTask: Task<Void, Error>?
+    @ObservationIgnored private var verificationTask: Task<Void, Error>?
+    @ObservationIgnored private var saveTask: Task<Void, Error>?
+    @ObservationIgnored private var staticAnalysisTask: Task<Void, Error>?
+    @ObservationIgnored private var documentSaveTask: Task<Void, Error>?
+    
     // MARK: - Published UI State
     public var results: [IntelligenceResult] = []
     public var siftedImage: PlatformImage?
@@ -298,7 +305,6 @@ public class VisualIntelligenceViewModel {
     private var processor = IntelligenceProcessor()
     private var linkGenerator: DiverLinkGenerator?
     private let webViewService = WebViewLinkEnrichmentService() // New Service
-    private var currentAnalysisTask: Task<Void, Never>?
     public var isAnalyzing = false
     public var isSavingDocument = false
     
@@ -1049,7 +1055,7 @@ public class VisualIntelligenceViewModel {
         // Cancel any previous analysis to prevent race conditions
         currentAnalysisTask?.cancel()
         
-        currentAnalysisTask = Task.detached(priority: .utility) { [weak self] in
+        currentAnalysisTask = Task(priority: .utility) { [weak self] in
             guard let self = self else { return }
             
             // Capture @MainActor-isolated references for use in detached context
@@ -1099,20 +1105,24 @@ public class VisualIntelligenceViewModel {
                 
                 if let sifted = fullResults.first(where: { if case .siftedSubject = $0 { return true }; return false }),
                    case .siftedSubject(let mask, let bounds, _) = sifted {
-                    Task.detached(priority: .utility) { [weak self] in
+                    siftingTask?.cancel()
+                    siftingTask = Task(priority: .utility) { [weak self] in
                         guard let self else { return }
                         let cgOrientation = await MainActor.run {
                             self.capturedImageVisionOrientation
                         }
+                        try? Task.checkCancellation()
                         if let (sImage, sBounds) = await self.extractSiftedImage(
                             mask: mask,
                             bounds: bounds,
                             frame: cgImage,
                             orientation: cgOrientation
                         ) {
-                            await MainActor.run {
-                                self.siftedImage = sImage
-                                self.siftedBoundingBox = sBounds
+                            if !Task.isCancelled {
+                                await MainActor.run {
+                                    self.siftedImage = sImage
+                                    self.siftedBoundingBox = sBounds
+                                }
                             }
                         }
                     }
@@ -1283,9 +1293,12 @@ public class VisualIntelligenceViewModel {
                 // use the full result set for specific, OCR-informed suggestions.
                 print("🔍 Starting Background Verification...")
                 let currentResults = await MainActor.run { self.results }
-                Task.detached(priority: .utility) { [weak self] in
+                
+                verificationTask?.cancel()
+                verificationTask = Task(priority: .utility) { [weak self] in
                     guard let self else { return }
                     for await result in processor.verify(initialResults: currentResults, image: cgImage) {
+                        try? Task.checkCancellation()
                         await MainActor.run {
                             if !self.results.contains(result) {
                                 withAnimation {
@@ -1299,12 +1312,16 @@ public class VisualIntelligenceViewModel {
                         }
                     }
                     
+                    try? Task.checkCancellation()
                     // Stage 6: Now that verification is complete, generate context suggestions
                     print("🤖 Auto-triggering Context Analysis (post-verification)...")
                     await MainActor.run { self.pipelineStatus = .reasoning }
                     let selectedPlace = await MainActor.run { self.selectedPlace }
                     await self.regenerateContextSuggestions(for: selectedPlace)
-                    await MainActor.run { self.pipelineStatus = .complete }
+                    
+                    if !Task.isCancelled {
+                        await MainActor.run { self.pipelineStatus = .complete }
+                    }
                 }
                 
             } catch {
@@ -1342,7 +1359,8 @@ public class VisualIntelligenceViewModel {
         }
         
         // Multi-item: full pipeline on first, vision-only on rest
-        Task.detached(priority: .utility) { [weak self] in
+        currentAnalysisTask?.cancel()
+        currentAnalysisTask = Task(priority: .utility) { [weak self] in
             guard let self else { return }
             // First item gets full pipeline (enrichment, verification, context)
             let firstItem = items[0]
@@ -1478,10 +1496,12 @@ public class VisualIntelligenceViewModel {
             }
             
             // Background verification → context suggestions (sequential)
-            Task.detached(priority: .utility) { [weak self] in
+            verificationTask?.cancel()
+            verificationTask = Task(priority: .utility) { [weak self] in
                 guard let self else { return }
                 let processor = await MainActor.run { self.processor }
                 for await result in processor.verify(initialResults: allResults, image: firstMedia.cgImage) {
+                    try? Task.checkCancellation()
                     await MainActor.run {
                         if !self.results.contains(result) {
                             withAnimation { self.results.append(result) }
@@ -1489,11 +1509,14 @@ public class VisualIntelligenceViewModel {
                     }
                 }
                 
+                try? Task.checkCancellation()
                 // Now that verification is complete, generate context suggestions
                 await MainActor.run { self.pipelineStatus = .reasoning }
                 let selectedPlace = await MainActor.run { self.selectedPlace }
                 await self.regenerateContextSuggestions(for: selectedPlace)
-                await MainActor.run { self.pipelineStatus = .complete }
+                if !Task.isCancelled {
+                    await MainActor.run { self.pipelineStatus = .complete }
+                }
             }
         }
     }
@@ -1635,8 +1658,10 @@ public class VisualIntelligenceViewModel {
     }
 
     private func analyzeStaticImage(cgImage: CGImage) {
-        Task.detached(priority: .userInitiated) {
+        staticAnalysisTask?.cancel()
+        staticAnalysisTask = Task(priority: .userInitiated) {
              do {
+                 try Task.checkCancellation()
                  // Use Vision SDK's built-in subject lifting (no model download needed)
                  let maskRequest = VNGenerateForegroundInstanceMaskRequest()
                  let handler = VNImageRequestHandler(cgImage: cgImage, orientation: .up, options: [:])
@@ -1659,9 +1684,11 @@ public class VisualIntelligenceViewModel {
                              frame: cgImage,
                              orientation: .up
                          ) {
-                             await MainActor.run { [weak self] in
-                                 self?.siftedImage = sImage
-                                 self?.siftedBoundingBox = sBounds
+                             if !Task.isCancelled {
+                                 await MainActor.run { [weak self] in
+                                     self?.siftedImage = sImage
+                                     self?.siftedBoundingBox = sBounds
+                                 }
                              }
                          }
                      }
@@ -1901,7 +1928,8 @@ public class VisualIntelligenceViewModel {
             let coordinate = self.currentCaptureCoordinate
             let locationPinned = self.isLocationPinned
             
-            Task.detached(priority: .utility) { [weak self] in
+            saveTask?.cancel()
+            saveTask = Task(priority: .utility) { [weak self] in
                 guard let self else { return }
                 
                 do {
@@ -1938,6 +1966,8 @@ public class VisualIntelligenceViewModel {
                             try? bgCtx.save()
                         }
                     }
+                    
+                    try Task.checkCancellation()
                     
                     // 2. Run the full pipeline via processItemByID
                     // This creates a private ModelContext, clears calculated data,
@@ -2081,7 +2111,8 @@ public class VisualIntelligenceViewModel {
             self.sessionTitle = calculatedTitle
         }
         
-        Task.detached(priority: .utility) { () -> Void in
+        saveTask?.cancel()
+        saveTask = Task(priority: .utility) {
             #if canImport(UIKit)
             // Fix orientation (bake it in) before saving to data, as jpegData strips EXIF orientation tags
             let normalizedImage = imageToSave?.fixedOrientation()
@@ -2174,8 +2205,12 @@ public class VisualIntelligenceViewModel {
                                     locationName: selectedPlaceTitle,
                                     attachments: []
                                 )
-                                try queueStore.enqueue(docQueueItem)
-                                print("📄 Auto-saved rectified document: \(documentTitle)")
+                                do {
+                                    try queueStore.enqueue(docQueueItem)
+                                    print("📄 Auto-saved rectified document: \(documentTitle)")
+                                } catch {
+                                    print("❌ Failed to auto-save rectified document: \(error)")
+                                }
                             }
                         }
                     }
@@ -2341,7 +2376,8 @@ public class VisualIntelligenceViewModel {
         let text = self.rectifiedDocumentText // Likely nil if not rectified
         isSavingDocument = true
         
-        Task.detached(priority: .userInitiated) {
+        documentSaveTask?.cancel()
+        documentSaveTask = Task(priority: .userInitiated) {
             var mainData: Data?
             var attachments: [Data] = []
             
@@ -3013,7 +3049,7 @@ public class VisualIntelligenceViewModel {
         }
         
         if !currentStepSummary.isEmpty {
-            let summary = currentStepSummary
+            _ = currentStepSummary
             Task { @MainActor in
                 Services.shared.dailyContextService?.requestUpdate()
             }

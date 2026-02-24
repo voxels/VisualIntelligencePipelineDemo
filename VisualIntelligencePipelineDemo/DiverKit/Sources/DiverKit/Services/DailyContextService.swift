@@ -55,7 +55,7 @@ public final class DailyContextService {
     /// Triggers a background re-generation of the daily summary.
     /// Called after pipeline saves or on app foreground.
     public func requestUpdate() {
-        Task.detached(priority: .utility) { [weak self] in
+        Task(priority: .utility) { [weak self] in
             guard let self else { return }
             // Brief delay for SwiftData persistence to flush
             try? await Task.sleep(for: .seconds(1))

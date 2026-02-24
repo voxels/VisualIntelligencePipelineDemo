@@ -372,7 +372,11 @@ struct SettingsView: View {
             do {
                 try await StorageClient.deleteDatabase(
                     context: modelContext,
-                    clearQueueStore: { try? sharedWithYouManager.clearQueueStore() },
+                    clearQueueStore: { 
+                        Task { @MainActor in
+                            try? sharedWithYouManager.clearQueueStore() 
+                        }
+                    },
                     additionalModels: [UserCachedRecord.self, RecommendationData.self],
                     appLevelPurge: {
                         Task { @MainActor in

@@ -1562,7 +1562,7 @@ public final class LocalPipelineService {
 
     // MARK: - Intelligence Processor Integration
     // Unified "Vision Engine" - replaces duplicate internal logic
-    // NOTE: IntelligenceProcessor is created inside Task.detached closures
+    // NOTE: IntelligenceProcessor is created inside Task closures
     // since it must cross actor boundaries. No stored instance needed.
     
     private func analyzeVisualContent(data: Data, existing: ProcessedItem, pipelineContext: inout PipelineContext, enrichmentService: LinkEnrichmentService?) async {
@@ -1580,7 +1580,7 @@ public final class LocalPipelineService {
         let results: [IntelligenceResult]
         do {
             let capturedData = data
-            results = try await Task.detached(priority: .userInitiated) {
+            results = try await Task(priority: .userInitiated) {
                 // Bail if cancelled (e.g. app backgrounded) before submitting GPU work
                 guard !Task.isCancelled else { return [IntelligenceResult]() }
                 

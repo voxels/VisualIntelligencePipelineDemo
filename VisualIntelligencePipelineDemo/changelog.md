@@ -322,7 +322,7 @@
 
 #### SwiftData EXC_BAD_ACCESS Fix
 - **MetadataPipelineService.processItemByID()**: New method that creates a private `ModelContext(modelContainer)` per call, safe to invoke from any isolation context. Prevents shared-context mutations that caused `Set.resize` use-after-free crashes.
-- **EditLocationView**: Fixed both `updateSessionLocation` (N concurrent Tasks → single `Task.detached` with sequential loop) and `updateItemLocation` (moved `Task` outside `MainActor.run`).
+- **EditLocationView**: Fixed both `updateSessionLocation` (N concurrent Tasks → single `Task` with sequential loop) and `updateItemLocation` (moved `Task` outside `MainActor.run`).
 - **SidebarViewModel**: Migrated 5 methods — `processItemNow`, `reprocessItem`, `processNow`, `reprocessSession` (had same N-concurrent-tasks crash), `analyzeSession` (now creates background ModelContext).
 - **ProcessedItemViewModel.reprocessItem**: Migrated to `processItemByID`.
 - **ReferenceDetailViewModel.refreshLinkMetadata**: Migrated to `processItemByID`.
@@ -339,7 +339,7 @@
 - **ContentView (SessionItemsView)**: Removed 3 stale functions (`deleteItem`, `deleteSession`, `analyzeSession`) — all duplicated ViewModel methods with unsafe patterns. Redirected callers to ViewModel's safe versions.
 
 #### FastVLM UI Freeze Fix
-- **FastVLMEnrichmentService**: Memory pressure `unloadModel()` now dispatched to `Task.detached(priority: .background)` — GPU resource deallocation was blocking UI. Model loading (`ensureLoaded()`) moved inside the detached inference task so GPU allocation never blocks the calling thread. Memory pressure dispatch queue changed from `.global()` to `.global(qos: .utility)`.
+- **FastVLMEnrichmentService**: Memory pressure `unloadModel()` now dispatched to `Task(priority: .background)` — GPU resource deallocation was blocking UI. Model loading (`ensureLoaded()`) moved inside the detached inference task so GPU allocation never blocks the calling thread. Memory pressure dispatch queue changed from `.global()` to `.global(qos: .utility)`.
 - **MetadataPipelineService**: `cancelProcessing()` now dispatches `unloadModel()` to background instead of calling it synchronously on the main thread.
 
 #### Contact Geocode Fallback
@@ -433,7 +433,7 @@
 ### Performance Refactor — Phase 0 & Phase 1 (Partial)
 
 #### @MainActor Fix (Phase 0)
-- **Root Cause Fix**: Changed 5 `Task { @MainActor in ... }` closures → `Task.detached(priority: .utility)` in `VisualIntelligenceViewModel` to move Vision/LLM/sifting work off the main thread.
+- **Root Cause Fix**: Changed 5 `Task { @MainActor in ... }` closures → `Task(priority: .utility)` in `VisualIntelligenceViewModel` to move Vision/LLM/sifting work off the main thread.
 
 #### @unchecked Sendable Audit (Phase 1D)
 - **Safety Documentation**: Added `/// Safety:` comments to all 10 production `@unchecked Sendable` types (`FoursquareEnrichmentService`, `MapKitEnrichmentService`, `DuckDuckGoEnrichmentService`, `AestheticsScoringService`, `KeychainService`, `CameraManager`, `LocationService`, `SSEStreamService`, `FastVLMEnrichmentService`, `MetadataPipelineService`). All verified safe via immutability, statelessness, serial queues, or explicit locks.

@@ -210,7 +210,7 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
     /// Save the current index to disk (debounced to avoid rapid writes during bulk ingestion).
     private func scheduleSave() {
         pendingSaveTask?.cancel()
-        pendingSaveTask = Task.detached(priority: .utility) { [weak self] in
+        pendingSaveTask = Task(priority: .utility) { [weak self] in
             try? await Task.sleep(for: .seconds(2))
             guard !Task.isCancelled else { return }
             self?.saveIndexToDisk()
@@ -651,7 +651,7 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
         DiverLogger.pipeline.info("🔍 [CLaRa] Query: \(String(question.prefix(80)))...")
         let queryStart = Date()
         
-        return await Task.detached(priority: .userInitiated) { [weak self] () -> String? in
+        return await Task(priority: .userInitiated) { [weak self] () -> String? in
             guard let self = self else { return nil }
             guard !Task.isCancelled else { return nil }
             

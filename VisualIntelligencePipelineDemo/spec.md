@@ -134,20 +134,21 @@ distributed actor InferenceService {
 | Context | Mechanism | Usage |
 |---------|-----------|-------|
 | Pipeline processing | `@PipelineActor` (custom global actor) | `LocalPipelineService`, heavy enrichment tasks |
-| Heavy computation | `Task.detached(priority: .utility)` | ML inference, image analysis, metadata extraction |
+| Heavy computation | `actor` / `nonisolated async` (`Task { }`) | ML inference, image analysis, metadata extraction |
 | Background SwiftData | `ModelContext(container)` with `autosaveEnabled = false` | All pipeline/enrichment SwiftData access |
 | UI updates | `@MainActor` | View models, published properties |
 | Progress reporting | `AsyncStream` (SE-0314) | Queue progress, pipeline status events |
 | Edge node transport | `distributed actor` (SE-0336) via `VisualIntelligenceActorSystem` | ML offloading, ESG/commerce enrichment over LAN |
 
-#### Threading Rules (Apple Documentation Validated)
+#### Threading Rules (Swift 6)
 
-> **Critical Rule:** Never use `Task { }` in SwiftUI handlers (`onAppear`, `onChange`, `onReceive`) or inside `@MainActor`-annotated types for pipeline work — it inherits `@MainActor` isolation (SE-0466). Always use `Task.detached(priority: .utility)` with explicit capture lists.
+> **Critical Rule:** Avoid the `Task` anti-pattern. While it guarantees dropping off the `@MainActor`, it breaks task hierarchy (canceling parent fails to cancel child) and priority inheritance. Instead:
+> 1.  Use standard `Task { }` and move the heavy work into a `nonisolated async` function or a separate `actor`.
+> 2.  **Use stored, cancellable tasks:** Rather than firing and forgetting a detached task, maintain references to active work (e.g. `var currentTask: Task<Void, Never>?`) and proactively call `.cancel()` at opportune moments (e.g. navigating away, receiving a newer input). Inside the worker function, frequently call `try Task.checkCancellation()` to ensure work is torn down promptly.
 
 **Actor isolation inheritance (SE-0466, Swift 6.2):**
-- `Task { }` inside an `@MainActor` class/method → inherits `@MainActor` isolation
-- `Task.detached { }` → runs on the cooperative thread pool, no actor isolation inherited
-- Inner `Task { }` inside an outer `Task { @MainActor }` → also inherits `@MainActor`
+- **WRONG:** Using `Task { await heavyWork() }` inside a ViewModel to avoid blocking it.
+- **RIGHT:** Using `Task { await heavyWork() }` where `heavyWork()` is marked `nonisolated` (or lives on a different actor). The standard `Task` runs on `@MainActor`, but suspends when calling the `nonisolated` function, allowing the block of heavy work to naturally execute on the global concurrent pool.
 
 **ML service threading (confirmed via Apple docs):**
 - `LanguageModelSession` (Foundation Models) — `final class`, no actor isolation. Pure `async/await`. Safe to call from any thread.
@@ -392,7 +393,7 @@ struct FinancialSnapshot: Codable, Sendable {
 | Service | File | Responsibility |
 |---------|------|----------------|
 | **LocalPipelineService** | `LocalPipelineService.swift` (135KB) | Master orchestrator — ingestion, enrichment coordination, persistence, session management, reprocessing, library maintenance. Routes stages to edge node when available. |
-| **MetadataPipelineService** | `MetadataPipelineService.swift` (47KB) | Converts queue items → `LocalInput`, dispatches metadata extraction tasks via `Task.detached` |
+| **MetadataPipelineService** | `MetadataPipelineService.swift` (47KB) | Converts queue items → `LocalInput`, dispatches metadata extraction tasks via `Task` |
 | **PipelineContext** | `PipelineContext.swift` | Typed context struct aggregated across enrichment stages |
 | **PipelineActor** | `PipelineActor.swift` | Custom `@globalActor` for pipeline isolation |
 
@@ -758,8 +759,8 @@ The Mac/iPad edge node maintains local caches that never sync to CloudKit or lea
 
 1. **Never compromise data integrity** — No destructive schema changes without a tested migration plan
 2. **Build stability is paramount** — Verify the project builds after any refactoring
-3. **Main thread safety** — Keep pipeline work off `@MainActor`; use `@PipelineActor` or `Task.detached`. `LanguageModelSession`, Vision, and `IntelligenceProcessor` have no actor isolation and must not be called from `@MainActor` task closures.
-4. **Task isolation (SE-0466)** — `Task { }` inside `@MainActor` types inherits main actor isolation. Always use `Task.detached(priority: .utility)` for ML/Vision/LLM work, hopping to `@MainActor` only for UI property updates via `await MainActor.run { }`.
+3. **Main thread safety** — Keep pipeline work off `@MainActor`; use `@PipelineActor` or `Task`. `LanguageModelSession`, Vision, and `IntelligenceProcessor` have no actor isolation and must not be called from `@MainActor` task closures.
+4. **Task isolation (SE-0466)** — `Task { }` inside `@MainActor` types inherits main actor isolation. Always use `Task(priority: .utility)` for ML/Vision/LLM work, hopping to `@MainActor` only for UI property updates via `await MainActor.run { }`.
 5. **Background ModelContext** — Create via `ModelContext(container)` with `autosaveEnabled = false` for pipeline SwiftData access; never use `mainContext` from background tasks
 6. **Error logging** — Use `do { try } catch { log }` instead of `try?` for all SwiftData saves
 7. **Autorelease in loops** — Wrap image processing loops (`CGImage`, Vision results) in `autoreleasepool { }` to drain ObjC temporaries. Do not place `await` suspension points inside autoreleasepool blocks.

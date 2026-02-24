@@ -9,6 +9,9 @@ public final class ProcessedItemViewModel: ObservableObject {
     private let modelContext: ModelContext
     private let pipeline: MetadataPipelineService
     
+    // Background Tasks
+    @ObservationIgnored private var reprocessTask: Task<Void, Error>?
+    
     public init(modelContext: ModelContext, pipeline: MetadataPipelineService) {
         self.modelContext = modelContext
         self.pipeline = pipeline
@@ -23,7 +26,9 @@ public final class ProcessedItemViewModel: ObservableObject {
     
     public func reprocessItem(_ item: ProcessedItem) {
         let itemID = item.id
-        Task.detached(priority: .utility) { [pipeline] in
+        reprocessTask?.cancel()
+        reprocessTask = Task(priority: .utility) { [pipeline] in
+            try? Task.checkCancellation()
             try? await pipeline.processItemByID(itemID)
         }
     }

@@ -41,7 +41,7 @@ final class DiverQueueProcessingService {
     func processPendingQueue() async throws {
         // Run on detached task to ensure we don't block calling actor (which might be Main)
         // However, the caller should usually handle the detach. 
-        // We'll trust the caller to await this in a non-blocking way, or we can use Task.detached internally if needed.
+        // We'll trust the caller to await this in a non-blocking way, or we can use Task internally if needed.
         // For now, removing @MainActor is the key step.
         
         let records = try queueStore.pendingEntries()
@@ -62,7 +62,7 @@ final class DiverQueueProcessingService {
     }
 
     private func handle(record: DiverQueueRecord) async throws {
-        // Enforce background context for heavy lifting via Task.detached
+        // Enforce background context for heavy lifting via Task
         // DiverQueueRecord is Sendable, so we can pass it directly.
         
         try await Task.detached(priority: .utility) { [weak self] in

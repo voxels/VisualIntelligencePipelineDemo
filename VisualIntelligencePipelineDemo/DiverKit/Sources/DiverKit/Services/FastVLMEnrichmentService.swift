@@ -315,7 +315,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
             }
             print("⚠️ [FastVLMService] Memory pressure detected — scheduling model unload")
             // Unload on a detached task to avoid blocking any thread during GPU resource deallocation
-            Task.detached(priority: .background) { [weak self] in
+            Task(priority: .background) { [weak self] in
                 self?.unloadModel()
             }
         }
@@ -632,7 +632,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         let capturedTags = visionTags
         let capturedContext = enrichmentContext
         let capturedTranscription = transcription
-        let result: FastVLMAnalysis? = await Task.detached(priority: .background) { [self] in
+        let result: FastVLMAnalysis? = await Task(priority: .background) { [self] in
             // Bail immediately if the parent task was cancelled (e.g. app backgrounded).
             // This prevents submitting new Metal command buffers after iOS has invalidated them.
             guard !Task.isCancelled else {

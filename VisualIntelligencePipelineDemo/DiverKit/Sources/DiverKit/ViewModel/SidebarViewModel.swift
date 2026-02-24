@@ -58,6 +58,14 @@ public final class SidebarViewModel {
     public var showingCombineCollectionSheet = false
     public var combineCollectionName = ""
     public var importError: String? // For user-facing import notifications
+    
+    // Background Tasks
+    @ObservationIgnored private var backgroundRefreshTask: Task<Void, Error>?
+    @ObservationIgnored private var semanticSearchTask: Task<Void, Error>?
+    @ObservationIgnored private var processItemTask: Task<Void, Error>?
+    @ObservationIgnored private var analyzeSessionTask: Task<Void, Error>?
+    @ObservationIgnored private var fullAnalysisTask: Task<Void, Error>?
+    @ObservationIgnored private var thumbnailLoadingTasks: [String: Task<UIImage?, Never>] = [:]
     public var isPerformingAction = false // Immediate feedback for blocking operations
     
     // Full Analysis (CLaRa) Modal State
@@ -214,9 +222,9 @@ public final class SidebarViewModel {
             try await service.processPendingQueue()
             try await service.refreshProcessedItems()
             
-            // Check for edge summary upgrades in the background
             let container = context.container
-            Task.detached(priority: .background) {
+            backgroundRefreshTask?.cancel()
+            backgroundRefreshTask = Task(priority: .utility) {
                 let router = PipelineEdgeRouter(discoveryService: BonjourDiscoveryService())
                 let system = VisualIntelligenceActorSystem(transport: NWTransportLayer(localNodeName: UUID().uuidString))
                 let backgroundService = BackgroundSummaryService(modelContainer: container)
@@ -505,7 +513,8 @@ public final class SidebarViewModel {
     
     public func processItemNow(_ item: ProcessedItem) {
         let itemID = item.id
-        Task.detached(priority: .utility) { [pipelineService] in
+        processItemTask?.cancel()
+        processItemTask = Task {
             do {
                 try await pipelineService?.processItemByID(itemID)
                 print("✅ Triggered immediate processing for: \(itemID)")
@@ -525,8 +534,10 @@ public final class SidebarViewModel {
     public func analyzeSession(_ session: SessionMetadata, context: ModelContext) {
         let sessionID = session.sessionID
         let container = context.container
-        Task.detached(priority: .utility) {
+        analyzeSessionTask?.cancel()
+        analyzeSessionTask = Task(priority: .utility) {
             let actor = PersistenceActor(modelContainer: container)
+            try? Task.checkCancellation()
             await actor.analyzeSession(sessionID: sessionID)
         }
     }
@@ -545,7 +556,8 @@ public final class SidebarViewModel {
         isGeneratingAnalysis = true
         showingFullAnalysis = true
         
-        Task.detached(priority: .utility) {
+        fullAnalysisTask?.cancel()
+        fullAnalysisTask = Task(priority: .utility) {
             // Background ModelContext for SwiftData fetch
             let bgContext = ModelContext(container)
             bgContext.autosaveEnabled = false
@@ -563,10 +575,14 @@ public final class SidebarViewModel {
             }
             allItems.sort { $0.createdAt < $1.createdAt }
             
+            try? Task.checkCancellation()
+            
             guard !allItems.isEmpty else {
-                await MainActor.run { [weak self] in
-                    self?.fullAnalysisText = "No items found in this collection."
-                    self?.isGeneratingAnalysis = false
+                if !Task.isCancelled {
+                    await MainActor.run { [weak self] in
+                        self?.fullAnalysisText = "No items found in this collection."
+                        self?.isGeneratingAnalysis = false
+                    }
                 }
                 return
             }
@@ -582,9 +598,11 @@ public final class SidebarViewModel {
                 context: aggregatedContext
             )
             
-            await MainActor.run { [weak self] in
-                self?.fullAnalysisText = analysisResult
-                self?.isGeneratingAnalysis = false
+            if !Task.isCancelled {
+                await MainActor.run { [weak self] in
+                    self?.fullAnalysisText = analysisResult
+                    self?.isGeneratingAnalysis = false
+                }
             }
         }
     }
@@ -723,7 +741,8 @@ public final class SidebarViewModel {
         
         // Background reprocessing with private ModelContext
         let itemID = item.id
-        Task.detached(priority: .utility) { [pipelineService] in
+        processItemTask?.cancel()
+        processItemTask = Task(priority: .utility) { [pipelineService] in
             try? await pipelineService?.processItemByID(itemID)
         }
     }
@@ -743,7 +762,8 @@ public final class SidebarViewModel {
     public func processNow(_ item: ProcessedItem) {
         item.status = .processing
         let itemID = item.id
-        Task.detached(priority: .utility) { [pipelineService] in
+        processItemTask?.cancel()
+        processItemTask = Task(priority: .utility) { [pipelineService] in
             do {
                 try await pipelineService?.processItemByID(itemID)
                 await MainActor.run { item.status = .ready }
@@ -773,8 +793,10 @@ public final class SidebarViewModel {
             try context.save()
             
             // Process SEQUENTIALLY in background — each call creates its own ModelContext
-            Task.detached(priority: .utility) { [pipelineService] in
+            processItemTask?.cancel()
+            processItemTask = Task(priority: .utility) { [pipelineService] in
                 for id in itemIDs {
+                    try? Task.checkCancellation()
                     try? await pipelineService?.processItemByID(id)
                 }
             }
@@ -796,9 +818,11 @@ public final class SidebarViewModel {
             let container = context.container
             print("🔄 Reprocessing \(itemIDs.count) items for session \(sessionID) via processItemByID")
             
-            Task.detached(priority: .utility) { [pipeline] in
+            processItemTask?.cancel()
+            processItemTask = Task(priority: .utility) { [pipeline] in
                 // Process each item through the single canonical path
                 for itemID in itemIDs {
+                    try? Task.checkCancellation()
                     do {
                         try await pipeline.processItemByID(itemID)
                     } catch {
@@ -806,6 +830,7 @@ public final class SidebarViewModel {
                     }
                 }
                 
+                try? Task.checkCancellation()
                 // Regenerate session summary after all items are reprocessed
                 let bgCtx = ModelContext(container)
                 let localPipeline = LocalPipelineService(modelContext: bgCtx)
@@ -1379,42 +1404,46 @@ public final class SidebarViewModel {
         let itemIDs = allItems.filter { $0.sessionID == sessionID }.map { $0.persistentModelID }
         guard !itemIDs.isEmpty else { return nil }
         
-        let result = await Task.detached(priority: .userInitiated) { () -> UIImage? in
-            // Background context to prevent blocking main thread with external storage reads
-            let bgContext = ModelContext(container)
-            bgContext.autosaveEnabled = false
-            
-            for id in itemIDs {
-                guard let item = bgContext.model(for: id) as? ProcessedItem else { continue }
-                
-                if let data = item.rawPayload {
-                    // Fast, memory-efficient downsampling without fully decoding
-                    if let imageSource = CGImageSourceCreateWithData(data as CFData, nil) {
-                        let options = [
-                            kCGImageSourceCreateThumbnailFromImageAlways: true,
-                            kCGImageSourceThumbnailMaxPixelSize: 300,
-                            kCGImageSourceCreateThumbnailWithTransform: true
-                        ] as CFDictionary
-                        
-                        if let cgImage = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options) {
-                            return UIImage(cgImage: cgImage)
-                        }
-                    }
-                    // Fallback
-                    if let image = UIImage(data: data) { return image }
-                }
-                
-                if let path = item.webContext?.snapshotURL, let image = UIImage(contentsOfFile: path) {
-                    return image
-                }
-            }
-            return nil
-        }.value
+        let result = await loadPreviewImage(itemIDs: itemIDs, container: container)
         
-        if let image = result {
-            ThumbnailCache.shared.insert(image, forKey: sessionID)
+        if let result {
+            ThumbnailCache.shared.insert(result, forKey: sessionID)
         }
         return result
+    }
+    
+    nonisolated private func loadPreviewImage(itemIDs: [PersistentIdentifier], container: ModelContainer) async -> UIImage? {
+        // Background context to prevent blocking main thread with external storage reads
+        let bgContext = ModelContext(container)
+        bgContext.autosaveEnabled = false
+        
+        for id in itemIDs {
+            try? await Task.sleep(nanoseconds: 1_000) // Yield slightly
+            if Task.isCancelled { return nil }
+            guard let item = bgContext.model(for: id) as? ProcessedItem else { continue }
+            
+            if let data = item.rawPayload {
+                // Fast, memory-efficient downsampling without fully decoding
+                if let imageSource = CGImageSourceCreateWithData(data as CFData, nil) {
+                    let options = [
+                        kCGImageSourceCreateThumbnailFromImageAlways: true,
+                        kCGImageSourceThumbnailMaxPixelSize: 300,
+                        kCGImageSourceCreateThumbnailWithTransform: true
+                    ] as CFDictionary
+                    
+                    if let cgImage = CGImageSourceCreateThumbnailAtIndex(imageSource, 0, options) {
+                        return UIImage(cgImage: cgImage)
+                    }
+                }
+                // Fallback
+                if let image = UIImage(data: data) { return image }
+            }
+            
+            if let path = item.webContext?.snapshotURL, let image = UIImage(contentsOfFile: path) {
+                return image
+            }
+        }
+        return nil
     }
     
     // Kept for backward compatibility if needed synchronously

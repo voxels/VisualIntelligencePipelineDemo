@@ -36,6 +36,12 @@ public class ReferenceDetailViewModel: ObservableObject {
     @Published public var suggestedPurposes: [String] = []
     @Published public var isGeneratingPurposes: Bool = false
     
+    // Background Tasks
+    @ObservationIgnored private var purposeTask: Task<Void, Error>?
+    @ObservationIgnored private var regenerateTask: Task<Void, Error>?
+    @ObservationIgnored private var metadataTask: Task<Void, Error>?
+    @ObservationIgnored private var scoreHistoryTask: Task<Void, Error>?
+    
     // MARK: - Actions
     
     public func generatePurposes(for item: ProcessedItem, siblingContext: String) {
@@ -135,11 +141,13 @@ public class ReferenceDetailViewModel: ObservableObject {
             }
         }
         
-        // Auto-regenerate summary in the background (not on main thread)
+        // Auto-regenerate summary in the background
         let itemID = item.id
-        Task.detached(priority: .utility) {
+        regenerateTask?.cancel()
+        regenerateTask = Task(priority: .utility) {
             print("🔄 Regenerating summary for purpose update...")
             if let pipeline = Services.shared.metadataPipelineService {
+                try? Task.checkCancellation()
                 try? await pipeline.processItemByID(itemID)
             }
         }
@@ -198,12 +206,16 @@ public class ReferenceDetailViewModel: ObservableObject {
         // Regenerate summary in the background using processItemByID (creates its own
         // background ModelContext — avoids "Unbinding from main queue" and UI freeze)
         let itemID = item.id
-        Task.detached(priority: .utility) {
+        regenerateTask?.cancel()
+        regenerateTask = Task(priority: .utility) {
             print("🔄 Regenerating summary after title update...")
             if let pipeline = Services.shared.metadataPipelineService {
+                try? Task.checkCancellation()
                 try? await pipeline.processItemByID(itemID)
             }
-            await MainActor.run { item.status = .ready }
+            if !Task.isCancelled {
+                await MainActor.run { item.status = .ready }
+            }
         }
     }
     
@@ -279,21 +291,29 @@ public class ReferenceDetailViewModel: ObservableObject {
         item.status = .processing
         
         let itemID = item.id
-        Task.detached(priority: .utility) {
+        metadataTask?.cancel()
+        metadataTask = Task(priority: .utility) {
             do {
                 if let pipeline = await MainActor.run(body: { Services.shared.metadataPipelineService }) {
+                    try Task.checkCancellation()
                     try await pipeline.processItemByID(itemID)
                     print("✅ Immediate refresh completed for \(itemID)")
                     // Update the main-context item status — processItemByID writes to a
                     // private background ModelContext, so the main-context copy stays stale.
-                    await MainActor.run { item.status = .ready }
+                    if !Task.isCancelled {
+                        await MainActor.run { item.status = .ready }
+                    }
                 } else {
                     print("❌ MetadataPipelineService not available")
-                    await MainActor.run { item.status = .failed }
+                    if !Task.isCancelled {
+                        await MainActor.run { item.status = .failed }
+                    }
                 }
             } catch {
-                print("❌ Failed to trigger immediate refresh: \(error)")
-                await MainActor.run { item.status = .failed }
+                if !Task.isCancelled {
+                    print("❌ Failed to trigger immediate refresh: \(error)")
+                    await MainActor.run { item.status = .failed }
+                }
             }
         }
     }
@@ -317,12 +337,16 @@ public class ReferenceDetailViewModel: ObservableObject {
     public func fetchScoreHistory(productID: String) {
         guard let container = Services.shared.modelContext?.container else { return }
         
-        Task.detached(priority: .utility) { [weak self] in
+        scoreHistoryTask?.cancel()
+        scoreHistoryTask = Task(priority: .utility) { [weak self] in
             let actor = PersistenceActor(modelContainer: container)
+            try? Task.checkCancellation()
             let data = (try? await actor.fetchScoreHistory(productID: productID)) ?? []
             
-            await MainActor.run { [weak self] in
-                self?.scoreSnapshots = data
+            if !Task.isCancelled {
+                await MainActor.run { [weak self] in
+                    self?.scoreSnapshots = data
+                }
             }
         }
     }
