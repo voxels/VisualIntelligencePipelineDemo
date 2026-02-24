@@ -44,9 +44,9 @@ public final class PhotoLibraryImportService {
     private let geocodingService: ReverseGeocodingService
     private let modelContext: ModelContext
     
-    public init(modelContext: ModelContext) {
+    public init(modelContext: ModelContext, foursquareService: ContextualEnrichmentService? = nil) {
         self.modelContext = modelContext
-        self.geocodingService = ReverseGeocodingService()
+        self.geocodingService = ReverseGeocodingService(foursquareService: foursquareService)
     }
     
     // MARK: - Public API

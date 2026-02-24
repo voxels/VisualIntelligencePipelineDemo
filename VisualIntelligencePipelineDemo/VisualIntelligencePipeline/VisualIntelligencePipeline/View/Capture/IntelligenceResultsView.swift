@@ -1,5 +1,4 @@
 import SwiftUI
-import DiverUI
 import DiverKit
 #if os(iOS)
 import UIKit

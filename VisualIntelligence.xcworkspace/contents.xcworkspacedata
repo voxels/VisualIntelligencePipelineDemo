@@ -5,16 +5,12 @@
       location = "group:VisualIntelligencePipelineDemo/VisualIntelligencePipeline/VisualIntelligencePipeline.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:VisualIntelligencePipelineDemo/VisualIntelligenceMac/VisualIntelligenceMac.xcodeproj">
-   </FileRef>
-   <FileRef
       location = "group:VisualIntelligencePipelineDemo/EdgeDaemon/EdgeDaemon.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:VisualIntelligencePipelineDemo/DiverUI">
+      location = "group:VisualIntelligencePipelineDemo/VisualIntelligenceMac/VisualIntelligenceMac.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:Know-Maps/Know-Maps/Know Maps.xcodeproj">
    </FileRef>
 </Workspace>
-

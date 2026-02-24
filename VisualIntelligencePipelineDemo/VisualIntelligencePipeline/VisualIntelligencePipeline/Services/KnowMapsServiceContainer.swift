@@ -17,6 +17,7 @@ final class KnowMapsServiceContainer {
     let initializationError: Error?
     let queueStore: DiverQueueStore?
     let queueProcessingService: DiverQueueProcessingService?
+    let foursquareEnrichmentService: FoursquareLinkEnrichmentService
     let locationProvider: DiverKit.LocationService
 
     init(
@@ -78,14 +79,16 @@ final class KnowMapsServiceContainer {
         }
 
         self.queueStore = resolvedQueueStore
+        self.foursquareEnrichmentService = FoursquareLinkEnrichmentService(modelController: modelController)
         self.locationProvider = DiverKit.LocationService()
         
         // Initialize Services
         let webViewService = DiverKit.WebViewLinkEnrichmentService()
         let duckDuckGoService = DiverKit.DuckDuckGoEnrichmentService()
         
-        // Use composite service: WebView (generic)
+        // Use composite service: Foursquare (specific) -> WebView (generic)
         let compositeLinkService = DiverKit.CompositeLinkEnrichmentService(services: [
+            self.foursquareEnrichmentService,
             webViewService
         ])
         

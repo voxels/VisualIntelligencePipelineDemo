@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -32,14 +32,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		1E7F42292F4CE0DE000002CB /* Recovered References */ = {
-			isa = PBXGroup;
-			children = (
-				"TEMP_4158D78C-4774-436E-A8F3-E182E2DAA08E" /* EdgeDaemonApp.swift */,
-			);
-			name = "Recovered References";
-			sourceTree = "<group>";
-		};
 		5358C2C19259525698816B4C /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -53,7 +45,6 @@
 			children = (
 				E5D349A03069000D51E8DDB2 /* Packages */,
 				5358C2C19259525698816B4C /* Products */,
-				1E7F42292F4CE0DE000002CB /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -64,6 +55,14 @@
 				F45ECD9D12119E0BCB884B2B /* DiverShared */,
 			);
 			name = Packages;
+			sourceTree = "<group>";
+		};
+		"TEMP_FC19D5E6-223B-4EEC-BC17-E248D7CED1E7" /* EdgeDaemon */ = {
+			isa = PBXGroup;
+			children = (
+				"TEMP_4158D78C-4774-436E-A8F3-E182E2DAA08E" /* EdgeDaemonApp.swift */,
+			);
+			path = EdgeDaemon;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -99,6 +98,7 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					692C3A52E3AF87669D3D5347 = {
+						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -117,6 +117,7 @@
 				D1F58A3B67944A033D363AAC /* XCLocalSwiftPackageReference "../DiverKit" */,
 				795B6FC1F885EABFD0B9D93F /* XCLocalSwiftPackageReference "../DiverShared" */,
 			);
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -200,7 +201,7 @@
 				CODE_SIGN_ENTITLEMENTS = EdgeDaemon.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 23264QUM9A;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -223,7 +224,7 @@
 				CODE_SIGN_ENTITLEMENTS = EdgeDaemon.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = 23264QUM9A;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

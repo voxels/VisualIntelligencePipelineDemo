@@ -8,7 +8,6 @@
 import SwiftUI
 import SwiftData
 import DiverKit
-import DiverUI
 import DiverShared
 import Contacts
 import ContactsUI

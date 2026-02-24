@@ -18,6 +18,7 @@ public final class APIKeyService: Sendable {
     
     /// Known API key identifiers for commerce and affiliate services.
     public enum APIKey: String, CaseIterable, Sendable {
+        case foursquare = "com.secretatomics.vi.foursquare"
         case reddit = "com.secretatomics.vi.reddit"
         case ifixit = "com.secretatomics.vi.ifixit"
         // Affiliate program tags (stored via Settings > API Keys)

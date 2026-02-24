@@ -139,9 +139,10 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     /// No official `mlx-community` 1.5B port exists yet. When one does, re-enable the medium tier.
     /// Candidate: `EZCon/FastVLM-1.5B-mlx` (third-party, untested).
     public static var optimalHuggingFaceRepo: String {
-        // FastVLM 7B uses llava_qwen2 architecture — unsupported by mlx-swift-lm.
-        // FastVLM 1.5B is provisioned locally by EdgeModelProvisioner (not from HF Hub).
-        // HF Hub is only used for the 0.5B fallback model on devices without local weights.
+        let capability = CapabilityRouter.shared
+        if capability.canRunHeavyVLM { return "mlx-community/FastVLM-7B-bf16" }
+        // Medium tier disabled — apple/FastVLM-1.5B-int8 incompatible with mlx-swift-lm
+        // if capability.canRunMediumVLM { return "apple/FastVLM-1.5B-int8" }
         return "mlx-community/FastVLM-0.5B-bf16"
     }
     

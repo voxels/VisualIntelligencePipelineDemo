@@ -18,7 +18,7 @@ Uses Apple's Vision framework (`VNGenerateForegroundInstanceMaskRequest`) to aut
 
 Every capture is automatically enriched with layers of real-world context:
 
-- **Location** — Apple MapKit reverse geocoding with contact detection ("Home", friend's addresses). Venue search available in the location editing UI for manual place selection.
+- **Location** — Apple MapKit reverse geocoding with contact detection ("Home", friend's addresses). Foursquare venue search available in the location editing UI for manual place selection.
 - **Web Intelligence** — Metadata extraction for web URLs and QR codes, with rich link previews.
 - **Aesthetics Scoring** — Image quality scores bundled into the Vision analysis pass via `VNCalculateImageAestheticsScoresRequest`, plus brightness, contrast, and sharpness analysis.
 - **Document Detection** — Automatic perspective correction via `VNDetectDocumentSegmentationRequest` and saving of detected documents as separate child items.

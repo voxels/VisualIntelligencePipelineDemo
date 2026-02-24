@@ -92,8 +92,11 @@ struct VisualIntelligencePipelineApp: App {
         let contactService = ContactService()
         let weatherService = WeatherEnrichmentService()
         
-        // Load API Keys from CloudKit cache
+        // Load Foursquare API key from CloudKit cache (populated by prefetchKeys on app launch).
+        // On first launch the cache may be empty — Foursquare degrades gracefully with no key.
         let apiKeyService = APIKeyService()
+        let foursquareKey = apiKeyService.retrieve(for: .foursquare) ?? ""
+        let foursquareContextService = FoursquareEnrichmentService(apiKey: foursquareKey)
         let duckDuckGoContextService = DuckDuckGoEnrichmentService()
         let webViewService = WebViewLinkEnrichmentService()
         let appleMusicService = AppleMusicEnrichmentService()
@@ -110,6 +113,7 @@ struct VisualIntelligencePipelineApp: App {
         // Register in shared Services singleton for VisualIntelligenceViewModel
         Services.shared.modelContext = dataStore.mainContext  // Single source of truth
         Services.shared.locationService = locationService
+        Services.shared.foursquareService = foursquareContextService
         Services.shared.duckDuckGoService = duckDuckGoContextService
         Services.shared.contactService = contactService
         Services.shared.weatherService = weatherService
@@ -262,10 +266,13 @@ struct VisualIntelligencePipelineApp: App {
                     }()
                     
                     if let services = knowMapsServices {
-                        // Update pipeline with knowmaps-backed Location
-                        metadataPipelineService.enrichmentService = DuckDuckGoEnrichmentService()
+                        // Update pipeline with knowmaps-backed Foursquare enrichment and Location
+                        metadataPipelineService.enrichmentService = CompositeLinkEnrichmentService(
+                            services: [DuckDuckGoEnrichmentService(), services.foursquareEnrichmentService]
+                        )
                         metadataPipelineService.locationService = services.locationProvider
                         Services.shared.locationService = services.locationProvider
+                        Services.shared.foursquareService = services.foursquareEnrichmentService
                         Services.shared.cloudCacheService = services.cacheService
                         
                         // Initialize Knowledge Graph Adapter
@@ -368,7 +375,7 @@ struct VisualIntelligencePipelineApp: App {
                 }
                 
                 // Process queue when app enters foreground, then backfill daily context
-                Task.detached(priority: .utility) { [metadataPipelineService] in
+                Task.detached(priority: .utility) { [metadataPipelineService, dataStore] in
                     try? await metadataPipelineService.processPendingQueue()
                     // Defer Data Diagnostics / Session Consolidation (User Request)
                     // await metadataPipelineService.runDataDiagnostics()

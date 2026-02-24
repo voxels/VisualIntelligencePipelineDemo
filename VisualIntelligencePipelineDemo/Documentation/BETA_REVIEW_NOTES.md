@@ -43,7 +43,7 @@ This is the **first public beta**. Your feedback is critical to shaping the fina
 - Is the detected location accurate?
 - Does pinning persist across captures?
 - Does renaming update everywhere?
-- Are MapKit results relevant?
+- Are Foursquare/MapKit results relevant?
 
 ### 3. Session Management
 
@@ -176,7 +176,7 @@ This is the **first public beta**. Your feedback is critical to shaping the fina
 The following features are **not included** in this beta and should not be tested:
 
 - Proximity sharing (GroupActivities / "bump" sharing)
-
+- Foursquare deep enrichment (expanded venue details, photos, tips)
 - Advanced recommendation ranking (vector ranking + reinforcement learning)
 - macOS / visionOS builds (iOS only for this beta)
 

@@ -60,7 +60,7 @@
     &nbsp;&nbsp;Siri/Shortcuts → SaveLinkIntent.perform()<br><br>
     <strong style="color:var(--accent-green)">Pipeline</strong><br>
     &nbsp;&nbsp;Raw Input → LocalPipelineService.process()<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;├── LocationSearchAggregator (MapKit)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── LocationSearchAggregator (Foursquare + MapKit, parallel)<br>
     &nbsp;&nbsp;&nbsp;&nbsp;├── WeatherEnrichmentService (WeatherKit)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;├── AestheticsScoringService (CoreML quality scoring)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;├── FastVLMEnrichmentService (FastVLM 0.5B / 7B Edge multimodal image analysis)<br>
@@ -121,7 +121,7 @@
     <tr><td>Computer Vision</td><td>Vision framework (subject detection, text recognition, barcode scanning)</td></tr>
     <tr><td>ML Inference</td><td>CoreML (SAM 2.1 Subject Sifting, Aesthetics Scoring)</td></tr>
     <tr><td>Generative AI</td><td>Apple SystemLanguageModel (SLM), MLX Swift (FastVLM 7B, CLaRa memory search)</td></tr>
-    <tr><td>Location</td><td>MapKit, CLGeocoder</td></tr>
+    <tr><td>Location</td><td>MapKit, CLGeocoder, Foursquare Places API</td></tr>
     <tr><td>Weather</td><td>WeatherKit</td></tr>
     <tr><td>Camera</td><td>AVFoundation (AVCaptureSession)</td></tr>
     <tr><td>Music</td><td>MusicKit (Apple Music), Spotify Web API</td></tr>

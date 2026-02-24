@@ -2,7 +2,6 @@ import SwiftUI
 import SwiftData
 import DiverKit
 import DiverShared
-import DiverUI
 import SharedWithYou
 import MapKit
 import LinkPresentation
@@ -379,20 +378,7 @@ struct ReferenceDetailContent: View {
         }
         
         // 9. Product Search Preview (for products without direct commerce data)
-        // Disambiguate potential overloads of productSearchURL by coercing to URL
-        let resolvedProductSearchURL: URL? = {
-            // Prefer a URL-typed property if available via key path
-            if let urlValue = (item as AnyObject).value(forKey: "productSearchURL") as? URL {
-                return urlValue
-            }
-            // Fall back to String-typed property that can be converted to URL
-            if let stringValue = (item as AnyObject).value(forKey: "productSearchURL") as? String,
-               let url = URL(string: stringValue) {
-                return url
-            }
-            return nil
-        }()
-        if item.isProduct, item.commerceContext == nil, let searchURL = resolvedProductSearchURL {
+        if item.isProduct, item.commerceContext == nil, let searchURL = item.productSearchURL {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Product Search Result")
                     .font(.headline)
@@ -1425,4 +1411,3 @@ func normalize(color: UIColor) -> UIColor {
     return color
     #endif
 }
-

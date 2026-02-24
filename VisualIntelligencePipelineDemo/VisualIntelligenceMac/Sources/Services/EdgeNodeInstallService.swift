@@ -18,7 +18,6 @@
 import Foundation
 import ServiceManagement
 import Observation
-import AppKit
 
 // MARK: - Install Status
 
@@ -35,7 +34,7 @@ public enum EdgeNodeInstallStatus: String {
 /// Registers and monitors the Visual Intelligence Node login item helper.
 @Observable
 @MainActor
-public final class EdgeNodeInstallService {
+public final class EdgeNodeInstallService: ObservableObject {
 
     // MARK: State
 
@@ -52,12 +51,10 @@ public final class EdgeNodeInstallService {
         installStatus == .running
     }
 
-
     // MARK: Constants
 
-
-    /// Must match PRODUCT_BUNDLE_IDENTIFIER of the VisualIntelligenceMacEdgeNode target.
-    private static let nodeHelperBundleID = "com.secretatomics.visualintelligence.mac.edgenode"
+    /// Must match PRODUCT_BUNDLE_IDENTIFIER in the Node helper target.
+    private static let nodeHelperBundleID = "com.secretatomics.visualintelligence.node"
 
     private var smService: SMAppService {
         SMAppService.loginItem(identifier: Self.nodeHelperBundleID)
@@ -66,10 +63,6 @@ public final class EdgeNodeInstallService {
     // MARK: Lifecycle
 
     public init() {
-        guard !isRunningFromDerivedData else {
-            installStatus = .notInstalled
-            return
-        }
         refresh()
     }
 
@@ -78,80 +71,16 @@ public final class EdgeNodeInstallService {
     /// Install and register the Node as a Login Item.
     /// Shows in System Settings → General → Login Items as "Visual Intelligence Node".
     public func install() {
-        print("🔧 [EdgeNode] install() called — status: \(installStatus), isDerivedData: \(isRunningFromDerivedData)")
         installStatus = .installing
         lastError = nil
 
-        if isRunningFromDerivedData {
-            launchEdgeDaemonDirect()
-            return
-        }
-
         do {
-            print("🔧 [EdgeNode] Calling smService.register()…")
             try smService.register()
-            print("🔧 [EdgeNode] register() succeeded")
             refresh()
-        } catch let error as NSError {
-            print("🔧 [EdgeNode] register() failed: \(error)")
+        } catch {
             installStatus = .error
-            if error.code == 22 {
-                lastError = "Helper not found inside the app bundle. Install Visual Intelligence from the App Store to use this feature."
-            } else {
-                lastError = error.localizedDescription
-            }
+            lastError = error.localizedDescription
         }
-    }
-
-    /// Dev-only: launch the EdgeNode helper embedded in this app bundle.
-    /// In production SMAppService handles this; in dev we launch directly.
-    private func launchEdgeDaemonDirect() {
-        // Primary: embedded via Copy Files build phase (production + full scheme build)
-        let loginItemsURL = Bundle.main.bundleURL
-            .appendingPathComponent("Contents/Library/LoginItems/VisualIntelligenceMacEdgeNode.app")
-
-        // Fallback: sibling in the same Products/Debug folder (when building EdgeNode target
-        // separately without the Copy Files phase running — common in partial dev builds)
-        let siblingURL = Bundle.main.bundleURL
-            .deletingLastPathComponent()
-            .appendingPathComponent("VisualIntelligenceMacEdgeNode.app")
-
-        let helperURL: URL
-        if FileManager.default.fileExists(atPath: loginItemsURL.path) {
-            helperURL = loginItemsURL
-        } else if FileManager.default.fileExists(atPath: siblingURL.path) {
-            helperURL = siblingURL
-        } else {
-            print("🔧 [EdgeNode] Helper not found at:\n  \(loginItemsURL.path)\n  \(siblingURL.path)")
-            installStatus = .notInstalled
-            lastError = "Build the VisualIntelligenceMac scheme in Xcode (⌘B) — both VisualIntelligenceMac and VisualIntelligenceMacEdgeNode targets must build."
-            return
-        }
-
-        print("🔧 [EdgeNode] Launching \(helperURL.path)")
-        NSWorkspace.shared.openApplication(
-            at: helperURL,
-            configuration: NSWorkspace.OpenConfiguration()
-        ) { _, error in
-            DispatchQueue.main.async {
-                if let error {
-                    print("🔧 [EdgeNode] Launch failed: \(error)")
-                    self.installStatus = .error
-                    self.lastError = error.localizedDescription
-                } else {
-                    print("🔧 [EdgeNode] EdgeNode launched ✅")
-                    self.installStatus = .running
-                    self.lastError = nil
-                }
-            }
-        }
-    }
-
-
-
-
-    private var isRunningFromDerivedData: Bool {
-        Bundle.main.bundlePath.contains("DerivedData")
     }
 
     /// Unregister the Login Item (does not delete the binary).
