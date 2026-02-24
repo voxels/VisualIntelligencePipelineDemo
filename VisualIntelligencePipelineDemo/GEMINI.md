@@ -18,15 +18,14 @@ The project is modularized using Swift Package Manager:
 *   **SwiftData + CloudKit:** Local-first persistence with cross-device sync.
 *   **Vision & CoreML:** Subject detection, sifting, aesthetics scoring, and ML embeddings.
 *   **Apple Intelligence:** Uses `SystemLanguageModel` for on-device context generation. Requires **iOS 26.0+**.
-*   **MapKit:** Reverse geocoding and location enrichment for captures.
-*   **Foursquare API:** Venue-level location search in editing UI via `LocationSearchAggregator` (not used in automatic pipeline processing).
+*   **Location:** MapKit reverse geocoding and location enrichment for captures.
 
 ## Visual Intelligence Features
 
 *   **Intelligent Sifting:** Uses Vision framework to detect subjects in images and "sift" them out from the background with proper alpha channel handling.
 *   **Person Capture & Identity:** Leverages Apple's PhotoKit (`PHPerson`, `PHAsset`) to securely bootstrap a local `PersonVector` database, allowing Vision feature prints to identify faces in real-time instantly.
 *   **Context Enrichment:** Enriches captured items with:
-    *   **Location:** MapKit reverse geocoding (Landmarks/Addresses) with contact detection (Home, friends), and user-pinnable persistence. Foursquare is available in the location editing UI for manual searches.
+    *   **Location:** MapKit reverse geocoding (Landmarks/Addresses) with contact detection (Home, friends), and user-pinnable persistence.
     *   **Web:** Link metadata extraction and rich link previews for web URLs and QR codes.
     *   **Aesthetics:** Quality scoring bundled into the Vision analysis pass via `VNCalculateImageAestheticsScoresRequest`. Score displayed in detail view Media Information section.
     *   **Music:** Apple Music and Spotify recognition for music-related captures.
@@ -78,13 +77,28 @@ The project is modularized using Swift Package Manager:
 2.  **Select a target:** Choose the `VisualIntelligencePipeline` scheme.
 3.  **Run the application:** `Cmd+R`. Requires iOS 26.0+ for Apple Intelligence features.
 
-### EdgeDaemon (macOS Menu Bar App)
+### Mac Companion App (VisualIntelligenceMac)
 
 ```bash
 # Generate project (requires xcodegen: brew install xcodegen)
-cd EdgeDaemon && xcodegen generate && cd ..
+cd VisualIntelligenceMac && xcodegen generate && cd ..
 
-# Build for macOS
+# Open in Xcode
+open VisualIntelligenceMac/VisualIntelligenceMac.xcodeproj
+```
+
+*   First-launch `MacInstallerView` downloads FastVLM 1.5B; CLaRa and ML-Sharp are delegated to EdgeDaemon.
+*   Settings → On-Device AI shows live status for all three models with Provision/Delete buttons.
+*   `EdgeNodeInstallService` uses `@Observable` only (no `ObservableObject`). Injected via `.environment(edgeNodeInstaller)`.
+*   In dev builds, "Enable Edge Node" launches `VisualIntelligenceMacEdgeNode.app` from DerivedData directly.
+
+### EdgeDaemon (macOS Menu Bar App)
+
+```bash
+# EdgeDaemon is now embedded as a Login Item inside VisualIntelligenceMac.
+# For development, run the VisualIntelligenceMac scheme — the EdgeNode target builds alongside it.
+# To run EdgeDaemon standalone (legacy):
+cd EdgeDaemon && xcodegen generate && cd ..
 xcodebuild -project EdgeDaemon/EdgeDaemon.xcodeproj \
   -scheme EdgeDaemon -destination 'platform=macOS' build
 ```
@@ -92,6 +106,8 @@ xcodebuild -project EdgeDaemon/EdgeDaemon.xcodeproj \
 *   LSUIElement menu bar app — no dock icon.
 *   Bonjour-advertises as `_visualintel._tcp` on port 8847.
 *   Routes Vision, FastVLM, Nowcast, and GovernmentData requests from iOS clients.
+*   On startup: calls `EdgeModelProvisioner.shared.provisionAll()` in a background task — provisions CLaRa 7B and ML-Sharp (Python/git subprocesses work because EdgeDaemon is unsandboxed).
+
 
 ### SpatialCommerce (visionOS App)
 
@@ -145,7 +161,7 @@ cd DiverShared && swift test
 *   **SwiftUI:** Views are organized in `VisualIntelligencePipeline/VisualIntelligencePipeline/View/`.
 *   **View Models:** Located in `DiverKit/Sources/DiverKit/ViewModel/` — `VisualIntelligenceViewModel`, `SidebarViewModel`, `ReferenceDetailViewModel`, `ProcessedItemViewModel`, `AgenticChatViewModel`, `ModelUIExtensions`.
 *   **Protocols:** 18 protocols across `DiverKit/Sources/DiverKit/Protocols/` and inline in service files — `IntelligenceProcessing`, `ContextProcessing`, `AestheticsScoring`, `FastVLMAnalyzing`, `ProductScoringStrategy`, `ProductRecommending`, `ESGEnriching`, `EdgeNodeDiscovering`, `CommerceRouting`, `PriceNowcasting`, `ContactServiceProvider`, `KnowledgeGraphIndexingService`, `LinkEnrichmentService`, `ContextualEnrichmentService`, `EdgeTransportProtocol`, `KnowledgeGraphRetrievalService`, `LocationProvider`.
-### App & UI (62 views)
+### App & UI (39 views)
 *   `VisualIntelligencePipelineApp.swift` — App entry point, service initialization, foreground/background lifecycle
 *   `View/VisualIntelligenceView.swift` — Camera and capture UI
 *   `View/SidebarView.swift` — Main navigation sidebar (942 lines, delegates to 7 child views in `View/Sidebar/`)
@@ -190,7 +206,7 @@ cd DiverShared && swift test
 *   `Services/MetadataPipelineService.swift` — Metadata extraction and queue processing
 *   `Services/IntelligenceProcessor.swift` — On-device LLM processing
 *   `Services/FastVLMEnrichmentService.swift` — FastVLM multimodal image analysis
-*   `Services/LocationSearchAggregator.swift` — Unified Foursquare + MapKit search
+*   `Services/LocationSearchAggregator.swift` — Unified MapKit search
 *   `Services/SessionClusteringService.swift` — Time/location-based session grouping
 *   `Services/CameraManager.swift` — AVFoundation camera management
 *   `Services/CapabilityRouter.swift` — Hardware constraint discovery (RAM/TOPS) and ML routing

@@ -546,7 +546,6 @@ struct EditLocationView: View {
         
         if let data = await LocationSearchAggregator.resolveMapFeature(
             feature: simpleFeature,
-            foursquareService: Services.shared.foursquareService,
             mapKitService: Services.shared.mapKitService
         ) {
              await MainActor.run {
@@ -566,7 +565,6 @@ struct EditLocationView: View {
         let results = await LocationSearchAggregator.fetchCandidates(
             query: searchText,
             center: center,
-            foursquareService: Services.shared.foursquareService,
             mapKitService: Services.shared.mapKitService
         )
 

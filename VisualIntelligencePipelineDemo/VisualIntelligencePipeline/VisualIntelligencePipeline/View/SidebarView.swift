@@ -9,6 +9,7 @@
 import SwiftUI
 import SwiftData
 import DiverKit
+import DiverUI
 import DiverShared
 import MapKit
 

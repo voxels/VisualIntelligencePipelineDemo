@@ -14,9 +14,13 @@
 		5410A02CD4D0C69E83CF6BEB /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = DDE556A49D2EC58E428FB14A /* DiverShared */; };
 		54AA860865FCDDE2DCE814B4 /* EdgeNodeOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D710365DF869C97E4CAF6F /* EdgeNodeOnboardingView.swift */; };
 		5EC218B6FE753865CC203C5B /* EdgeNodeInstallService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EACA0ADD62CC3A588AA6495C /* EdgeNodeInstallService.swift */; };
+		6EEEE61583580D41678FA790 /* DiverUI in Frameworks */ = {isa = PBXBuildFile; productRef = 8DE3E30176C63E0B2B9E898A /* DiverUI */; };
+		737D959C0042F0E7967DB636 /* MacInstallerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF4B3E679A6D78A8721F0F2A /* MacInstallerView.swift */; };
 		7F21F77228BDB911D847A6EB /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6FE0B057AE753644516843A8 /* Assets.xcassets */; };
 		A1D2469F4098E8A12897DFE2 /* DiverShared in Frameworks */ = {isa = PBXBuildFile; productRef = E0C74270DEF6055306D13649 /* DiverShared */; };
+		CFF9773D1F582F3D823A8801 /* MacSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 892DB01B3A757DF1732F0192 /* MacSettingsView.swift */; };
 		D04D03132FB102C5E0229DE6 /* MacIngestionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1368A9A0DD2417A1F1DCC0E /* MacIngestionService.swift */; };
+		D1BE2905A45B31516F2E9764 /* MacReprocessingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 385060C1375355467A69E0D2 /* MacReprocessingView.swift */; };
 		D6CB4051B343BDC81255D4CA /* VisualIntelligenceMacEdgeNode.app in Resources */ = {isa = PBXBuildFile; fileRef = 0CEB53C183DD2E0E9708B805 /* VisualIntelligenceMacEdgeNode.app */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		DB150F61F44F2CE0824B309D /* DiverKit in Frameworks */ = {isa = PBXBuildFile; productRef = 6B8B066926576E8102656835 /* DiverKit */; };
 /* End PBXBuildFile section */
@@ -33,15 +37,19 @@
 
 /* Begin PBXFileReference section */
 		0CEB53C183DD2E0E9708B805 /* VisualIntelligenceMacEdgeNode.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisualIntelligenceMacEdgeNode.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13A8D7335ACA009ED12370D9 /* DiverUI */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DiverUI; path = ../DiverUI; sourceTree = SOURCE_ROOT; };
 		1DD79B9541C19AF437EFFFA5 /* DiverKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DiverKit; path = ../DiverKit; sourceTree = SOURCE_ROOT; };
+		385060C1375355467A69E0D2 /* MacReprocessingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacReprocessingView.swift; sourceTree = "<group>"; };
 		6FE0B057AE753644516843A8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		86D03CEA031D14603525CB6A /* VisualIntelligenceMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisualIntelligenceMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		892DB01B3A757DF1732F0192 /* MacSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacSettingsView.swift; sourceTree = "<group>"; };
 		9E5D36B94D0A05A5C4908E60 /* MacContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacContentView.swift; sourceTree = "<group>"; };
 		A1368A9A0DD2417A1F1DCC0E /* MacIngestionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacIngestionService.swift; sourceTree = "<group>"; };
 		A2834EB484744439A6950AA0 /* VisualIntelligenceMacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualIntelligenceMacApp.swift; sourceTree = "<group>"; };
 		C9D710365DF869C97E4CAF6F /* EdgeNodeOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeNodeOnboardingView.swift; sourceTree = "<group>"; };
 		D090F229E84124691231B2E9 /* DiverShared */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DiverShared; path = ../DiverShared; sourceTree = SOURCE_ROOT; };
 		EACA0ADD62CC3A588AA6495C /* EdgeNodeInstallService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeNodeInstallService.swift; sourceTree = "<group>"; };
+		FF4B3E679A6D78A8721F0F2A /* MacInstallerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacInstallerView.swift; sourceTree = "<group>"; };
 		FF7FE3B270A31E27D2910346 /* EdgeDaemonApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeDaemonApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -61,6 +69,7 @@
 			files = (
 				4CC3D1D95064F769EB858B20 /* DiverKit in Frameworks */,
 				A1D2469F4098E8A12897DFE2 /* DiverShared in Frameworks */,
+				6EEEE61583580D41678FA790 /* DiverUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -81,6 +90,7 @@
 			children = (
 				1DD79B9541C19AF437EFFFA5 /* DiverKit */,
 				D090F229E84124691231B2E9 /* DiverShared */,
+				13A8D7335ACA009ED12370D9 /* DiverUI */,
 			);
 			name = Packages;
 			sourceTree = "<group>";
@@ -90,6 +100,9 @@
 			children = (
 				C9D710365DF869C97E4CAF6F /* EdgeNodeOnboardingView.swift */,
 				9E5D36B94D0A05A5C4908E60 /* MacContentView.swift */,
+				FF4B3E679A6D78A8721F0F2A /* MacInstallerView.swift */,
+				385060C1375355467A69E0D2 /* MacReprocessingView.swift */,
+				892DB01B3A757DF1732F0192 /* MacSettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -169,6 +182,7 @@
 			packageProductDependencies = (
 				5B609EED3F25F7EA8321B32F /* DiverKit */,
 				E0C74270DEF6055306D13649 /* DiverShared */,
+				8DE3E30176C63E0B2B9E898A /* DiverUI */,
 			);
 			productName = VisualIntelligenceMac;
 			productReference = 86D03CEA031D14603525CB6A /* VisualIntelligenceMac.app */;
@@ -204,11 +218,11 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					37EF435987B68CAE99C00722 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 23264QUM9A;
 						ProvisioningStyle = Automatic;
 					};
 					BEF55EF9FB2E08797EE8C886 = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 23264QUM9A;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -226,6 +240,7 @@
 			packageReferences = (
 				797DAD5B376153F260E70756 /* XCLocalSwiftPackageReference "../DiverKit" */,
 				E75FC4F6079E381ABB1AACA9 /* XCLocalSwiftPackageReference "../DiverShared" */,
+				AE190EA6440C0B000B770368 /* XCLocalSwiftPackageReference "../DiverUI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
@@ -266,6 +281,9 @@
 				54AA860865FCDDE2DCE814B4 /* EdgeNodeOnboardingView.swift in Sources */,
 				379B43E65B46A564F526E281 /* MacContentView.swift in Sources */,
 				D04D03132FB102C5E0229DE6 /* MacIngestionService.swift in Sources */,
+				737D959C0042F0E7967DB636 /* MacInstallerView.swift in Sources */,
+				D1BE2905A45B31516F2E9764 /* MacReprocessingView.swift in Sources */,
+				CFF9773D1F582F3D823A8801 /* MacSettingsView.swift in Sources */,
 				1D393457885C6EBF5FC2BAA9 /* VisualIntelligenceMacApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -344,7 +362,7 @@
 				CODE_SIGN_ENTITLEMENTS = ../EdgeDaemon/EdgeDaemon.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 23264QUM9A;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = ../EdgeDaemon/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -367,7 +385,7 @@
 				CODE_SIGN_ENTITLEMENTS = VisualIntelligenceMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 23264QUM9A;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -390,7 +408,7 @@
 				CODE_SIGN_ENTITLEMENTS = VisualIntelligenceMac.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 23264QUM9A;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -476,7 +494,7 @@
 				CODE_SIGN_ENTITLEMENTS = ../EdgeDaemon/EdgeDaemon.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 23264QUM9A;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = ../EdgeDaemon/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -529,6 +547,10 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../DiverKit;
 		};
+		AE190EA6440C0B000B770368 /* XCLocalSwiftPackageReference "../DiverUI" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../DiverUI;
+		};
 		E75FC4F6079E381ABB1AACA9 /* XCLocalSwiftPackageReference "../DiverShared" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../DiverShared;
@@ -543,6 +565,10 @@
 		6B8B066926576E8102656835 /* DiverKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DiverKit;
+		};
+		8DE3E30176C63E0B2B9E898A /* DiverUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DiverUI;
 		};
 		DDE556A49D2EC58E428FB14A /* DiverShared */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -12,7 +12,34 @@ import Foundation
 import FoundationNetworking
 #endif
 
+/// Observable state for Mac AI model provisioning — used by MacSettingsView.
+@MainActor
+@Observable
+public final class ProvisioningState {
+    public static let shared = ProvisioningState()
+    public var isCLaRaDownloading = false
+    public var isMLSharpDownloading = false
+
+    #if os(macOS)
+    public var isCLaRaReady: Bool {
+        FileManager.default.fileExists(atPath: claraIndexPath)
+    }
+    public var isMLSharpReady: Bool {
+        FileManager.default.fileExists(atPath: mlSharpPath)
+    }
+    private let claraIndexPath: String = {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return base.appendingPathComponent("Models/CLaRa/model.safetensors.index.json").path
+    }()
+    private let mlSharpPath: String = {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        return base.appendingPathComponent("Models/ml-sharp/enhance.py").path
+    }()
+    #endif
+}
+
 public actor EdgeModelProvisioner {
+
     
     public static let shared = EdgeModelProvisioner()
     
@@ -32,18 +59,37 @@ public actor EdgeModelProvisioner {
         await provisionSAM2()
         
         #if os(macOS)
-        // Only the backend daemon provisions the heavy MLX pipelines from raw PyTorch
-        // Note: FastVLM 7B removed — uses llava_qwen2 architecture unsupported by mlx_vlm converter.
-        // FastVLM 0.5B is used via HF Hub download instead (mlx-community/FastVLM-0.5B-bf16).
         await provisionCLaRa7B()
         await provisionMLSharp()
         #else
-        // iOS clients will pull the pre-converted fast ODR assets here in the future
         print("📱 EdgeModelProvisioner: iOS-specific lightweight provisioning...")
         #endif
         
         print("✅ EdgeModelProvisioner: Fully provisioned all models.")
     }
+
+    // MARK: - Public Status
+
+    #if os(macOS)
+    public var isCLaRaProvisioned: Bool {
+        let path = modelsDir.appendingPathComponent("CLaRa/model.safetensors.index.json")
+        return FileManager.default.fileExists(atPath: path.path)
+    }
+
+    public var isMLSharpProvisioned: Bool {
+        let path = modelsDir.appendingPathComponent("ml-sharp/enhance.py")
+        return FileManager.default.fileExists(atPath: path.path)
+    }
+
+    public var claraModelSizeGB: Double { 14.0 }
+    public var mlSharpModelSizeGB: Double { 0.5 }
+
+    /// Provisions CLaRa 7B (macOS only). Returns when download+conversion completes.
+    public func downloadCLaRa() async { await provisionCLaRa7B() }
+    /// Provisions ML-Sharp (macOS only). Returns when git clone+venv setup completes.
+    public func downloadMLSharp() async { await provisionMLSharp() }
+    #endif
+
     
     // MARK: - SAM 2.1 CoreML (cross-platform)
     
@@ -220,7 +266,17 @@ public actor EdgeModelProvisioner {
         do {
             try process.run()
             process.waitUntilExit()
+            guard process.terminationStatus == 0 else {
+                print("⚠️ git clone failed with status \(process.terminationStatus)")
+                return
+            }
             print("✅ cloned ml-sharp.")
+
+            // Verify the cloned directory actually exists before proceeding
+            guard FileManager.default.fileExists(atPath: sharpPath.path) else {
+                print("⚠️ ml-sharp directory not found after clone at: \(sharpPath.path)")
+                return
+            }
             
             // Set up a dedicated virtual environment
             print("⚙️ Setting up Python virtual environment for ml-sharp...")

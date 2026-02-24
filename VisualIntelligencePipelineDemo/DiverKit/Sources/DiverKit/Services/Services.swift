@@ -11,7 +11,6 @@ public final class Services: @unchecked Sendable {
     public var modelContext: ModelContext?
     
     public var locationService: LocationService?
-    public var foursquareService: ContextualEnrichmentService?
     public var duckDuckGoService: ContextualEnrichmentService?
     public var contactService: ContactServiceProvider?
     public var weatherService: WeatherEnrichmentService?

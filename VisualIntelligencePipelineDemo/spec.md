@@ -1,8 +1,8 @@
 # Visual Intelligence Pipeline — Project Specification
 
 > **Version:** 3.0  
-> **Last Updated:** 2026-02-22  
-> **Platforms:** iOS 26.3+, iPadOS 26.3+, macOS 26.3+ (edge node), visionOS 26.3+ (future)  
+> **Last Updated:** 2026-02-24
+> **Platforms:** iOS 26.3+, iPadOS 26.3+, macOS 26.3+ (edge node), visionOS 26.3+
 > **Bundle ID:** `com.secretatomics.VisualIntelligencePipeline`
 
 ---
@@ -60,11 +60,11 @@ VisualIntelligencePipelineDemo/
 | **DiverKit** | Business logic, ML pipelines, persistence | 65 services, 18 service protocols, 6 view models, 20 models, 56 API schemas, storage layer |
 | **DiverShared** | Cross-target shared types | `AppGroupConfig`, `QueueStore`, `LinkWrapping`, `IntelligenceCapability`, `ContextSnapshot` |
 
-**Future targets** (Ethical Commerce phases):
+**Specialized targets** (Ethical Commerce phases):
 | Target | Platform | Role |
 |--------|----------|------|
-| **VisualIntelligenceEdge** | macOS (M-series) | Edge node daemon — hosts distributed actors for ML offloading, ESG/commerce enrichment |
-| **VisualIntelligenceVision** | visionOS | AR client — spatial HUD with product overlays, RealityKit rendering |
+| **EdgeDaemon** | macOS (M-series) | Edge node daemon — hosts distributed actors for ML offloading, ESG/commerce enrichment |
+| **SpatialCommerce** | visionOS | AR client — spatial HUD with product overlays, RealityKit rendering |
 
 ### 2.2 Multi-Platform & Edge Computing
 
@@ -456,7 +456,7 @@ struct FinancialSnapshot: Codable, Sendable {
 | **NowcastingService** | `distributed actor` | **The Accelerate Engine:** Receives a commercial category. Executes CPU-intensive Dynamic Factor Model (DFM) LAPACK tensor math over dense historical BLS/FRED arrays locally on the Mac to return a simple 14-day price trajectory to the Vision Pro or iPhone HUD. |
 | **ESGEnrichmentService** | `distributed actor` | **The Cache Guardian:** Prevents the iPhone from making redundant, battery-draining network calls. The Mac queries Climate TRACE and Open Food Facts, caches the results locally for 24h, and serves instant carbon scores to local network peers. |
 | **APIKeyService** | `distributed actor` | Prevents credential leakage. API Keys are stored strictly in the Edge Node's encrypted `.Keys` CloudKit container and are never transmitted to iOS clients. The Edge Node makes all exterior API queries on behalf of the client. |
-| **MLSharpService** | `distributed actor` | **The Python Bridge (Planned):** Orchestrates CLI execution of Python algorithms via `Process()`. Manages the local `apple/ml-sharp` repository to return 3D Gaussian Splats (rendered via RealityKit) for advanced semantic edge manipulation that is unsuited for native Swift implementation. |
+| **MLSharpService** | `distributed actor` | **The Python Bridge:** Orchestrates CLI execution of Python algorithms via `Process()`. Manages the local `apple/ml-sharp` repository to return 3D Gaussian Splats on demand. |
 
 ### 4.8 Library Maintenance Pipeline
 
@@ -721,13 +721,13 @@ The Mac/iPad edge node maintains local caches that never sync to CloudKit or lea
 
 ## 10. Platform Requirements
 
-| Requirement | iOS / iPadOS Client | macOS Edge Node | visionOS Client *(future)* |
+| Requirement | iOS / iPadOS Client | macOS Edge Node | visionOS Client |
 |-------------|--------------------|-----------------|-----------------------------|
 | **Minimum OS** | iOS/iPadOS 26.0 | macOS 26.0 | visionOS 26.3 |
 | **Minimum Device** | iPhone 16 / iPad (M-series) | Mac (M4+) | Apple Vision Pro |
 | **Apple Intelligence** | Required | Required | Required |
 | **FastVLM** | 0.5B (optional, ~500MB) | 1.5B (required, ~1GB) | — |
-| **SAM 2.1 / CLaRa / ML-Sharp** | sam2.1-small (optional) | CLaRa 7B MLX, Python 3.10+ (required) | — |
+| **SAM 2.1 / CLaRa / ML-Sharp** | sam2.1-small (optional) | CLaRa 7B MLX, apple/ml-sharp Python (required) | — |
 | **Key Frameworks** | Swift, SwiftUI, SwiftData, Vision, MapKit, Foundation Models, MLX Swift, AVFoundation, CoreLocation, Contacts, MusicKit, Distributed, Network, Charts, FinanceKit | Swift, Distributed, Network, CoreML, MLX Swift, Accelerate, Charts, Foundation.Process (Python Interop) | Swift, SwiftUI, RealityKit, ARKit, Distributed, Network, Charts |
 | **Key APIs** | Spotify, DuckDuckGo | Climate TRACE, Open Food Facts, OpenESG, World Bank, BLS, FRED, Plaid | — |
 | **Financial** | FinanceKit (Apple Wallet) | Plaid (OAuth2 bank data) | — |

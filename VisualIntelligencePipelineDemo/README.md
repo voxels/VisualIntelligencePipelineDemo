@@ -11,7 +11,7 @@ Uses Apple's Vision framework (`VNGenerateForegroundInstanceMaskRequest`) to aut
 
 ### Deep Contextual Enrichment
 Every capture is automatically enriched with layers of real-world context:
-- **Location** — Apple MapKit reverse geocoding and contact detection (Home, friends), with user-pinnable persistence and bidirectional session sync. Foursquare available in editing UI for manual venue searches.
+- **Location** — Apple MapKit reverse geocoding and contact detection (Home, friends), with user-pinnable persistence and bidirectional session sync.
 - **Web Intelligence** — Link metadata extraction and rich link previews for web URLs and QR codes.
 - **Aesthetics Scoring** — Image quality scores using `VNCalculateImageAestheticsScoresRequest` plus brightness, contrast, and sharpness analysis.
 - **Document Detection** — Automatic perspective correction via `VNDetectDocumentSegmentationRequest` and saving of detected documents as separate child items.

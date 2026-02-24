@@ -119,7 +119,7 @@ The freshness guard in `processItemByID` is best-effort — it depends on CloudK
 | Camera & Subject Sifting | ✅ Complete | `VisualIntelligenceView`, `VisualIntelligenceViewModel`, `CameraManager` |
 | Vision Analysis (OCR, QR, Semantic, Document, Aesthetics, Saliency) | ✅ Complete | `IntelligenceProcessor` — 7 requests, single pass |
 | Location Enrichment (MapKit + Contacts) | ✅ Complete | `ReverseGeocodingService`, `ContactService` |
-| Location Editing (MapKit + Foursquare) | ✅ Complete | `LocationSearchAggregator`, `EditLocationView` |
+| Location Editing (MapKit) | ✅ Complete | `LocationSearchAggregator`, `EditLocationView` |
 | Document Detection & Saving | ✅ Complete | `DocumentManager` |
 | Apple Music / Spotify | ✅ Complete | `AppleMusicEnrichmentService`, `SpotifyService` |
 | Web / QR URL Enrichment | ✅ Complete | `LinkEnrichmentService` (http/https only — custom schemes skipped) |

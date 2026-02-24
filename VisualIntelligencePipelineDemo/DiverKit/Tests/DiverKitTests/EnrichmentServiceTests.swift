@@ -108,15 +108,7 @@ final class EnrichmentServiceTests: XCTestCase {
         XCTAssertNil(result)
     }
     
-    // MARK: - Foursquare API Key Guard
-    
-    func testFoursquareNoAPIKey_ReturnsNil() async throws {
-        let service = FoursquareEnrichmentService(apiKey: nil)
-        let location = CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060)
-        
-        let result = try await service.enrich(location: location)
-        XCTAssertNil(result, "Should return nil when API key is missing")
-    }
+
     
     // MARK: - Call Tracking
     

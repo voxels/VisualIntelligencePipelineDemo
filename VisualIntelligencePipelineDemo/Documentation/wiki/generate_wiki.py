@@ -173,22 +173,22 @@ def generate_all():
                 type_item("EdgeInferenceActor", "distributed actor", "Distributed ML Router to MacOS neural engine for FastVLM 7B, SAM 2.1, and CLaRa execution."),
             ], "IntelligenceProcessor generates summaries, concepts, and tags by composing LLM prompts enriched with weather, location, OCR text, and web data. FastVLMEnrichmentService runs Apple's FastVLM models for multimodal image understanding, scaling up parameters via the Edge node."),
             section("Location Services", [
-                type_item("LocationSearchAggregator", "struct", "Parallel Foursquare + MapKit search with merged results"),
+                type_item("LocationSearchAggregator", "struct", "Parallel MapKit search with merged results"),
                 type_item("SimpleMapFeature", "struct", "Lightweight map annotation model"),
-                type_item("FoursquareEnrichmentService", "class", "Venue search and detail enrichment"),
+
                 type_item("MapKitEnrichmentService", "class", "Apple Maps landmark/address enrichment"),
                 type_item("ReverseGeocodingService", "struct", "CLGeocoder coordinate → address"),
                 type_item("LocationProvider", "protocol", "AnyObject, Sendable — CLLocationManager abstraction"),
                 type_item("LocationService", "class", "GPS coordinate provider"),
                 type_item("SessionClusteringService", "struct", "Location/time-based session grouping"),
-            ], "LocationSearchAggregator runs Foursquare and MapKit searches in parallel, deduplicates by proximity, and returns a unified result set."),
+            ], "LocationSearchAggregator runs MapKit searches, deduplicates by proximity, and returns a unified result set."),
             section("Content Enrichment", [
                 type_item("WeatherEnrichmentService", "actor", "WeatherKit current conditions"),
                 type_item("DuckDuckGoEnrichmentService", "struct", "Web search enrichment"),
                 type_item("WebViewLinkEnrichmentService", "struct", "URL metadata extraction via WKWebView"),
                 type_item("AppleMusicEnrichmentService", "struct", "LinkEnrichmentService — MusicKit matching"),
                 type_item("SpotifyService", "class", "Spotify track/album identification"),
-                type_item("FoursquareLinkEnrichmentService", "struct", "Foursquare URL enrichment"),
+
                 type_item("YahooSearchService", "struct", "Web search via LocalPackages/YahooSearch"),
             ]),
             section("Enrichment Protocols", [
@@ -412,7 +412,7 @@ def generate_all():
             section("System Integration", [
                 type_item("SharedWithYouManager", "class", "NSObject, ObservableObject — Shared With You framework integration"),
                 type_item("NavigationManager", "class", "ObservableObject — app-level navigation state"),
-                type_item("FoursquareLinkEnrichmentService", "class", "Foursquare URL enrichment (app-level)"),
+
             ]),
             section("App Entry Point", [
                 type_item("VisualIntelligencePipelineApp", "struct", "App — @main entry point, service initialization, scene setup"),
@@ -500,7 +500,7 @@ def generate_all():
     &nbsp;&nbsp;Siri/Shortcuts → SaveLinkIntent.perform()<br><br>
     <strong style="color:var(--accent-green)">Pipeline</strong><br>
     &nbsp;&nbsp;Raw Input → LocalPipelineService.process()<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;├── LocationSearchAggregator (Foursquare + MapKit, parallel)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── LocationSearchAggregator (MapKit)<br>
     &nbsp;&nbsp;&nbsp;&nbsp;├── WeatherEnrichmentService (WeatherKit)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;├── AestheticsScoringService (CoreML quality scoring)<br>
      &nbsp;&nbsp;&nbsp;&nbsp;├── FastVLMEnrichmentService (FastVLM 0.5B / 7B Edge multimodal image analysis)<br>
@@ -561,7 +561,7 @@ def generate_all():
     <tr><td>Computer Vision</td><td>Vision framework (subject detection, text recognition, barcode scanning)</td></tr>
     <tr><td>ML Inference</td><td>CoreML (SAM 2.1 Subject Sifting, Aesthetics Scoring)</td></tr>
     <tr><td>Generative AI</td><td>Apple SystemLanguageModel (SLM), MLX Swift (FastVLM 7B, CLaRa memory search)</td></tr>
-    <tr><td>Location</td><td>MapKit, CLGeocoder, Foursquare Places API</td></tr>
+    <tr><td>Location</td><td>MapKit, CLGeocoder</td></tr>
     <tr><td>Weather</td><td>WeatherKit</td></tr>
     <tr><td>Camera</td><td>AVFoundation (AVCaptureSession)</td></tr>
     <tr><td>Music</td><td>MusicKit (Apple Music), Spotify Web API</td></tr>

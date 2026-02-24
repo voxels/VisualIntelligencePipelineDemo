@@ -32,9 +32,10 @@ struct EdgeDaemonApp: App {
                 }
             }
         }
-        .menuBarExtraStyle(.window)  // enables custom SwiftUI panel instead of plain menu
+        .menuBarExtraStyle(.window)
     }
 }
+
 
 // MARK: - Menu Content
 
@@ -99,10 +100,15 @@ struct EdgeDaemonMenu: View {
         }
         .frame(width: 300)
         .task {
-            // Start uptime tracking when listening begins
+            // Start the Bonjour server and provision all AI models on first launch.
+            // EdgeDaemon is unsandboxed — Python/git subprocesses work correctly here.
+            service.startListening()
             startDate = Date()
             uptimeTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
                 uptimeSeconds = Int(Date().timeIntervalSince(startDate))
+            }
+            Task.detached(priority: .utility) {
+                await EdgeModelProvisioner.shared.provisionAll()
             }
         }
         .onDisappear {

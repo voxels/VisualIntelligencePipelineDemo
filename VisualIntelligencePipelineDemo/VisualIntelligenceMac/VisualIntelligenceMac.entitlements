@@ -10,19 +10,26 @@
     <true/>
     <key>com.apple.security.network.server</key>
     <true/>
-    <!-- CloudKit for SwiftData sync -->
+    <!-- Camera access for Continuity Camera / file import -->
+    <key>com.apple.security.device.camera</key>
+    <true/>
+    <!-- CloudKit — must match iOS container IDs exactly -->
     <key>com.apple.developer.icloud-container-identifiers</key>
     <array>
-        <string>iCloud.com.secretatomics.visualintelligence</string>
+        <string>iCloud.com.secretatomics.knowmaps.Cache</string>
+        <string>iCloud.com.secretatomics.knowmaps.Keys</string>
     </array>
     <key>com.apple.developer.icloud-services</key>
     <array>
         <string>CloudKit</string>
     </array>
-    <!-- App Groups shared with iOS app -->
+    <!-- Push for CloudKit change notifications -->
+    <key>com.apple.developer.aps-environment</key>
+    <string>development</string>
+    <!-- App Group shared with iOS app (UserDefaults, file coordination) -->
     <key>com.apple.security.application-groups</key>
     <array>
-        <string>group.com.secretatomics.visualintelligence</string>
+        <string>group.com.secretatomics.VisualIntelligence</string>
     </array>
 </dict>
 </plist>

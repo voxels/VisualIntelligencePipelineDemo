@@ -7,8 +7,6 @@ import DiverShared
 /// Priority: MKLocalSearch (primary) → MKReverseGeocodingRequest (secondary) → Foursquare (tertiary)
 public actor ReverseGeocodingService {
     
-    private var foursquareService: ContextualEnrichmentService?
-    
     /// Cache entry with TTL for reverse geocoding results
     private struct CachedGeocode: Sendable {
         let result: PlaceContext
@@ -26,8 +24,7 @@ public actor ReverseGeocodingService {
         return "\(lat),\(lon)"
     }
     
-    public init(foursquareService: ContextualEnrichmentService? = nil) {
-        self.foursquareService = foursquareService
+    public init() {
     }
     
     /// Lookup place information for a coordinate using priority-ranked services
@@ -63,12 +60,6 @@ public actor ReverseGeocodingService {
         if let geocoderResult = await lookupWithReverseGeocoding(coordinate: coordinate) {
             print("📍 ReverseGeocoding: Found via MKReverseGeocodingRequest: \(geocoderResult.name ?? "Unknown")")
             return geocoderResult
-        }
-        
-        // 3. Tertiary: Foursquare for POI data
-        if let foursquareResult = await lookupWithFoursquare(coordinate: coordinate) {
-            print("📍 ReverseGeocoding: Found via Foursquare: \(foursquareResult.name ?? "Unknown")")
-            return foursquareResult
         }
         
         print("⚠️ ReverseGeocoding: No results for coordinate \(coordinate)")
@@ -130,27 +121,6 @@ public actor ReverseGeocodingService {
             }
         } catch {
             print("⚠️ MKReverseGeocodingRequest failed: \(error)")
-        }
-        
-        return nil
-    }
-    
-    // MARK: - Foursquare (Tertiary)
-    
-    private func lookupWithFoursquare(coordinate: CLLocationCoordinate2D) async -> PlaceContext? {
-        guard let foursquare = foursquareService else { return nil }
-        
-        do {
-            let enrichments = try await foursquare.searchNearby(
-                location: coordinate,
-                limit: 1
-            )
-            
-            if let first = enrichments.first, let placeContext = first.placeContext {
-                return placeContext
-            }
-        } catch {
-            print("⚠️ Foursquare lookup failed: \(error)")
         }
         
         return nil

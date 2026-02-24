@@ -8,12 +8,10 @@ public struct LocationSearchAggregator {
     public static func fetchCandidates(
         query: String,
         center: CLLocationCoordinate2D,
-        foursquareService: ContextualEnrichmentService?,
         mapKitService: MapKitEnrichmentService?
     ) async -> [EnrichmentData] {
         
         // MapKit is now PRIMARY for search results
-        // Foursquare is used for supplemental enrichment ONLY (in detail view)
         var mapResults: [EnrichmentData] = []
         
         if let service = mapKitService {
@@ -38,7 +36,6 @@ public struct LocationSearchAggregator {
     
     public static func resolveMapFeature(
         feature: SimpleMapFeature,
-        foursquareService: ContextualEnrichmentService?,
         mapKitService: MapKitEnrichmentService?
     ) async -> EnrichmentData? {
         let coordinate = feature.coordinate
@@ -66,30 +63,6 @@ public struct LocationSearchAggregator {
         )
     }
     
-    /// Fetches supplemental Foursquare data for a place (categories, ratings, tips, photos).
-    /// Use this in detail views to enrich MapKit results with Foursquare data.
-    /// - Parameters:
-    ///   - title: The place name to search for
-    ///   - coordinate: The location coordinate
-    ///   - foursquareService: The Foursquare service
-    /// - Returns: Enriched PlaceContext with Foursquare data, or nil if not found
-    public static func fetchFoursquareSupplementalData(
-        title: String,
-        coordinate: CLLocationCoordinate2D,
-        foursquareService: ContextualEnrichmentService?
-    ) async -> PlaceContext? {
-        guard let fsqService = foursquareService else { return nil }
-        
-        do {
-            let results = try await fsqService.search(query: title, location: coordinate, limit: 1)
-            if let bestMatch = results.first {
-                return bestMatch.placeContext
-            }
-        } catch {
-            print("Foursquare supplemental lookup failed: \(error)")
-        }
-        return nil
-    }
 }
 
 public struct SimpleMapFeature {

@@ -75,7 +75,7 @@ Camera/Import/ShareSheet → LocalPipelineService → SwiftData + CloudKit
 - **`LocalPipelineService`**: Core orchestrator — ingestion, enrichment, persistence
 - **`MetadataPipelineService`**: Queue item → `LocalInput` conversion, metadata extraction
 - **`IntelligenceProcessor`**: On-device LLM prompts for concept extraction and summarization
-- **`LocationSearchAggregator`**: Unified Foursquare + MapKit parallel search with merged results
+- **`LocationSearchAggregator`**: Unified MapKit search
 - **Reprocessing**: Items can be reprocessed silently; existing IDs are reused to prevent duplicates
 - **Session Sync**: Location edits propagate between `ProcessedItem` and parent `DiverSession`
 - **Enriched Session Summaries**: `generateAndSaveSessionSummary` aggregates all item metadata (transcription, themes, tags, categories, location, weather, web/document/QR context, FastVLM analysis, product metadata, questions, media type) for LLM summarization
@@ -118,7 +118,7 @@ Camera/Import/ShareSheet → LocalPipelineService → SwiftData + CloudKit
 - `Services/AestheticsScoringService.swift` — Image quality scoring
 - `Services/WeatherEnrichmentService.swift` — WeatherKit integration
 - `Services/DuckDuckGoEnrichmentService.swift` — Web enrichment
-- `Services/FoursquareEnrichmentService.swift` — Venue enrichment
+
 - `Services/MapKitEnrichmentService.swift` — Apple Maps enrichment
 - `Services/AppleMusicEnrichmentService.swift` — Music recognition
 - `Services/SpotifyService.swift` — Spotify integration

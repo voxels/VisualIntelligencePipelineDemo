@@ -2730,7 +2730,7 @@ public final class LocalPipelineService {
     /// `@MainActor` because `ReverseGeocodingService` is MainActor-isolated.
     @MainActor
     private static func reverseGeocode(coordinate: CLLocationCoordinate2D) async -> PlaceContext? {
-        let service = ReverseGeocodingService(foursquareService: Services.shared.foursquareService)
+        let service = ReverseGeocodingService()
         return await service.lookup(coordinate: coordinate)
     }
     

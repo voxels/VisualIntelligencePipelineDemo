@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import DiverKit
+import DiverUI
 
 extension Notification.Name {
     static let fastVLMDownloadComplete = Notification.Name("fastVLMDownloadComplete")
@@ -48,8 +49,7 @@ struct ContentView: View {
             if navigationManager.showingAgenticChat,
                let searchService = Services.shared.agenticSearchService {
                 AgenticChatView(
-                    viewModel: AgenticChatViewModel(searchService: searchService),
-                    navigationManager: navigationManager
+                    viewModel: AgenticChatViewModel(searchService: searchService)
                 )
             } else {
                 SessionItemsView(

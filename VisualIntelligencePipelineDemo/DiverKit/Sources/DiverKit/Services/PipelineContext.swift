@@ -37,7 +37,7 @@ public struct PipelineContext: Sendable, Codable {
     
     /// Link/web enrichment data
     public var linkEnrichment: EnrichmentData?
-    /// Foursquare/MapKit place enrichment
+    /// MapKit place enrichment
     public var placeEnrichment: EnrichmentData?
     /// DuckDuckGo search enrichment
     public var duckDuckGoEnrichment: EnrichmentData?

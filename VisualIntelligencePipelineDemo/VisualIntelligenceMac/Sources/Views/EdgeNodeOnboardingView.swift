@@ -61,25 +61,25 @@ struct EdgeNodeOnboardingView: View {
                     icon: "brain.head.profile",
                     color: .purple,
                     title: "Larger AI Models",
-                    body: "CLaRa 7B and FastVLM 1.5B run here, delivering richer summaries than the on-device models."
+                    description: "CLaRa 7B and FastVLM 1.5B run here, delivering richer summaries than the on-device models."
                 )
                 OnboardingBullet(
                     icon: "rotate.3d",
                     color: .orange,
                     title: "3D Scene Generation",
-                    body: "Convert any capture into a 3D Gaussian Splat viewable in AR on your iPhone."
+                    description: "Convert any capture into a 3D Gaussian Splat viewable in AR on your iPhone."
                 )
                 OnboardingBullet(
                     icon: "lock.shield.fill",
                     color: .green,
                     title: "Stays on Your Network",
-                    body: "All traffic uses TLS 1.3. Nothing leaves your home. No accounts, no cloud."
+                    description: "All traffic uses TLS 1.3. Nothing leaves your home. No accounts, no cloud."
                 )
                 OnboardingBullet(
                     icon: "gearshape.fill",
                     color: .gray,
                     title: "Fully in Your Control",
-                    body: "Appears in System Settings › Login Items. Disable it anytime in one click."
+                    description: "Appears in System Settings › Login Items. Disable it anytime in one click."
                 )
             }
             .padding(.horizontal, 32)
@@ -160,7 +160,7 @@ private struct OnboardingBullet: View {
     let icon: String
     let color: Color
     let title: String
-    let body: String
+    let description: String
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -173,7 +173,7 @@ private struct OnboardingBullet: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline.weight(.semibold))
-                Text(body)
+                Text(description)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

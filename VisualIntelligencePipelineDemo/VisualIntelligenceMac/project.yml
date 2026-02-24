@@ -12,6 +12,8 @@ packages:
     path: ../DiverKit
   DiverShared:
     path: ../DiverShared
+  DiverUI:
+    path: ../DiverUI
 
 targets:
 
@@ -27,6 +29,7 @@ targets:
     dependencies:
       - package: DiverKit
       - package: DiverShared
+      - package: DiverUI
       # Embed the EdgeDaemon as a Login Item helper
       - target: VisualIntelligenceMacEdgeNode
         embed: true
@@ -52,7 +55,7 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "26.0"
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: VisualIntelligenceMac.entitlements
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: 23264QUM9A
         ENABLE_HARDENED_RUNTIME: YES
         SWIFT_STRICT_CONCURRENCY: complete
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -96,7 +99,7 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "26.0"
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: ../EdgeDaemon/EdgeDaemon.entitlements
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: 23264QUM9A
         ENABLE_HARDENED_RUNTIME: YES
         SWIFT_STRICT_CONCURRENCY: complete
 
