@@ -744,7 +744,7 @@ struct VisualIntelligencePipelineApp: App {
             photosAssetIdentifier: nil
         )
 
-        Task {
+        Task.detached(priority: .utility) { [metadataPipelineService] in
             do {
                 let queueDir = AppGroupContainer.queueDirectoryURL()!
                 let queueStore = try DiverQueueStore(directoryURL: queueDir)
