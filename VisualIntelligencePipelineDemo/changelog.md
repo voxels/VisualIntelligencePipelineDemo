@@ -1,6 +1,46 @@
 # Changelog
 
+## 2026-02-24
+
+### MetadataPipelineService Refactoring & Orchestrator Actor
+- **MetadataPipelineOrchestrator Actor**: Extracted heavy processing logic from `MetadataPipelineService` into a new `distributed actor` (running locally) to ensure task isolation and thread safety. Handles queue sweeping, item processing (`processItemByID`), and status reporting via `AsyncStream`.
+- **MetadataPipelineService Wrapper**: Refactored into a `@MainActor` `@Observable` wrapper that delegates to the orchestrator. Simplifies UI integration while keeping heavy work off the main thread.
+- **AsyncStream Progress Delivery**: Orchestrator provides a `QueueProgressEvent` stream that the service observes and exposes to the UI, ensuring responsive progress updates without direct property mutation across threads.
+- **Thread-Safety for QueueStore**: Marked `DiverQueueStore` as `final` and `Sendable`. Removed stored `JSONEncoder`/`JSONDecoder` to prevent data races, creating them on-demand instead.
+- `[NEW]` `DiverKit/Services/MetadataPipelineOrchestrator.swift` — Core processing logic in actor context
+- `[MODIFY]` `DiverKit/Services/MetadataPipelineService.swift` — Refactored to delegate-only wrapper
+- `[MODIFY]` `DiverKit/Models/DiverQueueStore.swift` — Sendable conformance and thread-safety fixes
+
+### macOS Intelligence & Build Stability
+- **Fixed macOS Build Errors**: Corrected `MacContentView.swift` to use `rawPayload` for images/thumbnails and `item.placeContext?.name` for location data to align with `DiverShared` and `DiverKit` models. Fixed conditional binding error for non-optional tags array.
+- **Enhanced Test Reliability**: 
+    - Fixed test suite build errors by updating `UnifiedDataManager` initializers to handle throwing `init` in `TestHelpers.swift` and across various test cases.
+    - Resolved `Services.shared` dependency issues in `ReprocessPipelineFilteringTests` by ensuring `MetadataPipelineService` is initialized in `setUp`.
+    - Restored `processingLog` audit trails in `MetadataPipelineOrchestrator` to fix freshness guard test failures.
+    - Ensured `MetadataPipelineService` resets its state correctly when cancelled, fixing `BackgroundSafetyTests`.
+    - Increased timeouts in `PipelinePerformanceTests` to reduce flakiness in restricted execution environments.
+    - Updated `FastVLMEnrichmentService` to properly reset `retainModel` on model unload, ensuring clean teardown.
+- `[MODIFY]` `EdgeDaemon/EdgeDaemon/View/MacContentView.swift` — Fixed property access and Swift 6 errors
+- `[MODIFY]` `DiverKit/Tests/DiverKitTests/` — Fixed test setup, timeouts, and race conditions
+- `[MODIFY]` `DiverKit/Sources/DiverKit/Services/FastVLMEnrichmentService.swift` — Reset retainModel on unload
+- `[MODIFY]` `DiverKit/Sources/DiverKit/Services/MetadataPipelineOrchestrator.swift` — Added audit logging for tests
+- `[MODIFY]` `DiverKit/Sources/DiverKit/Services/MetadataPipelineService.swift` — Fixed state reset on cancel
+
+### Structural Crash Point Mitigation
+- **DataStore Initialization**: Replaced `fatalError` in `VisualIntelligencePipelineApp` with logging and an in-memory fallback. `DiverDataStore.init` is now `throwing` for safer error propagation.
+- **Safe Payload Unwrapping**: Replaced forced unwraps (`!`) in `URLCompletenessAnalyzer.swift`, `LocalPipelineService`, and `ReferenceDetailView` with safe optional handling.
+- **Fail-Safe Initializers**: Replaced `try!` with `do-catch` and descriptive `fatalError` in `DiverDataStore.swift` and SwiftUI previews (`SettingsView`, `SharedWithYouView`) to prevent silent crashes and provide diagnostic context.
+- `[MODIFY]` `VisualIntelligencePipeline/VisualIntelligencePipelineApp.swift` — Safe DataStore init with fallback
+- `[MODIFY]` `DiverKit/Storage/DiverDataStore.swift` — Replaced `try!` with `fatalError` for schema corruption handlers
+- `[MODIFY]` `VisualIntelligencePipeline/AppIntents/Services/URLCompletenessAnalyzer.swift` — Safe unwrap of TLD components
+- `[MODIFY]` `VisualIntelligencePipeline/View/SettingsView.swift` — Safe preview initialization
+- `[MODIFY]` `VisualIntelligencePipeline/View/SharedWithYouView.swift` — Safe preview initialization
+- `[MODIFY]` `DiverKit/Services/LocalPipelineService.swift` — Safe unwrapping in `process()`
+- `[MODIFY]` `View/ContentView.swift` — Safe session/summary unwrapping
+- `[MODIFY]` `View/ReferenceDetailView.swift` — Safe transcription/summary unwrapping
+
 ## 2026-02-23 (e)
+
 
 ### Multi-Device Reprocessing Safety
 - **Freshness guard in `processItemByID`**: Re-fetches the item's current status before starting. If it's already `.ready` or `.processing` (synced from another device via CloudKit), skips processing entirely and logs at debug level. Prevents two devices from redundantly reprocessing the same items.

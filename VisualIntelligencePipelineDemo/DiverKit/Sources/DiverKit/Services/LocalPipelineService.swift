@@ -299,7 +299,8 @@ public final class LocalPipelineService {
                       
                       // On-demand load for imports if needed
                       // Use loadBestFrame (High Quality) instead of thumbnail to ensure QR/Barcode legibility
-                      if (analysisData == nil || isJSONData(analysisData!)), let assetId = existing.photosAssetIdentifier {
+                      let shouldEnrich = analysisData == nil || (analysisData.map { isJSONData($0) } ?? true)
+                      if shouldEnrich, let assetId = existing.photosAssetIdentifier {
                           analysisData = await PhotosAssetLoader.shared.loadBestFrame(identifier: assetId)
                       }
                       
@@ -429,9 +430,8 @@ public final class LocalPipelineService {
                         applyEnrichment(placeEnrichment, to: existing, preservePlaceIdentity: isUserLocationFixed)
                         DiverLogger.pipeline.debug("Reverse geocoding complete (update): \(placeContext.name ?? "Unknown")")
                     }
-                } else {
-                    DiverLogger.pipeline.debug("Skipping reverse geocoding (update) to preserve existing place context: \(existing.placeContext?.name ?? "Unknown")")
-                    let existingPlace = existing.placeContext!
+                } else if let existingPlace = existing.placeContext {
+                    DiverLogger.pipeline.debug("Skipping reverse geocoding (update) to preserve existing place context: \(existingPlace.name ?? "Unknown")")
                     localPipelineContext.placeEnrichment = EnrichmentData(
                         title: existingPlace.name,
                         descriptionText: existingPlace.address,
@@ -496,7 +496,7 @@ public final class LocalPipelineService {
                 let system = await MainActor.run { Services.shared.actorSystem }
                 
                 if let router = router, let system = system {
-                    let decision = await router.shouldOffload(task: .vlmInference)
+                    let decision = await router.shouldOffload(task: .agenticSearch)
                     if case .edge(let node, _) = decision {
                         let identity = EdgeActorID(id: "EdgeContext", nodeName: node.deviceName)
                         let edgeActor = try EdgeContextActor.resolve(id: identity, using: system)
@@ -742,7 +742,8 @@ public final class LocalPipelineService {
         
         // 1.5 Barcode/QR Detection (Parity with Update Path)
         var analysisData = rawPayload
-        if (analysisData == nil || isJSONData(analysisData!)), let assetId = descriptor?.photosAssetIdentifier {
+        let shouldEnrich = analysisData == nil || (analysisData.map { isJSONData($0) } ?? true)
+        if shouldEnrich, let assetId = descriptor?.photosAssetIdentifier {
              analysisData = await PhotosAssetLoader.shared.loadBestFrame(identifier: assetId)
         }
         
@@ -864,9 +865,8 @@ public final class LocalPipelineService {
                     applyEnrichment(placeEnrichment, to: processed, preservePlaceIdentity: hasUserOverride)
                     DiverLogger.pipeline.debug("Reverse geocoding complete: \(placeContext.name ?? "Unknown")")
                 }
-            } else {
-                DiverLogger.pipeline.debug("Skipping reverse geocoding to preserve existing place context: \(processed.placeContext?.name ?? "Unknown")")
-                let existingPlace = processed.placeContext!
+            } else if let existingPlace = processed.placeContext {
+                DiverLogger.pipeline.debug("Skipping reverse geocoding to preserve existing place context: \(existingPlace.name ?? "Unknown")")
                 pipelineContext.placeEnrichment = EnrichmentData(
                     title: existingPlace.name,
                     descriptionText: existingPlace.address,
@@ -2684,7 +2684,7 @@ public final class LocalPipelineService {
 
                  do {
                      let filename = "\(resolvedId)-cover.jpg"
-                     let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+                     guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return nil }
                      let dir = docs.appendingPathComponent("thumbnails", isDirectory: true)
                      try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
                      let fileURL = dir.appendingPathComponent(filename)

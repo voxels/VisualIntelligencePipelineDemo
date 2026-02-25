@@ -29,6 +29,7 @@ struct VisualIntelligencePipelineApp: App {
     let metadataPipelineService: MetadataPipelineService
     let keychainService: KeychainService
     let cloudKitSyncMonitor: CloudKitSyncMonitor
+    let queueStore: DiverQueueStore?
 
     // This is where KnowMapsServiceContainer needs a ModelContext, it can use the DiverDataStore's container
     @State private var knowMapsServices: KnowMapsServiceContainer?
@@ -62,16 +63,28 @@ struct VisualIntelligencePipelineApp: App {
         // Define Configurations
         // Both configurations need the FULL schema to allow cross-referencing
         // 1. Diver Config (App Group) - primary storage
-        let diverConfig: ModelConfiguration
+        let diverConfig: ModelConfiguration?
         do {
             let appGroupURL = try AppGroupContainer.dataStoreURL()
             diverConfig = ModelConfiguration(schema: fullSchema, url: appGroupURL)
         } catch {
-            fatalError("VisualIntelligencePipelineApp: Failed to get App Group URL: \(error)")
+            DiverLogger.storage.error("VisualIntelligencePipelineApp: Failed to get App Group URL: \(error)")
+            diverConfig = nil
         }
         
         // Initialize DataStore with dual configurations
-        self.dataStore = DiverDataStore(schema: fullSchema, configurations: [diverConfig])
+        do {
+            if let config = diverConfig {
+                self.dataStore = try DiverDataStore(schema: fullSchema, configurations: [config])
+            } else {
+                // Fallback to in-memory if app group fails
+                self.dataStore = try DiverDataStore(schema: fullSchema, configurations: [ModelConfiguration(isStoredInMemoryOnly: true)])
+            }
+        } catch {
+            DiverLogger.storage.critical("VisualIntelligencePipelineApp: Catastrophic failure initializing DataStore: \(error.localizedDescription)")
+            // App cannot function without a store. Since dataStore is a 'let', we must crash, but at least we logged it.
+            fatalError("VisualIntelligencePipelineApp: Catastrophic failure initializing DataStore: \(error.localizedDescription)")
+        }
         VisualIntelligencePipelineApp._staticDataStore = self.dataStore
         
         // Start CloudKit sync monitoring (logs events, surfaces errors)
@@ -84,8 +97,19 @@ struct VisualIntelligencePipelineApp: App {
         
         // Initialize MetadataPipelineService
         // It needs a queueStore (from AppGroup) and the modelContext from dataStore
-        let queueDirectory = AppGroupContainer.queueDirectoryURL()!
-        let queueStore = try! DiverQueueStore(directoryURL: queueDirectory)
+        let initializedQueueStore: DiverQueueStore?
+        if let queueDirectory = AppGroupContainer.queueDirectoryURL() {
+            do {
+                initializedQueueStore = try DiverQueueStore(directoryURL: queueDirectory)
+            } catch {
+                DiverLogger.queue.error("VisualIntelligencePipelineApp: Failed to initialize DiverQueueStore at \(queueDirectory.path): \(error.localizedDescription)")
+                initializedQueueStore = nil
+            }
+        } else {
+            DiverLogger.queue.error("VisualIntelligencePipelineApp: AppGroup queue directory URL is unavailable.")
+            initializedQueueStore = nil
+        }
+        self.queueStore = initializedQueueStore
         
         // Initialize Enrichment Services
         let locationService = LocationService()
@@ -123,7 +147,7 @@ struct VisualIntelligencePipelineApp: App {
         
         // Initialize MetadataPipelineService before registering it
         self.metadataPipelineService = MetadataPipelineService(
-            queueStore: queueStore,
+            queueStore: initializedQueueStore,
             modelContainer: dataStore.container,
             mainContext: dataStore.mainContext,
             enrichmentService: compositeLinkService,
@@ -221,7 +245,11 @@ struct VisualIntelligencePipelineApp: App {
         // Register background tasks
         let service = self.metadataPipelineService
         BGTaskScheduler.shared.register(forTaskWithIdentifier: VisualIntelligencePipelineApp.backgroundTaskIdentifier, using: nil) { task in
-            VisualIntelligencePipelineApp.handleAppRefresh(task: task as! BGAppRefreshTask, service: service)
+            guard let refreshTask = task as? BGAppRefreshTask else {
+                DiverLogger.pipeline.error("VisualIntelligencePipelineApp: Background task is not BGAppRefreshTask")
+                return
+            }
+            VisualIntelligencePipelineApp.handleAppRefresh(task: refreshTask, service: service)
         }
 
         // Generate and store a cryptographically secure random secret if it doesn't exist
@@ -247,7 +275,7 @@ struct VisualIntelligencePipelineApp: App {
             ContentView(pipelineService: metadataPipelineService)
                 .modelContainer(dataStore.container) // Provide SwiftData container for @Query support
                 .environment(\.metadataPipelineService, metadataPipelineService)
-                .environmentObject(sharedWithYouManager ?? SharedWithYouManager(queueStore: try! DiverQueueStore(directoryURL: AppGroupContainer.queueDirectoryURL()!), pipelineService: metadataPipelineService, isEnabled: false))
+                .environmentObject(sharedWithYouManager ?? SharedWithYouManager(queueStore: queueStore, pipelineService: metadataPipelineService, isEnabled: false))
                 .environmentObject(navigationManager)
                 .overlay {
                     if isLaunching {
@@ -328,9 +356,16 @@ struct VisualIntelligencePipelineApp: App {
 
                     if #available(iOS 16.0, macOS 13.0, *) {
                         if sharedWithYouManager == nil {
-                            let queueDirectory = AppGroupContainer.queueDirectoryURL()!
-                            let queueStore = try! DiverQueueStore(directoryURL: queueDirectory)
-                            sharedWithYouManager = SharedWithYouManager(queueStore: queueStore, pipelineService: metadataPipelineService, isEnabled: true)
+                            if let queueDirectory = AppGroupContainer.queueDirectoryURL() {
+                                do {
+                                    let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
+                                    sharedWithYouManager = SharedWithYouManager(queueStore: queueStore, pipelineService: metadataPipelineService, isEnabled: true)
+                                } catch {
+                                    DiverLogger.queue.error("SharedWithYouManager failed to initialize DiverQueueStore: \(error.localizedDescription)")
+                                }
+                            } else {
+                                DiverLogger.queue.error("SharedWithYouManager: AppGroup queue directory unavailable.")
+                            }
                         }
                     }
                     
@@ -406,16 +441,19 @@ struct VisualIntelligencePipelineApp: App {
             if #available(iOS 16.0, macOS 13.0, *) {
                 print("🔄 [BGTask] Checking Shared with You links...")
                 do {
-                     let queueDir = AppGroupContainer.queueDirectoryURL()!
-                     let qStore = try DiverQueueStore(directoryURL: queueDir)
-                     // Initialize temporary manager
-                     let manager = SharedWithYouManager(queueStore: qStore, pipelineService: service, isEnabled: true)
-                     
-                     if let store = VisualIntelligencePipelineApp.sharedDataStore {
-                         await manager.processUnprocessedHighlights(modelContext: store.mainContext)
+                     if let queueDir = AppGroupContainer.queueDirectoryURL() {
+                         let qStore = try DiverQueueStore(directoryURL: queueDir)
+                         // Initialize temporary manager
+                         let manager = SharedWithYouManager(queueStore: qStore, pipelineService: service, isEnabled: true)
+                         
+                         if let store = VisualIntelligencePipelineApp.sharedDataStore {
+                             await manager.processUnprocessedHighlights(modelContext: store.mainContext)
+                         }
+                     } else {
+                         DiverLogger.queue.error("VisualIntelligencePipelineApp: [BGTask] AppGroup queue directory unavailable.")
                      }
                 } catch {
-                    print("❌ [BGTask] Failed to process Shared with You: \(error)")
+                    DiverLogger.queue.error("VisualIntelligencePipelineApp: [BGTask] Failed to process Shared with You: \(error.localizedDescription)")
                 }
             }
             
@@ -694,13 +732,19 @@ struct VisualIntelligencePipelineApp: App {
                         )
 
                         let queueItem = DiverQueueItem(action: "process", descriptor: descriptor, source: "deep_link")
-                        let queueDirectory = AppGroupContainer.queueDirectoryURL()!
-                        let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
-                        _ = try queueStore.enqueue(queueItem)
-
-                        print("✅ Enqueued wrapped link for processing")
+                        if let queueDirectory = AppGroupContainer.queueDirectoryURL() {
+                            do {
+                                let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
+                                _ = try queueStore.enqueue(queueItem)
+                                DiverLogger.queue.info("Enqueued wrapped link for processing")
+                            } catch {
+                                DiverLogger.queue.error("VisualIntelligencePipelineApp: Failed to enqueue wrapped link: \(error.localizedDescription)")
+                            }
+                        } else {
+                            DiverLogger.queue.error("VisualIntelligencePipelineApp: AppGroup queue directory unavailable for wrapped link")
+                        }
                     } else {
-                        print("⚠️ No payload found in wrapped link, cannot extract original URL")
+                        DiverLogger.pipeline.warning("No payload found in wrapped link, cannot extract original URL")
                     }
                 }
             } catch {
@@ -746,7 +790,10 @@ struct VisualIntelligencePipelineApp: App {
 
         Task.detached(priority: .utility) { [metadataPipelineService] in
             do {
-                let queueDir = AppGroupContainer.queueDirectoryURL()!
+                guard let queueDir = AppGroupContainer.queueDirectoryURL() else {
+                    DiverLogger.queue.error("Save-clipboard: AppGroup queue directory unavailable.")
+                    return
+                }
                 let queueStore = try DiverQueueStore(directoryURL: queueDir)
                 let queueItem = DiverQueueItem(
                     action: "save",

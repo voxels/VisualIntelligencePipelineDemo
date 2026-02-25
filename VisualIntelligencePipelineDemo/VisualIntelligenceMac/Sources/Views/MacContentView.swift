@@ -13,9 +13,9 @@ import DiverShared
 
 struct MacContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject private var edgeNodeInstaller: EdgeNodeInstallService
+    @Environment(EdgeNodeInstallService.self) private var edgeNodeInstaller: EdgeNodeInstallService?
 
-    @Query(sort: \SessionMetadata.startDate, order: .reverse)
+    @Query(sort: \SessionMetadata.createdAt, order: .reverse)
     private var sessions: [SessionMetadata]
 
     @State private var selectedSession: SessionMetadata?
@@ -62,7 +62,9 @@ struct MacContentView: View {
             }
         }
         .sheet(isPresented: $showEdgeNodeSettings) {
-            MacEdgeNodeStatusSheet(installer: edgeNodeInstaller)
+            if let edgeNodeInstaller {
+                MacEdgeNodeStatusSheet(installer: edgeNodeInstaller)
+            }
         }
     }
 
@@ -72,20 +74,20 @@ struct MacContentView: View {
         Button {
             showEdgeNodeSettings = true
         } label: {
-            HStack(spacing: 4) {
-                Image(systemName: edgeNodeInstaller.isRunning
-                      ? "brain.filled.head.profile"
-                      : "brain.head.profile")
-                if edgeNodeInstaller.isRunning {
-                    Circle()
-                        .fill(.green)
-                        .frame(width: 6, height: 6)
-                }
+        HStack(spacing: 4) {
+            Image(systemName: (edgeNodeInstaller?.isRunning ?? false)
+                  ? "brain.filled.head.profile"
+                  : "brain.head.profile")
+            if edgeNodeInstaller?.isRunning ?? false {
+                Circle()
+                    .fill(.green)
+                    .frame(width: 6, height: 6)
             }
         }
-        .help(edgeNodeInstaller.isRunning
-              ? "Edge Node running — click to manage"
-              : "Edge Node not active — click to set up")
+    }
+    .help((edgeNodeInstaller?.isRunning ?? false)
+          ? "Edge Node running — click to manage"
+          : "Edge Node not active — click to set up")
     }
 }
 
@@ -105,7 +107,7 @@ private struct MacSessionRow: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Text(session.startDate, style: .relative)
+                Text(session.createdAt, style: .relative)
                     .foregroundStyle(.tertiary)
             }
             .font(.caption)
@@ -135,51 +137,48 @@ private struct MacItemRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            if let thumb = item.thumbnailData, let img = NSImage(data: thumb) {
+            if let thumb = item.rawPayload, let img = NSImage(data: thumb) {
                 Image(nsImage: img)
                     .resizable()
-                    .scaledToFill()
-                    .frame(width: 44, height: 44)
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 40, height: 40)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
             } else {
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(.secondary.opacity(0.15))
-                    .frame(width: 44, height: 44)
-                    .overlay {
-                        Image(systemName: item.entityType == "product"
-                              ? "barcode" : "photo")
-                            .foregroundStyle(.secondary)
-                            .font(.caption)
-                    }
+                Image(systemName: "photo")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 40, height: 40)
+                    .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
             }
-
+            
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.title ?? "Untitled")
-                    .font(.subheadline)
+                    .font(.body)
                     .lineLimit(1)
+                
                 if let summary = item.summary {
                     Text(summary)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                        .lineLimit(2)
+                        .lineLimit(1)
                 }
             }
+            
+            Spacer()
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
     }
 }
 
 // MARK: - Item Detail
 
-private struct MacItemDetailView: View {
+struct MacItemDetailView: View {
     let item: ProcessedItem
-
+    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-
-                // Image
-                if let data = item.imageData, let img = NSImage(data: data) {
+                // Header Image
+                if let data = item.rawPayload, let img = NSImage(data: data) {
                     Image(nsImage: img)
                         .resizable()
                         .scaledToFit()
@@ -199,7 +198,8 @@ private struct MacItemDetailView: View {
                 }
 
                 // Meta chips
-                if let tags = item.tags, !tags.isEmpty {
+                let tags = item.tags
+                if !tags.isEmpty {
                     FlowLayout(spacing: 6) {
                         ForEach(tags, id: \.self) { tag in
                             Text(tag)
@@ -213,7 +213,7 @@ private struct MacItemDetailView: View {
                 }
 
                 // Location
-                if let place = item.placeContext?.displayName {
+                if let place = item.placeContext?.name {
                     Label(place, systemImage: "mappin.circle.fill")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -229,7 +229,7 @@ private struct MacItemDetailView: View {
 
 // MARK: - Edge Node Status Sheet (from toolbar button)
 
-private struct MacEdgeNodeStatusSheet: View {
+struct MacEdgeNodeStatusSheet: View {
     @Bindable var installer: EdgeNodeInstallService
     @Environment(\.dismiss) private var dismiss
 

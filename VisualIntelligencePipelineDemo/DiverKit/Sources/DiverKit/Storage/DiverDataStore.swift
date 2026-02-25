@@ -23,14 +23,21 @@ public final class DiverDataStore {
         PersonVector.self
     ]
 
-    public init(schema: Schema, configurations: [ModelConfiguration]) {
+    public init(schema: Schema, configurations: [ModelConfiguration]) throws {
         do {
             self.container = try ModelContainer(
                 for: schema,
                 configurations: configurations
             )
         } catch {
-            fatalError("DiverDataStore: Failed to create ModelContainer with custom configurations: \(error)")
+            DiverLogger.storage.critical("DiverDataStore: Failed to create ModelContainer with custom configurations: \(error.localizedDescription)")
+            DiverLogger.storage.warning("DiverDataStore: Attempting fallback to in-memory container")
+            do {
+                self.container = try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+            } catch {
+                DiverLogger.storage.critical("DiverDataStore: SwiftData is catastrophically corrupted. In-memory fallback failed: \(error.localizedDescription)")
+                throw error
+            }
         }
     }
 
@@ -162,7 +169,7 @@ public final class DiverDataStore {
         return sections.isEmpty ? "" : sections.joined(separator: "\n\n")
     }
 
-    public init(types: [any PersistentModel.Type] = DiverDataStore.coreTypes, inMemory: Bool = false, forAppGroup: Bool = true) {
+    public init(types: [any PersistentModel.Type] = DiverDataStore.coreTypes, inMemory: Bool = false, forAppGroup: Bool = true) throws {
         let schema = Schema(types)
         
         let configuration: ModelConfiguration
@@ -178,7 +185,8 @@ public final class DiverDataStore {
                 configuration = ModelConfiguration(schema: schema, url: storeURL)
             }
             catch {
-                fatalError("DiverDataStore: Failed to get App Group URL or create ModelConfiguration: \(error)")
+                DiverLogger.storage.error("DiverDataStore: Failed to get App Group URL or create ModelConfiguration: \(error.localizedDescription). Falling back to non-App Group store.")
+                configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             }
         } else {
             // Default to non-App Group persistent store if not inMemory and not forAppGroup
@@ -191,7 +199,13 @@ public final class DiverDataStore {
                 configurations: [configuration]
             )
         } catch {
-            fatalError("DiverDataStore: Failed to create ModelContainer: \(error)")
+            DiverLogger.storage.critical("DiverDataStore: Failed to create primary ModelContainer: \(error.localizedDescription)")
+            DiverLogger.storage.warning("DiverDataStore: Falling back to in-memory configuration.")
+            do {
+                self.container = try ModelContainer(for: schema, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+            } catch {
+                throw error
+            }
         }
     }
     

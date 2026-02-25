@@ -34,7 +34,7 @@ public enum EdgeNodeInstallStatus: String {
 /// Registers and monitors the Visual Intelligence Node login item helper.
 @Observable
 @MainActor
-public final class EdgeNodeInstallService: ObservableObject {
+public final class EdgeNodeInstallService {
 
     // MARK: State
 
@@ -54,7 +54,7 @@ public final class EdgeNodeInstallService: ObservableObject {
     // MARK: Constants
 
     /// Must match PRODUCT_BUNDLE_IDENTIFIER in the Node helper target.
-    private static let nodeHelperBundleID = "com.secretatomics.visualintelligence.node"
+    private static let nodeHelperBundleID = "com.secretatomics.visualintelligence.mac.edgenode.helper"
 
     private var smService: SMAppService {
         SMAppService.loginItem(identifier: Self.nodeHelperBundleID)
@@ -76,8 +76,14 @@ public final class EdgeNodeInstallService: ObservableObject {
 
         do {
             try smService.register()
+            // Status might not update immediately, so we refresh again after a short delay
             refresh()
+            Task {
+                try? await Task.sleep(for: .milliseconds(500))
+                refresh()
+            }
         } catch {
+            print("❌ EdgeNodeInstallService: Registration failed: \(error)")
             installStatus = .error
             lastError = error.localizedDescription
         }

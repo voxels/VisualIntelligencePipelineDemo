@@ -17,7 +17,7 @@ import os.log
 /// mutable state updates occur on the main thread. The class is
 /// `@MainActor` to enforce this at compile time.
 @MainActor
-public final class CloudKitSyncMonitor {
+public final class CloudKitSyncMonitor: ObservableObject {
     
     /// Posted when a CloudKit sync error occurs.
     /// `userInfo` contains `"error"` (Error) and `"eventType"` (String).

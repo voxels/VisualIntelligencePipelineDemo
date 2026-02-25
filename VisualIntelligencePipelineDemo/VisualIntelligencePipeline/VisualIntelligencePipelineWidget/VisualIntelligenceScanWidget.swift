@@ -61,7 +61,7 @@ struct ScanProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<ScanEntry>) -> Void) {
         let entry = ScanEntry(date: Date(), summary: loadSummary())
         // Refresh every 15 minutes or when app reloads widget
-        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date()) ?? Date().addingTimeInterval(15 * 60)
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
     }
@@ -72,7 +72,8 @@ struct VisualIntelligenceScanWidgetView: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        Link(destination: URL(string: "secretatomics://scan")!) {
+        let url = URL(string: "secretatomics://scan") ?? URL(string: "about:blank")!
+        Link(destination: url) {
             ZStack(alignment: .leading) {
                 // Subtle gradient background
                 ContainerRelativeShape()

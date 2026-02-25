@@ -11,7 +11,7 @@ final class HierarchicalEnrichmentTests: XCTestCase {
     
     @MainActor
     override func setUp() async throws {
-        let unifiedDataManager = UnifiedDataManager(inMemory: true)
+        let unifiedDataManager = try! UnifiedDataManager(inMemory: true)
         modelContainer = unifiedDataManager.container
         modelContext = unifiedDataManager.mainContext
         pipeline = LocalPipelineService(modelContext: modelContext)

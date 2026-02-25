@@ -116,10 +116,17 @@ public struct PipelineImportService {
         DiverLogger.pipeline.info("✅ Saved imported items to SwiftData")
         
         // Ensure the pipeline processes the new inputs immediately
-        let queueDirectory = AppGroupContainer.queueDirectoryURL()!
-        let queueStore = try! DiverQueueStore(directoryURL: queueDirectory)
-        let pipelineService = MetadataPipelineService(queueStore: queueStore, modelContainer: modelContext.container, mainContext: modelContext)
-        try await pipelineService.refreshProcessedItems()
+        if let queueDirectory = AppGroupContainer.queueDirectoryURL() {
+            do {
+                let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
+                let pipelineService = MetadataPipelineService(queueStore: queueStore, modelContainer: modelContext.container, mainContext: modelContext)
+                try await pipelineService.refreshProcessedItems()
+            } catch {
+                DiverLogger.pipeline.error("PipelineImportService: Failed to initialize queue store: \(error.localizedDescription)")
+            }
+        } else {
+            DiverLogger.pipeline.error("PipelineImportService: AppGroup queue directory is unavailable.")
+        }
         
         UserDefaults.standard.set(true, forKey: "DiverPipelineImported")
         DiverLogger.pipeline.info("✅ Successfully imported pipeline examples")

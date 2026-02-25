@@ -116,20 +116,13 @@ public distributed actor EdgeInferenceActor {
                     imageDescription: analysis.imageDescription
                 )
             } else {
-                print("⚠️ [EdgeInferenceActor] FastVLM analyze returned nil — returning Vision-only result")
+                print("⚠️ [EdgeInferenceActor] FastVLM analyze returned nil — throwing to trigger client fallback")
+                throw EdgeInferenceError.modelNotLoaded("FastVLM returned nil analysis")
             }
         } catch {
-            print("❌ [EdgeInferenceActor] FastVLM analyze failed: \(error) — returning Vision-only result")
+            print("❌ [EdgeInferenceActor] FastVLM analyze failed: \(error) — throwing to trigger client fallback")
+            throw error
         }
-        
-        // Fallback: return Vision-only result (OCR text, semantic tags)
-        return LLMAnalysisResult(
-            summary: nil,
-            statements: [],
-            purpose: nil,
-            tags: visionResult.semanticTags,
-            imageDescription: nil
-        )
     }
     
     /// Executes the Apple `ml-sharp` semantic edge cutting Python script locally on the macOS edge node.

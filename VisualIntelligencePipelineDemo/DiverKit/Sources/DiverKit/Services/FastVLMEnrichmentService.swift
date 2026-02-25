@@ -133,16 +133,10 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     
     /// Maps hardware capability to the best MLX-format HuggingFace repo.
     /// These are pre-converted MLX checkpoints — no PyTorch→MLX conversion needed at runtime.
-    ///
-    /// NOTE: `apple/FastVLM-1.5B-int8` is NOT compatible with mlx-swift-lm v2.30.x —
-    /// its vision encoder weights don't match the FastViT architecture the library expects.
-    /// No official `mlx-community` 1.5B port exists yet. When one does, re-enable the medium tier.
-    /// Candidate: `EZCon/FastVLM-1.5B-mlx` (third-party, untested).
     public static var optimalHuggingFaceRepo: String {
         let capability = CapabilityRouter.shared
         if capability.canRunHeavyVLM { return "mlx-community/FastVLM-7B-bf16" }
-        // Medium tier disabled — apple/FastVLM-1.5B-int8 incompatible with mlx-swift-lm
-        // if capability.canRunMediumVLM { return "apple/FastVLM-1.5B-int8" }
+        if capability.canRunMediumVLM { return "apple/FastVLM-1.5B-int8" }
         return "mlx-community/FastVLM-0.5B-bf16"
     }
     
@@ -259,7 +253,8 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     
     /// The directory where the active model is stored.
     private static var modelCacheDirectory: URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let fallback = URL(fileURLWithPath: NSTemporaryDirectory())
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? fallback
         let activeID = Self.modelID
         
         // If it's our downloaded Apple FastVLM models, they live in Models/FastVLM/Tier
@@ -269,7 +264,7 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
         }
         
         // Fallback MLX cache directory for the built-in 0.5B community model
-        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first ?? fallback
         return caches.appendingPathComponent("models/\(activeID)", isDirectory: true)
     }
     
@@ -478,7 +473,10 @@ public final class FastVLMEnrichmentService: FastVLMAnalyzing, Sendable {
     public func unloadModel() {
         #if canImport(MLXVLM) && !targetEnvironment(simulator)
         container = nil
+        retainModel = false
         print("💤 [FastVLMService] Model unloaded from GPU memory")
+        #else
+        retainModel = false
         #endif
     }
     

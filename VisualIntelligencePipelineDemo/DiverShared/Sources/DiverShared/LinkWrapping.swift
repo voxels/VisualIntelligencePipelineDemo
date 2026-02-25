@@ -32,7 +32,13 @@ public enum DiverLinkError: Error, Equatable {
 }
 
 public enum DiverLinkWrapper {
-    public static let baseURL = URL(string: "https://secretatomics.com")!
+    public static let baseURL: URL = {
+        if let url = URL(string: "https://secretatomics.com") {
+            return url
+        }
+        // Fallback that should never be hit if the hardcoded string is valid
+        return URL(string: "http://localhost")!
+    }()
     public static let currentVersion = 1
 
     public static func id(for url: URL, salt: String? = nil, length: Int = 24) -> String {

@@ -44,8 +44,10 @@ struct SaveLinkIntent: AppIntent {
             let queueStore: DiverQueueStore
             if let testStore = Self._testQueueStore {
                 queueStore = testStore
+            } else if let queueDirectory = AppGroupContainer.queueDirectoryURL() {
+                queueStore = try DiverQueueStore(directoryURL: queueDirectory)
             } else {
-                queueStore = try DiverQueueStore(directoryURL: AppGroupContainer.queueDirectoryURL()!)
+                return .result(dialog: "Unable to access application storage to save link.")
             }
             let queueItem = DiverQueueItem(
                 action: "save",

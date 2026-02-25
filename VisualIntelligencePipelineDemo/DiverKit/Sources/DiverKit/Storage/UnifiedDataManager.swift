@@ -18,8 +18,8 @@ public final class UnifiedDataManager {
     }
 
     // Public initializer for testability and flexible setup
-    public init(inMemory: Bool = false, forAppGroup: Bool = true) {
-        self.store = DiverDataStore(types: DiverDataStore.coreTypes, inMemory: inMemory, forAppGroup: forAppGroup)
+    public init(inMemory: Bool = false, forAppGroup: Bool = true) throws {
+        self.store = try DiverDataStore(types: DiverDataStore.coreTypes, inMemory: inMemory, forAppGroup: forAppGroup)
     }
     
     // Allow wrapping an existing store

@@ -13,6 +13,16 @@ final class ReprocessPipelineFilteringTests: XCTestCase {
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
         modelContext = ModelContext(modelContainer)
+        
+        // Initialize MetadataPipelineService and register in Services.shared
+        // reprocessPipeline now depends on it.
+        let metadataPipeline = MetadataPipelineService(
+            queueStore: nil,
+            modelContainer: modelContainer,
+            mainContext: modelContext
+        )
+        Services.shared.metadataPipelineService = metadataPipeline
+        
         service = LocalPipelineService(modelContext: modelContext)
     }
 

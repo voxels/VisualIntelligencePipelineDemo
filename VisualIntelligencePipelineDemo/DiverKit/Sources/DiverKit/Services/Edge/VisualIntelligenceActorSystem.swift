@@ -86,16 +86,22 @@ public final class VisualIntelligenceActorSystem: DistributedActorSystem, Sendab
         if Res.self == String.self {
             if let str = String(data: response, encoding: .utf8) {
                 // If it was double-quoted by JSONEncoder on the edge, strip it
-                if str.hasPrefix("\"") && str.hasSuffix("\"") {
-                    return String(str.dropFirst().dropLast()) as! Res
+                let cleanStr = str.hasPrefix("\"") && str.hasSuffix("\"") ? String(str.dropFirst().dropLast()) : str
+                if let res = cleanStr as? Res {
+                    return res
+                } else {
+                    throw EdgeTransportError.typeMismatch(expected: "String")
                 }
-                return str as! Res
             }
         }
         
         // Handle bare Data returns
         if Res.self == Data.self {
-            return response as! Res
+            if let res = response as? Res {
+                return res
+            } else {
+                throw EdgeTransportError.typeMismatch(expected: "Data")
+            }
         }
         
         do {
@@ -255,6 +261,7 @@ public enum EdgeTransportError: Error, LocalizedError {
     case actorNotFound(EdgeActorID)
     case argumentDecodingFailed
     case responseTooLarge
+    case typeMismatch(expected: String)
     
     public var errorDescription: String? {
         switch self {
@@ -263,6 +270,7 @@ public enum EdgeTransportError: Error, LocalizedError {
         case .actorNotFound(let id): return "Actor '\(id.id)' not found on node '\(id.nodeName)'"
         case .argumentDecodingFailed: return "Failed to decode remote call arguments"
         case .responseTooLarge: return "Response exceeds size limit"
+        case .typeMismatch(let expected): return "Failed to cast actor response to expected type: \(expected)"
         }
     }
 }

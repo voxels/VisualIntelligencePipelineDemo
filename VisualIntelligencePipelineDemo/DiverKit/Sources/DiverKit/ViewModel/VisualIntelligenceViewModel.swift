@@ -479,7 +479,7 @@ public class VisualIntelligenceViewModel {
         
         // Fetch the full ProcessedItem from SwiftData
         guard let context = Services.shared.modelContext else {
-            print("❌ VI ViewModel: No modelContext for reprocess fetch")
+            DiverLogger.storage.error("VI ViewModel: No modelContext for reprocess fetch")
             return
         }
         
@@ -487,7 +487,7 @@ public class VisualIntelligenceViewModel {
             predicate: #Predicate { $0.id == itemID }
         )
         guard let item = try? context.fetch(fetch).first else {
-            print("❌ VI ViewModel: ProcessedItem not found for ID: \(itemID)")
+            DiverLogger.storage.error("VI ViewModel: ProcessedItem not found for ID: \(itemID)")
             return
         }
         
@@ -602,7 +602,7 @@ public class VisualIntelligenceViewModel {
                     }
                 }
             } catch {
-                print("❌ VI ViewModel: Failed to prepare video for reprocessing: \(error)")
+                DiverLogger.pipeline.error("VI ViewModel: Failed to prepare video for reprocessing: \(error.localizedDescription)")
             }
         } else if let data = imageData {
             // Image from rawPayload
@@ -620,7 +620,7 @@ public class VisualIntelligenceViewModel {
                     }
                 } else {
                     await MainActor.run {
-                        print("❌ VI ViewModel: Failed to load image from Photos for reprocessing")
+                        DiverLogger.pipeline.error("VI ViewModel: Failed to load image from Photos for reprocessing")
                         self.pipelineStatus = .failed
                         self.isAnalyzing = false
                     }

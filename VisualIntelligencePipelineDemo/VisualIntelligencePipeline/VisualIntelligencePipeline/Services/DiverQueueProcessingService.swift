@@ -334,7 +334,9 @@ final class DiverQueueProcessingService {
     
     private func persistPayload(_ payload: Data, for descriptor: DiverItemDescriptor, fileExtension: String = "jpg", clearIdentifier: Bool = false) throws -> DiverItemDescriptor {
         let filename = "\(descriptor.id)-payload.\(fileExtension)"
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            throw NSError(domain: "DiverQueueProcessingService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Documents directory unavailable"])
+        }
         let dir = docs.appendingPathComponent("thumbnails", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let fileURL = dir.appendingPathComponent(filename)

@@ -12,6 +12,9 @@ import Observation
 
 #if canImport(UIKit)
 import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 public final class ThumbnailCache: @unchecked Sendable {
     public static let shared = ThumbnailCache()
@@ -22,15 +25,14 @@ public final class ThumbnailCache: @unchecked Sendable {
         cache.countLimit = 200
     }
     
-    public func image(forKey key: String) -> UIImage? {
-        cache.object(forKey: key as NSString) as? UIImage
+    public func image(forKey key: String) -> PlatformImage? {
+        cache.object(forKey: key as NSString) as? PlatformImage
     }
     
-    public func insert(_ image: UIImage, forKey key: String) {
+    public func insert(_ image: PlatformImage, forKey key: String) {
         cache.setObject(image as AnyObject, forKey: key as NSString)
     }
 }
-#endif
 import PhotosUI
 
 @MainActor
@@ -65,7 +67,7 @@ public final class SidebarViewModel {
     @ObservationIgnored private var processItemTask: Task<Void, Error>?
     @ObservationIgnored private var analyzeSessionTask: Task<Void, Error>?
     @ObservationIgnored private var fullAnalysisTask: Task<Void, Error>?
-    @ObservationIgnored private var thumbnailLoadingTasks: [String: Task<UIImage?, Never>] = [:]
+    @ObservationIgnored private var thumbnailLoadingTasks: [String: Task<PlatformImage?, Never>] = [:]
     public var isPerformingAction = false // Immediate feedback for blocking operations
     
     // Full Analysis (CLaRa) Modal State
@@ -1024,11 +1026,14 @@ public final class SidebarViewModel {
                 Task {
                     do {
                         let queueItem = DiverQueueItem(action: "save", descriptor: descriptor, source: "duplicate")
-                        let queueDirectory = AppGroupContainer.queueDirectoryURL()!
-                        let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
-                        _ = try queueStore.enqueue(queueItem)
+                        if let queueDirectory = AppGroupContainer.queueDirectoryURL() {
+                            let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
+                            _ = try queueStore.enqueue(queueItem)
+                        } else {
+                            throw NSError(domain: "SidebarViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "AppGroup queue directory unavailable for duplicate"])
+                        }
                     } catch {
-                        print("❌ Failed to enqueue duplicate: \(error)")
+                        DiverLogger.queue.error("Failed to enqueue duplicate: \(error.localizedDescription)")
                     }
                 }
             }
@@ -1485,7 +1490,6 @@ public final class SidebarViewModel {
                     ext = isVideo ? "mov" : "jpg" // Fallback for unknown streams
                 }
                 let _ = "import-\(UUID().uuidString).\(ext)"
-                let queueDirectory = AppGroupContainer.queueDirectoryURL()!
                 
                 let descriptor = DiverItemDescriptor(
                     id: UUID().uuidString,
@@ -1504,9 +1508,13 @@ public final class SidebarViewModel {
                     payload: data
                 )
                 
-                let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
-                let path = try queueStore.enqueue(queueItem)
-                print("✅ Enqueued imported item at \(path)")
+                if let queueDirectory = AppGroupContainer.queueDirectoryURL() {
+                    let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
+                    let path = try queueStore.enqueue(queueItem)
+                    print("✅ Enqueued imported item at \(path)")
+                } else {
+                    print("❌ AppGroup queue directory unavailable for import")
+                }
                 
                 await MainActor.run {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {

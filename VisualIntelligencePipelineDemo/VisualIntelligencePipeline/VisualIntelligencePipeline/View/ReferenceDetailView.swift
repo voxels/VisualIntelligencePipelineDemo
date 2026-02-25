@@ -158,7 +158,7 @@ struct ReferenceDetailContent: View {
             }
             
             // Text Editor Content for Note type
-            let showTextEditor = item.source == "ManualNote" || (item.entityType != "document" && item.entityType != "web_link" && item.transcription != nil && !(item.transcription!.isEmpty))
+            let showTextEditor = item.source == "ManualNote" || (item.entityType != "document" && item.entityType != "web_link" && item.transcription.map { !$0.isEmpty } == true)
             if showTextEditor {
                 TextEditorView(item: item).padding(.bottom, 12)
             }

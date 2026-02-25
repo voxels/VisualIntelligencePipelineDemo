@@ -13,7 +13,7 @@ final class MetadataPipelineServiceTests: XCTestCase {
 
     override func setUp() async throws {
         // Setup SwiftData (In-Memory) using UnifiedDataManager for consistency
-        let unifiedDataManager = UnifiedDataManager(inMemory: true)
+        let unifiedDataManager = try! UnifiedDataManager(inMemory: true)
         modelContainer = unifiedDataManager.container
         modelContext = unifiedDataManager.mainContext
 

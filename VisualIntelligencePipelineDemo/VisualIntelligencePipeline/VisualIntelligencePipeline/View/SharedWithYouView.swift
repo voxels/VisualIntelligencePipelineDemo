@@ -138,16 +138,22 @@ struct SharedWithYouPlaceholder: View {
 }
 
 #Preview {
-    if #available(iOS 16.0, macOS 13.0, *) {
+    let manager: SharedWithYouManager = {
         let queueDir = FileManager.default.temporaryDirectory.appendingPathComponent("queue-preview")
         try? FileManager.default.createDirectory(at: queueDir, withIntermediateDirectories: true)
-        let store = try! DiverQueueStore(directoryURL: queueDir)
-        let manager = SharedWithYouManager(queueStore: store, isEnabled: true)
-
-        return List {
-            SharedWithYouView(manager: manager)
+        guard let store = try? DiverQueueStore(directoryURL: queueDir) else {
+            fatalError("Failed to create preview queue store")
         }
-    } else {
-        return Text("iOS 16.0+ required")
+        return SharedWithYouManager(queueStore: store, isEnabled: true)
+    }()
+
+    return Group {
+        if #available(iOS 16.0, macOS 13.0, *) {
+            List {
+                SharedWithYouView(manager: manager)
+            }
+        } else {
+            Text("iOS 16.0+ required")
+        }
     }
 }

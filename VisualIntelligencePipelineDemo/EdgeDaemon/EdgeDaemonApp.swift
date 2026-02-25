@@ -13,7 +13,7 @@ import ServiceManagement
 @main
 struct EdgeDaemonApp: App {
     @State private var service = EdgeDaemonService()
-    @State private var isLoginItemEnabled = SMAppService.mainApp.status == .enabled
+    @State private var isLoginItemEnabled = SMAppService.loginItem(identifier: "com.secretatomics.visualintelligence.mac.edgenode.helper").status == .enabled
 
     var body: some Scene {
         MenuBarExtra {
@@ -392,15 +392,16 @@ struct EdgeDaemonMenu: View {
     }
 
     private func toggleLoginItem(enabled: Bool) {
+        let smService = SMAppService.loginItem(identifier: "com.secretatomics.visualintelligence.mac.edgenode.helper")
         do {
             if enabled {
-                try SMAppService.mainApp.register()
+                try smService.register()
             } else {
-                try SMAppService.mainApp.unregister()
+                try smService.unregister()
             }
         } catch {
             print("❌ Login item toggle failed: \(error)")
-            isLoginItemEnabled = SMAppService.mainApp.status == .enabled
+            isLoginItemEnabled = smService.status == .enabled
         }
     }
 }

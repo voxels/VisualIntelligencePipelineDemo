@@ -251,11 +251,8 @@ public final class ContactService: ContactServiceProvider, Sendable {
                         newGeocodeCount += 1
                     }
                 } catch {
-                    if let ref = referenceLocation {
-                        address.location = ref
-                        address.distance = 0
-                        geocodedAddresses.append(address)
-                    }
+                    DiverLogger.pipeline.warning("Geocoding failed for \(address.formattedAddress): \(error.localizedDescription)")
+                    geocodedAddresses.append(address)
                 }
             }
             

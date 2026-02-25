@@ -114,12 +114,15 @@ public class ReferenceDetailViewModel: ObservableObject {
                         print("✅ ReferenceDetailViewModel: Received \(suggestions.count) suggestions, \(self.suggestedPurposes.count) new")
                     }
                 } else {
-                    print("❌ ReferenceDetailViewModel: ContextQuestionService not found")
+                    let err = NSError(domain: "ReferenceDetailViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "ContextQuestionService not found"])
+                    DiverLogger.pipeline.error("\(err.localizedDescription)")
                     await MainActor.run { self.isGeneratingPurposes = false }
+                    throw err
                 }
             } catch {
-                print("❌ ReferenceDetailViewModel: Failed to generate purposes: \(error)")
+                DiverLogger.pipeline.error("Failed to generate purposes: \(error.localizedDescription)")
                 await MainActor.run { self.isGeneratingPurposes = false }
+                throw error
             }
         }
     }
@@ -252,13 +255,15 @@ public class ReferenceDetailViewModel: ObservableObject {
                 // If no rawPayload but has photosAssetIdentifier, load on-demand
                 if payload == nil, let assetId = item.photosAssetIdentifier {
                     print("📸 Loading image data from Photos library for reprocessing: \(assetId)")
-                    payload = await PhotosAssetLoader.shared.loadImageData(identifier: assetId)
-                    if payload != nil {
-                        print("✅ Loaded \(payload!.count) bytes from Photos library")
+                    let data = await PhotosAssetLoader.shared.loadImageData(identifier: assetId)
+                    if let data = data {
+                        print("✅ Loaded \(data.count) bytes from Photos library")
+                        payload = data
                     } else {
                         print("⚠️ Failed to load data from Photos library - asset may have been deleted")
                     }
                 }
+
                 
                 let queueItem = DiverQueueItem(
                     id: UUID(), // New queue entry
@@ -269,17 +274,23 @@ public class ReferenceDetailViewModel: ObservableObject {
                     payload: payload
                 )
                 
-                let queueDirectory = AppGroupContainer.queueDirectoryURL()!
-                let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
-                _ = try queueStore.enqueue(queueItem)
-                print("✅ Re-enqueued item for deep processing: \(urlString) (Payload: \(payload?.count ?? 0) bytes)")
-                
-                // Update UI state
-                await MainActor.run {
-                    item.status = .queued
+                if let queueDirectory = AppGroupContainer.queueDirectoryURL() {
+                    let queueStore = try DiverQueueStore(directoryURL: queueDirectory)
+                    _ = try queueStore.enqueue(queueItem)
+                    print("✅ Re-enqueued item for deep processing: \(urlString) (Payload: \(payload?.count ?? 0) bytes)")
+                    
+                    // Update UI state
+                    await MainActor.run {
+                        item.status = .queued
+                    }
+                } else {
+                    let err = NSError(domain: "ReferenceDetailViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "AppGroup queue directory unavailable for retry"])
+                    DiverLogger.queue.error("\(err.localizedDescription)")
+                    throw err
                 }
             } catch {
-                print("❌ Failed to re-enqueue item: \(error)")
+                DiverLogger.queue.error("Failed to re-enqueue item: \(error.localizedDescription)")
+                throw error
             }
         }
     }
@@ -304,16 +315,19 @@ public class ReferenceDetailViewModel: ObservableObject {
                         await MainActor.run { item.status = .ready }
                     }
                 } else {
-                    print("❌ MetadataPipelineService not available")
+                    let err = NSError(domain: "ReferenceDetailViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "MetadataPipelineService not available"])
+                    DiverLogger.pipeline.error("\(err.localizedDescription)")
                     if !Task.isCancelled {
                         await MainActor.run { item.status = .failed }
                     }
+                    throw err
                 }
             } catch {
                 if !Task.isCancelled {
-                    print("❌ Failed to trigger immediate refresh: \(error)")
+                    DiverLogger.pipeline.error("Failed to trigger immediate refresh: \(error.localizedDescription)")
                     await MainActor.run { item.status = .failed }
                 }
+                throw error
             }
         }
     }

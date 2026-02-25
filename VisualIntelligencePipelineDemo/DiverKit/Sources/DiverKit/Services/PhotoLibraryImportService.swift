@@ -377,7 +377,7 @@ public final class PhotoLibraryImportService {
         guard let data = image.jpegData(compressionQuality: 0.8) else { return nil }
         
         // Ensure directory exists
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return nil }
         let dir = docs.appendingPathComponent("thumbnails", isDirectory: true)
         
         do {

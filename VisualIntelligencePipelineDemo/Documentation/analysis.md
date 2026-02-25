@@ -1,8 +1,8 @@
 # Visual Intelligence Pipeline — v1.2 Analysis
 
-**Date:** 2026-02-23
-**Revision:** Post-edge infrastructure + commerce intelligence + reprocessing unification
-**Development period:** 43 days (Jan 11 – Feb 23, 2026)
+**Date:** 2026-02-24
+**Revision:** Post-edge infrastructure + commerce intelligence + reprocessing unification + service decomposition
+**Development period:** 44 days (Jan 11 – Feb 24, 2026)
 
 ---
 
@@ -49,7 +49,7 @@
 | `LocalPipelineService.swift` | 3,656 | Pipeline orchestration, enrichment, persistence, reprocessing, session management |
 | `VisualIntelligenceViewModel.swift` | 3,198 | Camera, detection, sifting, capture review, import, spatial commerce |
 | `SidebarViewModel.swift` | 1,517 | Sidebar state, session management, library maintenance, reprocessSession |
-| `MetadataPipelineService.swift` | 1,223 | Queue processing, processItemByID, processQueuedOrphanItems, freshness guard |
+| `MetadataPipelineOrchestrator.swift` | 691 | Queue processing, processItemByID, processQueuedOrphanItems, freshness guard |
 | `ReferenceDetailView.swift` | 1,413 | Unified item detail view routing to 6 domain-specific profile views |
 | `EdgeDaemonService.swift` | 811 | Bonjour TLS server, distributed actor dispatch, CLaRa/FastVLM/Vision routing |
 
@@ -88,6 +88,9 @@ Phase 1 (capture-time, ~1-2s): Vision + Location + Web enrichment. Returns with 
 
 **Robust Edge Transport**
 `NWTransportLayer` uses TLS 1.3 with `ConnectionSerializer` actor for ordering. Self-healing: framing errors cancel the connection so the next request creates a fresh TCP connection, preventing cascading failures. Length-prefixed framing with per-request timeout.
+
+**Service Decomposition (Phase 1)**
+`MetadataPipelineService` (~1,200 lines) was successfully decomposed into a lightweight `@MainActor` wrapper and a `MetadataPipelineOrchestrator` actor. This extraction moved 70% of the logic off the main thread, improved task isolation, and reduced the probability of UI hangs during bulk queue processing.
 
 ### Areas for Improvement
 
@@ -166,6 +169,8 @@ The freshness guard in `processItemByID` is best-effort — it depends on CloudK
 | EdgeDaemon CloudKit warning | Fixed: `APIKeyService` skips `CKContainer` init in EdgeDaemon process |
 | URL scheme guard | Fixed: link enrichment only runs on `http://`/`https://` URLs |
 | Queue self-cancellation | Fixed: `processQueuedOrphanItems` uses `processItemByID` not `processItemImmediately` |
+| Structural Crash Points | Fixed: Removed `try!` and forced unwraps in `LocalPipelineService`, `DataStore` init, and detail views. |
+| MetadataService Bloat | Refactored: Decomposed `MetadataPipelineService` into Service + Orchestrator. |
 
 ### Positive Patterns (Carried Forward)
 

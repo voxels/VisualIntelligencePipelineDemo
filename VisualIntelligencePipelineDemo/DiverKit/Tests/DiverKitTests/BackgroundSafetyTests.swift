@@ -143,7 +143,7 @@ final class BackgroundSafetyTests: XCTestCase {
     // =========================================================================
     
     /// Verifies that cancelProcessing() unloads FastVLM from GPU memory.
-    func testCancelProcessingUnloadsFastVLM() {
+    func testCancelProcessingUnloadsFastVLM() async {
         // Given: A FastVLM service is attached
         let fastVLM = FastVLMEnrichmentService()
         fastVLM.retainModel = true
@@ -151,6 +151,9 @@ final class BackgroundSafetyTests: XCTestCase {
         
         // When: Cancel processing (simulating background transition)
         pipelineService.cancelProcessing()
+        
+        // Give the async cancellation and detached unload task a moment to run
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
         
         // Then: FastVLM should be unloaded
         XCTAssertFalse(fastVLM.retainModel,

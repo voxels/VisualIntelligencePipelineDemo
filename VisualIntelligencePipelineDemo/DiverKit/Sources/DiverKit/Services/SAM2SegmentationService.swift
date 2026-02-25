@@ -32,7 +32,11 @@ public final class SAM2SegmentationService: SAM2Segmenting, Sendable {
     public init() {
         // Load the 150MB sam2.1-small.mlpackage provisioned natively by EdgeModelProvisioner
         do {
-            let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            guard let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+                print("❌ [SAM2Service] Application Support directory unavailable")
+                self.model = nil
+                return
+            }
             let modelURL = appSupport.appendingPathComponent("Models/sam2.1-small.mlpackage")
             
             guard FileManager.default.fileExists(atPath: modelURL.path) else {

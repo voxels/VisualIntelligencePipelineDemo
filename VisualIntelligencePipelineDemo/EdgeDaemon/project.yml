@@ -51,7 +51,7 @@ targets:
         DEVELOPMENT_TEAM: ""
         ENABLE_HARDENED_RUNTIME: YES
         SWIFT_STRICT_CONCURRENCY: complete
-        PRODUCT_BUNDLE_IDENTIFIER: com.secretatomics.visualintelligence.node
+        PRODUCT_BUNDLE_IDENTIFIER: com.secretatomics.visualintelligence.mac.edgenode.helper
 
 schemes:
   EdgeDaemon:

@@ -10,7 +10,7 @@ final class LocalPipelineServiceTests: XCTestCase {
     var service: LocalPipelineService!
 
     override func setUp() async throws {
-        let unifiedDataManager = UnifiedDataManager(inMemory: true)
+        let unifiedDataManager = try! UnifiedDataManager(inMemory: true)
         modelContainer = unifiedDataManager.container
         modelContext = unifiedDataManager.mainContext
         service = LocalPipelineService(modelContext: modelContext)

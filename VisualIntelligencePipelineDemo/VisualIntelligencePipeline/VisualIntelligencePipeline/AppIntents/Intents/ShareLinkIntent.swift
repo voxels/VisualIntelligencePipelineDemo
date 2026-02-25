@@ -73,8 +73,14 @@ struct ShareLinkIntent: AppIntent {
             let queueStore: DiverQueueStore
             if let testStore = Self._testQueueStore {
                 queueStore = testStore
+            } else if let queueDirectory = AppGroupContainer.queueDirectoryURL() {
+                queueStore = try DiverQueueStore(directoryURL: queueDirectory)
             } else {
-                queueStore = try DiverQueueStore(directoryURL: AppGroupContainer.queueDirectoryURL()!)
+                return .result(
+                    value: wrappedURL,
+                    dialog: "Created link but unable to access application storage to save it.",
+                    view: ShareLinkSnippet(host: title ?? url.host ?? "Link", wrappedLink: wrappedString)
+                )
             }
             let queueItem = DiverQueueItem(
                 action: "save",

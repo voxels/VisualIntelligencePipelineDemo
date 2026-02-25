@@ -551,7 +551,9 @@ struct StorageInfoRow: View {
     @Previewable @State var manager: SharedWithYouManager = {
         let queueDir = FileManager.default.temporaryDirectory.appendingPathComponent("preview-queue")
         try? FileManager.default.createDirectory(at: queueDir, withIntermediateDirectories: true)
-        let queueStore = try! DiverQueueStore(directoryURL: queueDir)
+        guard let queueStore = try? DiverQueueStore(directoryURL: queueDir) else {
+            fatalError("Failed to create DiverQueueStore for preview")
+        }
         return SharedWithYouManager(queueStore: queueStore, isEnabled: true)
     }()
 

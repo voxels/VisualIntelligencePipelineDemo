@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "37EF435987B68CAE99C00722"
-               BuildableName = "Visual Intelligence.app"
-               BlueprintName = "VisualIntelligenceMac"
+               BlueprintIdentifier = "A46470A83E84A28C6D6BCE47"
+               BuildableName = "VisualIntelligenceEdgeHelper.app"
+               BlueprintName = "VisualIntelligenceEdgeHelper"
                ReferencedContainer = "container:VisualIntelligenceMac.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -28,9 +28,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "BEF55EF9FB2E08797EE8C886"
-               BuildableName = "VisualIntelligenceMacEdgeNode.app"
-               BlueprintName = "VisualIntelligenceMacEdgeNode"
+               BlueprintIdentifier = "37EF435987B68CAE99C00722"
+               BuildableName = "Visual Intelligence.app"
+               BlueprintName = "VisualIntelligenceMac"
                ReferencedContainer = "container:VisualIntelligenceMac.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -44,9 +44,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "37EF435987B68CAE99C00722"
-            BuildableName = "Visual Intelligence.app"
-            BlueprintName = "VisualIntelligenceMac"
+            BlueprintIdentifier = "A46470A83E84A28C6D6BCE47"
+            BuildableName = "VisualIntelligenceEdgeHelper.app"
+            BlueprintName = "VisualIntelligenceEdgeHelper"
             ReferencedContainer = "container:VisualIntelligenceMac.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -67,9 +67,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "37EF435987B68CAE99C00722"
-            BuildableName = "Visual Intelligence.app"
-            BlueprintName = "VisualIntelligenceMac"
+            BlueprintIdentifier = "A46470A83E84A28C6D6BCE47"
+            BuildableName = "VisualIntelligenceEdgeHelper.app"
+            BlueprintName = "VisualIntelligenceEdgeHelper"
             ReferencedContainer = "container:VisualIntelligenceMac.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -84,9 +84,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "37EF435987B68CAE99C00722"
-            BuildableName = "Visual Intelligence.app"
-            BlueprintName = "VisualIntelligenceMac"
+            BlueprintIdentifier = "A46470A83E84A28C6D6BCE47"
+            BuildableName = "VisualIntelligenceEdgeHelper.app"
+            BlueprintName = "VisualIntelligenceEdgeHelper"
             ReferencedContainer = "container:VisualIntelligenceMac.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

@@ -69,7 +69,8 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
     
     /// Local cache directory for CLaRa weights.
     private static var modelCacheDirectory: URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let fallback = URL(fileURLWithPath: NSTemporaryDirectory())
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? fallback
         return appSupport.appendingPathComponent("Models/CLaRa")
     }
     
@@ -174,7 +175,8 @@ public final class CLaRaLatentService: LocalAgenticSearching, @unchecked Sendabl
     
     /// File URL for the persisted index cache.
     private static var indexCacheURL: URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let fallback = URL(fileURLWithPath: NSTemporaryDirectory())
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first ?? fallback
         let dir = appSupport.appendingPathComponent("CLaRa")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("document_index.json.gz")

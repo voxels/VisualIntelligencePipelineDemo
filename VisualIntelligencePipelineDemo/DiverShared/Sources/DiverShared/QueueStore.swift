@@ -55,35 +55,30 @@ public struct DiverQueueRecord: Hashable, Sendable {
     }
 }
 
-open class DiverQueueStore {
+final public class DiverQueueStore: Sendable {
     public let directoryURL: URL
     private let fileManager: FileManager
-    private let encoder: JSONEncoder
-    private let decoder: JSONDecoder
 
     public init(
         directoryURL: URL,
-        fileManager: FileManager = .default,
-        encoder: JSONEncoder? = nil,
-        decoder: JSONDecoder? = nil
+        fileManager: FileManager = .default
     ) throws {
         self.directoryURL = directoryURL
         self.fileManager = fileManager
-        self.encoder = encoder ?? DiverQueueStore.createEncoder()
-        self.decoder = decoder ?? DiverQueueStore.createDecoder()
         try ensureDirectory()
     }
 
     @discardableResult
-    open func enqueue(_ item: DiverQueueItem) throws -> DiverQueueRecord {
+    public func enqueue(_ item: DiverQueueItem) throws -> DiverQueueRecord {
         let filename = Self.filename(for: item)
         let fileURL = directoryURL.appendingPathComponent(filename)
+        let encoder = Self.createEncoder()
         let data = try encoder.encode(item)
         try data.write(to: fileURL, options: [.atomic])
         return DiverQueueRecord(item: item, fileURL: fileURL)
     }
 
-    open func pendingEntries() throws -> [DiverQueueRecord] {
+    public func pendingEntries() throws -> [DiverQueueRecord] {
         // Ensure directory exists before listing
         if !fileManager.fileExists(atPath: directoryURL.path) {
             try ensureDirectory()
@@ -95,6 +90,7 @@ open class DiverQueueStore {
             includingPropertiesForKeys: nil,
             options: [.skipsHiddenFiles]
         )
+        let decoder = Self.createDecoder()
         var records: [DiverQueueRecord] = []
         for fileURL in contents where fileURL.pathExtension.lowercased() == "json" {
             let data = try Data(contentsOf: fileURL)
@@ -104,7 +100,7 @@ open class DiverQueueStore {
         return records.sorted { $0.item.createdAt < $1.item.createdAt }
     }
 
-    open func remove(_ record: DiverQueueRecord) throws {
+    public func remove(_ record: DiverQueueRecord) throws {
         do {
             try fileManager.removeItem(at: record.fileURL)
         } catch {
@@ -117,7 +113,7 @@ open class DiverQueueStore {
         }
     }
 
-    open func removeAll() throws {
+    public func removeAll() throws {
         let records = try pendingEntries()
         for record in records {
             try remove(record)

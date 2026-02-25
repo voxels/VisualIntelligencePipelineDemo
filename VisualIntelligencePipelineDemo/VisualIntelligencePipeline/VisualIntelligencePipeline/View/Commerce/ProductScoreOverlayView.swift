@@ -458,7 +458,7 @@ private struct MethodologyEntry: Identifiable {
         price: 4.99,
         currency: "USD",
         scores: [esgScore, brandScore, durabilityScore, valueScore],
-        affiliateURL: URL(string: "https://example.com")!
+        affiliateURL: URL(string: "https://example.com") ?? URL(fileURLWithPath: "/")
     )
     
     let recommendation = RankedRecommendation(

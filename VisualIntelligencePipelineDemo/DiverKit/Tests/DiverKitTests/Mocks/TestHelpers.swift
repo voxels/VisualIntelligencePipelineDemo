@@ -9,7 +9,7 @@ import DiverShared
 /// Creates an in-memory `UnifiedDataManager` for testing. Returns the manager so both `container` and `mainContext` are accessible.
 @MainActor
 func makeTestDataManager() -> UnifiedDataManager {
-    return UnifiedDataManager(inMemory: true)
+    return try! UnifiedDataManager(inMemory: true)
 }
 
 // MARK: - ProcessedItem Factory

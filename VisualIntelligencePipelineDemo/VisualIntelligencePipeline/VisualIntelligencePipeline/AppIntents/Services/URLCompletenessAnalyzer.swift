@@ -78,7 +78,7 @@ struct URLCompletenessAnalyzer {
             return .partialDomain(missingPart: "top-level domain")
         }
 
-        let tld = String(components.last!)
+        let tld = String(components.last ?? "")
 
         // Common TLDs that should be complete
         // Common TLDs that should be complete

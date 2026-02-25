@@ -583,8 +583,13 @@ public final class EdgeDaemonService {
 
         
         do {
-            let modelsDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-                .first!.appendingPathComponent("Models/FastVLM")
+            let baseURL: URL
+            if let appGroupURL = try? AppGroupContainer.containerURL() {
+                baseURL = appGroupURL
+            } else {
+                baseURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            }
+            let modelsDir = baseURL.appendingPathComponent("Models/FastVLM", isDirectory: true)
             let targetDir = modelsDir.appendingPathComponent(folderName)
             
             try FileManager.default.createDirectory(at: targetDir, withIntermediateDirectories: true)
@@ -708,8 +713,8 @@ public final class EdgeDaemonService {
     nonisolated private func discoverModels() -> [String] {
         var models = ["vision-pipeline"]
         
-        let modelsDir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-            .first?.appendingPathComponent("Models")
+        let baseURL: URL? = try? AppGroupContainer.containerURL()
+        let modelsDir = (baseURL ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first)?.appendingPathComponent("Models")
         
         guard let dir = modelsDir else { return models }
         

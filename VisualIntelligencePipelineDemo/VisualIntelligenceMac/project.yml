@@ -12,6 +12,9 @@ packages:
     path: ../DiverKit
   DiverShared:
     path: ../DiverShared
+  knowmaps:
+    url: https://github.com/voxels/Know-Maps.git
+    branch: main
 
 targets:
 
@@ -27,10 +30,12 @@ targets:
     dependencies:
       - package: DiverKit
       - package: DiverShared
-      # Embed the EdgeDaemon as a Login Item helper
-      - target: VisualIntelligenceMacEdgeNode
+      - sdk: ServiceManagement.framework
+      # Embed the EdgeHelper as a Login Item helper
+      - target: VisualIntelligenceEdgeHelper
         embed: true
         codeSign: true
+        subpath: Contents/Library/LoginItems
     info:
       path: Info.plist
       properties:
@@ -52,13 +57,13 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "26.0"
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: VisualIntelligenceMac.entitlements
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "SDZ7V7QF9F"
         ENABLE_HARDENED_RUNTIME: YES
         SWIFT_STRICT_CONCURRENCY: complete
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 
-  # ── EdgeNode Login Item helper — embedded inside the main app ─────────────
-  VisualIntelligenceMacEdgeNode:
+  # ── EdgeHelper Login Item helper — embedded inside the main app ─────────────
+  VisualIntelligenceEdgeHelper:
     type: application
     platform: macOS
     sources:
@@ -79,8 +84,9 @@ targets:
     info:
       path: ../EdgeDaemon/Info.plist
       properties:
+        CFBundleDisplayName: "Visual Intelligence Edge Helper"
+        CFBundleIdentifier: com.secretatomics.visualintelligence.mac.edgenode.helper
         LSUIElement: true
-        CFBundleDisplayName: "Visual Intelligence Edge Node"
         LSApplicationCategoryType: public.app-category.utilities
         NSLocalNetworkUsageDescription: >
           The Edge Node advertises via Bonjour to serve ML inference
@@ -89,14 +95,15 @@ targets:
           - _visualintel._tcp
     settings:
       base:
-        PRODUCT_NAME: "VisualIntelligenceMacEdgeNode"
+        PRODUCT_NAME: "VisualIntelligenceEdgeHelper"
         # Must be child of the parent app for SMAppService.loginItem to work
-        PRODUCT_BUNDLE_IDENTIFIER: com.secretatomics.visualintelligence.mac.edgenode
+        PRODUCT_BUNDLE_IDENTIFIER: com.secretatomics.visualintelligence.mac.edgenode.helper
         SWIFT_VERSION: "6.0"
         MACOSX_DEPLOYMENT_TARGET: "26.0"
         CODE_SIGN_STYLE: Automatic
         CODE_SIGN_ENTITLEMENTS: ../EdgeDaemon/EdgeDaemon.entitlements
-        DEVELOPMENT_TEAM: ""
+        SKIP_INSTALL: YES
+        DEVELOPMENT_TEAM: "SDZ7V7QF9F"
         ENABLE_HARDENED_RUNTIME: YES
         SWIFT_STRICT_CONCURRENCY: complete
 
@@ -105,7 +112,7 @@ schemes:
     build:
       targets:
         VisualIntelligenceMac: all
-        VisualIntelligenceMacEdgeNode: all
+        VisualIntelligenceEdgeHelper: all
     run:
       config: Debug
     profile:

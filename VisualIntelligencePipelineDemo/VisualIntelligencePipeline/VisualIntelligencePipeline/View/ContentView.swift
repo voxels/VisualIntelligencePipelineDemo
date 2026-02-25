@@ -263,23 +263,25 @@ struct SessionItemsView: View {
                     }
                 }
             } header: {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(sessionTitle(for: session!))
-                        .font(.largeTitle)
-                        .bold()
-                        .foregroundStyle(.primary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    
-                    if let summary = session?.summary, !summary.isEmpty {
-                        Text(summary)
-                            .font(.body)
-                            .foregroundStyle(.secondary)
+                if let session = session {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(sessionTitle(for: session))
+                            .font(.largeTitle)
+                            .bold()
+                            .foregroundStyle(.primary)
                             .fixedSize(horizontal: false, vertical: true)
+                        
+                        if let summary = session.summary, !summary.isEmpty {
+                            Text(summary)
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
+                    .padding(.top, 8)
+                    .padding(.bottom, 16)
+                    .textCase(nil) // Prevent automatic uppercase for headers
                 }
-                .padding(.top, 8)
-                .padding(.bottom, 16)
-                .textCase(nil) // Prevent automatic uppercase for headers
             }
         }
         .navigationTitle("") // Hide default title to avoid truncation/duplication

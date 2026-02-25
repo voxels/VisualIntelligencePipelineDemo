@@ -22,7 +22,8 @@ struct SmartTagGenerator {
         tags.append(contentsOf: timeTags())
 
         // Remove duplicates while preserving order
-        return Array(NSOrderedSet(array: tags)) as! [String]
+        var seen = Set<String>()
+        return tags.filter { seen.insert($0).inserted }
     }
 
     // MARK: - Domain Tag Mapping

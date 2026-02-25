@@ -18,6 +18,7 @@ import VideoToolbox
 @MainActor
 public final class CameraManager: NSObject, ObservableObject, @unchecked Sendable {
     @Published public var isReady = false
+    @Published public var isDegraded = false
     @Published public var session = AVCaptureSession()
     @Published public var isRecording = false
     @Published public private(set) var extractedBarcodeURLs: [URL] = []
@@ -143,6 +144,7 @@ public final class CameraManager: NSObject, ObservableObject, @unchecked Sendabl
             
             guard let videoDevice = videoDevice,
                   let videoInput = try? AVCaptureDeviceInput(device: videoDevice) else {
+                self.isDegraded = true
                 self.session.commitConfiguration()
                 return
             }

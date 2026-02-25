@@ -122,7 +122,7 @@ struct SpatialScoreOverlayView: View {
             brand: product.brand,
             price: 0,
             scores: scores,
-            affiliateURL: URL(string: "https://example.com")!
+            affiliateURL: URL(string: "https://example.com") ?? URL(fileURLWithPath: "/")
         )
         let recommendation = RankedRecommendation(
             option: purchaseOption,

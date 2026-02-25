@@ -22,15 +22,15 @@ import UIKit
 class SharedWithYouManager: NSObject, ObservableObject {
 
     private let logger = Logger(subsystem: DiverLogger.subsystem, category: "shared-with-you")
-    private let queueStore: DiverQueueStore
+    private let queueStore: DiverQueueStore?
     private let pipelineService: MetadataPipelineService?
     private let highlightCenter: SWHighlightCenter
 
     @Published private(set) var highlights: [SWHighlight] = []
     @Published private(set) var isEnabled: Bool
 
-    /// Initialize the manager with a queue store for enqueueing shared content
-    init(queueStore: DiverQueueStore, pipelineService: MetadataPipelineService? = nil, isEnabled: Bool = false) {
+    /// Initialize the manager with an optional queue store for enqueueing shared content
+    init(queueStore: DiverQueueStore?, pipelineService: MetadataPipelineService? = nil, isEnabled: Bool = false) {
         self.queueStore = queueStore
         self.pipelineService = pipelineService
         self.isEnabled = isEnabled
@@ -110,8 +110,12 @@ class SharedWithYouManager: NSObject, ObservableObject {
         let queueItem = DiverQueueItem(action: "process", descriptor: descriptor, source: "shared_with_you")
 
         do {
-            let record = try queueStore.enqueue(queueItem)
-            logger.info("Enqueued highlight: \(url.absoluteString) (record: \(record.item.id))")
+            if let store = queueStore {
+                let record = try store.enqueue(queueItem)
+                logger.info("Enqueued highlight: \(url.absoluteString) (record: \(record.item.id))")
+            } else {
+                logger.warning("Queue store is unavailable. Cannot queue highlight.")
+            }
             
             // Trigger immediate processing so it shows up in the sidebar
             if let pipelineService {
@@ -153,7 +157,7 @@ class SharedWithYouManager: NSObject, ObservableObject {
     
     /// Clear all pending items in the queue store (used for database reset)
     func clearQueueStore() throws {
-        try queueStore.removeAll()
+        try queueStore?.removeAll()
         logger.info("Queue store cleared")
     }
 

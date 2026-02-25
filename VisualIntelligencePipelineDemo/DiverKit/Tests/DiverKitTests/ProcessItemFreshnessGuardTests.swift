@@ -17,7 +17,7 @@ final class ProcessItemFreshnessGuardTests: XCTestCase {
     var service: MetadataPipelineService!
 
     override func setUp() async throws {
-        let unifiedDataManager = UnifiedDataManager(inMemory: true)
+        let unifiedDataManager = try! UnifiedDataManager(inMemory: true)
         modelContainer = unifiedDataManager.container
         let mainContext = unifiedDataManager.mainContext
 
