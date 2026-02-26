@@ -472,6 +472,8 @@ public actor EdgeModelProvisioner {
         }
     }
     
+    #endif
+    
     // MARK: - Validation & Testing Helpers
     
     /// Diagnostically assesses the status of the local models and environments.
@@ -524,5 +526,4 @@ public actor EdgeModelProvisioner {
         
         return status
     }
-    #endif
 }
